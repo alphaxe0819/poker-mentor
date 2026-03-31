@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <rect width="192" height="192" rx="32" fill="#0d0d14"/>
+  <text x="96" y="112" text-anchor="middle" font-size="96" fill="white" font-family="serif">♠</text>
+  <text x="96" y="150" text-anchor="middle" font-size="22" fill="#6366f1" font-weight="800" font-family="sans-serif" letter-spacing="2">GTO</text>
+</svg>
