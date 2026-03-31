@@ -1,323 +1,153 @@
-import React from 'react'
-import type { SeatDisplayInfo } from '../lib/gtoData'
+export interface SeatDisplayInfo {
+  status: 'hero' | 'raised' | 'posted' | 'folded' | 'waiting' | 'active'
+  bet: number
+  stack?: number
+}
 
 interface Props {
-  children?: React.ReactNode
-  showPositions?: boolean
+  tableSize?: 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
   heroPosition?: string
+  showPositions?: boolean
   seatStacks?: number[]
   seatInfo?: Record<string, SeatDisplayInfo>
   potTotal?: number
   scenarioText?: string
   flashSeat?: string
-  tableSize?: 6 | 9
 }
 
-const SLOTS_6MAX = [
-  { top: '86%', left: '50%' },
-  { top: '70%', left: '15%' },
-  { top: '22%', left: '15%' },
-  { top: '10%', left: '50%' },
-  { top: '22%', left: '85%' },
-  { top: '70%', left: '85%' },
-]
-
-const SLOTS_9MAX = [
-  { top: '88%', left: '50%' },
-  { top: '72%', left: '18%' },
-  { top: '45%', left: '6%'  },
-  { top: '16%', left: '18%' },
-  { top: '6%',  left: '50%' },
-  { top: '16%', left: '82%' },
-  { top: '45%', left: '94%' },
-  { top: '72%', left: '82%' },
-  { top: '88%', left: '68%' },
-]
-
-// Bet chip position (top/left relative to 52×52 circle container) + anchor transform
-// Each points from the seat towards the table center
-const BET_POSITIONS = [
-  { top: -6,  left: 26, tr: 'translate(-50%,-100%)' },   // slot 0: above
-  { top: 10,  left: 58, tr: 'translate(0,-50%)' },        // slot 1: right
-  { top: 42,  left: 58, tr: 'translate(0,-50%)' },        // slot 2: right-lower
-  { top: 60,  left: 26, tr: 'translate(-50%,0)' },        // slot 3: below
-  { top: 42,  left: -6, tr: 'translate(-100%,-50%)' },    // slot 4: left-lower
-  { top: 10,  left: -6, tr: 'translate(-100%,-50%)' },    // slot 5: left
-]
-
-const ORDER_6MAX = ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB']
-const ORDER_9MAX = ['UTG', 'UTG+1', 'UTG+2', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB']
-
-function getLabels(heroPos: string, tableSize: number): string[] {
-  if (tableSize === 9) {
-    const order = ORDER_9MAX
-    const heroIdx = order.indexOf(heroPos)
-    if (heroIdx === -1) return order
-    return SLOTS_9MAX.map((_, i) => order[(heroIdx + i) % 9])
-  }
-  const order = ORDER_6MAX
-  const heroIdx = order.indexOf(heroPos)
-  if (heroIdx === -1) return order
-  return SLOTS_6MAX.map((_, i) => order[(heroIdx + i) % 6])
+function ellipseSlots(count: number): { top: string; left: string }[] {
+  const cx = 50, cy = 50, rx = 43, ry = 39
+  return Array.from({ length: count }, (_, i) => {
+    const angleDeg = 90 + (360 / count) * i
+    const angleRad = (angleDeg * Math.PI) / 180
+    return {
+      left: `${(cx + rx * Math.cos(angleRad)).toFixed(1)}%`,
+      top:  `${(cy + ry * Math.sin(angleRad)).toFixed(1)}%`,
+    }
+  })
 }
 
-const PokerFelt: React.FC<Props> = ({
-  children,
-  showPositions = false,
+const SLOT_MAP = Object.fromEntries(
+  [2,3,4,5,6,7,8,9,10].map(n => [n, ellipseSlots(n)])
+) as Record<number, { top: string; left: string }[]>
+
+const POSITION_MAP: Record<number, string[]> = {
+  2:  ['BTN/SB', 'BB'],
+  3:  ['BTN', 'SB', 'BB'],
+  4:  ['CO', 'BTN', 'SB', 'BB'],
+  5:  ['HJ', 'CO', 'BTN', 'SB', 'BB'],
+  6:  ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
+  7:  ['UTG', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
+  8:  ['UTG', 'UTG+1', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
+  9:  ['UTG', 'UTG+1', 'UTG+2', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
+  10: ['UTG', 'UTG+1', 'UTG+2', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB', 'BB2'],
+}
+
+const STATUS_STYLE: Record<string, { bg: string; border: string }> = {
+  hero:    { bg: 'bg-[#1a1a2e]', border: '2px solid #7c3aed' },
+  raised:  { bg: 'bg-[#2a1a1a]', border: '1.5px solid #dc2626' },
+  posted:  { bg: 'bg-[#1a1a2e]', border: '1.5px solid #3b82f6' },
+  folded:  { bg: 'bg-[#111]',    border: '1.5px solid #333' },
+  waiting: { bg: 'bg-[#1c1c1c]', border: '1.5px solid #3a3a3a' },
+  active:  { bg: 'bg-[#1a2a1a]', border: '1.5px solid #16a34a' },
+}
+
+export default function PokerFelt({
+  tableSize = 6,
   heroPosition,
-  seatStacks,
-  seatInfo,
+  showPositions = true,
+  seatStacks = [],
+  seatInfo = {},
   potTotal,
   scenarioText,
-  flashSeat,
-  tableSize = 6,
-}) => {
-  const SLOTS = tableSize === 9 ? SLOTS_9MAX : SLOTS_6MAX
-  const labels = getLabels(heroPosition ?? 'BTN', tableSize)
+}: Props) {
+  const size      = Math.min(Math.max(tableSize, 2), 10) as keyof typeof SLOT_MAP
+  const positions = POSITION_MAP[size]
+  const slots     = SLOT_MAP[size]
+  const count     = positions.length
+
+  const heroIdx = heroPosition ? positions.indexOf(heroPosition) : 0
+  const orderedPositions = heroIdx >= 0
+    ? [positions[heroIdx], ...positions.slice(heroIdx + 1), ...positions.slice(0, heroIdx)]
+    : positions
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        width: '100%',
-        height: 230,
-        background: 'radial-gradient(ellipse at center, #1f5c3a 0%, #153d27 60%, #0e2c1c 100%)',
-        borderRadius: 20,
-        overflow: 'visible',
-        boxShadow: 'inset 0 0 40px rgba(0,0,0,0.5), 0 4px 20px rgba(0,0,0,0.4)',
-        border: '2px solid rgba(255,255,255,0.06)',
-      }}
-    >
-      {/* Felt texture */}
+    <div className="relative w-full" style={{ paddingBottom: '62%' }}>
       <div
+        className="absolute inset-0 rounded-[50%]"
         style={{
-          position: 'absolute', inset: 0,
-          background: 'repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px)',
-          pointerEvents: 'none',
+          background: 'radial-gradient(ellipse at center, #0d1f14 0%, #091510 70%, #060e0a 100%)',
+          border: '3px solid #2a1f0e',
         }}
       />
-
-      {/* Table edge */}
       <div
-        style={{
-          position: 'absolute', inset: 8, borderRadius: 14,
-          border: '1px solid rgba(255,255,255,0.08)', pointerEvents: 'none',
-        }}
+        className="absolute rounded-[50%]"
+        style={{ inset: '6%', border: '1px solid #1a3a22', opacity: 0.5 }}
       />
 
-      {/* Pot display */}
-      {potTotal != null && potTotal > 0 && (
-        <div
-          style={{
-            position: 'absolute', top: '38%', left: '50%',
-            transform: 'translate(-50%,-100%)',
-            fontSize: 10, fontWeight: 700,
-            fontFamily: '"IBM Plex Mono", monospace',
-            color: '#f59e0b',
-            background: 'rgba(0,0,0,0.45)',
-            padding: '2px 8px', borderRadius: 6,
-            zIndex: 3, whiteSpace: 'nowrap',
-          }}
-        >
-          POT {potTotal}bb
+      {potTotal !== undefined && potTotal > 0 && (
+        <div className="absolute top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2
+                        text-gray-300 text-xs px-3 py-1 rounded-full"
+             style={{ background: 'rgba(0,0,0,0.6)', border: '1px solid #2a2a2a' }}>
+          底池 {potTotal} BB
         </div>
       )}
 
-      {/* Scenario text */}
       {scenarioText && (
-        <div
-          style={{
-            position: 'absolute', top: 14, left: '50%',
-            transform: 'translateX(-50%)',
-            fontSize: 9, fontWeight: 600,
-            fontFamily: '"IBM Plex Mono", monospace',
-            color: 'rgba(255,255,255,0.45)',
-            background: 'rgba(0,0,0,0.35)',
-            padding: '2px 8px', borderRadius: 4,
-            zIndex: 3, whiteSpace: 'nowrap',
-          }}
-        >
+        <div className="absolute top-[52%] left-1/2 -translate-x-1/2 -translate-y-1/2
+                        text-gray-300 text-xs text-center max-w-[62%] leading-snug">
           {scenarioText}
         </div>
       )}
 
-      {/* Seats */}
-      {showPositions &&
-        SLOTS.map((slot, i) => {
-          const isHero = i === 0
-          const label = labels[i]
-          const stack = seatStacks?.[i]
-          const info = seatInfo?.[label]
-          const isFolded = info?.status === 'folded'
-          const isRaised = info?.status === 'raised'
-          const isPosted = info?.status === 'posted'
-          const isFlashing = flashSeat === label
+      {orderedPositions.map((pos, i) => {
+        const slot    = slots[i % count]
+        const info    = seatInfo[pos]
+        const status  = info?.status ?? 'waiting'
+        const stack   = info?.stack ?? seatStacks[i] ?? 0
+        const bet     = info?.bet ?? 0
+        const isHero  = status === 'hero'
+        const isFolded = status === 'folded'
+        const topPct  = parseFloat(slot.top)
+        const leftPct = parseFloat(slot.left)
+        const style   = STATUS_STYLE[status] ?? STATUS_STYLE.waiting
 
-          // Bet chip data
-          let betAmount: number | null = null
-          let chipColor = '#4a9eff'
-          let isAllInBet = false
+        const betDir =
+          topPct > 70 ? { bottom: '105%', left: '50%', transform: 'translateX(-50%)' } :
+          topPct < 30 ? { top: '105%',    left: '50%', transform: 'translateX(-50%)' } :
+          leftPct < 45 ? { left: '105%',  top: '50%',  transform: 'translateY(-50%)' } :
+                         { right: '105%', top: '50%',  transform: 'translateY(-50%)' }
 
-          if (seatInfo) {
-            if (!isHero && info && !isFolded && info.bet > 0) {
-              betAmount = info.bet
-              if (isRaised) chipColor = '#4a9eff'
-              if (isPosted) chipColor = 'rgba(74,158,255,0.5)'
-              // All-in detection: bet equals stack
-              if (stack != null && info.bet >= stack) {
-                chipColor = '#ff4444'
-                isAllInBet = true
-              }
-            }
-          } else {
-            // Legacy fallback
-            if (label === 'SB') { betAmount = 0.5; chipColor = 'rgba(74,158,255,0.5)' }
-            if (label === 'BB') { betAmount = 1; chipColor = '#4a9eff' }
-          }
-
-          const betPos = BET_POSITIONS[i]
-
-          return (
+        return (
+          <div
+            key={pos}
+            className="absolute -translate-x-1/2 -translate-y-1/2"
+            style={{ top: slot.top, left: slot.left, opacity: isFolded ? 0.35 : 1 }}
+          >
             <div
-              key={`slot-${i}`}
-              style={{
-                position: 'absolute',
-                top: slot.top,
-                left: slot.left,
-                transform: 'translate(-50%,-50%)',
-                zIndex: 2,
-                opacity: isFolded ? 0.3 : 1,
-                transition: 'opacity 0.3s',
-              }}
+              className={`relative flex flex-col items-center justify-center rounded-full ${style.bg}`}
+              style={{ width: 48, height: 48, border: style.border,
+                       boxShadow: isHero ? '0 0 10px 2px rgba(124,58,237,0.5)' : 'none' }}
             >
-              {/* Seat wrapper (52×52 relative container) */}
-              <div style={{ position: 'relative', width: 52, height: 52 }}>
-                {/* Circle */}
-                <div
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 1,
-                    background: isHero
-                      ? 'linear-gradient(135deg, #6366f1, #818cf8)'
-                      : isFolded
-                      ? 'rgba(0,0,0,0.25)'
-                      : 'rgba(0,0,0,0.45)',
-                    border: isHero
-                      ? '2px solid rgba(255,255,255,0.3)'
-                      : isFlashing
-                      ? '2px solid rgba(255,255,255,0.8)'
-                      : isFolded
-                      ? '1px solid rgba(255,255,255,0.04)'
-                      : isRaised
-                      ? '1.5px solid rgba(239,68,68,0.5)'
-                      : '1px solid rgba(255,255,255,0.12)',
-                    boxShadow: isHero
-                      ? '0 0 14px rgba(99,102,241,0.5)'
-                      : isFlashing
-                      ? '0 0 18px rgba(255,255,255,0.6)'
-                      : undefined,
-                    transition: 'all 0.3s',
-                  }}
-                >
-                  {/* Position name */}
-                  <div
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 700,
-                      fontFamily: 'Outfit, sans-serif',
-                      color: isHero
-                        ? '#9775fa'
-                        : isFolded
-                        ? 'rgba(255,255,255,0.3)'
-                        : 'white',
-                      lineHeight: 1,
-                      textDecoration: isFolded ? 'line-through' : 'none',
-                    }}
-                  >
-                    {label}
-                  </div>
-                  {/* Stack (behind = remaining chips) */}
-                  {stack != null && !isFolded && (
-                    <div
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 500,
-                        fontFamily: '"IBM Plex Mono", monospace',
-                        color: '#aaaaaa',
-                        lineHeight: 1,
-                      }}
-                    >
-                      {stack}
-                    </div>
-                  )}
-                </div>
-
-                {/* Bet chip — positioned towards table center */}
-                {betAmount != null && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: betPos.top,
-                      left: betPos.left,
-                      transform: betPos.tr,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 3,
-                      whiteSpace: 'nowrap',
-                      pointerEvents: 'none',
-                    }}
-                  >
-                    {/* Dot */}
-                    <div
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        background: chipColor,
-                        flexShrink: 0,
-                        boxShadow: `0 0 4px ${chipColor}`,
-                      }}
-                    />
-                    {/* Amount text */}
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 600,
-                        fontFamily: '"IBM Plex Mono", monospace',
-                        color: 'white',
-                        textShadow: '0 1px 3px rgba(0,0,0,0.8)',
-                      }}
-                    >
-                      {betAmount}
-                      {isAllInBet && (
-                        <span style={{ fontSize: 8, color: '#ff4444', marginLeft: 2 }}>AI</span>
-                      )}
-                    </span>
-                  </div>
-                )}
-              </div>
+              {showPositions && (
+                <span className={`text-[9px] font-bold leading-none ${isHero ? 'text-purple-300' : 'text-gray-300'}`}>
+                  {pos}
+                </span>
+              )}
+              <span className="text-[9px] leading-none mt-0.5 text-gray-500">
+                {stack > 0 ? `${stack}` : '—'}
+              </span>
             </div>
-          )
-        })}
 
-      {/* Center content */}
-      <div
-        style={{
-          position: 'absolute', inset: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1,
-        }}
-      >
-        {children}
-      </div>
+            {bet > 0 && (
+              <div className="absolute flex items-center gap-0.5 whitespace-nowrap" style={betDir}>
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                <span className="text-gray-300 text-[9px]">{bet}</span>
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
-
-export default PokerFelt

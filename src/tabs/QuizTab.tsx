@@ -1,695 +1,320 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react'
-import type { Action, Position } from '../types'
-import { pickRandomHand, resolveAction, generateSeatStacks, getRangeForStack, STACK_SIZES, generatePreflopContext, type PreflopContext } from '../lib/gtoData'
-import PokerFelt from '../components/PokerFelt'
+import { useState, useCallback } from 'react'
+import PokerFelt, { type SeatDisplayInfo } from '../components/PokerFelt'
 import HoleCards from '../components/HoleCards'
+import { getGTOAction, getActionLabel } from '../lib/gtoData'
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+// ── 常數 ──────────────────────────────────────────
+const GAME_TYPES = [
+  { key: 'cash_6max',  label: '6-max 現金', tableSize: 6  as const },
+  { key: 'tourn_9max', label: '9-max 錦標', tableSize: 9  as const },
+  { key: 'cash_hu',    label: 'HU 對戰',    tableSize: 2  as const },
+  { key: 'cash_4max',  label: '4-max 現金', tableSize: 4  as const },
+] as const
 
-type Phase = 'setup' | 'exam' | 'result'
+type GameTypeKey = typeof GAME_TYPES[number]['key']
 
-interface ExamQuestion {
-  hand: string
-  position: Position
-  stackBB: number
-  correctAction: Action
-  userAction?: Action
-  seatStacks: number[]
-  preflopCtx: PreflopContext
+const QUIZ_SIZES = [10, 20, 30]
+const STACK_DEPTHS = [100, 75, 40, 25, 15]
+
+const POSITIONS: Record<GameTypeKey, string[]> = {
+  cash_6max:  ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
+  tourn_9max: ['UTG', 'UTG+1', 'UTG+2', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
+  cash_hu:    ['BTN/SB', 'BB'],
+  cash_4max:  ['CO', 'BTN', 'SB', 'BB'],
 }
 
-const QUESTION_COUNTS = [10, 20, 30]
-const DEPTH_OPTIONS = [
-  { label: '10BB', value: 10 },
-  { label: '20BB', value: 20 },
-  { label: '30BB', value: 30 },
-  { label: '100BB', value: 100 },
-  { label: '隨機', value: 0 },
+const ACTION_BUTTONS = [
+  { label: 'Fold',  action: 'f',    color: 'bg-gray-600 hover:bg-gray-500' },
+  { label: 'Call',  action: 'c',    color: 'bg-blue-600 hover:bg-blue-500' },
+  { label: 'Raise', action: 'r',    color: 'bg-green-600 hover:bg-green-500' },
+  { label: '3-Bet', action: '3b',   color: 'bg-yellow-600 hover:bg-yellow-500' },
+  { label: 'All-in',action: 'allin',color: 'bg-red-700 hover:bg-red-600' },
 ]
-const ALL_POSITIONS_6MAX: Position[] = ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB']
-const ALL_POSITIONS_9MAX: Position[] = ['UTG', 'UTG+1', 'UTG+2', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'] as Position[]
 
-const ACTIONS: Action[] = ['raise', 'call', 'fold']
-const ACTION_LABELS: Record<Action, string> = { raise: 'Raise', call: 'Call', fold: 'Fold' }
-const ACTION_EMOJI: Record<Action, string> = { raise: '🔺', call: '📞', fold: '🗑️' }
-const ACTION_COLORS: Record<Action, { color: string; bg: string; border: string }> = {
-  raise: { color: '#9775fa', bg: 'rgba(151,117,250,0.18)', border: 'rgba(151,117,250,0.5)' },
-  call:  { color: '#38d9a9', bg: 'rgba(56,217,169,0.12)',  border: 'rgba(56,217,169,0.5)' },
-  fold:  { color: '#ff6b6b', bg: 'rgba(255,107,107,0.1)',  border: 'rgba(255,107,107,0.5)' },
-}
-
-interface Props {
-  onGoToTrain?: () => void
-  tableType?: 'cash' | 'tournament'
-  onTableTypeChange?: (type: 'cash' | 'tournament') => void
-}
-
-// ─── Component ──────────────────────────────────────────────────────────────
-
-const QuizTab: React.FC<Props> = ({ onGoToTrain, tableType = 'cash', onTableTypeChange }) => {
-  const [localTableType, setLocalTableType] = useState<'cash' | 'tournament'>(tableType)
-  const isNineMax = localTableType === 'tournament'
-  const ALL_POSITIONS = isNineMax ? ALL_POSITIONS_9MAX : ALL_POSITIONS_6MAX
-
-  const handleTableTypeChange = (type: 'cash' | 'tournament') => {
-    setLocalTableType(type)
-    onTableTypeChange?.(type)
-    setSelectedPositions(type === 'tournament' ? [...ALL_POSITIONS_9MAX] : [...ALL_POSITIONS_6MAX])
-  }
-
-  const [phase, setPhase] = useState<Phase>('setup')
-
-  // Setup state
-  const [questionCount, setQuestionCount] = useState(10)
-  const [selectedDepth, setSelectedDepth] = useState(0)
-  const [selectedPositions, setSelectedPositions] = useState<Position[]>([...ALL_POSITIONS])
-
-  // Exam state
-  const [questions, setQuestions] = useState<ExamQuestion[]>([])
-  const [currentIdx, setCurrentIdx] = useState(0)
-  const [answered, setAnswered] = useState(false)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // Cleanup timer on unmount
-  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current) }, [])
-
-  // ── Generate questions ────────────────────────────────────────────────────
-  const startExam = useCallback(() => {
-    const positions = selectedPositions.length > 0 ? selectedPositions : ALL_POSITIONS
-    const qs: ExamQuestion[] = []
-
-    for (let i = 0; i < questionCount; i++) {
-      const pos = positions[Math.floor(Math.random() * positions.length)]
-      const stackBB = selectedDepth === 0
-        ? STACK_SIZES[Math.floor(Math.random() * STACK_SIZES.length)]
-        : selectedDepth
-      const range = getRangeForStack(pos, stackBB)
-      const hand = pickRandomHand(range)
-      const correctAction = resolveAction(range, hand)
-      const seatStacks = generateSeatStacks(stackBB, isNineMax ? 9 : 6)
-      const gtoScenario = pos === 'BB' ? 'vs_open' : 'open'
-      const preflopCtx = generatePreflopContext(pos, gtoScenario, isNineMax ? 9 : 6)
-
-      qs.push({ hand, position: pos, stackBB, correctAction, seatStacks, preflopCtx })
+// ── 輔助函數 ──────────────────────────────────────
+const RANKS = ['A','K','Q','J','T','9','8','7','6','5','4','3','2']
+const ALL_HANDS: string[] = (() => {
+  const h: string[] = []
+  for (let i = 0; i < RANKS.length; i++)
+    for (let j = 0; j < RANKS.length; j++) {
+      if (i === j) h.push(RANKS[i] + RANKS[j])
+      else if (i < j) h.push(RANKS[i] + RANKS[j] + 's')
+      else h.push(RANKS[j] + RANKS[i] + 'o')
     }
+  return h
+})()
 
-    setQuestions(qs)
-    setCurrentIdx(0)
+function randomItem<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)]
+}
+
+function buildSeatInfo(positions: string[], heroPos: string): Record<string, SeatDisplayInfo> {
+  const info: Record<string, SeatDisplayInfo> = {}
+  let hasRaiser = false
+  for (const pos of positions) {
+    if (pos === heroPos) { info[pos] = { status: 'hero', bet: 0 }; break }
+    if (pos === 'SB')    { info[pos] = { status: 'posted', bet: 0.5 }; continue }
+    if (pos === 'BB')    { info[pos] = { status: 'posted', bet: 1 };   continue }
+    if (!hasRaiser && Math.random() < 0.28) {
+      info[pos] = { status: 'raised', bet: 2.5 }
+      hasRaiser = true
+    } else {
+      info[pos] = { status: 'folded', bet: 0 }
+    }
+  }
+  for (const pos of positions) {
+    if (!info[pos]) info[pos] = { status: 'waiting', bet: 0 }
+  }
+  return info
+}
+
+function buildScenario(positions: string[], heroPos: string, seatInfo: Record<string, SeatDisplayInfo>): string {
+  const raiser = positions.find(p => seatInfo[p]?.status === 'raised')
+  return raiser
+    ? `${raiser} 加注到 2.5BB，輪到你（${heroPos}）`
+    : `沒有人加注，輪到你（${heroPos}）`
+}
+
+// Placeholder GTO lookup
+function getGTOAnswer(gameTypeKey: string, stackDepth: number, heroPos: string, hand: string): string {
+  return getGTOAction(gameTypeKey, stackDepth, heroPos, hand)
+}
+
+// ── 型別 ──────────────────────────────────────────
+interface QuizQuestion {
+  gameTypeKey: GameTypeKey
+  tableSize: 2 | 4 | 6 | 9
+  stackDepth: number
+  heroPos: string
+  hand: string
+  seatInfo: Record<string, SeatDisplayInfo>
+  scenario: string
+  gtoAnswer: string
+}
+
+interface WrongItem {
+  hand: string
+  heroPos: string
+  chosen: string
+  gtoAnswer: string
+}
+
+type QuizPhase = 'setup' | 'playing' | 'result'
+
+// ── 主元件 ────────────────────────────────────────
+export default function QuizTab() {
+  const [gameTypeKey, setGameTypeKey] = useState<GameTypeKey>('cash_6max')
+  const [stackDepth, setStackDepth]   = useState<number>(100)
+  const [quizSize, setQuizSize]       = useState<number>(10)
+
+  const [phase, setPhase]         = useState<QuizPhase>('setup')
+  const [questions, setQuestions] = useState<QuizQuestion[]>([])
+  const [current, setCurrent]     = useState<number>(0)
+  const [answered, setAnswered]   = useState<boolean>(false)
+  const [chosen, setChosen]       = useState<string>('')
+  const [score, setScore]         = useState<number>(0)
+  const [wrongs, setWrongs]       = useState<WrongItem[]>([])
+
+  const gameType  = GAME_TYPES.find(g => g.key === gameTypeKey)!
+  const positions = POSITIONS[gameTypeKey]
+
+  const generateQuestions = useCallback((): QuizQuestion[] => {
+    return Array.from({ length: quizSize }, () => {
+      const heroPos   = randomItem(positions)
+      const hand      = randomItem(ALL_HANDS)
+      const seatInfo  = buildSeatInfo(positions, heroPos)
+      const scenario  = buildScenario(positions, heroPos, seatInfo)
+      const gtoAnswer = getGTOAnswer(gameTypeKey, stackDepth, heroPos, hand)
+      return { gameTypeKey, tableSize: gameType.tableSize, stackDepth, heroPos, hand, seatInfo, scenario, gtoAnswer }
+    })
+  }, [gameTypeKey, stackDepth, quizSize, gameType.tableSize, positions])
+
+  const startQuiz = () => {
+    setQuestions(generateQuestions())
+    setCurrent(0)
+    setScore(0)
+    setWrongs([])
     setAnswered(false)
-    setPhase('exam')
-  }, [questionCount, selectedDepth, selectedPositions])
+    setChosen('')
+    setPhase('playing')
+  }
 
-  // ── Answer a question ─────────────────────────────────────────────────────
-  const handleAnswer = useCallback((action: Action) => {
+  const handleAnswer = (action: string) => {
     if (answered) return
+    setChosen(action)
     setAnswered(true)
-
-    setQuestions(prev => {
-      const next = [...prev]
-      next[currentIdx] = { ...next[currentIdx], userAction: action }
-      return next
-    })
-
-    // Auto-advance after 1.5s
-    timerRef.current = setTimeout(() => {
-      if (currentIdx + 1 >= questions.length) {
-        setPhase('result')
-      } else {
-        setCurrentIdx(i => i + 1)
-        setAnswered(false)
-      }
-    }, 1500)
-  }, [answered, currentIdx, questions.length])
-
-  // ── Toggle position ───────────────────────────────────────────────────────
-  const togglePosition = (pos: Position) => {
-    setSelectedPositions(prev => {
-      if (prev.includes(pos)) {
-        const next = prev.filter(p => p !== pos)
-        return next.length === 0 ? [...ALL_POSITIONS] : next
-      }
-      return [...prev, pos]
-    })
+    const q = questions[current]
+    if (action === q.gtoAnswer) {
+      setScore(s => s + 1)
+    } else {
+      setWrongs(w => [...w, { hand: q.hand, heroPos: q.heroPos, chosen: action, gtoAnswer: q.gtoAnswer }])
+    }
   }
 
-  const selectAllPositions = selectedPositions.length === ALL_POSITIONS.length
-
-  // ── Results calculation ───────────────────────────────────────────────────
-  const correctCount = questions.filter(q => q.userAction === q.correctAction).length
-  const totalCount = questions.length
-  const accuracy = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0
-  const wrongQuestions = questions.filter(q => q.userAction !== q.correctAction)
-
-  const getScoreColor = (acc: number) => {
-    if (acc >= 90) return '#38d9a9'
-    if (acc >= 70) return '#9775fa'
-    if (acc >= 50) return '#ffa94d'
-    return '#ff6b6b'
+  const nextQuestion = () => {
+    if (current + 1 >= questions.length) {
+      setPhase('result')
+    } else {
+      setCurrent(c => c + 1)
+      setAnswered(false)
+      setChosen('')
+    }
   }
 
-  const getComment = (acc: number) => {
-    if (acc >= 90) return '優秀！你已掌握 GTO 基礎'
-    if (acc >= 70) return '不錯！繼續練習可以更好'
-    if (acc >= 50) return '需要加強，建議多練習'
-    return '繼續努力，GTO 需要反覆練習'
-  }
+  const q = questions[current]
+  const isCorrect = q ? chosen === q.gtoAnswer : false
+  const accuracy = questions.length > 0 ? Math.round((score / questions.length) * 100) : 0
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // SETUP PHASE
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ── 設定畫面 ──
   if (phase === 'setup') {
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '16px 16px 24px',
-          gap: 18,
-          height: '100%',
-          overflowY: 'auto',
-        }}
-      >
-        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>
-          📝 考題測驗
-        </h2>
+      <div className="flex flex-col gap-5 p-4 max-w-lg mx-auto">
+        <h2 className="text-white font-bold text-lg">測驗模式</h2>
 
-        {/* Table type */}
         <div>
-          <div style={sectionLabel}>遊戲類型</div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={() => handleTableTypeChange('cash')}
-              style={chipStyle(localTableType === 'cash', false)}
-            >
-              現金局 6-max
-            </button>
-            <button
-              onClick={() => handleTableTypeChange('tournament')}
-              style={chipStyle(localTableType === 'tournament', false)}
-            >
-              錦標賽 9-max
-            </button>
-          </div>
-        </div>
-
-        {/* Question count */}
-        <div>
-          <div style={sectionLabel}>題目數量</div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {QUESTION_COUNTS.map(n => (
-              <button
-                key={n}
-                onClick={() => setQuestionCount(n)}
-                style={chipStyle(questionCount === n, false)}
-              >
-                {n} 題
+          <div className="text-gray-400 text-xs mb-2">遊戲類型</div>
+          <div className="flex gap-2 flex-wrap">
+            {GAME_TYPES.map(g => (
+              <button key={g.key} onClick={() => setGameTypeKey(g.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition
+                  ${gameTypeKey === g.key ? 'bg-purple-600 border-purple-500 text-white' : 'bg-gray-800 border-gray-600 text-gray-400'}`}>
+                {g.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Depth */}
         <div>
-          <div style={sectionLabel}>籌碼深度</div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {DEPTH_OPTIONS.map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => setSelectedDepth(opt.value)}
-                style={chipStyle(selectedDepth === opt.value, opt.value === 0)}
-              >
-                {opt.label}
+          <div className="text-gray-400 text-xs mb-2">籌碼深度</div>
+          <div className="flex gap-2 flex-wrap">
+            {STACK_DEPTHS.map(d => (
+              <button key={d} onClick={() => setStackDepth(d)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition
+                  ${stackDepth === d ? 'bg-blue-600 border-blue-500 text-white' : 'bg-gray-800 border-gray-600 text-gray-400'}`}>
+                {d}BB
               </button>
             ))}
           </div>
         </div>
 
-        {/* Position */}
         <div>
-          <div style={sectionLabel}>位置</div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            <button
-              onClick={() => setSelectedPositions([...ALL_POSITIONS])}
-              style={chipStyle(selectAllPositions, true)}
-            >
-              全部
-            </button>
-            {ALL_POSITIONS.map(pos => (
-              <button
-                key={pos}
-                onClick={() => togglePosition(pos)}
-                style={chipStyle(
-                  !selectAllPositions && selectedPositions.includes(pos),
-                  false,
-                )}
-              >
-                {pos}
+          <div className="text-gray-400 text-xs mb-2">題數</div>
+          <div className="flex gap-2">
+            {QUIZ_SIZES.map(s => (
+              <button key={s} onClick={() => setQuizSize(s)}
+                className={`px-4 py-1.5 rounded-full text-xs font-medium border transition
+                  ${quizSize === s ? 'bg-green-600 border-green-500 text-white' : 'bg-gray-800 border-gray-600 text-gray-400'}`}>
+                {s} 題
               </button>
             ))}
           </div>
         </div>
 
-        {/* Start button */}
-        <div style={{ flex: 1 }} />
-        <button
-          className="btn-primary"
-          onClick={startExam}
-          style={{ width: '100%', padding: '14px 0', fontSize: 16, fontWeight: 700 }}
-        >
-          開始測驗 →
+        <button onClick={startQuiz}
+          className="bg-purple-600 hover:bg-purple-500 text-white px-8 py-3 rounded-full font-bold text-base transition mt-2">
+          開始測驗
         </button>
       </div>
     )
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // EXAM PHASE
-  // ═══════════════════════════════════════════════════════════════════════════
-  if (phase === 'exam') {
-    const q = questions[currentIdx]
-    const isCorrect = answered && q.userAction === q.correctAction
-    const isWrong = answered && q.userAction !== q.correctAction
-    const progress = ((currentIdx + (answered ? 1 : 0)) / totalCount) * 100
-
+  // ── 結果畫面 ──
+  if (phase === 'result') {
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100dvh',
-          padding: '6px 16px 8px',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Progress bar */}
-        <div style={{ flexShrink: 0, marginBottom: 6 }}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 4,
-            }}
-          >
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>
-              第 {currentIdx + 1} 題 / 共 {totalCount} 題
-            </span>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                fontFamily: '"IBM Plex Mono", monospace',
-                color:
-                  q.stackBB <= 15 ? '#ef4444' :
-                  q.stackBB <= 40 ? '#f59e0b' :
-                  '#10b981',
-              }}
-            >
-              {q.stackBB}BB · {q.position}
-            </span>
-          </div>
-          <div
-            style={{
-              width: '100%',
-              height: 4,
-              borderRadius: 2,
-              background: 'var(--border)',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              style={{
-                width: `${progress}%`,
-                height: '100%',
-                background: '#9775fa',
-                borderRadius: 2,
-                transition: 'width 0.4s ease',
-              }}
-            />
-          </div>
+      <div className="flex flex-col gap-4 p-4 max-w-lg mx-auto">
+        <h2 className="text-white font-bold text-lg text-center">測驗結果</h2>
+
+        <div className="bg-gray-800 rounded-2xl p-5 text-center">
+          <div className="text-5xl font-black text-purple-400">{accuracy}%</div>
+          <div className="text-gray-400 text-sm mt-1">正確率</div>
+          <div className="text-white text-sm mt-2">{score} / {questions.length} 題正確</div>
         </div>
 
-        {/* Poker felt */}
-        <div style={{ flexShrink: 0 }}>
-          <PokerFelt
-            showPositions
-            heroPosition={q.position}
-            seatStacks={q.seatStacks}
-            seatInfo={q.preflopCtx.seatInfo}
-            potTotal={q.preflopCtx.potTotal}
-            scenarioText={q.preflopCtx.scenarioDesc}
-            tableSize={isNineMax ? 9 : 6}
-          >
-            {!answered && (
-              <div
-                style={{
-                  background: 'rgba(0,0,0,0.55)',
-                  backdropFilter: 'blur(8px)',
-                  borderRadius: 8,
-                  padding: '5px 14px',
-                  fontSize: 13,
-                  color: 'rgba(255,255,255,0.7)',
-                  fontFamily: '"IBM Plex Mono", monospace',
-                }}
-              >
-                你會怎麼做？
+        {wrongs.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <div className="text-gray-400 text-xs">錯誤題目</div>
+            {wrongs.map((w, i) => (
+              <div key={i} className="bg-gray-800 rounded-xl p-3 flex justify-between items-center">
+                <span className="text-white text-sm font-bold">{w.hand}</span>
+                <span className="text-gray-400 text-xs">{w.heroPos}</span>
+                <span className="text-red-400 text-xs">你：{getActionLabel(w.chosen)}</span>
+                <span className="text-green-400 text-xs">GTO：{getActionLabel(w.gtoAnswer)}</span>
               </div>
-            )}
-            {answered && (
-              <div
-                className="animate-pop"
-                style={{
-                  background: isCorrect ? 'rgba(16,185,129,0.9)' : 'rgba(239,68,68,0.9)',
-                  backdropFilter: 'blur(8px)',
-                  borderRadius: 8,
-                  padding: '5px 14px',
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: 'white',
-                }}
-              >
-                {isCorrect
-                  ? '✓ 正確'
-                  : `✗ 應該是 ${ACTION_LABELS[q.correctAction]}`}
-              </div>
-            )}
-          </PokerFelt>
-        </div>
+            ))}
+          </div>
+        )}
 
-        {/* Hand display */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 10,
-            flexShrink: 0,
-            marginTop: 6,
-          }}
-        >
-          <HoleCards hand={q.hand} revealed size="md" />
-          <span
-            style={{
-              fontSize: 20,
-              fontWeight: 800,
-              fontFamily: '"IBM Plex Mono", monospace',
-              color: 'var(--text-primary)',
-              letterSpacing: '-1px',
-            }}
-          >
-            {q.hand}
-          </span>
-        </div>
-
-        {/* Action buttons */}
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0, marginTop: 6 }}>
-          {ACTIONS.map(action => {
-            const cfg = ACTION_COLORS[action]
-            const isUserPick = answered && q.userAction === action
-            const isCorrectAction = answered && q.correctAction === action
-
-            let btnBg = cfg.bg
-            let btnBorder = cfg.border
-            let btnColor = cfg.color
-
-            if (answered) {
-              if (isUserPick && isCorrect) {
-                btnBg = 'rgba(16,185,129,0.2)'
-                btnBorder = 'rgba(16,185,129,0.6)'
-                btnColor = '#10b981'
-              } else if (isUserPick && isWrong) {
-                btnBg = 'rgba(239,68,68,0.2)'
-                btnBorder = 'rgba(239,68,68,0.6)'
-                btnColor = '#ef4444'
-              } else if (isCorrectAction && isWrong) {
-                btnBg = 'rgba(16,185,129,0.12)'
-                btnBorder = 'rgba(16,185,129,0.4)'
-                btnColor = '#10b981'
-              } else {
-                btnBg = 'rgba(148,163,184,0.06)'
-                btnBorder = 'rgba(148,163,184,0.15)'
-                btnColor = 'rgba(148,163,184,0.3)'
-              }
-            }
-
-            return (
-              <button
-                key={action}
-                onClick={() => handleAnswer(action)}
-                disabled={answered}
-                style={{
-                  flex: 1,
-                  padding: '8px 6px',
-                  borderRadius: 12,
-                  border: `1.5px solid ${btnBorder}`,
-                  background: btnBg,
-                  color: btnColor,
-                  cursor: answered ? 'default' : 'pointer',
-                  transition: 'all 0.15s',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 2,
-                  fontFamily: 'Outfit, sans-serif',
-                  opacity: answered && !isUserPick && !isCorrectAction ? 0.4 : 1,
-                }}
-              >
-                <span style={{ fontSize: 18 }}>{ACTION_EMOJI[action]}</span>
-                <span style={{ fontSize: 11, fontWeight: 700 }}>{ACTION_LABELS[action]}</span>
-              </button>
-            )
-          })}
+        <div className="flex gap-3 mt-2">
+          <button onClick={startQuiz}
+            className="flex-1 bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-full font-bold text-sm transition">
+            再測一次
+          </button>
+          <button onClick={() => setPhase('setup')}
+            className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-full font-bold text-sm transition">
+            重新設定
+          </button>
         </div>
       </div>
     )
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // RESULT PHASE
-  // ═══════════════════════════════════════════════════════════════════════════
-  const scoreColor = getScoreColor(accuracy)
-  const radius = 52
-  const circumference = 2 * Math.PI * radius
-  const dashOffset = circumference - (accuracy / 100) * circumference
-
+  // ── 答題畫面 ──
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '16px 16px 24px',
-        gap: 16,
-        height: '100%',
-        overflowY: 'auto',
-      }}
-    >
-      <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>
-        測驗結果
-      </h2>
+    <div className="flex flex-col gap-4 p-4 max-w-lg mx-auto">
 
-      {/* Score circle */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 12,
-          padding: '24px 0',
-          background: 'var(--surface-card)',
-          border: '1px solid var(--border)',
-          borderRadius: 16,
-        }}
-      >
-        <div style={{ position: 'relative', width: 124, height: 124 }}>
-          <svg width="124" height="124" style={{ transform: 'rotate(-90deg)' }}>
-            <circle cx="62" cy="62" r={radius} fill="none" stroke="var(--border)" strokeWidth="9" />
-            <circle
-              cx="62" cy="62" r={radius}
-              fill="none"
-              stroke={scoreColor}
-              strokeWidth="9"
-              strokeDasharray={circumference}
-              strokeDashoffset={dashOffset}
-              strokeLinecap="round"
-              style={{ transition: 'stroke-dashoffset 0.7s ease' }}
-            />
-          </svg>
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <div
-              style={{
-                fontSize: 24,
-                fontWeight: 800,
-                fontFamily: '"IBM Plex Mono", monospace',
-                color: scoreColor,
-                lineHeight: 1,
-              }}
-            >
-              {correctCount} / {totalCount}
-            </div>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
-              正確率 {accuracy}%
-            </div>
-          </div>
-        </div>
-
-        <div
-          style={{
-            fontSize: 15,
-            fontWeight: 600,
-            color: scoreColor,
-            textAlign: 'center',
-          }}
-        >
-          {getComment(accuracy)}
-        </div>
+      {/* 進度 */}
+      <div className="flex justify-between items-center">
+        <span className="text-gray-400 text-xs">第 {current + 1} / {questions.length} 題</span>
+        <span className="text-green-400 text-xs">✓ {score}</span>
+      </div>
+      <div className="w-full bg-gray-700 rounded-full h-1">
+        <div className="bg-purple-500 h-1 rounded-full transition-all"
+             style={{ width: `${((current) / questions.length) * 100}%` }} />
       </div>
 
-      {/* Wrong questions review */}
-      {wrongQuestions.length > 0 && (
-        <div
-          style={{
-            background: 'var(--surface-card)',
-            border: '1px solid var(--border)',
-            borderRadius: 14,
-            padding: '14px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
-          }}
-        >
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: 'var(--text-muted)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              marginBottom: 4,
-            }}
-          >
-            錯題回顧（{wrongQuestions.length} 題）
+      {q && (
+        <>
+          <PokerFelt
+            tableSize={q.tableSize}
+            heroPosition={q.heroPos}
+            seatInfo={q.seatInfo}
+            scenarioText={q.scenario}
+            showPositions
+          />
+
+          <div className="flex justify-center">
+            <HoleCards hand={q.hand} />
           </div>
-          {wrongQuestions.map((q, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '8px 0',
-                borderTop: i > 0 ? '1px solid var(--border)' : undefined,
-                fontSize: 13,
-              }}
-            >
-              <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: '#ef4444',
-                  flexShrink: 0,
-                }}
-              />
-              <span
-                style={{
-                  fontFamily: '"IBM Plex Mono", monospace',
-                  fontWeight: 700,
-                  color: 'var(--text-primary)',
-                  width: 40,
-                  flexShrink: 0,
-                }}
-              >
-                {q.hand}
-              </span>
-              <span style={{ width: 32, fontWeight: 700, color: 'var(--text-secondary)', flexShrink: 0 }}>
-                {q.position}
-              </span>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', flexShrink: 0 }}>
-                {q.stackBB}BB
-              </span>
-              <span style={{ flex: 1 }} />
-              <span style={{ fontSize: 12, color: '#ef4444', fontWeight: 600 }}>
-                {ACTION_LABELS[q.userAction!]}
-              </span>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>→</span>
-              <span style={{ fontSize: 12, color: '#10b981', fontWeight: 600 }}>
-                {ACTION_LABELS[q.correctAction]}
-              </span>
+
+          {!answered && (
+            <div className="grid grid-cols-3 gap-2">
+              {ACTION_BUTTONS.map(btn => (
+                <button key={btn.action} onClick={() => handleAnswer(btn.action)}
+                  className={`${btn.color} text-white font-bold py-3 rounded-xl text-sm transition`}>
+                  {btn.label}
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+
+          {answered && (
+            <div className={`rounded-xl p-4 text-center border ${
+              isCorrect ? 'bg-green-900/40 border-green-600' : 'bg-red-900/40 border-red-600'
+            }`}>
+              <div className="text-lg font-bold mb-1">
+                {isCorrect ? '✅ 正確！' : '❌ 不對'}
+              </div>
+              <div className="text-sm text-gray-300">
+                GTO 建議：<span className="text-yellow-300 font-bold">{getActionLabel(q.gtoAnswer)}</span>
+              </div>
+              <button onClick={nextQuestion}
+                className="mt-3 bg-purple-600 hover:bg-purple-500 text-white px-6 py-2 rounded-full text-sm font-medium transition">
+                {current + 1 >= questions.length ? '查看結果' : '下一題'}
+              </button>
+            </div>
+          )}
+        </>
       )}
-
-      {/* Buttons */}
-      <div style={{ display: 'flex', gap: 10 }}>
-        <button
-          className="btn-primary"
-          onClick={startExam}
-          style={{ flex: 1, padding: '12px 0', fontSize: 14 }}
-        >
-          再考一次
-        </button>
-        <button
-          onClick={onGoToTrain}
-          style={{
-            flex: 1,
-            padding: '12px 0',
-            borderRadius: 12,
-            background: 'var(--surface-elevated)',
-            border: '1px solid var(--border)',
-            color: 'var(--text-secondary)',
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: 'pointer',
-            fontFamily: 'Outfit, sans-serif',
-          }}
-        >
-          返回練習
-        </button>
-      </div>
     </div>
   )
 }
-
-// ─── Shared styles ──────────────────────────────────────────────────────────
-
-const sectionLabel: React.CSSProperties = {
-  fontSize: 13,
-  fontWeight: 700,
-  color: 'var(--text-secondary)',
-  marginBottom: 8,
-}
-
-function chipStyle(active: boolean, teal: boolean): React.CSSProperties {
-  return {
-    padding: '6px 14px',
-    borderRadius: 10,
-    border: `1.5px solid ${
-      active
-        ? teal ? 'rgba(56,217,169,0.4)' : 'rgba(151,117,250,0.5)'
-        : 'var(--border)'
-    }`,
-    background: active
-      ? teal ? 'rgba(56,217,169,0.12)' : 'rgba(151,117,250,0.12)'
-      : 'var(--surface-card)',
-    color: active
-      ? teal ? '#38d9a9' : '#9775fa'
-      : 'var(--text-muted)',
-    fontSize: 13,
-    fontWeight: 700,
-    cursor: 'pointer',
-    fontFamily: '"IBM Plex Mono", monospace',
-    transition: 'all 0.15s',
-  }
-}
-
-export default QuizTab
