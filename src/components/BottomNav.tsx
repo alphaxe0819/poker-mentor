@@ -9,8 +9,6 @@ interface Props {
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'train',   label: '練習' },
-  { key: 'quiz',    label: '測驗' },
-  { key: 'coach',   label: '教練' },
   { key: 'stats',   label: '統計' },
   { key: 'profile', label: '帳號' },
 ]

@@ -9,7 +9,7 @@ export default function SessionStats({ accuracy, streak, total, stackBB }: Props
   return (
     <div className="flex gap-2 px-4 py-2" style={{ background: '#0a0a0a', borderBottom: '1px solid #1a1a1a' }}>
       <div className="flex-1 text-center">
-        <div className="text-[10px] text-gray-600">準確率</div>
+        <div className="text-[10px] text-gray-600 whitespace-nowrap">準確率</div>
         <div className="text-sm font-bold" style={{ color: total === 0 ? '#444' : accuracy >= 70 ? '#4ade80' : accuracy >= 50 ? '#fbbf24' : '#f87171' }}>
           {total > 0 ? `${accuracy}%` : '—'}
         </div>

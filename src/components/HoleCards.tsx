@@ -1,3 +1,5 @@
+import React from 'react'
+
 interface Props {
   hand: string
 }
@@ -16,6 +18,23 @@ function parseHand(hand: string) {
     rank2:  hand[1],
     suited: hand.endsWith('s'),
     pair:   hand[0] === hand[1],
+  }
+}
+
+// 用手牌字串做確定性的花色選擇（同一手牌永遠顯示同樣花色）
+function getSuits(hand: string) {
+  const { suited } = parseHand(hand)
+  // 用手牌的字元碼決定基礎花色，確保一致性
+  const base = (hand.charCodeAt(0) + hand.charCodeAt(1)) % 4
+
+  if (suited) {
+    // 同花：兩張用同一花色
+    return [SUITS[base], SUITS[base]]
+  } else {
+    // 雜色：兩張用不同花色
+    const suit1 = SUITS[base]
+    const suit2 = SUITS[(base + 1) % 4]
+    return [suit1, suit2]
   }
 }
 
@@ -45,9 +64,8 @@ function Card({ rank, suit }: { rank: string; suit: typeof SUITS[number] }) {
 
 export default function HoleCards({ hand }: Props) {
   const { rank1, rank2, suited, pair } = parseHand(hand)
-  const suit1 = SUITS[0]
-  const suit2 = suited ? SUITS[1] : pair ? SUITS[2] : SUITS[3]
-  const label = suited ? '同花' : pair ? '對子' : '異花'
+  const [suit1, suit2] = getSuits(hand)
+  const label = suited ? '同花' : pair ? '對子' : '雜色'
 
   return (
     <div className="flex flex-col items-center gap-2">
