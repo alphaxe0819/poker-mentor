@@ -299,7 +299,7 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
     // 第一題才檢查每日限制
     if (onStartRound && total === 0) {
       const allowed = await onStartRound()
-      if (!allowed) return
+      if (allowed === false) return
     }
 
     // 免費用戶隨機籌碼深度

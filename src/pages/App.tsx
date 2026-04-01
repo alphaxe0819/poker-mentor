@@ -60,16 +60,25 @@ export default function App() {
 
   // 開始新關卡時檢查每日限制
   const handleStartRound = async (): Promise<boolean> => {
-    if (!profile || !user) return false
-    if (profile.is_paid) return true
+    if (!user) return false
 
-    if (isDailyLimitReached(profile)) {
+    // profile 可能還沒載入，重新fetch一次
+    let currentProfile = profile
+    if (!currentProfile) {
+      currentProfile = await getProfile()
+      setProfile(currentProfile)
+    }
+
+    if (!currentProfile) return true // 找不到 profile 也讓他練習
+
+    if (currentProfile.is_paid) return true
+
+    if (isDailyLimitReached(currentProfile)) {
       setShowLimit(true)
       return false
     }
 
-    await incrementDailyPlays(user.id, profile)
-    // 更新本地 profile
+    await incrementDailyPlays(user.id, currentProfile)
     const p = await getProfile()
     setProfile(p)
     return true
