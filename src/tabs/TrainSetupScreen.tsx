@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 
 const GAME_TYPES = [
   { key: 'tourn_9max', label: '9-max 錦標' },
@@ -7,15 +7,10 @@ const GAME_TYPES = [
 const STACK_DEPTHS = [100, 75, 40, 25, 15]
 const ROUND_SIZES = [10, 30, 100]
 
-const TRAIN_MODES = [
-  { key: 'single', label: '單步驟', desc: '每手只問一個決策' },
-  { key: 'multi',  label: '多步驟', desc: '完整模擬對手反應' },
-] as const
-
 interface Props {
   isPaid?: boolean
   onStart: (config: {
-    gameTypeKey: string
+    gameTypeKey: 'tourn_9max'
     stackDepth: number
     trainMode: 'single' | 'multi'
     roundSize: number
@@ -94,7 +89,7 @@ export default function TrainSetupScreen({ isPaid = false, onStart }: Props) {
       )}
 
       <button
-        onClick={() => onStart({ gameTypeKey, stackDepth, trainMode, roundSize: isPaid ? roundSize : 10 })}
+        onClick={() => onStart({ gameTypeKey: gameTypeKey as 'tourn_9max', stackDepth, trainMode, roundSize: isPaid ? roundSize : 10 })}
         className="w-full py-3.5 rounded-full font-bold text-base text-white mt-2"
         style={{ background: '#7c3aed' }}>
         開始練習

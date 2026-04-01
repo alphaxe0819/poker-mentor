@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
-import PokerFelt, { type SeatDisplayInfo } from '../components/PokerFelt'
+import PokerFelt from '../components/PokerFelt'
+import type { SeatDisplayInfo } from '../tabs/TrainTab'
 import HoleCards from '../components/HoleCards'
 import { getGTOAction, getActionLabel } from '../lib/gtoData'
 

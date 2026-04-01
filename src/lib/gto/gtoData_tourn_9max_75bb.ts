@@ -411,8 +411,7 @@ const DB_TOURN_75BB: GtoDatabase = {
     // Wide call
     'TT':'c','99':'c','88':'c','77':'c','66':'c','55':'c','44':'c','33':'c','22':'c',
     'A9s':'c','A8s':'c','A7s':'c','A6s':'c',
-    'AJo':'c','ATo':'c','A9o':'c','A8o':'c',
-    'KQs':'c','KJs':'c','KTs':'c','K9s':'c','K8s':'c','K7s':'c',
+    'AJo':'c','ATo':'c','A9o':'c','A8o':'c','KJs':'c','KTs':'c','K9s':'c','K8s':'c','K7s':'c',
     'KQo':'c','KJo':'c','KTo':'c','K9o':'c','K8o':'c',
     'QJs':'c','QTs':'c','Q9s':'c','Q8s':'c',
     'QJo':'c','QTo':'c','Q9o':'c',

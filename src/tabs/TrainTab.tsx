@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import PokerFelt from '../components/PokerFelt'
 
 export interface SeatDisplayInfo {
@@ -8,12 +8,12 @@ export interface SeatDisplayInfo {
 }
 import HoleCards from '../components/HoleCards'
 import SessionStats from '../components/SessionStats'
-import ActionFeedback, { SimpleStepFeedback } from '../components/ActionFeedback'
+import ActionFeedback from '../components/ActionFeedback'
 import ActionHistory from '../components/ActionHistory'
 import TrainSetupScreen from './TrainSetupScreen'
 import RoundResultScreen from '../components/RoundResultScreen'
 import { saveAnswerRecord } from '../lib/auth'
-import { getGTOAction, getTopActions, getStep2GTOFromDB, getRangeForPosition, getValidScenarios, getRangeByKey, getActionByKey, getTopActionsByKey } from '../lib/gtoData'
+import { getStep2GTOFromDB, getValidScenarios, getRangeByKey, getActionByKey, getTopActionsByKey } from '../lib/gtoData'
 
 // ── 常數 ──────────────────────────────────────────────────────────────────────
 
@@ -233,7 +233,7 @@ interface TrainTabProps {
   onRoundComplete?: () => void
 }
 
-export default function TrainTab({ guestMode = false, userId = null, userName, isPaid = false, onStartRound, onRoundComplete }: TrainTabProps) {
+export default function TrainTab({ guestMode: _guestMode = false, userId = null, userName, isPaid = false, onStartRound, onRoundComplete }: TrainTabProps) {
   const [screen,    setScreen]    = useState<Screen>('setup')
   const [config,    setConfig]    = useState<TrainConfig | null>(null)
   const [showExitConfirm, setShowExitConfirm] = useState(false)

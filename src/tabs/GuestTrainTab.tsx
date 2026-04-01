@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import PokerFelt from '../components/PokerFelt'
 import HoleCards from '../components/HoleCards'
 import ActionHistory from '../components/ActionHistory'

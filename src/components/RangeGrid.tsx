@@ -1,4 +1,3 @@
-import React from 'react'
 
 interface Props {
   highlightHand?: string
@@ -47,8 +46,8 @@ export default function RangeGrid({ highlightHand, gtoRange, onClose }: Props) {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(13, 1fr)', gap: 1.5 }}>
-          {RANKS.map((r1, i) =>
-            RANKS.map((r2, j) => {
+          {RANKS.map((r1, _i) =>
+            RANKS.map((r2, _j) => {
               const key    = handKey(r1, r2)
               const isHero = key === highlightHand
               const action = gtoRange?.[key]

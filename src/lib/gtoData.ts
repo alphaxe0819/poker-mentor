@@ -10,14 +10,6 @@ function getDB(stackBB: number) {
   return DBS.DB_TOURN_15BB
 }
 
-function getCanonicalBB(stackBB: number): number {
-  if (stackBB >= 88) return 100
-  if (stackBB >= 58) return 75
-  if (stackBB >= 33) return 40
-  if (stackBB >= 20) return 25
-  return 15
-}
-
 // ── 有效場景表 ────────────────────────────────────────────────────────────────
 // 每個深度明確列出有資料的 (heroPos, raiserPos) 組合
 // raiserPos = null 表示 RFI 場景
@@ -289,7 +281,7 @@ function parseAction(val: string | undefined): string {
 // ── 舊版相容函數（保留給其他元件使用）────────────────────────────────────────
 
 export function getGTOAction(
-  gameTypeKey: string,
+  _gameTypeKey: string,
   stackBB: number,
   position: string,
   hand: string,
@@ -307,7 +299,7 @@ export function getGTOAction(
 }
 
 export function getTopActions(
-  gameTypeKey: string,
+  _gameTypeKey: string,
   stackBB: number,
   position: string,
   hand: string,
@@ -324,7 +316,7 @@ export function getTopActions(
 }
 
 export function getRangeForPosition(
-  gameTypeKey: string,
+  _gameTypeKey: string,
   stackBB: number,
   position: string,
   scenario: string = 'open',
@@ -347,7 +339,7 @@ export function getRangeForPosition(
 // ── Step 2 GTO ────────────────────────────────────────────────────────────────
 
 export function getStep2GTOFromDB(
-  gameTypeKey: string,
+  _gameTypeKey: string,
   stackBB: number,
   heroPos: string,
   villainPos: string,

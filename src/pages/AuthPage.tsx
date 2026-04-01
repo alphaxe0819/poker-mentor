@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { APP_NAME } from '../version'
 
 type Mode = 'login' | 'register'
 

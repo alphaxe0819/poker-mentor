@@ -403,8 +403,7 @@ const DB_TOURN_40BB: GtoDatabase = {
     // Very wide call vs CO at 40BB
     '99':'c','88':'c','77':'c','66':'c','55':'c','44':'c','33':'c','22':'c',
     'A9s':'c','A8s':'c','A7s':'c','A6s':'c',
-    'ATo':'c','A9o':'c','A8o':'c','A7o':'c',
-    'KQs':'c','KJs':'c','KTs':'c','K9s':'c','K8s':'c','K7s':'c','K6s':'c',
+    'ATo':'c','A9o':'c','A8o':'c','A7o':'c','KJs':'c','KTs':'c','K9s':'c','K8s':'c','K7s':'c','K6s':'c',
     'KQo':'c','KJo':'c','KTo':'c','K9o':'c',
     'QJs':'c','QTs':'c','Q9s':'c','Q8s':'c','Q7s':'c',
     'QJo':'c','QTo':'c','Q9o':'c',
@@ -447,8 +446,7 @@ const DB_TOURN_40BB: GtoDatabase = {
     // Very wide call vs BTN
     '88':'c','77':'c','66':'c','55':'c','44':'c','33':'c','22':'c',
     'A7s':'c','A6s':'c',
-    'A9o':'c','A8o':'c','A7o':'c','A6o':'c',
-    'KQs':'c','KTs':'c','K9s':'c','K8s':'c','K7s':'c','K6s':'c',
+    'A9o':'c','A8o':'c','A7o':'c','A6o':'c','KTs':'c','K9s':'c','K8s':'c','K7s':'c','K6s':'c',
     'KQo':'c','KJo':'c','KTo':'c','K9o':'c','K8o':'c',
     'QJs':'c','QTs':'c','Q9s':'c','Q8s':'c','Q7s':'c',
     'QJo':'c','QTo':'c','Q9o':'c',

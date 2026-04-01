@@ -17,9 +17,9 @@ export function getGTOAction(
 
   if (gameType === 'cash') {
     canonicalBB = 100;
-    if (tableType === '6max') db = DBS.DB_CASH_6MAX_100BB;
-    else if (tableType === '4max') db = DBS.DB_CASH_4MAX_100BB;
-    else if (tableType === 'hu') db = DBS.DB_CASH_HU_100BB;
+    if (tableType === '6max') db = (DBS as any).DB_CASH_6MAX_100BB;
+    else if (tableType === '4max') db = (DBS as any).DB_CASH_4MAX_100BB;
+    else if (tableType === 'hu') db = (DBS as any).DB_CASH_HU_100BB;
   } else {
     if (stackBB >= 88) { db = DBS.DB_TOURN_100BB; canonicalBB = 100; }
     else if (stackBB >= 58) { db = DBS.DB_TOURN_75BB; canonicalBB = 75; }

@@ -80,8 +80,7 @@ const DB_TOURN_15BB: GtoDatabase = {
     'A5s':'r','A4s':'r','A3s':'r','A2s':'r',
     'KQo':'r','KJo':'r','KTo':'r',
     // All-In
-    '44':'allin','33':'allin','22':'allin',
-    'A9s':'allin', // 部分 A9s 也 jam
+    '44':'allin','33':'allin','22':'allin', // 部分 A9s 也 jam
   },
 
   // ── HJ (Hijack) RFI — Raise: 16.0%, All-In: 7.1% (total ~23.1%) ──
@@ -278,7 +277,6 @@ const DB_TOURN_15BB: GtoDatabase = {
     '76s':'c','75s':'c',
     '65s':'c','54s':'c',
     '43s':'c',
-    '33':'c',
   },
 
   // ============================================================
@@ -454,7 +452,6 @@ const DB_TOURN_15BB: GtoDatabase = {
     '54s':'c','53s':'c',
     '43s':'c',
     'K3o':'c','K4o':'c',
-    'A3s':'c',
   },
 
   // ============================================================
