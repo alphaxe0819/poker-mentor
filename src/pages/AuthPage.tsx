@@ -30,10 +30,13 @@ export default function AuthPage({ onSuccess, onGuest }: Props) {
 
       // 建立 profile
       if (data.user) {
-        await supabase.from('profiles').insert({
-          id:    data.user.id,
-          email: data.user.email,
-          name:  name || email.split('@')[0],
+        await supabase.from('profiles').upsert({
+          id:       data.user.id,
+          email:    data.user.email,
+          name:     name || email.split('@')[0],
+          is_paid:  false,
+          player_type: 'tournament',
+          daily_plays_count: 0,
         })
       }
       onSuccess()
