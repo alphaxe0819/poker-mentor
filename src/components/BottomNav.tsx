@@ -1,6 +1,4 @@
-
-
-type Tab = 'train' | 'quiz' | 'coach' | 'stats' | 'profile'
+type Tab = 'train' | 'stats' | 'analysis' | 'profile'
 
 interface Props {
   current: Tab
@@ -8,9 +6,10 @@ interface Props {
 }
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: 'train',   label: '練習' },
-  { key: 'stats',   label: '統計' },
-  { key: 'profile', label: '帳號' },
+  { key: 'train',    label: '練習' },
+  { key: 'stats',    label: '統計' },
+  { key: 'analysis', label: '分析' },
+  { key: 'profile',  label: '帳號' },
 ]
 
 export default function BottomNav({ current, onChange }: Props) {

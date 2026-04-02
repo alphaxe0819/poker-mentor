@@ -236,35 +236,57 @@ export function getRangeByKey(stackBB: number, dbKey: string): Record<string, st
   return db[dbKey] ?? {}
 }
 
+// BB vs SB Limp 時，fold 等於 check（BB 已下盲注，不需棄牌）
+function isBBvsSBLimp(dbKey: string): boolean {
+  return dbKey.includes('SB_limp')
+}
+
 export function getActionByKey(stackBB: number, dbKey: string, hand: string): string {
   const range = getRangeByKey(stackBB, dbKey)
-  return parseAction(range[hand])
+  const action = parseAction(range[hand])
+  return isBBvsSBLimp(dbKey) && action === 'f' ? 'c' : action
 }
 
 export function getTopActionsByKey(stackBB: number, dbKey: string, hand: string): { action: string; freq: number }[] {
   const range = getRangeByKey(stackBB, dbKey)
   const val   = range[hand]
-  if (!val) return [{ action: 'f', freq: 100 }]
+  const limp = isBBvsSBLimp(dbKey)
+  // BB vs SB limp: fold → check（BB 已下盲注，不需棄牌）
+  const f = limp ? 'c' : 'f'
+
+  if (!val) return [{ action: f, freq: 100 }]
 
   if (val.startsWith('mr:') && !val.includes('_')) {
     const pct = parseInt(val.split(':')[1])
-    return [{ action: 'r', freq: pct }, { action: 'f', freq: 100 - pct }]
+    const actions = [{ action: 'r', freq: pct }, { action: f, freq: 100 - pct }]
+    return actions.sort((a, b) => b.freq - a.freq)
   }
   if (val.includes('_3b')) {
     const pct = parseInt(val.split(':')[1])
-    return [{ action: '3b', freq: pct }, { action: 'f', freq: 100 - pct }]
+    const actions = [{ action: '3b', freq: pct }, { action: f, freq: 100 - pct }]
+    return actions.sort((a, b) => b.freq - a.freq)
   }
   if (val.includes('_4b')) {
     const pct = parseInt(val.split(':')[1])
-    return [{ action: '4b', freq: pct }, { action: 'f', freq: 100 - pct }]
+    const actions = [{ action: '4b', freq: pct }, { action: f, freq: 100 - pct }]
+    return actions.sort((a, b) => b.freq - a.freq)
   }
 
   const primary = parseAction(val)
-  const secondMap: Record<string, string> = { r: 'f', c: 'f', '3b': 'c', '4b': 'c', allin: 'f', f: 'r' }
+  const mappedPrimary = limp && primary === 'f' ? 'c' : primary
+  const secondMap: Record<string, string> = { r: f, c: f, '3b': 'c', '4b': 'c', allin: f, f: 'r' }
   return [
-    { action: primary,                   freq: 100 },
-    { action: secondMap[primary] ?? 'f', freq: 0   },
+    { action: mappedPrimary,                       freq: 100 },
+    { action: secondMap[mappedPrimary] ?? f, freq: 0   },
   ]
+}
+
+// ── isActionValid（頻率 > 0% 即視為正確）────────────────────────────────────
+
+export function isActionValid(stackBB: number, dbKey: string, hand: string, action: string): boolean {
+  const topActions = getTopActionsByKey(stackBB, dbKey, hand)
+  const match = topActions.find(a => a.action === action)
+  return match !== undefined && match.freq > 0
 }
 
 // ── parseAction ───────────────────────────────────────────────────────────────

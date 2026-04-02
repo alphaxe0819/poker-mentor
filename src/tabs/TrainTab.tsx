@@ -13,7 +13,7 @@ import ActionHistory from '../components/ActionHistory'
 import TrainSetupScreen from './TrainSetupScreen'
 import RoundResultScreen from '../components/RoundResultScreen'
 import { saveAnswerRecord } from '../lib/auth'
-import { getStep2GTOFromDB, getValidScenarios, getRangeByKey, getActionByKey, getTopActionsByKey } from '../lib/gtoData'
+import { getStep2GTOFromDB, getValidScenarios, getRangeByKey, getActionByKey, getTopActionsByKey, isActionValid } from '../lib/gtoData'
 
 // ── 常數 ──────────────────────────────────────────────────────────────────────
 
@@ -229,11 +229,12 @@ interface TrainTabProps {
   userId?: string | null
   userName?: string
   isPaid?: boolean
+  isTabActive?: boolean
   onStartRound?: () => Promise<boolean>
   onRoundComplete?: () => void
 }
 
-export default function TrainTab({ guestMode: _guestMode = false, userId = null, userName, isPaid = false, onStartRound, onRoundComplete }: TrainTabProps) {
+export default function TrainTab({ guestMode: _guestMode = false, userId = null, userName, isPaid = false, isTabActive = true, onStartRound, onRoundComplete }: TrainTabProps) {
   const [screen,    setScreen]    = useState<Screen>('setup')
   const [config,    setConfig]    = useState<TrainConfig | null>(null)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
@@ -259,11 +260,24 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
 
   const [needAutoStart, setNeedAutoStart] = useState(false)
 
-  const handleStart = (cfg: TrainConfig) => {
+  useEffect(() => {
+    setScreen('setup')
+    setConfig(null)
+    setHandSetup(null)
+    setPhase('question_step1')
+    setTotal(0); setCorrect(0); setStreak(0); setScore(0)
+    setStepResults([])
+    setNeedAutoStart(false)
+  }, [userId])
+
+  const handleStart = async (cfg: TrainConfig) => {
+    if (onStartRound) {
+      const allowed = await onStartRound()
+      if (allowed === false) return
+    }
     setConfig(cfg)
     setScreen('training')
     setTotal(0); setCorrect(0); setStreak(0); setScore(0)
-    // 直接開始第一手，不等用戶點按鈕
     setTimeout(() => {
       setNeedAutoStart(true)
     }, 50)
@@ -296,11 +310,6 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
     if (autoNextTimer.current) clearTimeout(autoNextTimer.current)
 
 
-    // 第一題才檢查每日限制
-    if (onStartRound && total === 0) {
-      const allowed = await onStartRound()
-      if (allowed === false) return
-    }
 
     // 免費用戶隨機籌碼深度
     const effectiveStackDepth = isPaid
@@ -336,7 +345,7 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
     setVillainResp(''); setVillainPos('')
     setStep2Actions([]); setStepResults([])
     setPotWinMsg('')
-  }, [config, positions])
+  }, [config, positions, total, onStartRound])
 
   useEffect(() => {
     if (needAutoStart && config) {
@@ -344,6 +353,12 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
       startHand()
     }
   }, [needAutoStart, config, startHand])
+
+  // 離開 tab 時不做任何事，保留當前狀態，回來繼續
+  const prevTabActive = useRef(true)
+  useEffect(() => {
+    prevTabActive.current = isTabActive
+  }, [isTabActive])
 
   const getStep1Actions = (setup: HandSetup) => {
     if (setup.initialScenario === 'RFI') {
@@ -376,12 +391,13 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
     if (!handSetup || !config) return
     const gtoAnswer  = getActionByKey(handSetup.stackDepth, handSetup.dbKey, handSetup.hand)
     const topActions = getTopActionsByKey(handSetup.stackDepth, handSetup.dbKey, handSetup.hand)
-    const isOk = action === gtoAnswer
+    const isOk = isActionValid(handSetup.stackDepth, handSetup.dbKey, handSetup.hand, action)
     const result: StepResult = { step: 1, heroAction: action, gtoAction: gtoAnswer, isCorrect: isOk, gtoTopActions: topActions }
     setStepResults([result])
 
-    // 存答題記錄（付費用戶）
-    if (userId && isPaid && handSetup) {
+    // 存答題記錄（所有登入用戶，Step2 的手牌在 Step2 結束後存）
+    const willGoStep2 = isOk && config.trainMode === 'multi' && (action === 'r' || action === '3b')
+    if (userId && handSetup && !willGoStep2) {
       saveAnswerRecord({
         userId,
         dbKey:        handSetup.dbKey,
@@ -461,7 +477,6 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
           const pot = action === 'r' ? raiseAmt + 1.5 : threeBetAmt + raiseAmt
           setPotWinMsg(resp === 'fold' ? `所有人棄牌，收取底池 +${pot.toFixed(1)}BB` : `${vPos} 跟注`)
           if (resp === 'fold') setScenarioText(`所有人棄牌，收取底池 +${pot.toFixed(1)}BB`)
-          // 更新行動歷史：顯示對手最終行動
           const villainAmount = resp === 'call'
             ? (action === 'r' ? raiseAmt : threeBetAmt)
             : undefined
@@ -470,8 +485,28 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
               ? { ...item, action: resp === 'fold' ? 'fold' : 'call', amount: villainAmount }
               : item
           ))
+          // villain fold/call：存答題記錄（這手牌不會進 Step2）
+          if (userId && handSetup) {
+            saveAnswerRecord({
+              userId,
+              dbKey:        handSetup.dbKey,
+              hand:         handSetup.hand,
+              chosenAction: action,
+              gtoAction:    gtoAnswer,
+              isCorrect:    isOk,
+              stackBb:      handSetup.stackDepth,
+              heroPos:      handSetup.heroPos,
+              scenarioType: handSetup.raiserPos ? 'vs_raise' : 'RFI',
+            }).catch(console.error)
+          }
+          const newTotalFold = total + 1
+          setTotal(newTotalFold)
           setCorrect(c => c + 1); setStreak(s => s + 1)
           setScore(s => Math.round((s + 1) * 10) / 10)
+          if (newTotalFold >= ROUND_SIZE) {
+            setPhase('round_complete')
+            return
+          }
           setPhase('feedback_step1')
         } else {
           const betAmt = resp === '3bet' ? 7.5 : resp === '4bet' ? 17 : handSetup.stackDepth
@@ -527,7 +562,22 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
         ? { ...item, action: action as any, amount: step2Amount }
         : item
     ))
-    // Step 2 不另外計題數，和 Step 1 同一手
+    // Step 2 計題數，存答題記錄
+    if (userId && handSetup) {
+      saveAnswerRecord({
+        userId,
+        dbKey:        handSetup.dbKey,
+        hand:         handSetup.hand,
+        chosenAction: action,
+        gtoAction:    gtoAnswer,
+        isCorrect:    isOk,
+        stackBb:      handSetup.stackDepth,
+        heroPos:      handSetup.heroPos,
+        scenarioType: handSetup.raiserPos ? 'vs_raise' : 'RFI',
+      }).catch(console.error)
+    }
+    const newTotalStep2 = total + 1
+    setTotal(newTotalStep2)
     if (isOk) {
       setCorrect(c => c + 1)
       setStreak(s => s + 1)
@@ -535,6 +585,10 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
     } else {
       setStreak(0)
       setScore(s => Math.round((s - 1) * 10) / 10)
+    }
+    if (newTotalStep2 >= ROUND_SIZE) {
+      setPhase('round_complete')
+      return
     }
     setPhase('feedback_step2')
   }
@@ -558,16 +612,16 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
         userId={userId}
         userName={userName}
         stackBb={config?.stackDepth}
-        onNext={() => {
-          // 回到設定頁面
-          setScreen('setup')
-          setPhase('question_step1')
+        onNext={async () => {
           setTotal(0)
           setCorrect(0)
           setStreak(0)
           setScore(0)
           setHandSetup(null)
-          if (onRoundComplete) onRoundComplete()
+          if (onRoundComplete) await onRoundComplete()
+          // onRoundComplete 可能設 showLimit，等它執行完再回設定頁
+          setScreen('setup')
+          setPhase('question_step1')
         }}
       />
     )
@@ -575,7 +629,7 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
 
   // ── 練習畫面 ──
   return (
-    <div className="flex flex-col" style={{ minHeight: '100vh', background: '#0a0a0a' }}>
+    <div className="flex flex-col" style={{ height: '100dvh', background: '#0a0a0a', overflow: 'hidden' }}>
 
       {/* 退出確認彈窗 */}
       {showExitConfirm && (
@@ -607,25 +661,15 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
           ←
         </button>
         <SessionStats accuracy={accuracy} streak={streak} total={total} stackBB={config?.stackDepth ?? 100} />
+        {handSetup && config && (
+          <span className="ml-auto text-xs text-gray-500 whitespace-nowrap">
+            {Math.min(total + 1, ROUND_SIZE)}/{ROUND_SIZE}
+          </span>
+        )}
       </div>
 
-      <div className="flex flex-col gap-3 p-4 max-w-lg mx-auto w-full">
-        {/* 題數進度 */}
-        {handSetup && config && (
-          <div className="flex items-center justify-between px-1">
-            <span className="text-gray-500 text-xs whitespace-nowrap">
-              第 {Math.min(total + 1, ROUND_SIZE)} 題 / 共 {ROUND_SIZE} 題
-            </span>
-            <div className="flex-1 mx-3 rounded-full h-1" style={{ background: '#1a1a1a' }}>
-              <div className="h-1 rounded-full transition-all"
-                   style={{
-                     width: `${Math.min((total / ROUND_SIZE) * 100, 100)}%`,
-                     background: '#7c3aed',
-                   }} />
-            </div>
-            <span className="text-gray-600 text-xs whitespace-nowrap">{Math.min(total, ROUND_SIZE)}/{ROUND_SIZE}</span>
-          </div>
-        )}
+      <div className="flex flex-col gap-3 p-4 max-w-lg mx-auto w-full overflow-y-auto flex-1 pb-6">
+
 
         {!handSetup ? (
           <div className="flex flex-col items-center gap-4 py-12">
@@ -649,8 +693,44 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
               showPositions
             />
 
-            <div className="flex justify-center">
-              <HoleCards hand={handSetup.hand} />
+            <div className="flex items-start gap-2">
+              <div className="flex-1 flex justify-center">
+                {(phase === 'feedback_step1' || phase === 'feedback_step2') ? (
+                  <button
+                    onClick={() => document.getElementById('range-btn')?.click()}
+                    className="w-full rounded-xl text-xs transition"
+                    style={{ background: '#111', border: '1px solid #2a2a2a', color: '#666', height: 76 }}
+                  >
+                    查看範圍
+                  </button>
+                ) : <div className="flex-1" />}
+              </div>
+              <div className="flex flex-col items-center gap-1">
+                <HoleCards hand={handSetup.hand} />
+                {(phase === 'feedback_step1' || phase === 'feedback_step2') ? (() => {
+                  const result = phase === 'feedback_step1' ? stepResults.find(r => r.step === 1) : stepResults.find(r => r.step === 2)
+                  return result ? (
+                    <span className="text-sm font-bold" style={{ color: result.isCorrect ? '#10b981' : '#ef4444' }}>
+                      {result.isCorrect ? '✓ 正確！' : '✗ 不對'}
+                    </span>
+                  ) : null
+                })() : (
+                  <span className="text-xs text-gray-400">
+                    {handSetup.hand} {handSetup.hand.endsWith('s') ? '同花' : handSetup.hand.endsWith('o') ? '雜色' : '對子'}
+                  </span>
+                )}
+              </div>
+              <div className="flex-1 flex justify-center">
+                {(phase === 'feedback_step1' || phase === 'feedback_step2') ? (
+                  <button
+                    onClick={() => document.getElementById('next-hand-btn')?.click()}
+                    className="w-full rounded-xl text-xs font-bold text-white transition"
+                    style={{ background: '#4c1d95', border: '1px solid #7c3aed', height: 76 }}
+                  >
+                    下一手 →
+                  </button>
+                ) : <div className="flex-1" />}
+              </div>
             </div>
 
             {phase === 'question_step1' && (
@@ -691,6 +771,8 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
 
             {phase === 'feedback_step1' && step1Result && (
               <ActionFeedback
+                hideResult
+                hideButtons
                 isCorrect={step1Result.isCorrect}
                 gtoAction={step1Result.gtoTopActions[0]?.action ?? step1Result.gtoAction}
                 gtoFreq={step1Result.gtoTopActions[0]?.freq ?? 100}
@@ -700,12 +782,15 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
                 chosenFreq={step1Result.isCorrect ? 100 : 0}
                 hand={handSetup.hand}
                 gtoRange={handSetup.gtoRange}
+                isLimp={handSetup.raiserAction === 'limp'}
                 onNext={startHand}
               />
             )}
 
             {phase === 'feedback_step2' && step2Result && (
               <ActionFeedback
+                hideResult
+                hideButtons
                 isCorrect={step2Result.isCorrect}
                 gtoAction={step2Result.gtoTopActions[0]?.action ?? step2Result.gtoAction}
                 gtoFreq={step2Result.gtoTopActions[0]?.freq ?? 100}
@@ -715,6 +800,7 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
                 chosenFreq={step2Result.isCorrect ? 100 : 0}
                 hand={handSetup.hand}
                 gtoRange={handSetup.gtoRange}
+                isLimp={handSetup.raiserAction === 'limp'}
                 onNext={startHand}
               />
             )}

@@ -10,13 +10,9 @@ const ACTION_NAMES: Record<string, string> = {
   allin:'All-in（全下）',
 }
 
-const ACTION_ICONS: Record<string, string> = {
-  f:    '▼',
-  c:    '●',
-  r:    '▲',
-  '3b': '▲',
-  '4b': '▲',
-  allin:'⚡',
+function getActionName(action: string, isLimp?: boolean): string {
+  if (isLimp && action === 'c') return 'Check（過牌）'
+  return ACTION_NAMES[action] ?? action
 }
 
 function ActionCol({
@@ -24,11 +20,13 @@ function ActionCol({
   action,
   freq,
   highlight,
+  isLimp,
 }: {
   label: string
   action: string
   freq: number
   highlight?: boolean
+  isLimp?: boolean
 }) {
   return (
     <div
@@ -39,16 +37,15 @@ function ActionCol({
       }}
     >
       <span className="text-[10px] text-gray-500 mb-1">{label}</span>
-      <span className="text-base mb-0.5" style={{ color: highlight ? '#a78bfa' : '#555' }}>
-        {ACTION_ICONS[action] ?? '?'}
-      </span>
-      <span className="text-sm font-bold text-white">{ACTION_NAMES[action] ?? action}</span>
+      <span className="text-sm font-bold text-white">{getActionName(action, isLimp)}</span>
       <span className="text-xs mt-0.5" style={{ color: '#10b981' }}>{freq}%</span>
     </div>
   )
 }
 
 interface Props {
+  hideResult?: boolean
+  hideButtons?: boolean
   isCorrect: boolean
   gtoAction: string
   gtoFreq: number
@@ -58,10 +55,13 @@ interface Props {
   chosenFreq: number
   hand: string
   gtoRange?: Record<string, string>
+  isLimp?: boolean
   onNext: () => void
 }
 
 export default function ActionFeedback({
+  hideResult,
+  hideButtons,
   isCorrect,
   gtoAction,
   gtoFreq,
@@ -71,6 +71,7 @@ export default function ActionFeedback({
   chosenFreq,
   hand,
   gtoRange,
+  isLimp,
   onNext,
 }: Props) {
   const [showRange, setShowRange] = useState(false)
@@ -80,42 +81,52 @@ export default function ActionFeedback({
   return (
     <div className="flex flex-col gap-3">
 
-      <div className="text-center">
-        <span
-          className="text-base font-bold"
-          style={{ color: isCorrect ? '#10b981' : '#ef4444' }}
-        >
-          {isCorrect ? '✓ 正確！' : '✗ 不對'}
-        </span>
-      </div>
+      {!hideResult && (
+        <div className="text-center">
+          <span
+            className="text-base font-bold"
+            style={{ color: isCorrect ? '#10b981' : '#ef4444' }}
+          >
+            {isCorrect ? '✓ 正確！' : '✗ 不對'}
+          </span>
+        </div>
+      )}
 
       <div className="flex gap-2">
-        <ActionCol label="最佳行動" action={gtoAction}    freq={gtoFreq}    highlight />
-        <ActionCol label="你的選擇" action={chosenAction} freq={chosenFreq} />
+        <ActionCol label="最佳行動" action={gtoAction}    freq={gtoFreq}    highlight isLimp={isLimp} />
+        <ActionCol label="你的選擇" action={chosenAction} freq={chosenFreq} isLimp={isLimp} />
         {hasSecond && (
-          <ActionCol label="第二選項" action={secondAction} freq={secondFreq} />
+          <ActionCol label="第二選項" action={secondAction} freq={secondFreq} isLimp={isLimp} />
         )}
       </div>
 
-      <button
-        onClick={() => setShowRange(true)}
-        className="w-full py-2.5 rounded-xl text-sm transition"
-        style={{ background: '#111', border: '1px solid #2a2a2a', color: '#666' }}
-      >
-        查看完整範圍 13×13
-      </button>
+      {/* 隱藏按鈕供手牌區觸發 */}
+      <button id="range-btn" style={{ display: 'none' }} onClick={() => setShowRange(true)} />
+      <button id="next-hand-btn" style={{ display: 'none' }} onClick={onNext} />
+
+      {!hideButtons && (
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowRange(true)}
+            className="flex-1 py-2.5 rounded-xl text-sm transition"
+            style={{ background: '#111', border: '1px solid #2a2a2a', color: '#666' }}
+          >
+            查看範圍
+          </button>
+          <button
+            onClick={onNext}
+            className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition"
+            style={{ background: '#4c1d95', border: '1px solid #7c3aed' }}
+          >
+            下一手 →
+          </button>
+        </div>
+      )}
 
       {showRange && (
         <RangeGrid highlightHand={hand} gtoRange={gtoRange} onClose={() => setShowRange(false)} />
       )}
 
-      <button
-        onClick={onNext}
-        className="w-full py-3 rounded-xl text-sm font-bold text-white transition"
-        style={{ background: '#4c1d95', border: '1px solid #7c3aed' }}
-      >
-        下一手 →
-      </button>
     </div>
   )
 }

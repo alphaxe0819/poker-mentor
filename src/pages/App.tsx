@@ -8,26 +8,24 @@ import UpgradePage from './UpgradePage'
 import BottomNav from '../components/BottomNav'
 import DailyLimitScreen from '../components/DailyLimitScreen'
 import TrainTab from '../tabs/TrainTab'
-import QuizTab from '../tabs/QuizTab'
-import CoachListTab from '../tabs/CoachListTab'
 import StatsTab from '../tabs/StatsTab'
+import AnalysisTab from '../tabs/AnalysisTab'
 import ProfileTab from '../tabs/ProfileTab'
 import GuestTrainTab from '../tabs/GuestTrainTab'
 import SharePage from './SharePage'
 
-type Tab = 'train' | 'quiz' | 'coach' | 'stats' | 'profile'
+type Tab = 'train' | 'stats' | 'analysis' | 'profile'
 type AppMode = 'loading' | 'auth' | 'guest' | 'app' | 'upgrade'
 
 export default function App() {
-  // 分享頁面不需要 auth，直接渲染
   if (window.location.pathname === '/share') {
     return <SharePage />
   }
 
-  const [appMode,  setAppMode]  = useState<AppMode>('loading')
-  const [user,     setUser]     = useState<User | null>(null)
-  const [profile,  setProfile]  = useState<UserProfile | null>(null)
-  const [tab,      setTab]      = useState<Tab>('train')
+  const [appMode,   setAppMode]   = useState<AppMode>('loading')
+  const [user,      setUser]      = useState<User | null>(null)
+  const [profile,   setProfile]   = useState<UserProfile | null>(null)
+  const [tab,       setTab]       = useState<Tab>('train')
   const [showLimit, setShowLimit] = useState(false)
 
   useEffect(() => {
@@ -47,10 +45,12 @@ export default function App() {
         setUser(session.user)
         const p = await getProfile()
         setProfile(p)
+        setShowLimit(false)
         setAppMode('app')
       } else {
         setUser(null)
         setProfile(null)
+        setShowLimit(false)
         setAppMode('auth')
       }
     })
@@ -58,18 +58,16 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // 開始新關卡時檢查每日限制
   const handleStartRound = async (): Promise<boolean> => {
     if (!user) return false
 
-    // profile 可能還沒載入，重新fetch一次
     let currentProfile = profile
     if (!currentProfile) {
       currentProfile = await getProfile()
       setProfile(currentProfile)
     }
 
-    if (!currentProfile) return true // 找不到 profile 也讓他練習
+    if (!currentProfile) return true
 
     if (currentProfile.is_paid) return true
 
@@ -124,34 +122,36 @@ export default function App() {
     return <UpgradePage onBack={() => setAppMode('app')} />
   }
 
-  if (showLimit) {
-    return (
-      <DailyLimitScreen
-        onUpgrade={() => { setShowLimit(false); setAppMode('upgrade') }}
-      />
-    )
-  }
-
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
       <div className="flex-1 overflow-y-auto pb-20">
-        {tab === 'train'   && (
-          <TrainTab
-            guestMode={false}
-            userId={user?.id ?? null}
-            userName={profile?.name ?? '玩家'}
-            isPaid={profile?.is_paid ?? false}
-            onStartRound={handleStartRound}
-            onRoundComplete={async () => {
-              const allowed = await handleStartRound()
-              if (!allowed) return
-            }}
-          />
-        )}
-        {tab === 'quiz'    && <QuizTab />}
-        {tab === 'coach'   && <CoachListTab />}
-        {tab === 'stats'   && <StatsTab userId={user?.id ?? null} isPaid={profile?.is_paid ?? false} />}
-        {tab === 'profile' && <ProfileTab />}
+        <div style={{ display: tab === 'train' ? 'block' : 'none' }}>
+          {showLimit ? (
+            <DailyLimitScreen
+              onUpgrade={() => { setShowLimit(false); setAppMode('upgrade') }}
+            />
+          ) : (
+            <TrainTab
+              isTabActive={tab === 'train'}
+              guestMode={false}
+              userId={user?.id ?? null}
+              userName={profile?.name ?? '玩家'}
+              isPaid={profile?.is_paid ?? false}
+              onStartRound={handleStartRound}
+              onRoundComplete={async () => {
+                const latestProfile = await getProfile()
+                setProfile(latestProfile)
+                if (!latestProfile || latestProfile.is_paid) return
+                if (isDailyLimitReached(latestProfile)) {
+                  setShowLimit(true)
+                }
+              }}
+            />
+          )}
+        </div>
+        {tab === 'stats'    && <StatsTab userId={user?.id ?? null} isPaid={profile?.is_paid ?? false} onNavigateAnalysis={() => setTab('analysis')} />}
+        {tab === 'analysis' && <AnalysisTab userId={user?.id ?? null} isPaid={profile?.is_paid ?? false} />}
+        {tab === 'profile'  && <ProfileTab />}
       </div>
       <BottomNav current={tab} onChange={setTab} />
     </div>

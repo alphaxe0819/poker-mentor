@@ -24,17 +24,24 @@ export async function getProfile(): Promise<UserProfile | null> {
   return data as UserProfile | null
 }
 
+function getLocalDateString(): string {
+  const now = new Date()
+  // 固定使用 UTC+8（台灣/東南亞時區）
+  const utc8 = new Date(now.getTime() + 8 * 60 * 60 * 1000)
+  return utc8.toISOString().slice(0, 10)
+}
+
 // 檢查今天免費額度是否用完
 export function isDailyLimitReached(profile: UserProfile): boolean {
   if (profile.is_paid) return false
-  const today = new Date().toISOString().slice(0, 10)
+  const today = getLocalDateString()
   if (profile.daily_plays_date !== today) return false
   return profile.daily_plays_count >= 1  // 免費每天 1 關
 }
 
 // 更新每日關卡計數
 export async function incrementDailyPlays(userId: string, profile: UserProfile): Promise<void> {
-  const today = new Date().toISOString().slice(0, 10)
+  const today = getLocalDateString()
   const isNewDay = profile.daily_plays_date !== today
 
   await supabase
@@ -107,4 +114,70 @@ export async function getShareResult(id: string) {
     .eq('id', id)
     .single()
   return data
+}
+
+export async function getAnalysisUsage(userId: string, isPaid: boolean): Promise<{
+  canUse: boolean
+  remaining: number
+  totalAnswered: number
+  nextUnlockAt: number
+}> {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('analysis_count, analysis_daily_count, analysis_last_date, analysis_last_answered')
+    .eq('id', userId)
+    .single()
+
+  if (!profile) return { canUse: false, remaining: 0, totalAnswered: 0, nextUnlockAt: 70 }
+
+  const { data: records } = await supabase
+    .from('answer_records')
+    .select('id')
+    .eq('user_id', userId)
+
+  const totalAnswered = records?.length ?? 0
+  const lastAnswered = profile.analysis_last_answered ?? 0
+  const newSinceLast = totalAnswered - lastAnswered
+  const nextUnlockAt = lastAnswered + 70
+
+  if (isPaid) {
+    const today = new Date().toISOString().slice(0, 10)
+    const isNewDay = profile.analysis_last_date !== today
+    const used = isNewDay ? 0 : (profile.analysis_daily_count ?? 0)
+    const remaining = 3 - used
+    const hasEnoughNew = newSinceLast >= 70
+    const canUse = remaining > 0 && hasEnoughNew
+    return { canUse, remaining, totalAnswered, nextUnlockAt }
+  } else {
+    const used = profile.analysis_count ?? 0
+    const unlockThreshold = (used + 1) * 70
+    const canUse = totalAnswered >= unlockThreshold
+    return { canUse, remaining: canUse ? 1 : 0, totalAnswered, nextUnlockAt: unlockThreshold }
+  }
+}
+
+export async function incrementAnalysisUsage(userId: string, isPaid: boolean, totalAnswered: number): Promise<void> {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('analysis_count, analysis_daily_count, analysis_last_date')
+    .eq('id', userId)
+    .single()
+
+  if (!profile) return
+
+  const today = new Date().toISOString().slice(0, 10)
+
+  if (isPaid) {
+    const isNewDay = profile.analysis_last_date !== today
+    await supabase.from('profiles').update({
+      analysis_last_date: today,
+      analysis_daily_count: isNewDay ? 1 : (profile.analysis_daily_count ?? 0) + 1,
+      analysis_last_answered: totalAnswered,
+    }).eq('id', userId)
+  } else {
+    await supabase.from('profiles').update({
+      analysis_count: (profile.analysis_count ?? 0) + 1,
+      analysis_last_answered: totalAnswered,
+    }).eq('id', userId)
+  }
 }

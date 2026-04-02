@@ -12,16 +12,28 @@ interface AnswerRecord {
 interface Props {
   userId?: string | null
   isPaid?: boolean
+  onNavigateAnalysis?: () => void
 }
 
-export default function StatsTab({ userId, isPaid }: Props) {
-  const [records,  setRecords]  = useState<AnswerRecord[]>([])
-  const [loading,  setLoading]  = useState(true)
-  const [period,   setPeriod]   = useState<'7' | '30' | 'all'>('7')
+export default function StatsTab({ userId, onNavigateAnalysis }: Props) {
+  const [records,      setRecords]      = useState<AnswerRecord[]>([])
+  const [todayRecords, setTodayRecords] = useState<AnswerRecord[]>([])
+  const [loading,      setLoading]      = useState(true)
+  const [period,       setPeriod]       = useState<'7' | '30' | 'all'>('7')
 
   useEffect(() => {
-    if (!userId || !isPaid) { setLoading(false); return }
+    if (!userId) { setLoading(false); return }
     setLoading(true)
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const todayQuery = supabase
+      .from('answer_records')
+      .select('hero_pos, hand, is_correct, scenario_type, created_at')
+      .eq('user_id', userId)
+      .gte('created_at', today.toISOString())
+      .order('created_at', { ascending: true })
 
     let query = supabase
       .from('answer_records')
@@ -35,23 +47,12 @@ export default function StatsTab({ userId, isPaid }: Props) {
       query = query.gte('created_at', since.toISOString())
     }
 
-    query.then(({ data }) => {
-      setRecords((data ?? []) as AnswerRecord[])
+    Promise.all([todayQuery, query]).then(([todayRes, res]) => {
+      setTodayRecords((todayRes.data ?? []) as AnswerRecord[])
+      setRecords((res.data ?? []) as AnswerRecord[])
       setLoading(false)
     })
-  }, [userId, isPaid, period])
-
-  if (!isPaid) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4 p-6"
-           style={{ background: '#0a0a0a' }}>
-        <div className="text-4xl">🔒</div>
-        <div className="text-white font-bold text-lg">弱點分析</div>
-        <div className="text-gray-500 text-sm text-center">付費用戶專屬功能</div>
-        <div className="text-gray-600 text-xs text-center">升級後可查看位置弱點、手牌類型分析及近 7 天趨勢</div>
-      </div>
-    )
-  }
+  }, [userId, period])
 
   if (loading) {
     return (
@@ -101,7 +102,7 @@ export default function StatsTab({ userId, isPaid }: Props) {
     if (r.is_correct) sceneStats[key].correct++
   })
 
-  // 近 7 天趨勢
+  // 趨勢
   const dayStats: Record<string, { total: number; correct: number }> = {}
   records.forEach(r => {
     const day = r.created_at.slice(0, 10)
@@ -119,6 +120,36 @@ export default function StatsTab({ userId, isPaid }: Props) {
 
   return (
     <div className="flex flex-col gap-5 p-4 pb-24" style={{ background: '#0a0a0a', minHeight: '100vh' }}>
+
+      {/* 今日挑戰 */}
+      {(() => {
+        const todayTotal   = todayRecords.length
+        const todayCorrect = todayRecords.filter(r => r.is_correct).length
+        const todayAcc     = todayTotal > 0 ? Math.round(todayCorrect / todayTotal * 100) : 0
+        return (
+          <div className="rounded-2xl p-4" style={{ background: '#111', border: '1px solid #1a1a1a' }}>
+            <div className="text-gray-400 text-xs mb-3">今日挑戰</div>
+            {todayTotal === 0 ? (
+              <div className="text-gray-600 text-sm text-center py-2">今天還沒有練習記錄</div>
+            ) : (
+              <div className="flex justify-between">
+                <div className="flex flex-col gap-1">
+                  <span className="text-gray-500 text-xs">總題數</span>
+                  <span className="text-white font-bold text-xl">{todayTotal}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-gray-500 text-xs">正確率</span>
+                  <span className="font-bold text-xl" style={{ color: todayAcc >= 70 ? '#10b981' : '#f59e0b' }}>{todayAcc}%</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-gray-500 text-xs">答對</span>
+                  <span className="text-white font-bold text-xl">{todayCorrect}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* 時間區間切換 */}
       <div className="flex rounded-full p-1" style={{ background: '#111' }}>
@@ -154,6 +185,15 @@ export default function StatsTab({ userId, isPaid }: Props) {
           </div>
         </div>
       </div>
+
+      {/* 弱點強化分析按鈕 */}
+      <button
+        onClick={() => onNavigateAnalysis?.()}
+        className="w-full py-3 rounded-2xl text-sm font-bold transition"
+        style={{ background: '#1a1a3a', border: '1px solid #4c1d95', color: '#a78bfa' }}
+      >
+        🎯 弱點強化分析 →
+      </button>
 
       {/* 位置弱點 */}
       <div className="rounded-2xl p-4" style={{ background: '#111', border: '1px solid #1a1a1a' }}>
