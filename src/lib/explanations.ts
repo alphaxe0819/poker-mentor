@@ -85,12 +85,15 @@ function positionType(pos: string): PositionType {
   return 'blinds'
 }
 
+// 位置描述（供未來擴展使用）
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const POS_DESC: Record<PositionType, string> = {
   early:  '前位需面對多位後手玩家，範圍應收緊',
   middle: '中位有一定位置優勢但仍需謹慎',
   late:   '後位有位置優勢，可以適當放寬範圍',
   blinds: '盲注位置不利，需要更好的牌力補償',
 }
+void POS_DESC
 
 // ── 行動名稱 ─────────────────────────────────────────────────────────────────
 

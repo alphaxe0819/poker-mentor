@@ -177,7 +177,7 @@ export default function AdminDashboard() {
       const yesterday = d.toISOString().slice(0, 10)
       const d7 = new Date(today)
       d7.setDate(d7.getDate() - 6)
-      const sevenDaysAgo = d7.toISOString().slice(0, 10)
+      void d7 // used for date range calculation
 
       // 1. Profiles
       const { data: profileData, error: profileErr } = await sb
