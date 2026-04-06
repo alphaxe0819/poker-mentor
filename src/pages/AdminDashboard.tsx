@@ -298,6 +298,7 @@ export default function AdminDashboard() {
         }))
       )
     } catch (e: unknown) {
+      console.error('Admin fetch error:', e)
       setError(e instanceof Error ? e.message : String(e))
     } finally {
       setLoading(false)
