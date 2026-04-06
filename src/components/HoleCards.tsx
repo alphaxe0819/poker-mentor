@@ -40,39 +40,32 @@ function getSuits(hand: string) {
 function Card({ rank, suit }: { rank: string; suit: typeof SUITS[number] }) {
   return (
     <div
-      className="flex flex-col items-center justify-between rounded-lg"
+      className="flex flex-col items-center justify-center rounded-lg gap-0.5"
       style={{
-        width: 54, height: 76, padding: '6px 8px',
+        width: 54, height: 76, padding: '4px',
         background: suit.bg,
         border: `1px solid ${suit.border}`,
         boxShadow: '0 2px 8px rgba(0,0,0,0.6)',
       }}
     >
-      <span className="text-xs font-black leading-none self-start" style={{ color: suit.color }}>
+      <span className="text-2xl font-black leading-none" style={{ color: suit.color }}>
         {rank}
       </span>
       <span className="text-2xl leading-none" style={{ color: suit.color }}>
         {suit.symbol}
-      </span>
-      <span className="text-xs font-black leading-none self-end rotate-180" style={{ color: suit.color }}>
-        {rank}
       </span>
     </div>
   )
 }
 
 export default function HoleCards({ hand }: Props) {
-  const { rank1, rank2, suited, pair } = parseHand(hand)
+  const { rank1, rank2 } = parseHand(hand)
   const [suit1, suit2] = getSuits(hand)
-  const label = suited ? '同花' : pair ? '對子' : '雜色'
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="flex gap-2">
-        <Card rank={rank1} suit={suit1} />
-        <Card rank={rank2} suit={suit2} />
-      </div>
-      <div className="text-gray-600 text-xs">{hand}　{label}</div>
+    <div className="flex gap-2">
+      <Card rank={rank1} suit={suit1} />
+      <Card rank={rank2} suit={suit2} />
     </div>
   )
 }

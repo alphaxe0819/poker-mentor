@@ -11,15 +11,24 @@ import TrainTab from '../tabs/TrainTab'
 import StatsTab from '../tabs/StatsTab'
 import AnalysisTab from '../tabs/AnalysisTab'
 import ProfileTab from '../tabs/ProfileTab'
+import CourseTab from '../tabs/CourseTab'
 import GuestTrainTab from '../tabs/GuestTrainTab'
+import OnboardingScreen from '../components/OnboardingScreen'
+import { loadPointsFromSupabase } from '../lib/points'
+import { loadCourseProgressFromSupabase, markOnboardingDone as syncMarkOnboardingDone, loadOnboardingFromSupabase } from '../lib/courseSync'
 import SharePage from './SharePage'
+import AdminDashboard from './AdminDashboard'
 
-type Tab = 'train' | 'stats' | 'analysis' | 'profile'
-type AppMode = 'loading' | 'auth' | 'guest' | 'app' | 'upgrade'
+type Tab = 'train' | 'course' | 'stats' | 'analysis' | 'profile'
+type AppMode = 'loading' | 'auth' | 'guest' | 'onboarding' | 'app' | 'upgrade'
 
 export default function App() {
   if (window.location.pathname === '/share') {
     return <SharePage />
+  }
+
+  if (window.location.pathname === '/admin') {
+    return <AdminDashboard />
   }
 
   const [appMode,   setAppMode]   = useState<AppMode>('loading')
@@ -28,13 +37,24 @@ export default function App() {
   const [tab,       setTab]       = useState<Tab>('train')
   const [showLimit, setShowLimit] = useState(false)
 
+  async function initUser(userId: string) {
+    // 從 Supabase 同步點數和課程進度
+    await Promise.all([
+      loadPointsFromSupabase(),
+      loadCourseProgressFromSupabase(),
+    ])
+    const done = await loadOnboardingFromSupabase(userId)
+    return done
+  }
+
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       if (data.session?.user) {
         setUser(data.session.user)
         const p = await getProfile()
         setProfile(p)
-        setAppMode('app')
+        const onboardingDone = await initUser(data.session.user.id)
+        setAppMode(onboardingDone ? 'app' : 'onboarding')
       } else {
         setAppMode('auth')
       }
@@ -46,7 +66,9 @@ export default function App() {
         const p = await getProfile()
         setProfile(p)
         setShowLimit(false)
-        setAppMode('app')
+        const onboardingDone = await initUser(session.user.id)
+        // 不覆蓋正在進行中的 onboarding
+        setAppMode(prev => prev === 'onboarding' ? prev : onboardingDone ? 'app' : 'onboarding')
       } else {
         setUser(null)
         setProfile(null)
@@ -76,9 +98,7 @@ export default function App() {
       return false
     }
 
-    await incrementDailyPlays(user.id, currentProfile)
-    const p = await getProfile()
-    setProfile(p)
+    // 計數移到 onRoundComplete，開始時只檢查額度
     return true
   }
 
@@ -122,6 +142,18 @@ export default function App() {
     return <UpgradePage onBack={() => setAppMode('app')} />
   }
 
+  if (appMode === 'onboarding' && user) {
+    return (
+      <OnboardingScreen
+        userName={profile?.name ?? '玩家'}
+        onComplete={() => {
+          syncMarkOnboardingDone(user.id)
+          setAppMode('app')
+        }}
+      />
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
       <div className="flex-1 overflow-y-auto pb-20">
@@ -139,6 +171,12 @@ export default function App() {
               isPaid={profile?.is_paid ?? false}
               onStartRound={handleStartRound}
               onRoundComplete={async () => {
+                if (!user) return
+                // 完成一關後才計數
+                const currentProfile = await getProfile()
+                if (currentProfile && !currentProfile.is_paid) {
+                  await incrementDailyPlays(user.id, currentProfile)
+                }
                 const latestProfile = await getProfile()
                 setProfile(latestProfile)
                 if (!latestProfile || latestProfile.is_paid) return
@@ -149,6 +187,7 @@ export default function App() {
             />
           )}
         </div>
+        {tab === 'course'   && <CourseTab />}
         {tab === 'stats'    && <StatsTab userId={user?.id ?? null} isPaid={profile?.is_paid ?? false} onNavigateAnalysis={() => setTab('analysis')} />}
         {tab === 'analysis' && <AnalysisTab userId={user?.id ?? null} isPaid={profile?.is_paid ?? false} />}
         {tab === 'profile'  && <ProfileTab />}

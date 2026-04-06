@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { getPoints } from '../lib/points'
 import type { User } from '@supabase/supabase-js'
 
 const DEMO_EMAIL    = 'student@demo.com'
@@ -53,6 +54,16 @@ export default function ProfileTab() {
             <div>
               <div className="text-white text-sm font-medium">{user.email}</div>
               <div className="text-gray-400 text-xs">快速體驗帳號</div>
+            </div>
+          </div>
+          <div className="rounded-xl p-4 flex items-center justify-between"
+            style={{ background: '#1a1a2e', border: '1px solid #2d2d4a' }}>
+            <div>
+              <div className="text-gray-400 text-xs">累積點數</div>
+              <div className="text-yellow-400 font-bold text-lg">⭐ {getPoints()}</div>
+            </div>
+            <div className="text-gray-500 text-xs text-right">
+              練習答對 +1 點
             </div>
           </div>
           <button

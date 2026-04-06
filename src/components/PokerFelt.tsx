@@ -34,7 +34,7 @@ const SLOT_MAP = Object.fromEntries(
 const POSITION_MAP: Record<number, string[]> = {
   2:  ['BTN/SB', 'BB'],
   3:  ['BTN', 'SB', 'BB'],
-  4:  ['CO', 'BTN', 'SB', 'BB'],
+  4:  ['UTG', 'BTN', 'SB', 'BB'],
   5:  ['HJ', 'CO', 'BTN', 'SB', 'BB'],
   6:  ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
   7:  ['UTG', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'],

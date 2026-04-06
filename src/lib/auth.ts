@@ -141,7 +141,7 @@ export async function getAnalysisUsage(userId: string, isPaid: boolean): Promise
   const nextUnlockAt = lastAnswered + 70
 
   if (isPaid) {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = getLocalDateString()
     const isNewDay = profile.analysis_last_date !== today
     const used = isNewDay ? 0 : (profile.analysis_daily_count ?? 0)
     const remaining = 3 - used
@@ -165,7 +165,7 @@ export async function incrementAnalysisUsage(userId: string, isPaid: boolean, to
 
   if (!profile) return
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = getLocalDateString()
 
   if (isPaid) {
     const isNewDay = profile.analysis_last_date !== today

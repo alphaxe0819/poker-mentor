@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import RangeGrid from './RangeGrid'
+import { getExplanation } from '../lib/explanations'
 
 const ACTION_NAMES: Record<string, string> = {
   f:    'Fold（棄牌）',
@@ -56,6 +57,12 @@ interface Props {
   hand: string
   gtoRange?: Record<string, string>
   isLimp?: boolean
+  heroPos?: string
+  raiserPos?: string | null
+  raiserAction?: string | null
+  stackBB?: number
+  showExplanation?: boolean
+  alwaysShowExplanation?: boolean
   onNext: () => void
 }
 
@@ -72,11 +79,26 @@ export default function ActionFeedback({
   hand,
   gtoRange,
   isLimp,
+  heroPos,
+  raiserPos,
+  raiserAction,
+  stackBB,
+  showExplanation: showExplanationProp = true,
+  alwaysShowExplanation = false,
   onNext,
 }: Props) {
   const [showRange, setShowRange] = useState(false)
+  const [showExplanationModal, setShowExplanationModal] = useState(false)
 
   const hasSecond = secondAction && secondAction !== gtoAction && secondFreq > 0
+
+  // 答錯時自動彈出；alwaysShowExplanation 開啟時答對也彈出（課程模式）
+  const shouldShowPopup = heroPos && showExplanationProp && (!isCorrect || alwaysShowExplanation)
+  const [autoOpened, setAutoOpened] = useState(false)
+  if (shouldShowPopup && !autoOpened) {
+    setAutoOpened(true)
+    setShowExplanationModal(true)
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -99,6 +121,63 @@ export default function ActionFeedback({
           <ActionCol label="第二選項" action={secondAction} freq={secondFreq} isLimp={isLimp} />
         )}
       </div>
+
+      {/* 答錯時的說明彈窗 */}
+      {showExplanationModal && shouldShowPopup && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.8)' }}
+          onClick={() => setShowExplanationModal(false)}
+        >
+          <div
+            className="rounded-2xl p-5 w-full max-w-sm flex flex-col gap-4"
+            style={{ background: '#111', border: '1px solid #333' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base" style={{ color: isCorrect ? '#10b981' : '#ef4444' }}>
+                {isCorrect ? '✓' : '✗'}
+              </span>
+              <span className="text-white font-bold text-base">
+                {isCorrect ? '答對了！來看看為什麼' : '策略說明'}
+              </span>
+            </div>
+
+            <p className="text-sm leading-relaxed" style={{ color: '#ccc' }}>
+              {getExplanation({
+                hand,
+                heroPos,
+                gtoAction,
+                chosenAction,
+                raiserPos: raiserPos ?? null,
+                raiserAction: raiserAction ?? null,
+                stackBB: stackBB ?? 100,
+              })}
+            </p>
+
+            <div className="text-xs text-gray-500 text-center">
+              點擊「查看範圍」可查看此場景的完整 GTO 推薦範圍
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setShowExplanationModal(false); setShowRange(true) }}
+                className="flex-1 py-2.5 rounded-xl text-sm transition"
+                style={{ background: '#1a1a2e', border: '1px solid #4c1d95', color: '#a78bfa' }}
+              >
+                查看範圍
+              </button>
+              <button
+                onClick={() => setShowExplanationModal(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition"
+                style={{ background: '#4c1d95', border: '1px solid #7c3aed' }}
+              >
+                知道了
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 隱藏按鈕供手牌區觸發 */}
       <button id="range-btn" style={{ display: 'none' }} onClick={() => setShowRange(true)} />

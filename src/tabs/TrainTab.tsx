@@ -13,14 +13,28 @@ import ActionHistory from '../components/ActionHistory'
 import TrainSetupScreen from './TrainSetupScreen'
 import RoundResultScreen from '../components/RoundResultScreen'
 import { saveAnswerRecord } from '../lib/auth'
+import { addPoints } from '../lib/points'
 import { getStep2GTOFromDB, getValidScenarios, getRangeByKey, getActionByKey, getTopActionsByKey, isActionValid } from '../lib/gtoData'
 
 // ── 常數 ──────────────────────────────────────────────────────────────────────
 
-type GameTypeKey = 'tourn_9max'
+type GameTypeKey = 'tourn_9max' | 'cash_6max' | 'cash_4max' | 'cash_hu'
+type ConfigGameTypeKey = GameTypeKey | 'random'
+const GAME_TYPE_KEYS: GameTypeKey[] = ['tourn_9max', 'cash_6max', 'cash_4max', 'cash_hu']
 
 const POSITIONS: Record<GameTypeKey, string[]> = {
   tourn_9max: ['UTG', 'UTG+1', 'UTG+2', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
+  cash_6max:  ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
+  cash_4max:  ['UTG', 'BTN', 'SB', 'BB'],
+  cash_hu:    ['SB', 'BB'],
+}
+
+type TableSize = 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
+const TABLE_SIZE: Record<GameTypeKey, TableSize> = {
+  tourn_9max: 9,
+  cash_6max:  6,
+  cash_4max:  4,
+  cash_hu:    2,
 }
 
 const RANKS = ['A','K','Q','J','T','9','8','7','6','5','4','3','2']
@@ -191,15 +205,16 @@ function buildSeatInfo(
 // ── 型別 ──────────────────────────────────────────────────────────────────────
 
 interface TrainConfig {
-  gameTypeKey: GameTypeKey
-  stackDepth: number
+  gameTypeKey: ConfigGameTypeKey
+  stackDepth: number | 'random'
   trainMode: 'single' | 'multi'
   roundSize: number
+  showExplanation: boolean
 }
 
 interface HandSetup {
   gameTypeKey: GameTypeKey
-  tableSize: 9
+  tableSize: 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
   stackDepth: number
   heroPos: string
   hand: string
@@ -238,6 +253,7 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
   const [screen,    setScreen]    = useState<Screen>('setup')
   const [config,    setConfig]    = useState<TrainConfig | null>(null)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
+  const [showExplanation, setShowExplanation] = useState(true)
 
   const [handSetup,       setHandSetup]       = useState<HandSetup | null>(null)
   const [phase,           setPhase]           = useState<Phase>('question_step1')
@@ -266,9 +282,13 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
     setHandSetup(null)
     setPhase('question_step1')
     setTotal(0); setCorrect(0); setStreak(0); setScore(0)
+    setInterruptedTotal(0)
     setStepResults([])
     setNeedAutoStart(false)
   }, [userId])
+
+  // 免費玩家中斷後保留已答題數，避免重複計算
+  const [interruptedTotal, setInterruptedTotal] = useState(0)
 
   const handleStart = async (cfg: TrainConfig) => {
     if (onStartRound) {
@@ -276,8 +296,11 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
       if (allowed === false) return
     }
     setConfig(cfg)
+    setShowExplanation(cfg.showExplanation)
     setScreen('training')
-    setTotal(0); setCorrect(0); setStreak(0); setScore(0)
+    // 免費玩家從中斷的題數接續；付費玩家每次重新開始
+    const resumeTotal = !isPaid ? interruptedTotal : 0
+    setTotal(resumeTotal); setCorrect(0); setStreak(0); setScore(0)
     setTimeout(() => {
       setNeedAutoStart(true)
     }, 50)
@@ -295,13 +318,13 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
 
   const confirmExit = () => {
     if (autoNextTimer.current) clearTimeout(autoNextTimer.current)
+    // 免費玩家中斷時保留已答題數
+    if (!isPaid) setInterruptedTotal(total)
     setShowExitConfirm(false)
     setScreen('setup')
     setHandSetup(null)
     setStepResults([])
   }
-
-  const positions = config ? POSITIONS[config.gameTypeKey] : POSITIONS['tourn_9max']
 
   const ROUND_SIZE = config?.roundSize ?? 10
 
@@ -309,13 +332,21 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
     if (!config) return
     if (autoNextTimer.current) clearTimeout(autoNextTimer.current)
 
+    // 解析實際遊戲類型（全隨機時每手隨機選）
+    const resolvedGameType: GameTypeKey = config.gameTypeKey === 'random'
+      ? randomItem(GAME_TYPE_KEYS)
+      : config.gameTypeKey
 
+    const positions = POSITIONS[resolvedGameType]
 
-    // 免費用戶隨機籌碼深度
-    const effectiveStackDepth = isPaid
-      ? config.stackDepth
-      : [100, 75, 40, 25, 15][Math.floor(Math.random() * 5)]
-    const scenarios = getValidScenarios(effectiveStackDepth)
+    // 現金局固定 100BB；全隨機或指定隨機時隨機深度
+    const isCash = resolvedGameType.startsWith('cash_')
+    const effectiveStackDepth = isCash
+      ? 100
+      : config.stackDepth === 'random'
+        ? [100, 75, 40, 25, 15][Math.floor(Math.random() * 5)]
+        : config.stackDepth
+    const scenarios = getValidScenarios(effectiveStackDepth, resolvedGameType)
     const scenario  = randomItem(scenarios)
 
     const heroPos      = scenario.heroPos
@@ -331,8 +362,8 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
     )
 
     setHandSetup({
-      gameTypeKey: config.gameTypeKey,
-      tableSize: 9,
+      gameTypeKey: resolvedGameType,
+      tableSize: TABLE_SIZE[resolvedGameType],
       stackDepth: effectiveStackDepth,
       heroPos, hand, raiserPos, raiserAction,
       initialScenario, gtoRange,
@@ -345,7 +376,7 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
     setVillainResp(''); setVillainPos('')
     setStep2Actions([]); setStepResults([])
     setPotWinMsg('')
-  }, [config, positions, total, onStartRound])
+  }, [config, total, onStartRound])
 
   useEffect(() => {
     if (needAutoStart && config) {
@@ -465,8 +496,9 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
       setScenarioText(heroActionText)
       setTimeout(() => {
         const resp = getVillainResponse(action, handSetup.stackDepth)
-        const heroIdx    = positions.indexOf(handSetup.heroPos)
-        const afterHero  = positions.slice(heroIdx + 1).filter(p => p !== 'SB' && p !== 'BB')
+        const handPositions = POSITIONS[handSetup.gameTypeKey]
+        const heroIdx    = handPositions.indexOf(handSetup.heroPos)
+        const afterHero  = handPositions.slice(heroIdx + 1).filter((p: string) => p !== 'SB' && p !== 'BB')
         const vPos = handSetup.heroPos === 'SB' ? 'BB'
           : handSetup.raiserPos ?? (afterHero.length > 0 ? randomItem(afterHero) : 'BB')
         setVillainResp(resp); setVillainPos(vPos)
@@ -501,7 +533,7 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
           }
           const newTotalFold = total + 1
           setTotal(newTotalFold)
-          setCorrect(c => c + 1); setStreak(s => s + 1)
+          setCorrect(c => c + 1); setStreak(s => s + 1); addPoints(1)
           setScore(s => Math.round((s + 1) * 10) / 10)
           if (newTotalFold >= ROUND_SIZE) {
             setPhase('round_complete')
@@ -510,7 +542,7 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
           setPhase('feedback_step1')
         } else {
           const betAmt = resp === '3bet' ? 7.5 : resp === '4bet' ? 17 : handSetup.stackDepth
-          const newSeatInfo = buildSeatInfo(positions, handSetup.heroPos, handSetup.stackDepth, handSetup.raiserPos, handSetup.raiserAction, vPos, resp)
+          const newSeatInfo = buildSeatInfo(handPositions, handSetup.heroPos, handSetup.stackDepth, handSetup.raiserPos, handSetup.raiserAction, vPos, resp)
           const newText = resp === '3bet' ? `${vPos} 3-Bet ${betAmt}BB，輪到你（${handSetup.heroPos}）`
             : resp === '4bet' ? `${vPos} 4-Bet ${betAmt}BB，輪到你（${handSetup.heroPos}）`
             : `${vPos} All-in ${betAmt}BB，輪到你（${handSetup.heroPos}）`
@@ -537,7 +569,7 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
 
     const newTotal = total + 1
     setTotal(newTotal)
-    setCorrect(c => c + 1)
+    setCorrect(c => c + 1); addPoints(1)
     setStreak(s => s + 1)
     setScore(s => Math.round((s + 1) * 10) / 10)
     if (newTotal >= ROUND_SIZE) {
@@ -549,7 +581,7 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
 
   const handleStep2 = (action: string) => {
     if (!handSetup || !config) return
-    const gtoAnswer = getStep2GTOFromDB(config.gameTypeKey, handSetup.stackDepth, handSetup.heroPos, villainPos, villainResp, handSetup.hand)
+    const gtoAnswer = getStep2GTOFromDB(handSetup.gameTypeKey, handSetup.stackDepth, handSetup.heroPos, villainPos, villainResp, handSetup.hand)
     const isOk = action === gtoAnswer
     setStepResults(prev => [...prev, { step: 2, heroAction: action, gtoAction: gtoAnswer, isCorrect: isOk, gtoTopActions: [{ action: gtoAnswer, freq: 100 }] }])
     // 更新行動歷史：Hero Step 2 行動
@@ -579,7 +611,7 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
     const newTotalStep2 = total + 1
     setTotal(newTotalStep2)
     if (isOk) {
-      setCorrect(c => c + 1)
+      setCorrect(c => c + 1); addPoints(1)
       setStreak(s => s + 1)
       setScore(s => Math.round((s + 1) * 10) / 10)
     } else {
@@ -611,12 +643,13 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
         score={score}
         userId={userId}
         userName={userName}
-        stackBb={config?.stackDepth}
+        stackBb={typeof config?.stackDepth === 'number' ? config.stackDepth : undefined}
         onNext={async () => {
           setTotal(0)
           setCorrect(0)
           setStreak(0)
           setScore(0)
+          setInterruptedTotal(0)
           setHandSetup(null)
           if (onRoundComplete) await onRoundComplete()
           // onRoundComplete 可能設 showLimit，等它執行完再回設定頁
@@ -660,11 +693,22 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
           style={{ background: '#1a1a1a' }}>
           ←
         </button>
-        <SessionStats accuracy={accuracy} streak={streak} total={total} stackBB={config?.stackDepth ?? 100} />
+        <SessionStats accuracy={accuracy} streak={streak} total={total} stackBB={typeof config?.stackDepth === 'number' ? config.stackDepth : 100} />
         {handSetup && config && (
-          <span className="ml-auto text-xs text-gray-500 whitespace-nowrap">
-            {Math.min(total + 1, ROUND_SIZE)}/{ROUND_SIZE}
-          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <label className="flex items-center gap-1 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showExplanation}
+                onChange={e => setShowExplanation(e.target.checked)}
+                className="w-3 h-3 rounded accent-purple-600"
+              />
+              <span className="text-[10px] text-gray-600 whitespace-nowrap">說明</span>
+            </label>
+            <span className="text-xs text-gray-500 whitespace-nowrap">
+              {Math.min(total + 1, ROUND_SIZE)}/{ROUND_SIZE}
+            </span>
+          </div>
         )}
       </div>
 
@@ -783,6 +827,11 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
                 hand={handSetup.hand}
                 gtoRange={handSetup.gtoRange}
                 isLimp={handSetup.raiserAction === 'limp'}
+                heroPos={handSetup.heroPos}
+                raiserPos={handSetup.raiserPos}
+                raiserAction={handSetup.raiserAction}
+                stackBB={handSetup.stackDepth}
+                showExplanation={showExplanation}
                 onNext={startHand}
               />
             )}
@@ -801,6 +850,11 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
                 hand={handSetup.hand}
                 gtoRange={handSetup.gtoRange}
                 isLimp={handSetup.raiserAction === 'limp'}
+                heroPos={handSetup.heroPos}
+                raiserPos={villainPos || handSetup.raiserPos}
+                raiserAction={villainResp || handSetup.raiserAction}
+                stackBB={handSetup.stackDepth}
+                showExplanation={showExplanation}
                 onNext={startHand}
               />
             )}
