@@ -102,7 +102,9 @@ export default function PokerFelt({
 
       {orderedPositions.map((pos, i) => {
         const slot    = slots[i % count]
-        const info    = seatInfo[pos]
+        // BTN/SB 顯示用，但 seatInfo key 是 SB
+        const infoKey = pos === 'BTN/SB' ? 'SB' : pos
+        const info    = seatInfo[infoKey] ?? seatInfo[pos]
         const status  = info?.status ?? 'waiting'
         const stack   = info?.stack ?? seatStacks[i] ?? 0
         const bet     = info?.bet ?? 0

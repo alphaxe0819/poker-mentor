@@ -32,11 +32,13 @@ function getLocalDateString(): string {
 }
 
 // 檢查今天免費額度是否用完
-export function isDailyLimitReached(profile: UserProfile): boolean {
-  if (profile.is_paid) return false
-  const today = getLocalDateString()
-  if (profile.daily_plays_date !== today) return false
-  return profile.daily_plays_count >= 1  // 免費每天 1 關
+export function isDailyLimitReached(_profile: UserProfile): boolean {
+  // TODO: 測試階段暫時取消每日限制，上線前恢復
+  return false
+  // if (profile.is_paid) return false
+  // const today = getLocalDateString()
+  // if (profile.daily_plays_date !== today) return false
+  // return profile.daily_plays_count >= 1  // 免費每天 1 關
 }
 
 // 更新每日關卡計數

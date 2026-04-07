@@ -198,6 +198,17 @@ function buildSeatInfo(
   if (villainRespPos) {
     const betAmt = villainResp === '3bet' ? 7.5 : villainResp === '4bet' ? 17 : stackBB
     seatInfo[villainRespPos] = { status: 'raised', bet: betAmt, stack: stackBB - betAmt }
+
+    // 更新 hero 的 bet — 在 step2 時 hero 已經 raise/3bet 過了
+    if (!raiserPos) {
+      // Hero 是 RFI（開池加注），hero bet = 2.5BB
+      const heroBet = 2.5
+      seatInfo[heroPos] = { status: 'hero', bet: heroBet, stack: stackBB - heroBet }
+    } else {
+      // Hero 是 vs raise，hero 之前 3-bet 過
+      const heroBet = getRaiseAmount(stackBB, raiserAction) * 3
+      seatInfo[heroPos] = { status: 'hero', bet: heroBet, stack: stackBB - heroBet }
+    }
   }
   return seatInfo
 }
