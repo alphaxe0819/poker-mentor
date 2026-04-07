@@ -230,7 +230,7 @@ export default function App() {
         {tab === 'course'   && <CourseTab />}
         {tab === 'stats'    && <StatsTab userId={user?.id ?? null} isPaid={profile?.is_paid ?? false} onNavigateAnalysis={() => setTab('analysis')} />}
         {tab === 'analysis' && <AnalysisTab userId={user?.id ?? null} isPaid={profile?.is_paid ?? false} />}
-        {tab === 'profile'  && <ProfileTab onUpgrade={() => setAppMode('upgrade')} />}
+        {tab === 'profile'  && <ProfileTab />}
       </div>
       <BottomNav current={tab} onChange={setTab} />
     </div>

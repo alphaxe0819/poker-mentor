@@ -1,18 +1,14 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { getPoints } from '../lib/points'
-import { getSubscription, getSubscriptionDisplayInfo, openCustomerPortal } from '../lib/lemonsqueezy'
+import { getSubscription, getSubscriptionDisplayInfo } from '../lib/lemonsqueezy'
 import type { Subscription } from '../lib/lemonsqueezy'
 import type { User } from '@supabase/supabase-js'
 
 const DEMO_EMAIL    = 'student@demo.com'
 const DEMO_PASSWORD = 'demo1234'
 
-interface Props {
-  onUpgrade?: () => void
-}
-
-export default function ProfileTab({ onUpgrade }: Props) {
+export default function ProfileTab() {
   const [user, setUser]       = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [sub, setSub]         = useState<Subscription | null>(null)

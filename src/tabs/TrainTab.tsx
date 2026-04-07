@@ -206,7 +206,7 @@ function buildSeatInfo(
       seatInfo[heroPos] = { status: 'hero', bet: heroBet, stack: stackBB - heroBet }
     } else {
       // Hero 是 vs raise，hero 之前 3-bet 過
-      const heroBet = getRaiseAmount(stackBB, raiserAction) * 3
+      const heroBet = getRaiseAmount(stackBB, raiserAction ?? null) * 3
       seatInfo[heroPos] = { status: 'hero', bet: heroBet, stack: stackBB - heroBet }
     }
   }
