@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { openCheckout } from '../lib/lemonsqueezy'
+import PromoCodeInput from '../components/PromoCodeInput'
 
 interface Props {
   onBack: () => void
   userId: string
   userEmail: string
+  onRedeemed?: () => void
 }
 
 const PRO_FEATURES = [
@@ -15,7 +17,7 @@ const PRO_FEATURES = [
   { icon: '🃏', text: '所有籌碼深度解鎖' },
 ]
 
-export default function UpgradePage({ onBack, userId, userEmail }: Props) {
+export default function UpgradePage({ onBack, userId, userEmail, onRedeemed }: Props) {
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly')
 
   const handleCheckout = () => {
@@ -86,6 +88,11 @@ export default function UpgradePage({ onBack, userId, userEmail }: Props) {
             <span className="text-gray-300 text-sm">{text}</span>
           </div>
         ))}
+      </div>
+
+      {/* 序號兌換 */}
+      <div className="w-full max-w-sm">
+        <PromoCodeInput onRedeemed={onRedeemed} />
       </div>
 
       {/* CTA */}

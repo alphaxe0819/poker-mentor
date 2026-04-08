@@ -187,6 +187,11 @@ export default function App() {
           onBack={() => setAppMode('app')}
           userId={user?.id ?? ''}
           userEmail={user?.email ?? ''}
+          onRedeemed={async () => {
+            const p = await getProfile()
+            setProfile(p)
+            setAppMode('app')
+          }}
         />
       </Suspense>
     )

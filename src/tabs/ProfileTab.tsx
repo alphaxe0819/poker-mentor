@@ -4,6 +4,7 @@ import { getPoints } from '../lib/points'
 import { getSubscription, getSubscriptionDisplayInfo } from '../lib/lemonsqueezy'
 import type { Subscription } from '../lib/lemonsqueezy'
 import type { User } from '@supabase/supabase-js'
+import PromoCodeInput from '../components/PromoCodeInput'
 
 const DEMO_EMAIL    = 'student@demo.com'
 const DEMO_PASSWORD = 'demo1234'
@@ -116,6 +117,9 @@ export default function ProfileTab() {
               </button>
             )}
           </div> */}
+
+          {/* 序號兌換 */}
+          <PromoCodeInput onRedeemed={() => window.location.reload()} />
 
           {/* 積分 */}
           <div className="rounded-2xl p-4 flex items-center justify-between"
