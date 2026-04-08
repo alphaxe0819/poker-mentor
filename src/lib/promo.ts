@@ -1,7 +1,5 @@
 import { supabase } from './supabase'
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/redeem-promo`
-
 export interface RedeemResult {
   success: boolean
   expires_at?: string
@@ -10,25 +8,31 @@ export interface RedeemResult {
 
 /** 呼叫 Edge Function 兌換序號 */
 export async function redeemPromoCode(code: string): Promise<RedeemResult> {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return { success: false, error: '請先登入' }
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return { success: false, error: '請先登入' }
 
-  const res = await fetch(FUNCTION_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify({ code }),
-  })
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/redeem-promo`
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY ?? '',
+      },
+      body: JSON.stringify({ code }),
+    })
 
-  const data = await res.json()
+    const data = await res.json()
 
-  if (!res.ok) {
-    return { success: false, error: data.error ?? '兌換失敗' }
+    if (!res.ok) {
+      return { success: false, error: data.error ?? '兌換失敗' }
+    }
+
+    return { success: true, expires_at: data.expires_at }
+  } catch (err) {
+    return { success: false, error: '網路錯誤，請稍後再試' }
   }
-
-  return { success: true, expires_at: data.expires_at }
 }
 
 /** 查詢當前用戶對某序號的兌換狀態 */

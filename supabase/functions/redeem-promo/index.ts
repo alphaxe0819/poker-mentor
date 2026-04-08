@@ -4,6 +4,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
 // 有效序號列表（新增序號只需加到這裡）
@@ -21,7 +22,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // 1. 驗證用戶 JWT
+    // 1. 用 anon key + user JWT 取得登入用戶
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       return new Response(JSON.stringify({ error: '未登入' }), {
@@ -30,9 +31,10 @@ Deno.serve(async (req) => {
       })
     }
 
-    const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token)
+    const supabaseUser = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    })
+    const { data: { user }, error: authError } = await supabaseUser.auth.getUser()
 
     if (authError || !user) {
       return new Response(JSON.stringify({ error: '驗證失敗' }), {
@@ -40,6 +42,9 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+
+    // 用 service_role 操作資料庫（bypass RLS）
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
     // 2. 解析並驗證序號
     const { code } = await req.json()
@@ -53,7 +58,7 @@ Deno.serve(async (req) => {
     }
 
     // 3. 檢查是否已兌換過
-    const { data: existing } = await supabaseAuth
+    const { data: existing } = await supabaseAdmin
       .from('promo_redemptions')
       .select('id')
       .eq('user_id', user.id)
@@ -70,7 +75,7 @@ Deno.serve(async (req) => {
     // 4. 計算到期時間
     let expiresAt: Date
 
-    const { data: sub } = await supabaseAuth
+    const { data: sub } = await supabaseAdmin
       .from('subscriptions')
       .select('status, current_period_end')
       .eq('user_id', user.id)
@@ -82,17 +87,15 @@ Deno.serve(async (req) => {
     )
 
     if (hasActiveSub && sub.current_period_end) {
-      // 有效訂閱：從訂閱到期日 +30 天
       expiresAt = new Date(sub.current_period_end)
       expiresAt.setDate(expiresAt.getDate() + 30)
     } else {
-      // 無有效訂閱：從現在 +30 天
       expiresAt = new Date()
       expiresAt.setDate(expiresAt.getDate() + 30)
     }
 
     // 5. 寫入兌換記錄
-    const { error: insertError } = await supabaseAuth
+    const { error: insertError } = await supabaseAdmin
       .from('promo_redemptions')
       .insert({
         user_id: user.id,
@@ -108,7 +111,7 @@ Deno.serve(async (req) => {
     }
 
     // 6. 更新 profiles.promo_expires_at（取較晚的到期時間）
-    const { data: profile } = await supabaseAuth
+    const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('promo_expires_at')
       .eq('id', user.id)
@@ -118,7 +121,7 @@ Deno.serve(async (req) => {
     const shouldUpdate = !currentExpiry || expiresAt > currentExpiry
 
     if (shouldUpdate) {
-      await supabaseAuth
+      await supabaseAdmin
         .from('profiles')
         .update({ promo_expires_at: expiresAt.toISOString() })
         .eq('id', user.id)

@@ -9,7 +9,11 @@ import PromoCodeInput from '../components/PromoCodeInput'
 const DEMO_EMAIL    = 'student@demo.com'
 const DEMO_PASSWORD = 'demo1234'
 
-export default function ProfileTab() {
+interface ProfileTabProps {
+  onPromoRedeemed?: () => void
+}
+
+export default function ProfileTab({ onPromoRedeemed }: ProfileTabProps) {
   const [user, setUser]       = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [sub, setSub]         = useState<Subscription | null>(null)
@@ -119,7 +123,7 @@ export default function ProfileTab() {
           </div> */}
 
           {/* 序號兌換 */}
-          <PromoCodeInput onRedeemed={() => window.location.reload()} />
+          <PromoCodeInput onRedeemed={onPromoRedeemed} />
 
           {/* 積分 */}
           <div className="rounded-2xl p-4 flex items-center justify-between"

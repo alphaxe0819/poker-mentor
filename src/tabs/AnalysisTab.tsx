@@ -4,6 +4,8 @@ import { getPoints, spendPoints } from '../lib/points'
 
 const ANALYSIS_COST = 50
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? ''
+
 interface AnswerRecord {
   hero_pos: string
   hand: string
@@ -16,8 +18,6 @@ interface Props {
   userId?: string | null
   isPaid?: boolean
 }
-
-const ANTHROPIC_API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY ?? ''
 
 // 付費用戶每日免費分析
 function getLocalDateString(): string {
@@ -54,56 +54,21 @@ async function analyzeWeakness(data: {
   offsuitAcc: number
   pairAcc: number
 }): Promise<string> {
-  const posText = data.posList
-    .map(p => `- ${p.pos}：${p.accuracy}%（${p.total} 題）`)
-    .join('\n')
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('未登入')
 
-  const userPrompt = `【分析模組：翻前基礎策略】
-
-以下是這位學生的近期答題數據：
-
-整體正確率：${data.overall}%，共 ${data.total} 題
-
-位置正確率（由低到高）：
-${posText}
-
-場景正確率：
-- RFI：${data.rfiAcc}%（${data.rfiTotal} 題）
-- vs Raise：${data.vsRaiseAcc}%（${data.vsRaiseTotal} 題）
-
-手牌類型正確率：
-- 同花：${data.suitedAcc}%
-- 雜色：${data.offsuitAcc}%
-- 對子：${data.pairAcc}%
-
-請直接點出這位學生最需要改善的 3-5 個弱點。`
-
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/analyze-weakness`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
+      'Authorization': `Bearer ${session.access_token}`,
     },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1000,
-      system: `你是一位專業的德州撲克 GTO 教練。
-用繁體中文，直接點出學生的弱點，口吻像教練在賽後檢討。
-格式固定：列出 3-5 個弱點，每條一句話，直接說問題在哪。
-開頭不要廢話，直接進入弱點清單。
-不要給鼓勵或正面評價，只講需要改進的地方。
-
-【分析模組】
-目前啟用：翻前基礎策略
-未來模組（停用中）：ICM 壓力場景、決賽桌單挑、短籌碼推疊策略`,
-      messages: [{ role: 'user', content: userPrompt }],
-    }),
+    body: JSON.stringify(data),
   })
 
   const json = await response.json()
-  return json.content?.[0]?.text ?? '分析失敗，請稍後再試。'
+  if (!response.ok) throw new Error(json.error ?? '分析失敗')
+  return json.text ?? '分析失敗，請稍後再試。'
 }
 
 export default function AnalysisTab({ userId, isPaid = false }: Props) {
@@ -149,12 +114,31 @@ export default function AnalysisTab({ userId, isPaid = false }: Props) {
     )
   }
 
-  if (records.length === 0) {
+  const MIN_RECORDS = 70
+
+  if (records.length < MIN_RECORDS) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-3 p-6" style={{ background: '#0a0a0a' }}>
         <div className="text-4xl">📊</div>
-        <div className="text-white font-bold">尚無答題記錄</div>
-        <div className="text-gray-500 text-sm">完成練習後才能使用弱點分析</div>
+        <div className="text-white font-bold">
+          {records.length === 0 ? '尚無答題記錄' : '答題數量不足'}
+        </div>
+        <div className="text-gray-500 text-sm text-center">
+          {records.length === 0
+            ? '完成練習後才能使用弱點分析'
+            : `需要至少 ${MIN_RECORDS} 題才能進行分析（目前 ${records.length} 題）`}
+        </div>
+        <div className="w-full max-w-xs mt-2">
+          <div className="h-2 rounded-full overflow-hidden" style={{ background: '#222' }}>
+            <div className="h-full rounded-full transition-all" style={{
+              width: `${Math.min(100, Math.round(records.length / MIN_RECORDS * 100))}%`,
+              background: 'linear-gradient(90deg, #7c3aed, #4f46e5)',
+            }} />
+          </div>
+          <div className="text-gray-600 text-xs text-center mt-1">
+            {records.length} / {MIN_RECORDS}
+          </div>
+        </div>
       </div>
     )
   }

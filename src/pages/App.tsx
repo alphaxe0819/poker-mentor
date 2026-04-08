@@ -246,7 +246,10 @@ export default function App() {
           {tab === 'course'   && <CourseTab />}
           {tab === 'stats'    && <StatsTab userId={user?.id ?? null} isPaid={profile ? isUserPaid(profile) : false} onNavigateAnalysis={() => setTab('analysis')} />}
           {tab === 'analysis' && <AnalysisTab userId={user?.id ?? null} isPaid={profile ? isUserPaid(profile) : false} />}
-          {tab === 'profile'  && <ProfileTab />}
+          {tab === 'profile'  && <ProfileTab onPromoRedeemed={async () => {
+            const p = await getProfile()
+            setProfile(p)
+          }} />}
         </Suspense>
       </div>
       <BottomNav current={tab} onChange={setTab} />
