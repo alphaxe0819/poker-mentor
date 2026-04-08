@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { VERSION } from '../version'
 
 type Mode = 'login' | 'register'
 
@@ -66,7 +67,7 @@ export default function AuthPage({ onSuccess, onGuest }: Props) {
           Poker <span style={{ color: '#7c3aed' }}>Goal</span>
         </div>
         <div className="text-gray-500 text-sm">每天練習，讓你的撲克越來越強</div>
-        <div className="text-gray-700 text-xs mt-1">v0.4.0</div>
+        <div className="text-gray-700 text-xs mt-1">{VERSION}</div>
       </div>
 
       {/* 模式切換 */}
