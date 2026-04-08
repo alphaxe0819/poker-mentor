@@ -1,35 +1,43 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { supabase } from '../lib/supabase'
-import { getProfile, isDailyLimitReached, incrementDailyPlays } from '../lib/auth'
+import { getProfile, isDailyLimitReached, incrementDailyPlays, isUserPaid } from '../lib/auth'
 import type { UserProfile } from '../lib/auth'
 import type { User } from '@supabase/supabase-js'
 import AuthPage from './AuthPage'
-import UpgradePage from './UpgradePage'
 import BottomNav from '../components/BottomNav'
 import DailyLimitScreen from '../components/DailyLimitScreen'
 import TrainTab from '../tabs/TrainTab'
-import StatsTab from '../tabs/StatsTab'
-import AnalysisTab from '../tabs/AnalysisTab'
-import ProfileTab from '../tabs/ProfileTab'
-import CourseTab from '../tabs/CourseTab'
 import GuestTrainTab from '../tabs/GuestTrainTab'
 import OnboardingScreen from '../components/OnboardingScreen'
 import { loadPointsFromSupabase } from '../lib/points'
 import { loadCourseProgressFromSupabase, markOnboardingDone as syncMarkOnboardingDone, loadOnboardingFromSupabase } from '../lib/courseSync'
 import { initLemonSqueezy, getSubscription, isSubscriptionActive } from '../lib/lemonsqueezy'
-import SharePage from './SharePage'
-import AdminDashboard from './AdminDashboard'
+
+// Lazy-loaded tabs & pages (code splitting)
+const StatsTab       = lazy(() => import('../tabs/StatsTab'))
+const AnalysisTab    = lazy(() => import('../tabs/AnalysisTab'))
+const ProfileTab     = lazy(() => import('../tabs/ProfileTab'))
+const CourseTab      = lazy(() => import('../tabs/CourseTab'))
+const UpgradePage    = lazy(() => import('./UpgradePage'))
+const SharePage      = lazy(() => import('./SharePage'))
+const AdminDashboard = lazy(() => import('./AdminDashboard'))
+
+const LazyFallback = () => (
+  <div className="flex items-center justify-center min-h-[200px]">
+    <div className="text-gray-600 text-sm">載入中...</div>
+  </div>
+)
 
 type Tab = 'train' | 'course' | 'stats' | 'analysis' | 'profile'
 type AppMode = 'loading' | 'auth' | 'guest' | 'onboarding' | 'app' | 'upgrade'
 
 export default function App() {
   if (window.location.pathname === '/share') {
-    return <SharePage />
+    return <Suspense fallback={<LazyFallback />}><SharePage /></Suspense>
   }
 
   if (window.location.pathname === '/admin') {
-    return <AdminDashboard />
+    return <Suspense fallback={<LazyFallback />}><AdminDashboard /></Suspense>
   }
 
   const [appMode,   setAppMode]   = useState<AppMode>('loading')
@@ -125,7 +133,7 @@ export default function App() {
 
     if (!currentProfile) return true
 
-    if (currentProfile.is_paid) return true
+    if (isUserPaid(currentProfile)) return true
 
     if (isDailyLimitReached(currentProfile)) {
       setShowLimit(true)
@@ -174,11 +182,13 @@ export default function App() {
 
   if (appMode === 'upgrade') {
     return (
-      <UpgradePage
-        onBack={() => setAppMode('app')}
-        userId={user?.id ?? ''}
-        userEmail={user?.email ?? ''}
-      />
+      <Suspense fallback={<LazyFallback />}>
+        <UpgradePage
+          onBack={() => setAppMode('app')}
+          userId={user?.id ?? ''}
+          userEmail={user?.email ?? ''}
+        />
+      </Suspense>
     )
   }
 
@@ -208,18 +218,18 @@ export default function App() {
               guestMode={false}
               userId={user?.id ?? null}
               userName={profile?.name ?? '玩家'}
-              isPaid={profile?.is_paid ?? false}
+              isPaid={profile ? isUserPaid(profile) : false}
               onStartRound={handleStartRound}
               onRoundComplete={async () => {
                 if (!user) return
                 // 完成一關後才計數
                 const currentProfile = await getProfile()
-                if (currentProfile && !currentProfile.is_paid) {
+                if (currentProfile && !isUserPaid(currentProfile)) {
                   await incrementDailyPlays(user.id, currentProfile)
                 }
                 const latestProfile = await getProfile()
                 setProfile(latestProfile)
-                if (!latestProfile || latestProfile.is_paid) return
+                if (!latestProfile || isUserPaid(latestProfile)) return
                 if (isDailyLimitReached(latestProfile)) {
                   setShowLimit(true)
                 }
@@ -227,10 +237,12 @@ export default function App() {
             />
           )}
         </div>
-        {tab === 'course'   && <CourseTab />}
-        {tab === 'stats'    && <StatsTab userId={user?.id ?? null} isPaid={profile?.is_paid ?? false} onNavigateAnalysis={() => setTab('analysis')} />}
-        {tab === 'analysis' && <AnalysisTab userId={user?.id ?? null} isPaid={profile?.is_paid ?? false} />}
-        {tab === 'profile'  && <ProfileTab />}
+        <Suspense fallback={<LazyFallback />}>
+          {tab === 'course'   && <CourseTab />}
+          {tab === 'stats'    && <StatsTab userId={user?.id ?? null} isPaid={profile ? isUserPaid(profile) : false} onNavigateAnalysis={() => setTab('analysis')} />}
+          {tab === 'analysis' && <AnalysisTab userId={user?.id ?? null} isPaid={profile ? isUserPaid(profile) : false} />}
+          {tab === 'profile'  && <ProfileTab />}
+        </Suspense>
       </div>
       <BottomNav current={tab} onChange={setTab} />
     </div>
