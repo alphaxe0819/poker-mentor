@@ -8,6 +8,14 @@ export interface UserProfile {
   player_type: 'tournament' | 'cash'
   daily_plays_date: string | null
   daily_plays_count: number
+  promo_expires_at: string | null
+}
+
+/** 判斷用戶是否為付費狀態（訂閱 或 序號體驗有效） */
+export function isUserPaid(profile: UserProfile): boolean {
+  if (profile.is_paid) return true
+  if (profile.promo_expires_at && new Date(profile.promo_expires_at) > new Date()) return true
+  return false
 }
 
 // 取得當前用戶 profile
@@ -32,13 +40,11 @@ function getLocalDateString(): string {
 }
 
 // 檢查今天免費額度是否用完
-export function isDailyLimitReached(_profile: UserProfile): boolean {
-  // TODO: 測試階段暫時取消每日限制，上線前恢復
-  return false
-  // if (profile.is_paid) return false
-  // const today = getLocalDateString()
-  // if (profile.daily_plays_date !== today) return false
-  // return profile.daily_plays_count >= 1  // 免費每天 1 關
+export function isDailyLimitReached(profile: UserProfile): boolean {
+  if (isUserPaid(profile)) return false
+  const today = getLocalDateString()
+  if (profile.daily_plays_date !== today) return false
+  return profile.daily_plays_count >= 1  // 免費每天 1 關
 }
 
 // 更新每日關卡計數
