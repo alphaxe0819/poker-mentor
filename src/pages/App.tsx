@@ -343,17 +343,23 @@ export default function App() {
             </Suspense>
           )}
         </div>
+        {user && (
+          <div style={{ display: tab === 'coach' ? 'block' : 'none' }}>
+            <Suspense fallback={<LazyFallback />}>
+              <CoachScreen
+                userId={user.id}
+                points={points}
+                coachOnboardingDone={profile?.coach_onboarding_done ?? false}
+                onPointsChanged={refreshPoints}
+                onOnboardingDone={async () => {
+                  const p = await getProfile()
+                  setProfile(p)
+                }}
+              />
+            </Suspense>
+          </div>
+        )}
         <Suspense fallback={<LazyFallback />}>
-          {tab === 'coach'    && user && <CoachScreen
-            userId={user.id}
-            points={points}
-            coachOnboardingDone={profile?.coach_onboarding_done ?? false}
-            onPointsChanged={refreshPoints}
-            onOnboardingDone={async () => {
-              const p = await getProfile()
-              setProfile(p)
-            }}
-          />}
           {tab === 'stats'    && <StatsTab userId={user?.id ?? null} isPaid={profile ? isUserPaid(profile) : false} onNavigateAnalysis={() => setTab('analysis')} />}
           {tab === 'analysis' && <AnalysisTab userId={user?.id ?? null} isPaid={profile ? isUserPaid(profile) : false} points={points} onPointsChanged={refreshPoints} />}
           {tab === 'profile'  && <ProfileTab points={points} userId={user?.id ?? null} onPointsChanged={refreshPoints} onPromoRedeemed={async () => {
