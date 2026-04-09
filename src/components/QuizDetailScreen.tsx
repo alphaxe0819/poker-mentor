@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, type ReactNode } from 'react'
 import type { QuizResult } from '../data/quizQuestions'
 import { STYLE_META, LEVEL_META, QUIZ_QUESTIONS } from '../data/quizQuestions'
 import { supabase } from '../lib/supabase'
@@ -220,6 +220,25 @@ export default function QuizDetailScreen({
     setSharing(false)
   }
 
+  // Collapsible section helper
+  const Collapsible = ({ title, children }: { title: string; children: ReactNode }) => {
+    const [open, setOpen] = useState(false)
+    return (
+      <div className="rounded-xl mb-3 overflow-hidden"
+        style={{ background: '#111', border: '1px solid #1a1a1a' }}>
+        <button onClick={() => setOpen(!open)}
+          className="w-full flex items-center justify-between px-4 py-3 text-left">
+          <span className="text-white text-sm font-medium">{title}</span>
+          <span className="text-gray-500 text-xs transition-transform"
+            style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+            ▼
+          </span>
+        </button>
+        {open && <div className="px-4 pb-4">{children}</div>}
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0a0a0a' }}>
       <div className="flex-1 overflow-y-auto pb-28">
@@ -234,70 +253,14 @@ export default function QuizDetailScreen({
         </div>
 
         {/* Radar chart */}
-        <div className="flex justify-center mb-2">
+        <div className="flex justify-center mb-4">
           <RadarChart dimensions={result.dimensions} size={240} />
         </div>
 
         <div className="px-6">
-          {/* Tips */}
-          <div className="mb-5">
-            <div className="text-white text-sm font-bold mb-3">💡 個性化訓練建議</div>
-            <div className="flex flex-col gap-2">
-              {meta.tips.map((tip, i) => (
-                <div key={i} className="flex items-start gap-2 rounded-xl p-3"
-                  style={{ background: '#111', border: '1px solid #1a1a1a' }}>
-                  <span className="text-purple-400 text-xs mt-0.5">●</span>
-                  <span className="text-gray-300 text-sm">{tip}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* GTO level */}
-          <div className="rounded-xl p-4 mb-5"
-            style={{ background: '#111', border: '1px solid #1a1a1a' }}>
-            <div className="text-gray-500 text-xs mb-2">📊 GTO 理解度</div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-gray-400 text-sm">等級</span>
-              <span className="text-white text-sm font-medium">{levelMeta.label}</span>
-            </div>
-            <div className="w-full h-1.5 rounded-full mt-1" style={{ background: '#222' }}>
-              <div className="h-1.5 rounded-full"
-                style={{
-                  width: `${(result.gtoCorrect / scenarioCount) * 100}%`,
-                  background: '#7c3aed',
-                }}
-              />
-            </div>
-            <div className="text-gray-600 text-xs mt-1 text-right">
-              {result.gtoCorrect} / {scenarioCount} 情境題正確
-            </div>
-          </div>
-
-          {/* Course recommendation */}
-          {reco && (
-            <div className="rounded-xl p-4 mb-5"
-              style={{ background: '#0f1a0f', border: '1px solid #1a4a1a' }}>
-              <div className="text-green-400 font-bold text-sm mb-1">🎯 推薦學習路徑</div>
-              <div className="text-gray-300 text-sm">
-                {reco.course === '直接開始訓練'
-                  ? `${reco.reason}，推薦直接開始實戰訓練！`
-                  : `推薦先上「${reco.course}」課程 — ${reco.reason}`
-                }
-              </div>
-            </div>
-          )}
-
-          {/* Share button */}
-          <button onClick={handleShare} disabled={sharing}
-            className="w-full py-3 rounded-xl text-sm font-medium transition mb-5"
-            style={{ background: '#111', border: '1px solid #222', color: '#ccc', opacity: sharing ? 0.6 : 1 }}>
-            {sharing ? '產生圖片中...' : '📤 分享我的撲克 MBTI'}
-          </button>
-
-          {/* Feedback survey */}
+          {/* Feedback survey — right after chart */}
           {!feedbackSent ? (
-            <div className="rounded-xl p-4 mb-4"
+            <div className="rounded-xl p-4 mb-5"
               style={{ background: '#111', border: '1px solid #1a1a1a' }}>
               <div className="text-gray-400 text-xs mb-3">花 10 秒幫我們改進</div>
 
@@ -336,10 +299,58 @@ export default function QuizDetailScreen({
               </div>
             </div>
           ) : (
-            <div className="rounded-xl p-4 mb-4 text-center"
+            <div className="rounded-xl p-4 mb-5 text-center"
               style={{ background: '#111', border: '1px solid #1a4a1a' }}>
               <div className="text-green-400 text-sm">感謝你的回饋！</div>
             </div>
+          )}
+
+          {/* Share button */}
+          <button onClick={handleShare} disabled={sharing}
+            className="w-full py-3 rounded-xl text-sm font-medium transition mb-5"
+            style={{ background: '#111', border: '1px solid #222', color: '#ccc', opacity: sharing ? 0.6 : 1 }}>
+            {sharing ? '產生圖片中...' : '📤 分享我的撲克 MBTI'}
+          </button>
+
+          {/* Collapsible details */}
+          <Collapsible title="💡 個性化訓練建議">
+            <div className="flex flex-col gap-2">
+              {meta.tips.map((tip, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <span className="text-purple-400 text-xs mt-0.5">●</span>
+                  <span className="text-gray-300 text-sm">{tip}</span>
+                </div>
+              ))}
+            </div>
+          </Collapsible>
+
+          <Collapsible title="📊 GTO 理解度">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-gray-400 text-sm">等級</span>
+              <span className="text-white text-sm font-medium">{levelMeta.label}</span>
+            </div>
+            <div className="w-full h-1.5 rounded-full mt-1" style={{ background: '#222' }}>
+              <div className="h-1.5 rounded-full"
+                style={{
+                  width: `${(result.gtoCorrect / scenarioCount) * 100}%`,
+                  background: '#7c3aed',
+                }}
+              />
+            </div>
+            <div className="text-gray-600 text-xs mt-1 text-right">
+              {result.gtoCorrect} / {scenarioCount} 情境題正確
+            </div>
+          </Collapsible>
+
+          {reco && (
+            <Collapsible title="🎯 推薦學習路徑">
+              <div className="text-gray-300 text-sm">
+                {reco.course === '直接開始訓練'
+                  ? `${reco.reason}，推薦直接開始實戰訓練！`
+                  : `推薦先上「${reco.course}」課程 — ${reco.reason}`
+                }
+              </div>
+            </Collapsible>
           )}
         </div>
       </div>
