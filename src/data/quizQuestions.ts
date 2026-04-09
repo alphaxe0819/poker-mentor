@@ -98,116 +98,126 @@ export const LEVEL_META: Record<LevelType, { label: string }> = {
 // ── Questions ──────────────────────────────────────────
 
 export const QUIZ_QUESTIONS: QuizQuestion[] = [
+  // ── Scenario 1: BTN open — tests aggression + discipline ──
   {
     type: 'scenario',
     prompt: '6-max 現金桌，100BB 深籌。你在 BTN，UTG 棄牌、HJ 棄牌、CO 棄牌，輪到你行動。',
     hand: 'AJo',
     heroPos: 'BTN',
     options: [
-      { label: '棄牌', dims: { discipline: 15, aggression: -10 } },
-      { label: '跟注大盲', dims: { potControl: 10 } },
-      { label: '加注到 2.5BB', isGTO: true, dims: { aggression: 10, position: 10, discipline: 5 } },
-      { label: '加注到 5BB', dims: { aggression: 15 } },
+      { label: '棄牌', dims: { discipline: 10, aggression: -15 } },
+      { label: '跟注大盲', dims: { aggression: -10, discipline: -10 } },
+      { label: '加注到 2.5BB', isGTO: true, dims: { aggression: 8, position: 5 } },
+      { label: '加注到 5BB', dims: { aggression: 15, discipline: -5 } },
     ],
   },
+  // ── Scenario 2: BB defend — tests discipline (fold=tight) vs loose ──
   {
     type: 'scenario',
     prompt: '6-max 現金桌，100BB 深籌。CO 加注到 3BB，BTN 棄牌、SB 棄牌，你在 BB。',
     hand: '87s',
     heroPos: 'BB',
     options: [
-      { label: '棄牌', dims: { discipline: 15 } },
-      { label: '跟注', isGTO: true, dims: { potControl: 10, discipline: 5 } },
-      { label: '3-Bet 到 10BB', dims: { aggression: 15 } },
-      { label: '全下 100BB', dims: { aggression: 20, tiltResistance: -10 } },
+      { label: '棄牌', dims: { discipline: 15, aggression: -10 } },
+      { label: '跟注', isGTO: true, dims: { discipline: -5, aggression: -5 } },
+      { label: '3-Bet 到 10BB', dims: { aggression: 15, discipline: -10 } },
+      { label: '全下 100BB', dims: { aggression: 20, discipline: -15, tiltResistance: -10 } },
     ],
   },
+  // ── Scenario 3: Flop c-bet — tests aggression (bet) vs passive (check) ──
   {
     type: 'scenario',
     prompt: '6-max 現金桌，100BB 深籌。翻前你在 CO 加注到 2.5BB，只有 BB 跟注。底池 5.5BB。\n翻牌：K♠ 7♦ 2♣（彩虹面），BB 過牌，輪到你。',
     hand: 'AQo',
     heroPos: 'CO',
     options: [
-      { label: '過牌', dims: { potControl: 15 } },
-      { label: '下注 1/3 底池（約 2BB）', isGTO: true, dims: { aggression: 5, potControl: 10 } },
-      { label: '下注 3/4 底池（約 4BB）', dims: { aggression: 10 } },
-      { label: '全下', dims: { aggression: 20, tiltResistance: -5 } },
+      { label: '過牌', dims: { aggression: -15, potControl: 10 } },
+      { label: '下注 1/3 底池（約 2BB）', isGTO: true, dims: { aggression: 5, potControl: 5 } },
+      { label: '下注 3/4 底池（約 4BB）', dims: { aggression: 12, potControl: -5 } },
+      { label: '全下', dims: { aggression: 20, tiltResistance: -10, potControl: -10 } },
     ],
   },
+  // ── Scenario 4: UTG hand selection — key discipline test ──
   {
     type: 'scenario',
     prompt: '6-max 現金桌，100BB 深籌。你在 UTG（最早位置），後面還有 5 位玩家等待行動。',
     hand: 'KTo',
     heroPos: 'UTG',
     options: [
-      { label: '棄牌', isGTO: true, dims: { discipline: 15, position: 10 } },
-      { label: '跟注大盲（limp）', dims: { potControl: 5 } },
-      { label: '加注到 2.5BB', dims: { aggression: 10 } },
-      { label: '加注到 4BB', dims: { aggression: 15, discipline: -5 } },
+      { label: '棄牌', isGTO: true, dims: { discipline: 10, position: 10, aggression: -5 } },
+      { label: '跟注大盲（limp）', dims: { discipline: -15, aggression: -15 } },
+      { label: '加注到 2.5BB', dims: { discipline: -10, aggression: 10 } },
+      { label: '加注到 4BB', dims: { discipline: -15, aggression: 15 } },
     ],
   },
+  // ── Scenario 5: Facing 3-bet — tests discipline (fold) vs aggression (4-bet) ──
   {
     type: 'scenario',
     prompt: '6-max 現金桌，100BB 深籌。你在 HJ 加注到 2.5BB，CO 和 SB 棄牌，BTN 3-Bet 到 9BB，BB 棄牌，輪回到你。',
     hand: 'TTs',
     heroPos: 'HJ',
     options: [
-      { label: '棄牌', dims: { discipline: 10, tiltResistance: 5 } },
-      { label: '跟注', isGTO: true, dims: { potControl: 10, discipline: 5 } },
-      { label: '4-Bet 到 22BB', dims: { aggression: 15 } },
-      { label: '全下 100BB', dims: { aggression: 20, tiltResistance: -5 } },
+      { label: '棄牌', dims: { discipline: 10, aggression: -15 } },
+      { label: '跟注', isGTO: true, dims: { aggression: -5, potControl: 8 } },
+      { label: '4-Bet 到 22BB', dims: { aggression: 15, discipline: -5 } },
+      { label: '全下 100BB', dims: { aggression: 20, discipline: -10, tiltResistance: -10 } },
     ],
   },
+  // ── Scenario 6: River facing donk bet — tests discipline (fold) vs call ──
   {
     type: 'scenario',
     prompt: '6-max 現金桌，100BB 深籌。翻前你在 BTN 加注到 2.5BB，BB 跟注。底池 5.5BB。\n翻牌 A♠ 8♦ 3♣，BB 過牌，你下注 2BB，BB 跟注。底池 9.5BB。\n轉牌 5♠，BB 過牌，你下注 6BB，BB 跟注。底池 21.5BB。\n河牌 J♠（第三張黑桃），BB 下注 20BB。你沒有黑桃。',
     hand: 'AKo',
     heroPos: 'BTN',
     options: [
-      { label: '棄牌', isGTO: true, dims: { discipline: 15, potControl: 10 } },
-      { label: '跟注', dims: { potControl: 5, tiltResistance: 5 } },
-      { label: '加注到 50BB', dims: { aggression: 20, tiltResistance: -10 } },
-      { label: '全下', dims: { aggression: 25, tiltResistance: -15 } },
+      { label: '棄牌', isGTO: true, dims: { discipline: 10, aggression: -10 } },
+      { label: '跟注', dims: { discipline: -10, aggression: -5 } },
+      { label: '加注到 50BB', dims: { aggression: 15, discipline: -15, tiltResistance: -10 } },
+      { label: '全下', dims: { aggression: 20, discipline: -15, tiltResistance: -15 } },
     ],
   },
+  // ── Preference 7: Hand preference — discipline vs loose ──
   {
     type: 'preference',
     prompt: '你比較喜歡拿到哪種手牌？',
     options: [
-      { label: 'A♠ A♦ 一對大 Ace', dims: { discipline: 15, potControl: 5 } },
-      { label: '7♠ 6♠ 同花連張', dims: { aggression: 10, position: 5 } },
-      { label: 'K♠ Q♦ 大高牌', dims: { discipline: 5, potControl: 10 } },
-      { label: '什麼牌都能打，看情況', dims: { aggression: 5, discipline: -10 } },
+      { label: 'A♠ A♦ 一對大 Ace', dims: { discipline: 12, aggression: -5 } },
+      { label: '7♠ 6♠ 同花連張', dims: { discipline: -12, aggression: 8 } },
+      { label: 'K♠ Q♦ 大高牌', dims: { discipline: 5, aggression: -3 } },
+      { label: '什麼牌都能打，看情況', dims: { discipline: -15, aggression: 5 } },
     ],
   },
+  // ── Preference 8: Tilt response — discipline/aggression split ──
   {
     type: 'preference',
     prompt: '連輸 5 手牌後，你通常會？',
     options: [
-      { label: '收緊範圍，等好牌再出手', dims: { discipline: 15, tiltResistance: 10 } },
+      { label: '收緊範圍，等好牌再出手', dims: { discipline: 12, aggression: -10, tiltResistance: 10 } },
       { label: '維持原本策略不變', dims: { tiltResistance: 15 } },
-      { label: '放寬範圍，積極找機會反擊', dims: { aggression: 15, tiltResistance: -5 } },
-      { label: '可能會有點衝動，想把輸的贏回來', dims: { aggression: 10, tiltResistance: -15 } },
+      { label: '放寬範圍，積極找機會反擊', dims: { discipline: -12, aggression: 15, tiltResistance: -5 } },
+      { label: '可能會有點衝動，想把輸的贏回來', dims: { discipline: -10, aggression: 10, tiltResistance: -15 } },
     ],
   },
+  // ── Preference 9: Position awareness ──
   {
     type: 'preference',
     prompt: '選桌位時，你最在意什麼？',
     options: [
       { label: '我要坐在魚（弱玩家）的左邊', dims: { position: 20 } },
       { label: '離莊家位越近越好', dims: { position: 15 } },
-      { label: '無所謂，牌好就會贏', dims: { position: -10, discipline: 5 } },
+      { label: '無所謂，牌好就會贏', dims: { position: -10 } },
       { label: '我沒特別想過桌位的問題', dims: { position: -5 } },
     ],
   },
+  // ── Preference 10: Medium hand strategy — aggression vs passive ──
   {
     type: 'preference',
     prompt: '拿到中等牌力（如中對子），你的策略傾向是？',
     options: [
-      { label: '小注控池，盡量便宜看到攤牌', dims: { potControl: 20 } },
-      { label: '看情況，對手弱就下注，強就過牌', dims: { potControl: 10, position: 10 } },
-      { label: '積極下注，不讓對手免費看牌', dims: { aggression: 15 } },
-      { label: '通常直接棄牌，不想冒險', dims: { discipline: 15, tiltResistance: 5 } },
+      { label: '小注控池，盡量便宜看到攤牌', dims: { aggression: -12, potControl: 12 } },
+      { label: '看情況，對手弱就下注，強就過牌', dims: { aggression: -3, potControl: 5, position: 5 } },
+      { label: '積極下注，不讓對手免費看牌', dims: { aggression: 15, potControl: -5 } },
+      { label: '通常直接棄牌，不想冒險', dims: { discipline: 10, aggression: -15 } },
     ],
   },
 ]
