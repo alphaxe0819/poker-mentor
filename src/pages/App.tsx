@@ -215,6 +215,7 @@ export default function App() {
         result={pendingQuizResult}
         onContinue={() => {
           setPendingQuizResult(null)
+          setTab('course')
           if (postQuizMode === 'onboarding' && user) {
             setAppMode('onboarding')
           } else {

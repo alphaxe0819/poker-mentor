@@ -9,6 +9,8 @@ interface Props {
 
 export default function QuizResultScreen({ result, onRegister, onBack }: Props) {
   const meta = STYLE_META[result.style]
+  // Show first sentence + trailing "..." to create curiosity
+  const firstSentence = meta.description.split('。')[0] + '。'
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6"
@@ -21,7 +23,7 @@ export default function QuizResultScreen({ result, onRegister, onBack }: Props) 
         <div className="text-3xl font-black text-white mb-1">{meta.name}</div>
         <div className="text-gray-500 text-sm mb-6">{meta.tag}</div>
         <p className="text-gray-400 text-sm leading-relaxed max-w-sm mx-auto">
-          {meta.description}
+          {firstSentence}<span className="text-gray-600">......</span>
         </p>
       </div>
 
