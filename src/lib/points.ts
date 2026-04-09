@@ -4,6 +4,9 @@ import { supabase } from './supabase'
 
 const POINTS_KEY = 'gto_user_points'
 
+// Pending sync queue — ensures no writes are lost
+let pendingSync: Promise<void> = Promise.resolve()
+
 export function getPoints(): number {
   const raw = localStorage.getItem(POINTS_KEY)
   return raw ? parseInt(raw, 10) || 0 : 0
@@ -51,14 +54,34 @@ export async function loadPointsFromSupabase(): Promise<number> {
   return merged
 }
 
-// 背景同步到 Supabase
+// 背景同步到 Supabase — queued to prevent race conditions
 function syncPointsToSupabase(points: number) {
-  supabase.auth.getUser().then(({ data: { user } }) => {
-    if (!user) return
-    supabase
-      .from('profiles')
-      .update({ points })
-      .eq('id', user.id)
-      .then(() => {})
+  pendingSync = pendingSync.then(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      await supabase
+        .from('profiles')
+        .update({ points })
+        .eq('id', user.id)
+    } catch {
+      // Silent fail — will retry on next sync
+    }
+  })
+}
+
+// Flush pending sync on page hide (tab close / navigate away)
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      // Use sendBeacon as last-resort fallback
+      const points = getPoints()
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (!user) return
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/profiles?id=eq.${user.id}`
+        const body = JSON.stringify({ points })
+        navigator.sendBeacon?.(url, new Blob([body], { type: 'application/json' }))
+      })
+    }
   })
 }

@@ -1,3 +1,4 @@
+import { memo } from 'react'
 
 interface Props {
   hand: string
@@ -58,7 +59,7 @@ function Card({ rank, suit }: { rank: string; suit: typeof SUITS[number] }) {
   )
 }
 
-export default function HoleCards({ hand }: Props) {
+export default memo(function HoleCards({ hand }: Props) {
   const { rank1, rank2 } = parseHand(hand)
   const [suit1, suit2] = getSuits(hand)
 
@@ -68,4 +69,4 @@ export default function HoleCards({ hand }: Props) {
       <Card rank={rank2} suit={suit2} />
     </div>
   )
-}
+})

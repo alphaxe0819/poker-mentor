@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import PokerFelt from '../components/PokerFelt'
 import type { SeatDisplayInfo } from '../tabs/TrainTab'
 import HoleCards from '../components/HoleCards'
-import { getGTOAction, getActionLabel } from '../lib/gtoData'
+import { getGTOAction, getActionLabel, preloadDB } from '../lib/gtoData'
 
 // ── 常數 ──────────────────────────────────────────
 const GAME_TYPES = [
@@ -130,7 +130,8 @@ export default function QuizTab() {
     })
   }, [gameTypeKey, stackDepth, quizSize, gameType.tableSize, positions])
 
-  const startQuiz = () => {
+  const startQuiz = async () => {
+    await preloadDB(gameTypeKey, stackDepth)
     setQuestions(generateQuestions())
     setCurrent(0)
     setScore(0)

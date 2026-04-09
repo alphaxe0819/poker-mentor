@@ -1,19 +1,13 @@
-import * as DBS from './gto/gtoData_index'
+import { getDBByGameType, preloadDB } from './gto/gtoData_index'
+
+export { preloadDB }
 
 // ── DB 選擇 ───────────────────────────────────────────────────────────────────
 
 export type GameTypeKey = 'tourn_9max' | 'cash_6max' | 'cash_4max' | 'cash_hu'
 
 function getDB(stackBB: number, gameTypeKey: GameTypeKey = 'tourn_9max') {
-  if (gameTypeKey === 'cash_6max') return DBS.DB_CASH_6MAX_100BB
-  if (gameTypeKey === 'cash_4max') return DBS.DB_CASH_4MAX_100BB
-  if (gameTypeKey === 'cash_hu')   return DBS.DB_CASH_HU_100BB
-  // tournament
-  if (stackBB >= 88) return DBS.DB_TOURN_100BB
-  if (stackBB >= 58) return DBS.DB_TOURN_75BB
-  if (stackBB >= 33) return DBS.DB_TOURN_40BB
-  if (stackBB >= 20) return DBS.DB_TOURN_25BB
-  return DBS.DB_TOURN_15BB
+  return getDBByGameType(stackBB, gameTypeKey) ?? {}
 }
 
 // ── 有效場景表 ────────────────────────────────────────────────────────────────
@@ -457,7 +451,7 @@ export function getStep2GTOFromDB(
 ): string {
   if (stackBB < 88) return getStep2GTOFallback(villainResp, hand)
 
-  const db = DBS.DB_TOURN_100BB as Record<string, Record<string, string>>
+  const db = getDB(100, 'tourn_9max') as Record<string, Record<string, string>>
   if (villainResp === '3bet') {
     const early  = ['UTG', 'UTG+1', 'UTG1', 'UTG+2', 'UTG2']
     const late   = ['BTN']

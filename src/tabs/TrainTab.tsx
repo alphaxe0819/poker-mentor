@@ -14,7 +14,7 @@ import TrainSetupScreen from './TrainSetupScreen'
 import RoundResultScreen from '../components/RoundResultScreen'
 import { saveAnswerRecord } from '../lib/auth'
 import { addPoints } from '../lib/points'
-import { getStep2GTOFromDB, getValidScenarios, getRangeByKey, getActionByKey, getTopActionsByKey, isActionValid } from '../lib/gtoData'
+import { getStep2GTOFromDB, getValidScenarios, getRangeByKey, getActionByKey, getTopActionsByKey, isActionValid, preloadDB } from '../lib/gtoData'
 
 // ── 常數 ──────────────────────────────────────────────────────────────────────
 
@@ -305,6 +305,17 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
     if (onStartRound) {
       const allowed = await onStartRound()
       if (allowed === false) return
+    }
+    // Preload GTO database(s) for selected game type (dynamic import)
+    if (cfg.gameTypeKey === 'random' || cfg.stackDepth === 'random') {
+      // Random mode: preload all possible DBs in parallel
+      const gameTypes = cfg.gameTypeKey === 'random' ? GAME_TYPE_KEYS : [cfg.gameTypeKey]
+      const stacks = cfg.stackDepth === 'random' ? [100, 75, 40, 25, 15] : [typeof cfg.stackDepth === 'number' ? cfg.stackDepth : 100]
+      await Promise.all(
+        gameTypes.flatMap(gt => stacks.map(s => preloadDB(gt, s)))
+      )
+    } else {
+      await preloadDB(cfg.gameTypeKey, cfg.stackDepth)
     }
     setConfig(cfg)
     setShowExplanation(cfg.showExplanation)

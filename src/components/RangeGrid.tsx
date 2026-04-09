@@ -1,3 +1,4 @@
+import { memo } from 'react'
 
 interface Props {
   highlightHand?: string
@@ -28,7 +29,7 @@ function getActionStyle(action: string | undefined): { bg: string; text: string 
   return { bg: '#1e1e1e', text: '#555' }         // 深灰：棄牌
 }
 
-export default function RangeGrid({ highlightHand, gtoRange, onClose }: Props) {
+export default memo(function RangeGrid({ highlightHand, gtoRange, onClose }: Props) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -102,4 +103,4 @@ export default function RangeGrid({ highlightHand, gtoRange, onClose }: Props) {
       </div>
     </div>
   )
-}
+})

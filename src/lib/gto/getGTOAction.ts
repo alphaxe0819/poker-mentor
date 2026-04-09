@@ -1,4 +1,4 @@
-import * as DBS from './gtoData_index'
+import { getDBByGameType } from './gtoData_index'
 import { ALL_HANDS } from './helpers'
 import type { RangeMap, HandData } from '../../types'
 
@@ -11,26 +11,26 @@ export function getGTOAction(
   scenario: string
 ): { action: string; freq?: number; note: string } {
 
-  // Select the appropriate database
-  let db;
-  let canonicalBB: number;
+  // Map to gameTypeKey format
+  const gameTypeKey = gameType === 'cash'
+    ? `cash_${tableType}` as string
+    : `tourn_${tableType}` as string
 
-  if (gameType === 'cash') {
-    canonicalBB = 100;
-    if (tableType === '6max') db = (DBS as any).DB_CASH_6MAX_100BB;
-    else if (tableType === '4max') db = (DBS as any).DB_CASH_4MAX_100BB;
-    else if (tableType === 'hu') db = (DBS as any).DB_CASH_HU_100BB;
-  } else {
-    if (stackBB >= 88) { db = DBS.DB_TOURN_100BB; canonicalBB = 100; }
-    else if (stackBB >= 58) { db = DBS.DB_TOURN_75BB; canonicalBB = 75; }
-    else if (stackBB >= 33) { db = DBS.DB_TOURN_40BB; canonicalBB = 40; }
-    else if (stackBB >= 20) { db = DBS.DB_TOURN_25BB; canonicalBB = 25; }
-    else { db = DBS.DB_TOURN_15BB; canonicalBB = 15; }
-  }
-
+  const db = getDBByGameType(stackBB, gameTypeKey)
   if (!db) return { action: 'f', note: '此情境無資料' };
 
-  const key = `${gameType}_${tableType}_${canonicalBB!}bb_${position}_${scenario}`;
+  let canonicalBB: number;
+  if (gameType === 'cash') {
+    canonicalBB = 100;
+  } else {
+    if (stackBB >= 88) canonicalBB = 100;
+    else if (stackBB >= 58) canonicalBB = 75;
+    else if (stackBB >= 33) canonicalBB = 40;
+    else if (stackBB >= 20) canonicalBB = 25;
+    else canonicalBB = 15;
+  }
+
+  const key = `${gameType}_${tableType}_${canonicalBB}bb_${position}_${scenario}`;
   const range = db[key];
   if (!range) return { action: 'f', note: '此情境無資料' };
 

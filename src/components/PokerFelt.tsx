@@ -1,3 +1,5 @@
+import { memo } from 'react'
+
 interface SeatDisplayInfo {
   status: 'hero' | 'raised' | 'posted' | 'folded' | 'waiting' | 'active'
   bet: number
@@ -52,7 +54,7 @@ const STATUS_STYLE: Record<string, { bg: string; border: string }> = {
   active:  { bg: 'bg-[#1a2a1a]', border: '1.5px solid #16a34a' },
 }
 
-export default function PokerFelt({
+export default memo(function PokerFelt({
   tableSize = 6,
   heroPosition,
   showPositions = true,
@@ -152,4 +154,4 @@ export default function PokerFelt({
       })}
     </div>
   )
-}
+})

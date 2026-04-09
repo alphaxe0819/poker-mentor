@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { Course, CourseQuestion } from '../lib/courseData'
 import { saveCourseProgress } from '../lib/courseSync'
-import { getActionByKey, getTopActionsByKey, isActionValid, getRangeByKey } from '../lib/gtoData'
+import { getActionByKey, getTopActionsByKey, isActionValid, getRangeByKey, preloadDB } from '../lib/gtoData'
 import { buildScenario, type SeatDisplayInfo } from '../tabs/TrainTab'
 import PokerFelt from './PokerFelt'
 import HoleCards from './HoleCards'
@@ -89,6 +89,21 @@ export default function CoursePlayScreen({ course, onBack }: Props) {
   const [correctCount, setCorrectCount] = useState(0)
   const [answers, setAnswers] = useState<boolean[]>([])
   const [showExitConfirm, setShowExitConfirm] = useState(false)
+  const [dbReady, setDbReady] = useState(false)
+
+  // Preload all unique game type + stack combinations for this course
+  useEffect(() => {
+    const seen = new Set<string>()
+    const loads: Promise<void>[] = []
+    for (const q of course.questions) {
+      const key = `${q.gameTypeKey}_${q.stackBB}`
+      if (!seen.has(key)) {
+        seen.add(key)
+        loads.push(preloadDB(q.gameTypeKey, q.stackBB))
+      }
+    }
+    Promise.all(loads).then(() => setDbReady(true))
+  }, [course])
 
   const handleBack = () => {
     if (phase === 'complete') {
@@ -96,6 +111,14 @@ export default function CoursePlayScreen({ course, onBack }: Props) {
     } else {
       setShowExitConfirm(true)
     }
+  }
+
+  if (!dbReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a0a' }}>
+        <div className="text-gray-600 text-sm">載入中...</div>
+      </div>
+    )
   }
 
   const question = course.questions[currentIdx]

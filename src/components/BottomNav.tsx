@@ -1,3 +1,5 @@
+import { memo } from 'react'
+
 type Tab = 'train' | 'course' | 'stats' | 'analysis' | 'profile'
 
 interface Props {
@@ -13,7 +15,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'profile',  label: '帳號' },
 ]
 
-export default function BottomNav({ current, onChange }: Props) {
+export default memo(function BottomNav({ current, onChange }: Props) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-700 flex">
       {TABS.map(t => (
@@ -27,4 +29,4 @@ export default function BottomNav({ current, onChange }: Props) {
       ))}
     </nav>
   )
-}
+})
