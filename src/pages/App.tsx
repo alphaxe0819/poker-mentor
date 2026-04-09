@@ -22,6 +22,7 @@ const CoachScreen    = lazy(() => import('../components/CoachScreen'))
 const UpgradePage    = lazy(() => import('./UpgradePage'))
 const SharePage      = lazy(() => import('./SharePage'))
 const AdminDashboard = lazy(() => import('./AdminDashboard'))
+const ChangelogPage  = lazy(() => import('./ChangelogPage'))
 
 const LazyFallback = () => (
   <div className="flex items-center justify-center min-h-[200px]">
@@ -40,6 +41,10 @@ export default function App() {
 
   if (window.location.pathname === '/admin') {
     return <Suspense fallback={<LazyFallback />}><AdminDashboard /></Suspense>
+  }
+
+  if (window.location.pathname === '/changelog') {
+    return <Suspense fallback={<LazyFallback />}><ChangelogPage /></Suspense>
   }
 
   const [appMode,   setAppMode]   = useState<AppMode>('loading')
