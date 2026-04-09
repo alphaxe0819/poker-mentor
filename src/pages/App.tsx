@@ -7,7 +7,7 @@ import AuthPage from './AuthPage'
 import BottomNav from '../components/BottomNav'
 import DailyLimitScreen from '../components/DailyLimitScreen'
 import TrainTab from '../tabs/TrainTab'
-import GuestTrainTab from '../tabs/GuestTrainTab'
+import QuizScreen from '../components/QuizScreen'
 import OnboardingScreen from '../components/OnboardingScreen'
 import { loadPointsFromSupabase } from '../lib/points'
 import { loadCourseProgressFromSupabase, markOnboardingDone as syncMarkOnboardingDone, loadOnboardingFromSupabase } from '../lib/courseSync'
@@ -107,6 +107,19 @@ export default function App() {
           p = await getProfile()
         }
         setProfile(p)
+        // Sync quiz result from localStorage to profile
+        if (p && session.user) {
+          const { loadQuizResultLocal, clearQuizResultLocal } = await import('../data/quizQuestions')
+          const quizResult = loadQuizResultLocal()
+          if (quizResult) {
+            await supabase.from('profiles').update({
+              quiz_style: quizResult.style,
+              quiz_level: quizResult.level,
+              quiz_dimensions: quizResult.dimensions,
+            }).eq('id', session.user.id)
+            clearQuizResultLocal()
+          }
+        }
         setShowLimit(false)
         const onboardingDone = await initUser(session.user.id)
         // 不覆蓋正在進行中的 onboarding
@@ -173,7 +186,7 @@ export default function App() {
 
   if (appMode === 'guest') {
     return (
-      <GuestTrainTab
+      <QuizScreen
         onFinish={() => setAppMode('auth')}
         onRegister={() => setAppMode('auth')}
       />
@@ -201,6 +214,8 @@ export default function App() {
     return (
       <OnboardingScreen
         userName={profile?.name ?? '玩家'}
+        quizStyle={profile?.quiz_style}
+        quizLevel={profile?.quiz_level}
         onComplete={() => {
           syncMarkOnboardingDone(user.id)
           setAppMode('app')

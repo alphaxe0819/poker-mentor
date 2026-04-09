@@ -148,13 +148,12 @@ export default function AuthPage({ onSuccess, onGuest }: Props) {
           </button>
         </div>
 
-        {/* 體驗模式 */}
+        {/* 撲克 MBTI */}
         <div className="mt-6 text-center">
-          <div className="text-gray-600 text-xs mb-2">不想註冊？</div>
           <button onClick={onGuest}
             className="text-sm font-medium transition"
             style={{ color: '#7c3aed' }}>
-            先體驗 3 題 →
+            🧠 測測你的撲克 MBTI →
           </button>
         </div>
       </div>
