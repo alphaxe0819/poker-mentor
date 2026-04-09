@@ -2,6 +2,8 @@ import { useState } from 'react'
 
 interface Props {
   userName: string
+  quizStyle?: string | null
+  quizLevel?: string | null
   onComplete: () => void
 }
 
@@ -103,32 +105,58 @@ const STEPS = [
   },
   {
     title: '準備好了嗎？',
-    content: () => (
-      <>
-        <div className="text-xl font-bold text-white mb-3">
-          開始你的 GTO 之旅！
-        </div>
-        <div className="flex flex-col gap-3 mt-4">
-          <div className="rounded-xl p-4 text-center"
-            style={{ background: '#1a1a2e', border: '1px solid #4c1d95' }}>
-            <div className="text-purple-400 font-bold text-sm mb-1">免費帳戶</div>
-            <div className="text-gray-400 text-xs">每天 1 關（10 題）全隨機練習</div>
+    content: (_name: string, quizStyle?: string | null, quizLevel?: string | null) => {
+      const RECO: Record<string, string> = {
+        'rock-beginner': '推薦從「RFI 基礎」課程開始，學習在各位置主動出擊',
+        'rock-novice': '推薦「位置的力量」課程，學會利用位置優勢',
+        'octopus-beginner': '推薦從「RFI 基礎」課程開始，建立正確的翻前範圍',
+        'octopus-novice': '推薦「面對加注」課程，學習何時該棄牌',
+        'octopus-intermediate': '推薦「面對加注」課程，提升防守效率',
+        'fox-beginner': '推薦從「RFI 基礎」課程開始，打好基礎再發揮創意',
+        'fox-novice': '推薦「面對加注」課程，讓攻擊更有紀律',
+        'fox-intermediate': '推薦直接開始訓練，用實戰磨練你的攻擊技巧',
+        'shark-beginner': '推薦從「RFI 基礎」課程開始，鞏固基本功',
+        'shark-novice': '推薦「位置的力量」課程，讓你的優勢更全面',
+      }
+      const recoKey = quizStyle && quizLevel ? `${quizStyle}-${quizLevel}` : null
+      const reco = recoKey ? RECO[recoKey] : null
+      const fallbackReco = quizStyle ? '推薦直接開始訓練，從實戰中持續進步' : null
+      const displayReco = reco || fallbackReco
+
+      return (
+        <>
+          <div className="text-xl font-bold text-white mb-3">
+            開始你的 GTO 之旅！
           </div>
-          <div className="rounded-xl p-4 text-center"
-            style={{ background: '#1a0a2e', border: '1px solid #7c3aed' }}>
-            <div className="text-purple-300 font-bold text-sm mb-1">付費帳戶</div>
-            <div className="text-gray-400 text-xs">無限練習 + 自選桌型/籌碼深度/題數</div>
+          {displayReco && (
+            <div className="rounded-xl p-4 mb-3 text-center"
+              style={{ background: '#0f1a0f', border: '1px solid #1a4a1a' }}>
+              <div className="text-green-400 font-bold text-sm mb-1">🧠 根據你的撲克 MBTI</div>
+              <div className="text-gray-300 text-xs">{displayReco}</div>
+            </div>
+          )}
+          <div className="flex flex-col gap-3 mt-1">
+            <div className="rounded-xl p-4 text-center"
+              style={{ background: '#1a1a2e', border: '1px solid #4c1d95' }}>
+              <div className="text-purple-400 font-bold text-sm mb-1">免費帳戶</div>
+              <div className="text-gray-400 text-xs">每天 1 關（10 題）全隨機練習</div>
+            </div>
+            <div className="rounded-xl p-4 text-center"
+              style={{ background: '#1a0a2e', border: '1px solid #7c3aed' }}>
+              <div className="text-purple-300 font-bold text-sm mb-1">付費帳戶</div>
+              <div className="text-gray-400 text-xs">無限練習 + 自選桌型/籌碼深度/題數</div>
+            </div>
           </div>
-        </div>
-        <p className="text-gray-500 text-xs text-center mt-4">
-          從實戰中學習，每一手都在進步
-        </p>
-      </>
-    ),
+          <p className="text-gray-500 text-xs text-center mt-4">
+            從實戰中學習，每一手都在進步
+          </p>
+        </>
+      )
+    },
   },
 ]
 
-export default function OnboardingScreen({ userName, onComplete }: Props) {
+export default function OnboardingScreen({ userName, quizStyle, quizLevel, onComplete }: Props) {
   const [step, setStep] = useState(0)
   const isLast = step === STEPS.length - 1
   const current = STEPS[step]
@@ -171,7 +199,7 @@ export default function OnboardingScreen({ userName, onComplete }: Props) {
 
         {/* 主內容 */}
         <div className="flex-1 flex flex-col justify-center">
-          {current.content(userName)}
+          {current.content(userName, quizStyle, quizLevel)}
         </div>
       </div>
 

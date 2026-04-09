@@ -9,6 +9,9 @@ export interface UserProfile {
   daily_plays_date: string | null
   daily_plays_count: number
   promo_expires_at: string | null
+  quiz_style: string | null
+  quiz_level: string | null
+  quiz_dimensions: Record<string, number> | null
 }
 
 /** 判斷用戶是否為付費狀態（訂閱 或 序號體驗有效） */
