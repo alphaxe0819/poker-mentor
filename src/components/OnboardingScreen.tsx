@@ -117,6 +117,12 @@ const STEPS = [
         'fox-intermediate': '推薦直接開始訓練，用實戰磨練你的攻擊技巧',
         'shark-beginner': '推薦從「RFI 基礎」課程開始，鞏固基本功',
         'shark-novice': '推薦「位置的力量」課程，讓你的優勢更全面',
+        'shark-intermediate': '推薦直接開始訓練，挑戰更高難度的情境',
+        'shark-advanced': '推薦直接開始訓練，你已具備 GTO 思維！',
+        'fox-advanced': '推薦直接開始訓練，將創意與紀律完美結合',
+        'rock-intermediate': '推薦「面對加注」課程，學習更積極的防守策略',
+        'rock-advanced': '推薦直接開始訓練，嘗試增加攻擊頻率',
+        'octopus-advanced': '推薦直接開始訓練，專注收緊你的翻前範圍',
       }
       const recoKey = quizStyle && quizLevel ? `${quizStyle}-${quizLevel}` : null
       const reco = recoKey ? RECO[recoKey] : null

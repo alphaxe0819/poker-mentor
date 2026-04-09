@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import type { QuizResult } from '../data/quizQuestions'
-import { STYLE_META, LEVEL_META } from '../data/quizQuestions'
+import { STYLE_META, LEVEL_META, QUIZ_QUESTIONS } from '../data/quizQuestions'
 import RadarChart from './RadarChart'
 
 interface Props {
@@ -14,6 +14,7 @@ export default function QuizResultScreen({ result, onRegister, onBack }: Props) 
   const [sharing, setSharing] = useState(false)
   const meta = STYLE_META[result.style]
   const levelMeta = LEVEL_META[result.level]
+  const scenarioCount = QUIZ_QUESTIONS.filter(q => q.type === 'scenario').length
 
   const handleShare = async () => {
     if (!shareRef.current || sharing) return
@@ -105,13 +106,13 @@ export default function QuizResultScreen({ result, onRegister, onBack }: Props) 
             <div className="w-full h-1.5 rounded-full mt-1" style={{ background: '#222' }}>
               <div className="h-1.5 rounded-full"
                 style={{
-                  width: `${(result.gtoCorrect / 6) * 100}%`,
+                  width: `${(result.gtoCorrect / scenarioCount) * 100}%`,
                   background: '#7c3aed',
                 }}
               />
             </div>
             <div className="text-gray-600 text-xs mt-1 text-right">
-              {result.gtoCorrect} / 6 情境題正確
+              {result.gtoCorrect} / {scenarioCount} 情境題正確
             </div>
           </div>
         </div>

@@ -106,8 +106,7 @@ export default function App() {
           })
           p = await getProfile()
         }
-        setProfile(p)
-        // Sync quiz result from localStorage to profile
+        // Sync quiz result from localStorage to profile (must run after profile exists)
         if (p && session.user) {
           const { loadQuizResultLocal, clearQuizResultLocal } = await import('../data/quizQuestions')
           const quizResult = loadQuizResultLocal()
@@ -118,8 +117,11 @@ export default function App() {
               quiz_dimensions: quizResult.dimensions,
             }).eq('id', session.user.id)
             clearQuizResultLocal()
+            // Refresh profile so onboarding can access quiz data
+            p = await getProfile()
           }
         }
+        setProfile(p)
         setShowLimit(false)
         const onboardingDone = await initUser(session.user.id)
         // 不覆蓋正在進行中的 onboarding
