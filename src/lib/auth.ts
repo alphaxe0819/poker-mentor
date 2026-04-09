@@ -48,12 +48,9 @@ function getLocalDateString(): string {
   return utc8.toISOString().slice(0, 10)
 }
 
-// 檢查今天免費額度是否用完
-export function isDailyLimitReached(profile: UserProfile): boolean {
-  if (isUserPaid(profile)) return false
-  const today = getLocalDateString()
-  if (profile.daily_plays_date !== today) return false
-  return profile.daily_plays_count >= 1  // 免費每天 1 關
+// 檢查今天免費額度是否用完（目前不限制）
+export function isDailyLimitReached(_profile: UserProfile): boolean {
+  return false
 }
 
 // 更新每日關卡計數
