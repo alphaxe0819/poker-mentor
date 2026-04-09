@@ -82,8 +82,10 @@ export default function QuizScreen({ onFinish, onRegister }: Props) {
         </div>
 
         {/* Scenario prompt */}
-        <div className="text-white text-base font-medium text-center mb-4 leading-relaxed">
-          {q.prompt}
+        <div className="text-white text-sm font-medium text-center mb-4 leading-relaxed">
+          {q.prompt.split('\n').map((line, i) => (
+            <span key={i}>{i > 0 && <br />}{line}</span>
+          ))}
         </div>
 
         {/* Hand display for scenario questions */}

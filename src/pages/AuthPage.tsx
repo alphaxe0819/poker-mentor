@@ -7,10 +7,11 @@ type Mode = 'login' | 'register'
 interface Props {
   onSuccess: () => void
   onGuest: () => void
+  initialMode?: Mode
 }
 
-export default function AuthPage({ onSuccess, onGuest }: Props) {
-  const [mode,      setMode]      = useState<Mode>('login')
+export default function AuthPage({ onSuccess, onGuest, initialMode = 'login' }: Props) {
+  const [mode,      setMode]      = useState<Mode>(initialMode)
   const [email,     setEmail]     = useState('')
   const [password,  setPassword]  = useState('')
   const [name,      setName]      = useState('')

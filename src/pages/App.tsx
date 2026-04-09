@@ -45,6 +45,7 @@ export default function App() {
   const [profile,   setProfile]   = useState<UserProfile | null>(null)
   const [tab,       setTab]       = useState<Tab>('train')
   const [showLimit, setShowLimit] = useState(false)
+  const [authInitialMode, setAuthInitialMode] = useState<'login' | 'register'>('login')
 
   // Checkout 完成後刷新訂閱狀態
   const refreshSubscription = async () => {
@@ -124,6 +125,7 @@ export default function App() {
         setProfile(p)
         setShowLimit(false)
         const onboardingDone = await initUser(session.user.id)
+        setTab('train')
         // 不覆蓋正在進行中的 onboarding
         setAppMode(prev => prev === 'onboarding' ? prev : onboardingDone ? 'app' : 'onboarding')
       } else {
@@ -180,7 +182,8 @@ export default function App() {
   if (appMode === 'auth') {
     return (
       <AuthPage
-        onSuccess={() => setAppMode('app')}
+        initialMode={authInitialMode}
+        onSuccess={() => { setTab('train'); setAppMode('app') }}
         onGuest={() => setAppMode('guest')}
       />
     )
@@ -189,8 +192,8 @@ export default function App() {
   if (appMode === 'guest') {
     return (
       <QuizScreen
-        onFinish={() => setAppMode('auth')}
-        onRegister={() => setAppMode('auth')}
+        onFinish={() => { setAuthInitialMode('login'); setAppMode('auth') }}
+        onRegister={() => { setAuthInitialMode('register'); setAppMode('auth') }}
       />
     )
   }
