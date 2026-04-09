@@ -263,7 +263,7 @@ interface TrainTabProps {
   onNavigateToMissions?: () => void
 }
 
-export default function TrainTab({ guestMode: _guestMode = false, userId = null, userName, isPaid = false, points = 0, isTabActive = true, onStartRound, onRoundComplete, onPointsChanged, onNavigateToMissions }: TrainTabProps) {
+export default function TrainTab({ guestMode: _guestMode = false, userId = null, userName, isPaid = false, points = 0, isTabActive = true, onStartRound, onRoundComplete, onPointsChanged: _onPointsChanged, onNavigateToMissions }: TrainTabProps) {
   const [screen,    setScreen]    = useState<Screen>('setup')
   const [config,    setConfig]    = useState<TrainConfig | null>(null)
   const [showExitConfirm, setShowExitConfirm] = useState(false)

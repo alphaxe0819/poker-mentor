@@ -61,14 +61,14 @@ describe('isDailyLimitReached', () => {
     expect(isDailyLimitReached(profile)).toBe(false)
   })
 
-  it('returns true for free user who reached limit today', () => {
+  it('returns false for free user (no limit currently)', () => {
     const profile = makeProfile({ daily_plays_date: getLocalDateString(), daily_plays_count: 1 })
-    expect(isDailyLimitReached(profile)).toBe(true)
+    expect(isDailyLimitReached(profile)).toBe(false)
   })
 
-  it('returns true for free user who exceeded limit today', () => {
+  it('returns false for free user with many plays (no limit currently)', () => {
     const profile = makeProfile({ daily_plays_date: getLocalDateString(), daily_plays_count: 3 })
-    expect(isDailyLimitReached(profile)).toBe(true)
+    expect(isDailyLimitReached(profile)).toBe(false)
   })
 
   it('returns false when daily_plays_date is null', () => {
