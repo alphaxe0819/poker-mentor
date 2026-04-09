@@ -12,6 +12,11 @@ export interface UserProfile {
   quiz_style: string | null
   quiz_level: string | null
   quiz_dimensions: Record<string, number> | null
+  last_login_date: string | null
+  login_streak: number
+  claimed_milestones: number[]
+  referral_code: string | null
+  referred_by: string | null
 }
 
 /** 判斷用戶是否為付費狀態（訂閱 或 序號體驗有效） */
