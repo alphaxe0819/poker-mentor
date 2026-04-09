@@ -1,87 +1,101 @@
 import { supabase } from './supabase'
 
-// ── 點數系統（localStorage + Supabase 同步）─────────────────────────────────
+// ── Types ──────────────────────────────────────────────
 
-const POINTS_KEY = 'gto_user_points'
-
-// Pending sync queue — ensures no writes are lost
-let pendingSync: Promise<void> = Promise.resolve()
-
-export function getPoints(): number {
-  const raw = localStorage.getItem(POINTS_KEY)
-  return raw ? parseInt(raw, 10) || 0 : 0
+export interface PointTransaction {
+  id: string
+  amount: number
+  balance_after: number
+  type: string
+  description: string
+  reference_id: string | null
+  created_at: string
 }
 
-export function addPoints(amount: number): number {
-  const current = getPoints()
-  const next = current + amount
-  localStorage.setItem(POINTS_KEY, String(next))
-  syncPointsToSupabase(next)
-  return next
-}
+// ── Queries ────────────────────────────────────────────
 
-export function spendPoints(amount: number): boolean {
-  const current = getPoints()
-  if (current < amount) return false
-  const next = current - amount
-  localStorage.setItem(POINTS_KEY, String(next))
-  syncPointsToSupabase(next)
-  return true
-}
-
-// 從 Supabase 載入點數（登入時呼叫）
-export async function loadPointsFromSupabase(): Promise<number> {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return getPoints()
-
+/** Get current point balance from Supabase */
+export async function getPoints(userId: string): Promise<number> {
   const { data } = await supabase
     .from('profiles')
     .select('points')
-    .eq('id', user.id)
+    .eq('id', userId)
     .single()
+  return data?.points ?? 0
+}
 
-  const serverPoints = data?.points ?? 0
-  const localPoints = getPoints()
+/** Get recent transaction history */
+export async function getTransactionHistory(
+  userId: string,
+  limit = 20
+): Promise<PointTransaction[]> {
+  const { data } = await supabase
+    .from('point_transactions')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  return (data ?? []) as PointTransaction[]
+}
 
-  // 取較大值（避免資料遺失）
-  const merged = Math.max(serverPoints, localPoints)
-  localStorage.setItem(POINTS_KEY, String(merged))
+// ── Mutations (atomic via RPC) ─────────────────────────
 
-  if (merged !== serverPoints) {
-    syncPointsToSupabase(merged)
+/** Add points atomically. Returns new balance. */
+export async function addPoints(
+  userId: string,
+  amount: number,
+  type: string,
+  description: string,
+  referenceId?: string
+): Promise<number> {
+  const { data, error } = await supabase.rpc('add_points', {
+    p_user_id: userId,
+    p_amount: amount,
+    p_type: type,
+    p_description: description,
+    p_reference_id: referenceId ?? null,
+  })
+  if (error) throw new Error(`addPoints failed: ${error.message}`)
+  return data?.[0]?.new_balance ?? 0
+}
+
+/** Spend points atomically. Returns success and new balance. */
+export async function spendPoints(
+  userId: string,
+  amount: number,
+  type: string,
+  description: string
+): Promise<{ success: boolean; balance: number }> {
+  const { data, error } = await supabase.rpc('spend_points', {
+    p_user_id: userId,
+    p_amount: amount,
+    p_type: type,
+    p_description: description,
+  })
+  if (error) throw new Error(`spendPoints failed: ${error.message}`)
+  const row = data?.[0]
+  return { success: row?.success ?? false, balance: row?.new_balance ?? 0 }
+}
+
+// ── Migration helper ───────────────────────────────────
+
+/**
+ * One-time migration: move localStorage points to Supabase.
+ * Called on login. After migration, clears localStorage.
+ */
+export async function migrateLocalPoints(userId: string): Promise<number> {
+  const LEGACY_KEY = 'gto_user_points'
+  const raw = localStorage.getItem(LEGACY_KEY)
+  const localPoints = raw ? parseInt(raw, 10) || 0 : 0
+
+  if (localPoints > 0) {
+    const serverPoints = await getPoints(userId)
+    if (localPoints > serverPoints) {
+      const diff = localPoints - serverPoints
+      await addPoints(userId, diff, 'admin', `從本地遷移 ${diff} 點`)
+    }
   }
 
-  return merged
-}
-
-// 背景同步到 Supabase — queued to prevent race conditions
-function syncPointsToSupabase(points: number) {
-  pendingSync = pendingSync.then(async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      await supabase
-        .from('profiles')
-        .update({ points })
-        .eq('id', user.id)
-    } catch {
-      // Silent fail — will retry on next sync
-    }
-  })
-}
-
-// Flush pending sync on page hide (tab close / navigate away)
-if (typeof document !== 'undefined') {
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') {
-      // Use sendBeacon as last-resort fallback
-      const points = getPoints()
-      supabase.auth.getUser().then(({ data: { user } }) => {
-        if (!user) return
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/profiles?id=eq.${user.id}`
-        const body = JSON.stringify({ points })
-        navigator.sendBeacon?.(url, new Blob([body], { type: 'application/json' }))
-      })
-    }
-  })
+  localStorage.removeItem(LEGACY_KEY)
+  return getPoints(userId)
 }
