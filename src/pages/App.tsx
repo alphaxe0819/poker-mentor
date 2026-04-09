@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react'
 import { supabase } from '../lib/supabase'
 import { getProfile, isDailyLimitReached, incrementDailyPlays, isUserPaid } from '../lib/auth'
 import type { UserProfile } from '../lib/auth'
@@ -10,7 +10,6 @@ import TrainTab from '../tabs/TrainTab'
 import QuizScreen from '../components/QuizScreen'
 import QuizDetailScreen from '../components/QuizDetailScreen'
 import OnboardingScreen from '../components/OnboardingScreen'
-import { loadPointsFromSupabase } from '../lib/points'
 import { loadCourseProgressFromSupabase, markOnboardingDone as syncMarkOnboardingDone, loadOnboardingFromSupabase } from '../lib/courseSync'
 import { initLemonSqueezy, getSubscription, isSubscriptionActive } from '../lib/lemonsqueezy'
 
@@ -47,8 +46,16 @@ export default function App() {
   const [tab,       setTab]       = useState<Tab>('train')
   const [showLimit, setShowLimit] = useState(false)
   const [authInitialMode, setAuthInitialMode] = useState<'login' | 'register'>('login')
+  const [points, setPoints] = useState(0)
   const [pendingQuizResult, setPendingQuizResult] = useState<import('../data/quizQuestions').QuizResult | null>(null)
   const [postQuizMode, setPostQuizMode] = useState<'onboarding' | 'app'>('app')
+
+  const refreshPoints = useCallback(async () => {
+    if (!user) return
+    const { getPoints } = await import('../lib/points')
+    const p = await getPoints(user.id)
+    setPoints(p)
+  }, [user])
 
   // Checkout 完成後刷新訂閱狀態
   const refreshSubscription = async () => {
@@ -63,11 +70,11 @@ export default function App() {
   }
 
   async function initUser(userId: string) {
-    // 從 Supabase 同步點數和課程進度
-    await Promise.all([
-      loadPointsFromSupabase(),
+    const [migratedPoints] = await Promise.all([
+      import('../lib/points').then(m => m.migrateLocalPoints(userId)),
       loadCourseProgressFromSupabase(),
     ])
+    setPoints(migratedPoints)
     const done = await loadOnboardingFromSupabase(userId)
     return done
   }
