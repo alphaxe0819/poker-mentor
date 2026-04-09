@@ -8,6 +8,7 @@ import BottomNav from '../components/BottomNav'
 import DailyLimitScreen from '../components/DailyLimitScreen'
 import TrainTab from '../tabs/TrainTab'
 import QuizScreen from '../components/QuizScreen'
+import QuizDetailScreen from '../components/QuizDetailScreen'
 import OnboardingScreen from '../components/OnboardingScreen'
 import { loadPointsFromSupabase } from '../lib/points'
 import { loadCourseProgressFromSupabase, markOnboardingDone as syncMarkOnboardingDone, loadOnboardingFromSupabase } from '../lib/courseSync'
@@ -29,7 +30,7 @@ const LazyFallback = () => (
 )
 
 type Tab = 'train' | 'course' | 'stats' | 'analysis' | 'profile'
-type AppMode = 'loading' | 'auth' | 'guest' | 'onboarding' | 'app' | 'upgrade'
+type AppMode = 'loading' | 'auth' | 'guest' | 'quiz-detail' | 'onboarding' | 'app' | 'upgrade'
 
 export default function App() {
   if (window.location.pathname === '/share') {
@@ -46,6 +47,8 @@ export default function App() {
   const [tab,       setTab]       = useState<Tab>('train')
   const [showLimit, setShowLimit] = useState(false)
   const [authInitialMode, setAuthInitialMode] = useState<'login' | 'register'>('login')
+  const [pendingQuizResult, setPendingQuizResult] = useState<import('../data/quizQuestions').QuizResult | null>(null)
+  const [postQuizMode, setPostQuizMode] = useState<'onboarding' | 'app'>('app')
 
   // Checkout 完成後刷新訂閱狀態
   const refreshSubscription = async () => {
@@ -108,8 +111,9 @@ export default function App() {
           p = await getProfile()
         }
         // Sync quiz result from localStorage to profile (must run after profile exists)
+        let hasQuizResult = false
         if (p && session.user) {
-          const { loadQuizResultLocal, clearQuizResultLocal } = await import('../data/quizQuestions')
+          const { loadQuizResultLocal, clearQuizResultLocal, computeQuizResult: _c } = await import('../data/quizQuestions')
           const quizResult = loadQuizResultLocal()
           if (quizResult) {
             await supabase.from('profiles').update({
@@ -118,16 +122,23 @@ export default function App() {
               quiz_dimensions: quizResult.dimensions,
             }).eq('id', session.user.id)
             clearQuizResultLocal()
-            // Refresh profile so onboarding can access quiz data
             p = await getProfile()
+            setPendingQuizResult(quizResult)
+            hasQuizResult = true
           }
         }
         setProfile(p)
         setShowLimit(false)
         const onboardingDone = await initUser(session.user.id)
         setTab('train')
-        // 不覆蓋正在進行中的 onboarding
-        setAppMode(prev => prev === 'onboarding' ? prev : onboardingDone ? 'app' : 'onboarding')
+        if (hasQuizResult) {
+          // Show quiz detail screen first, then proceed to onboarding or app
+          setPostQuizMode(onboardingDone ? 'app' : 'onboarding')
+          setAppMode('quiz-detail')
+        } else {
+          // 不覆蓋正在進行中的 onboarding
+          setAppMode(prev => prev === 'onboarding' ? prev : onboardingDone ? 'app' : 'onboarding')
+        }
       } else {
         setUser(null)
         setProfile(null)
@@ -194,6 +205,22 @@ export default function App() {
       <QuizScreen
         onFinish={() => { setAuthInitialMode('login'); setAppMode('auth') }}
         onRegister={() => { setAuthInitialMode('register'); setAppMode('auth') }}
+      />
+    )
+  }
+
+  if (appMode === 'quiz-detail' && pendingQuizResult) {
+    return (
+      <QuizDetailScreen
+        result={pendingQuizResult}
+        onContinue={() => {
+          setPendingQuizResult(null)
+          if (postQuizMode === 'onboarding' && user) {
+            setAppMode('onboarding')
+          } else {
+            setAppMode('app')
+          }
+        }}
       />
     )
   }
