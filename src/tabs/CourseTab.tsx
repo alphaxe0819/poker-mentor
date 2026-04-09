@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { COURSES, type Course, type CourseCategory } from '../lib/courseData'
-import { getPoints, spendPoints } from '../lib/points'
 import { getCourseProgress, isCourseUnlocked, markCourseUnlocked } from '../lib/courseSync'
 import CoursePlayScreen from '../components/CoursePlayScreen'
 
@@ -18,17 +17,22 @@ const CATEGORY_TABS: { key: CourseCategory; label: string; tag: string; tagColor
   { key: 'special',   label: '特別課程', tag: '敬請期待',  tagColor: '#6b7280' },
 ]
 
-export default function CourseTab() {
+interface CourseTabProps {
+  points: number
+  userId: string | null
+  onPointsChanged?: () => void
+}
+
+export default function CourseTab({ points, userId, onPointsChanged }: CourseTabProps) {
   const [activeCourse, setActiveCourse] = useState<Course | null>(null)
   const [activeCategory, setActiveCategory] = useState<CourseCategory>('beginner')
-  const [points, setPoints] = useState(getPoints)
   const [unlockTarget, setUnlockTarget] = useState<Course | null>(null)
 
   if (activeCourse) {
     return (
       <CoursePlayScreen
         course={activeCourse}
-        onBack={() => { setActiveCourse(null); setPoints(getPoints()) }}
+        onBack={() => { setActiveCourse(null) }}
       />
     )
   }
@@ -37,7 +41,6 @@ export default function CourseTab() {
 
   const handleCourseClick = (course: Course, locked: boolean, needsUnlock: boolean) => {
     if (needsUnlock) {
-      setPoints(getPoints())
       setUnlockTarget(course)
       return
     }
@@ -45,12 +48,15 @@ export default function CourseTab() {
     setActiveCourse(course)
   }
 
-  const handleUnlock = () => {
+  const handleUnlock = async () => {
     if (!unlockTarget) return
-    if (spendPoints(ADVANCED_COST)) {
+    if (!userId) return
+    const { spendPoints } = await import('../lib/points')
+    const result = await spendPoints(userId, ADVANCED_COST, 'course', `解鎖進階課程`)
+    if (result.success) {
       markCourseUnlocked(unlockTarget.id)
-      setPoints(getPoints())
       setUnlockTarget(null)
+      onPointsChanged?.()
     }
   }
 

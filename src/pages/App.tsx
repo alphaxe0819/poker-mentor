@@ -298,7 +298,7 @@ export default function App() {
           )}
         </div>
         <Suspense fallback={<LazyFallback />}>
-          {tab === 'course'   && <CourseTab />}
+          {tab === 'course'   && <CourseTab points={points} userId={user?.id ?? null} onPointsChanged={refreshPoints} />}
           {tab === 'stats'    && <StatsTab userId={user?.id ?? null} isPaid={profile ? isUserPaid(profile) : false} onNavigateAnalysis={() => setTab('analysis')} />}
           {tab === 'analysis' && <AnalysisTab userId={user?.id ?? null} isPaid={profile ? isUserPaid(profile) : false} />}
           {tab === 'profile'  && <ProfileTab onPromoRedeemed={async () => {
