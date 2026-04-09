@@ -166,8 +166,9 @@ export default function QuizDetailScreen({
   const [feedbackSent, setFeedbackSent] = useState(false)
   const feedbackRef = useRef(false)
 
-  // Share state
+  // Share & detail state
   const [sharing, setSharing] = useState(false)
+  const [detailOpen, setDetailOpen] = useState(false)
 
   const handleFeedback = useCallback(async (acc: number | null, imp: number | null) => {
     if (feedbackRef.current) return
@@ -220,24 +221,14 @@ export default function QuizDetailScreen({
     setSharing(false)
   }
 
-  // Collapsible section helper
-  const Collapsible = ({ title, children }: { title: string; children: ReactNode }) => {
-    const [open, setOpen] = useState(false)
-    return (
-      <div className="rounded-xl mb-3 overflow-hidden"
-        style={{ background: '#111', border: '1px solid #1a1a1a' }}>
-        <button onClick={() => setOpen(!open)}
-          className="w-full flex items-center justify-between px-4 py-3 text-left">
-          <span className="text-white text-sm font-medium">{title}</span>
-          <span className="text-gray-500 text-xs transition-transform"
-            style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-            ▼
-          </span>
-        </button>
-        {open && <div className="px-4 pb-4">{children}</div>}
-      </div>
-    )
-  }
+  // Detail section helper (all controlled by shared detailOpen state)
+  const DetailSection = ({ title, children }: { title: string; children: ReactNode }) => (
+    <div className="rounded-xl mb-3 overflow-hidden px-4 py-3"
+      style={{ background: '#111', border: '1px solid #1a1a1a' }}>
+      <div className="text-white text-sm font-medium mb-2">{title}</div>
+      {children}
+    </div>
+  )
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0a0a0a' }}>
@@ -312,45 +303,55 @@ export default function QuizDetailScreen({
             {sharing ? '產生圖片中...' : '📤 分享我的撲克 MBTI'}
           </button>
 
-          {/* Collapsible details */}
-          <Collapsible title="💡 個性化訓練建議">
-            <div className="flex flex-col gap-2">
-              {meta.tips.map((tip, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <span className="text-purple-400 text-xs mt-0.5">●</span>
-                  <span className="text-gray-300 text-sm">{tip}</span>
+          {/* Expandable details */}
+          {!detailOpen ? (
+            <button onClick={() => setDetailOpen(true)}
+              className="w-full py-3 rounded-xl text-sm font-medium transition mb-3"
+              style={{ background: '#111', border: '1px solid #1a1a1a', color: '#a78bfa' }}>
+              展開看更多說明 ▼
+            </button>
+          ) : (
+            <>
+              <DetailSection title="💡 個性化訓練建議">
+                <div className="flex flex-col gap-2">
+                  {meta.tips.map((tip, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <span className="text-purple-400 text-xs mt-0.5">●</span>
+                      <span className="text-gray-300 text-sm">{tip}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </Collapsible>
+              </DetailSection>
 
-          <Collapsible title="📊 GTO 理解度">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-gray-400 text-sm">等級</span>
-              <span className="text-white text-sm font-medium">{levelMeta.label}</span>
-            </div>
-            <div className="w-full h-1.5 rounded-full mt-1" style={{ background: '#222' }}>
-              <div className="h-1.5 rounded-full"
-                style={{
-                  width: `${(result.gtoCorrect / scenarioCount) * 100}%`,
-                  background: '#7c3aed',
-                }}
-              />
-            </div>
-            <div className="text-gray-600 text-xs mt-1 text-right">
-              {result.gtoCorrect} / {scenarioCount} 情境題正確
-            </div>
-          </Collapsible>
+              <DetailSection title="📊 GTO 理解度">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-gray-400 text-sm">等級</span>
+                  <span className="text-white text-sm font-medium">{levelMeta.label}</span>
+                </div>
+                <div className="w-full h-1.5 rounded-full mt-1" style={{ background: '#222' }}>
+                  <div className="h-1.5 rounded-full"
+                    style={{
+                      width: `${(result.gtoCorrect / scenarioCount) * 100}%`,
+                      background: '#7c3aed',
+                    }}
+                  />
+                </div>
+                <div className="text-gray-600 text-xs mt-1 text-right">
+                  {result.gtoCorrect} / {scenarioCount} 情境題正確
+                </div>
+              </DetailSection>
 
-          {reco && (
-            <Collapsible title="🎯 推薦學習路徑">
-              <div className="text-gray-300 text-sm">
-                {reco.course === '直接開始訓練'
-                  ? `${reco.reason}，推薦直接開始實戰訓練！`
-                  : `推薦先上「${reco.course}」課程 — ${reco.reason}`
-                }
-              </div>
-            </Collapsible>
+              {reco && (
+                <DetailSection title="🎯 推薦學習路徑">
+                  <div className="text-gray-300 text-sm">
+                    {reco.course === '直接開始訓練'
+                      ? `${reco.reason}，推薦直接開始實戰訓練！`
+                      : `推薦先上「${reco.course}」課程 — ${reco.reason}`
+                    }
+                  </div>
+                </DetailSection>
+              )}
+            </>
           )}
         </div>
       </div>
