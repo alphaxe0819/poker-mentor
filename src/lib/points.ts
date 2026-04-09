@@ -85,15 +85,25 @@ export async function spendPoints(
  */
 export async function migrateLocalPoints(userId: string): Promise<number> {
   const LEGACY_KEY = 'gto_user_points'
-  const raw = localStorage.getItem(LEGACY_KEY)
-  const localPoints = raw ? parseInt(raw, 10) || 0 : 0
+  const MIGRATED_KEY = 'gto_points_migrated'
 
-  if (localPoints > 0) {
-    const serverPoints = await getPoints(userId)
-    if (localPoints > serverPoints) {
-      const diff = localPoints - serverPoints
-      await addPoints(userId, diff, 'admin', `從本地遷移 ${diff} 點`)
+  // Only migrate once per browser, and only if this user already had points on server
+  // (prevents giving leftover localStorage points to a brand new account)
+  const alreadyMigrated = localStorage.getItem(MIGRATED_KEY)
+  if (!alreadyMigrated) {
+    const raw = localStorage.getItem(LEGACY_KEY)
+    const localPoints = raw ? parseInt(raw, 10) || 0 : 0
+
+    if (localPoints > 0) {
+      const serverPoints = await getPoints(userId)
+      // Only migrate if user already has some activity (not a fresh account)
+      if (serverPoints > 0 && localPoints > serverPoints) {
+        const diff = localPoints - serverPoints
+        await addPoints(userId, diff, 'admin', `從本地遷移 ${diff} 點`)
+      }
     }
+
+    localStorage.setItem(MIGRATED_KEY, userId)
   }
 
   localStorage.removeItem(LEGACY_KEY)
