@@ -13,7 +13,7 @@ import ActionHistory from '../components/ActionHistory'
 import TrainSetupScreen from './TrainSetupScreen'
 import RoundResultScreen from '../components/RoundResultScreen'
 import { saveAnswerRecord } from '../lib/auth'
-import { addPoints } from '../lib/points'
+
 import { getStep2GTOFromDB, getValidScenarios, getRangeByKey, getActionByKey, getTopActionsByKey, isActionValid, preloadDB } from '../lib/gtoData'
 
 // ── 常數 ──────────────────────────────────────────────────────────────────────
@@ -258,9 +258,10 @@ interface TrainTabProps {
   isTabActive?: boolean
   onStartRound?: () => Promise<boolean>
   onRoundComplete?: () => void
+  onPointsChanged?: () => void
 }
 
-export default function TrainTab({ guestMode: _guestMode = false, userId = null, userName, isPaid = false, isTabActive = true, onStartRound, onRoundComplete }: TrainTabProps) {
+export default function TrainTab({ guestMode: _guestMode = false, userId = null, userName, isPaid = false, isTabActive = true, onStartRound, onRoundComplete, onPointsChanged }: TrainTabProps) {
   const [screen,    setScreen]    = useState<Screen>('setup')
   const [config,    setConfig]    = useState<TrainConfig | null>(null)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
@@ -555,7 +556,7 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
           }
           const newTotalFold = total + 1
           setTotal(newTotalFold)
-          setCorrect(c => c + 1); setStreak(s => s + 1); addPoints(1)
+          setCorrect(c => c + 1); setStreak(s => s + 1); if (userId) { import('../lib/points').then(m => m.addPoints(userId, 1, 'training', '答題正確 +1')).then(() => onPointsChanged?.()) }
           setScore(s => Math.round((s + 1) * 10) / 10)
           if (newTotalFold >= ROUND_SIZE) {
             setPhase('round_complete')
@@ -591,7 +592,7 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
 
     const newTotal = total + 1
     setTotal(newTotal)
-    setCorrect(c => c + 1); addPoints(1)
+    setCorrect(c => c + 1); if (userId) { import('../lib/points').then(m => m.addPoints(userId, 1, 'training', '答題正確 +1')).then(() => onPointsChanged?.()) }
     setStreak(s => s + 1)
     setScore(s => Math.round((s + 1) * 10) / 10)
     if (newTotal >= ROUND_SIZE) {
@@ -633,7 +634,7 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
     const newTotalStep2 = total + 1
     setTotal(newTotalStep2)
     if (isOk) {
-      setCorrect(c => c + 1); addPoints(1)
+      setCorrect(c => c + 1); if (userId) { import('../lib/points').then(m => m.addPoints(userId, 1, 'training', '答題正確 +1')).then(() => onPointsChanged?.()) }
       setStreak(s => s + 1)
       setScore(s => Math.round((s + 1) * 10) / 10)
     } else {

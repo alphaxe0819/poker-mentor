@@ -280,6 +280,7 @@ export default function App() {
               userName={profile?.name ?? '玩家'}
               isPaid={profile ? isUserPaid(profile) : false}
               onStartRound={handleStartRound}
+              onPointsChanged={refreshPoints}
               onRoundComplete={async () => {
                 if (!user) return
                 // 完成一關後才計數
