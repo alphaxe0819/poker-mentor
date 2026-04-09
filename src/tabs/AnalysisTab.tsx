@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { getPoints, spendPoints } from '../lib/points'
 
 const ANALYSIS_COST = 50
 
@@ -17,6 +16,8 @@ interface AnswerRecord {
 interface Props {
   userId?: string | null
   isPaid?: boolean
+  points: number
+  onPointsChanged?: () => void
 }
 
 // 付費用戶每日免費分析
@@ -71,12 +72,11 @@ async function analyzeWeakness(data: {
   return json.text ?? '分析失敗，請稍後再試。'
 }
 
-export default function AnalysisTab({ userId, isPaid = false }: Props) {
+export default function AnalysisTab({ userId, isPaid = false, points, onPointsChanged }: Props) {
   const [records,   setRecords]   = useState<AnswerRecord[]>([])
   const [loading,   setLoading]   = useState(true)
   const [analyzing, setAnalyzing] = useState(false)
   const [analysis,  setAnalysis]  = useState<string | null>(null)
-  const [points,    setPoints]    = useState(getPoints)
   const [showConfirm, setShowConfirm] = useState(false)
 
   // 付費用戶今日是否已用免費次數
@@ -184,8 +184,12 @@ export default function AnalysisTab({ userId, isPaid = false }: Props) {
       if (hasPaidFree) {
         markPaidFreeUsed()
       } else {
-        spendPoints(ANALYSIS_COST)
-        setPoints(getPoints())
+        if (userId) {
+          const { spendPoints } = await import('../lib/points')
+          const result = await spendPoints(userId, ANALYSIS_COST, 'analysis', 'AI 弱點分析')
+          if (!result.success) return // insufficient points
+          onPointsChanged?.()
+        }
       }
       setAnalysis(result)
     } catch {
