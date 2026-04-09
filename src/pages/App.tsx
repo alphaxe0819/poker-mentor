@@ -60,6 +60,8 @@ export default function App() {
     setPoints(p)
   }, [user])
 
+  const navigateToMissions = useCallback(() => setTab('profile'), [])
+
   // Checkout 完成後刷新訂閱狀態
   const refreshSubscription = async () => {
     if (!user) return
@@ -320,6 +322,7 @@ export default function App() {
                 points={points}
                 onStartRound={handleStartRound}
                 onPointsChanged={refreshPoints}
+                onNavigateToMissions={navigateToMissions}
                 onRoundComplete={async () => {
                   if (!user) return
                   const currentProfile = await getProfile()
@@ -339,7 +342,7 @@ export default function App() {
 
           {trainSubTab === 'course' && (
             <Suspense fallback={<LazyFallback />}>
-              <CourseTab points={points} userId={user?.id ?? null} onPointsChanged={refreshPoints} />
+              <CourseTab points={points} userId={user?.id ?? null} onPointsChanged={refreshPoints} onNavigateToMissions={navigateToMissions} />
             </Suspense>
           )}
         </div>
@@ -351,6 +354,7 @@ export default function App() {
                 points={points}
                 coachOnboardingDone={profile?.coach_onboarding_done ?? false}
                 onPointsChanged={refreshPoints}
+                onNavigateToMissions={navigateToMissions}
                 onOnboardingDone={async () => {
                   const p = await getProfile()
                   setProfile(p)
@@ -361,7 +365,7 @@ export default function App() {
         )}
         <Suspense fallback={<LazyFallback />}>
           {tab === 'stats'    && <StatsTab userId={user?.id ?? null} isPaid={profile ? isUserPaid(profile) : false} onNavigateAnalysis={() => setTab('analysis')} />}
-          {tab === 'analysis' && <AnalysisTab userId={user?.id ?? null} isPaid={profile ? isUserPaid(profile) : false} points={points} onPointsChanged={refreshPoints} />}
+          {tab === 'analysis' && <AnalysisTab userId={user?.id ?? null} isPaid={profile ? isUserPaid(profile) : false} points={points} onPointsChanged={refreshPoints} onNavigateToMissions={navigateToMissions} />}
           {tab === 'profile'  && <ProfileTab points={points} userId={user?.id ?? null} onPointsChanged={refreshPoints} onPromoRedeemed={async () => {
             const p = await getProfile()
             setProfile(p)

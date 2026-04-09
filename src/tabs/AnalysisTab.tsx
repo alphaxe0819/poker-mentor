@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import PointsBadge from '../components/PointsBadge'
 
 const ANALYSIS_COST = 50
 
@@ -18,6 +19,7 @@ interface Props {
   isPaid?: boolean
   points: number
   onPointsChanged?: () => void
+  onNavigateToMissions?: () => void
 }
 
 // 付費用戶每日免費分析
@@ -72,7 +74,7 @@ async function analyzeWeakness(data: {
   return json.text ?? '分析失敗，請稍後再試。'
 }
 
-export default function AnalysisTab({ userId, isPaid = false, points, onPointsChanged }: Props) {
+export default function AnalysisTab({ userId, isPaid = false, points, onPointsChanged, onNavigateToMissions }: Props) {
   const [records,   setRecords]   = useState<AnswerRecord[]>([])
   const [loading,   setLoading]   = useState(true)
   const [analyzing, setAnalyzing] = useState(false)
@@ -224,11 +226,7 @@ export default function AnalysisTab({ userId, isPaid = false, points, onPointsCh
       {/* Header */}
       <div className="flex items-center justify-between pt-2">
         <div className="text-white font-bold text-base">🎯 弱點強化分析</div>
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full"
-          style={{ background: '#1a1a2e', border: '1px solid #2d2d4a' }}>
-          <span className="text-sm">⭐</span>
-          <span className="text-sm font-bold text-yellow-400">{points}</span>
-        </div>
+        <PointsBadge points={points} onNavigateToMissions={onNavigateToMissions} />
       </div>
 
       {/* 費用說明 */}

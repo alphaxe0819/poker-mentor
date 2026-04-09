@@ -260,9 +260,10 @@ interface TrainTabProps {
   onStartRound?: () => Promise<boolean>
   onRoundComplete?: () => void
   onPointsChanged?: () => void
+  onNavigateToMissions?: () => void
 }
 
-export default function TrainTab({ guestMode: _guestMode = false, userId = null, userName, isPaid = false, points = 0, isTabActive = true, onStartRound, onRoundComplete, onPointsChanged }: TrainTabProps) {
+export default function TrainTab({ guestMode: _guestMode = false, userId = null, userName, isPaid = false, points = 0, isTabActive = true, onStartRound, onRoundComplete, onPointsChanged, onNavigateToMissions }: TrainTabProps) {
   const [screen,    setScreen]    = useState<Screen>('setup')
   const [config,    setConfig]    = useState<TrainConfig | null>(null)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
@@ -654,7 +655,7 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
 
   // ── 設定畫面 ──
   if (screen === 'setup') {
-    return <TrainSetupScreen points={points} isPaid={isPaid} onStart={handleStart} />
+    return <TrainSetupScreen points={points} isPaid={isPaid} onNavigateToMissions={onNavigateToMissions} onStart={handleStart} />
   }
 
   // ── 完成一關 ──

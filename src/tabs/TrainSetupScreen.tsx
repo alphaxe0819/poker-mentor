@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import PointsBadge from '../components/PointsBadge'
 
 const GAME_TYPES = [
   { key: 'random',     label: '全隨機' },
@@ -18,6 +19,7 @@ const ROUND_SIZES = [10, 30, 100]
 interface Props {
   points?: number
   isPaid?: boolean
+  onNavigateToMissions?: () => void
   onStart: (config: {
     gameTypeKey: GameTypeKey
     stackDepth: number | 'random'
@@ -27,7 +29,7 @@ interface Props {
   }) => void
 }
 
-export default function TrainSetupScreen({ points = 0, isPaid = false, onStart }: Props) {
+export default function TrainSetupScreen({ points = 0, isPaid = false, onNavigateToMissions, onStart }: Props) {
   const [gameTypeKey, setGameTypeKey] = useState<GameTypeKey>(isPaid ? 'random' : 'random')
   const [stackDepth,  setStackDepth]  = useState<StackDepthOption>('random')
   const trainMode = 'multi'
@@ -46,11 +48,7 @@ export default function TrainSetupScreen({ points = 0, isPaid = false, onStart }
     <div className="flex flex-col gap-6 p-4 max-w-lg mx-auto">
       <div className="flex items-center justify-between mt-2">
         <h2 className="text-white font-bold text-lg">練習設定</h2>
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full"
-          style={{ background: '#1a1a2e', border: '1px solid #2d2d4a' }}>
-          <span className="text-sm">⭐</span>
-          <span className="text-sm font-bold text-yellow-400">{points}</span>
-        </div>
+        <PointsBadge points={points} onNavigateToMissions={onNavigateToMissions} />
       </div>
 
       {/* 遊戲類型 */}

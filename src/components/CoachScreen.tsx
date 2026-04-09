@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { ONBOARDING_STEPS, ONBOARDING_RESPONSES, ONBOARDING_OUTRO } from '../data/coachOnboarding'
 import { supabase } from '../lib/supabase'
+import PointsBadge from './PointsBadge'
 
 interface Props {
   userId: string
@@ -8,6 +9,7 @@ interface Props {
   coachOnboardingDone: boolean
   onPointsChanged: () => void
   onOnboardingDone: () => void
+  onNavigateToMissions?: () => void
 }
 
 interface ChatMessage {
@@ -31,7 +33,7 @@ function saveMessages(msgs: ChatMessage[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed))
 }
 
-export default function CoachScreen({ userId, points, coachOnboardingDone, onPointsChanged, onOnboardingDone }: Props) {
+export default function CoachScreen({ userId, points, coachOnboardingDone, onPointsChanged, onOnboardingDone, onNavigateToMissions }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>(() =>
     coachOnboardingDone ? loadMessages() : []
   )
@@ -166,7 +168,7 @@ export default function CoachScreen({ userId, points, coachOnboardingDone, onPoi
           <span className="text-white text-sm font-bold">AI 教練</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-yellow-400 text-xs font-medium">⭐ {points}</span>
+          <PointsBadge points={points} onNavigateToMissions={onNavigateToMissions} />
           {onboardingDone && messages.length > 0 && (
             <button onClick={handleClear} className="text-gray-600 text-xs">清除對話</button>
           )}

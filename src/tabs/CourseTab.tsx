@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import PointsBadge from '../components/PointsBadge'
 import { COURSES, type Course, type CourseCategory } from '../lib/courseData'
 import { getCourseProgress, isCourseUnlocked, markCourseUnlocked } from '../lib/courseSync'
 import CoursePlayScreen from '../components/CoursePlayScreen'
@@ -21,9 +22,10 @@ interface CourseTabProps {
   points: number
   userId: string | null
   onPointsChanged?: () => void
+  onNavigateToMissions?: () => void
 }
 
-export default function CourseTab({ points, userId, onPointsChanged }: CourseTabProps) {
+export default function CourseTab({ points, userId, onPointsChanged, onNavigateToMissions }: CourseTabProps) {
   const [activeCourse, setActiveCourse] = useState<Course | null>(null)
   const [activeCategory, setActiveCategory] = useState<CourseCategory>('beginner')
   const [unlockTarget, setUnlockTarget] = useState<Course | null>(null)
@@ -65,11 +67,7 @@ export default function CourseTab({ points, userId, onPointsChanged }: CourseTab
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold text-white">GTO 課程</h1>
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full"
-          style={{ background: '#1a1a2e', border: '1px solid #2d2d4a' }}>
-          <span className="text-sm">⭐</span>
-          <span className="text-sm font-bold text-yellow-400">{points}</span>
-        </div>
+        <PointsBadge points={points} onNavigateToMissions={onNavigateToMissions} />
       </div>
 
       {/* Category Tabs */}
