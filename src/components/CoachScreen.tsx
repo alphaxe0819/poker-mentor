@@ -157,9 +157,9 @@ export default function CoachScreen({ userId, points, coachOnboardingDone, onPoi
   const insufficientPoints = points < COST_PER_MESSAGE
 
   return (
-    <div className="flex flex-col h-full" style={{ background: '#0a0a0a' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3"
+    <div className="flex flex-col" style={{ background: '#0a0a0a', height: 'calc(100vh - 48px)' }}>
+      {/* Header — fixed top */}
+      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3"
         style={{ borderBottom: '1px solid #1a1a1a' }}>
         <div className="flex items-center gap-2">
           <span className="text-lg">🤖</span>
@@ -223,9 +223,9 @@ export default function CoachScreen({ userId, points, coachOnboardingDone, onPoi
         )}
       </div>
 
-      {/* Input area (only show after onboarding) */}
+      {/* Input area — fixed bottom */}
       {onboardingDone && (
-        <div className="px-4 pb-4 pt-2" style={{ borderTop: '1px solid #1a1a1a' }}>
+        <div className="flex-shrink-0 px-4 pb-4 pt-2" style={{ borderTop: '1px solid #1a1a1a' }}>
           {insufficientPoints && (
             <div className="text-center text-xs text-gray-500 mb-2">
               點數不足（需要 {COST_PER_MESSAGE} 點），完成任務獲取更多點數
