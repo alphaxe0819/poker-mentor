@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { getPoints } from '../lib/points'
 import { getSubscription, getSubscriptionDisplayInfo } from '../lib/lemonsqueezy'
 import type { Subscription } from '../lib/lemonsqueezy'
 import type { User } from '@supabase/supabase-js'
@@ -10,10 +9,11 @@ const DEMO_EMAIL    = 'student@demo.com'
 const DEMO_PASSWORD = 'demo1234'
 
 interface ProfileTabProps {
+  points: number
   onPromoRedeemed?: () => void
 }
 
-export default function ProfileTab({ onPromoRedeemed }: ProfileTabProps) {
+export default function ProfileTab({ points, onPromoRedeemed }: ProfileTabProps) {
   const [user, setUser]       = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [sub, setSub]         = useState<Subscription | null>(null)
@@ -130,7 +130,7 @@ export default function ProfileTab({ onPromoRedeemed }: ProfileTabProps) {
                style={{ background: '#111', border: '1px solid #1a1a1a' }}>
             <div>
               <div className="text-gray-400 text-xs">累積點數</div>
-              <div className="text-yellow-400 font-bold text-lg">⭐ {getPoints()}</div>
+              <div className="text-yellow-400 font-bold text-lg">⭐ {points}</div>
             </div>
             <div className="text-gray-500 text-xs text-right">
               練習答對 +1 點

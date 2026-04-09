@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { getPoints } from '../lib/points'
 
 const GAME_TYPES = [
   { key: 'random',     label: '全隨機' },
@@ -17,6 +16,7 @@ type StackDepthOption = typeof STACK_DEPTHS_OPTIONS[number]
 const ROUND_SIZES = [10, 30, 100]
 
 interface Props {
+  points?: number
   isPaid?: boolean
   onStart: (config: {
     gameTypeKey: GameTypeKey
@@ -27,7 +27,7 @@ interface Props {
   }) => void
 }
 
-export default function TrainSetupScreen({ isPaid = false, onStart }: Props) {
+export default function TrainSetupScreen({ points = 0, isPaid = false, onStart }: Props) {
   const [gameTypeKey, setGameTypeKey] = useState<GameTypeKey>(isPaid ? 'random' : 'random')
   const [stackDepth,  setStackDepth]  = useState<StackDepthOption>('random')
   const trainMode = 'multi'
@@ -49,7 +49,7 @@ export default function TrainSetupScreen({ isPaid = false, onStart }: Props) {
         <div className="flex items-center gap-1.5 px-3 py-1 rounded-full"
           style={{ background: '#1a1a2e', border: '1px solid #2d2d4a' }}>
           <span className="text-sm">⭐</span>
-          <span className="text-sm font-bold text-yellow-400">{getPoints()}</span>
+          <span className="text-sm font-bold text-yellow-400">{points}</span>
         </div>
       </div>
 
