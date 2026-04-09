@@ -75,6 +75,17 @@ export default function App() {
       loadCourseProgressFromSupabase(),
     ])
     setPoints(migratedPoints)
+
+    // Daily login + auto-claim quiz reward (fire and forget, don't block)
+    import('../lib/missions').then(async (m) => {
+      await m.checkDailyLogin(userId)
+      await m.claimQuizReward(userId)
+      // Refresh points after potential rewards
+      const { getPoints } = await import('../lib/points')
+      const p = await getPoints(userId)
+      setPoints(p)
+    })
+
     const done = await loadOnboardingFromSupabase(userId)
     return done
   }
@@ -116,6 +127,12 @@ export default function App() {
             onboarding_done: false,
           })
           p = await getProfile()
+        }
+        // Process pending referral (from Google OAuth)
+        const pendingRef = localStorage.getItem('pending_referral')
+        if (pendingRef && session.user) {
+          import('../lib/missions').then(m => m.recordReferral(session.user!.id, pendingRef))
+          localStorage.removeItem('pending_referral')
         }
         // Sync quiz result from localStorage to profile (must run after profile exists)
         let hasQuizResult = false
@@ -258,6 +275,8 @@ export default function App() {
         quizLevel={profile?.quiz_level}
         onComplete={() => {
           syncMarkOnboardingDone(user.id)
+          // Reward referrer if this user was referred
+          import('../lib/missions').then(m => m.rewardReferrer(user.id))
           setAppMode('app')
         }}
       />

@@ -18,7 +18,14 @@ export default function AuthPage({ onSuccess, onGuest, initialMode = 'login' }: 
   const [error,     setError]     = useState('')
   const [loading,   setLoading]   = useState(false)
 
+  const [refCode] = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    return params.get('ref')
+  })
+
   const handleGoogleLogin = async () => {
+    // Save referral code before OAuth redirect
+    if (refCode) localStorage.setItem('pending_referral', refCode)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -51,6 +58,10 @@ export default function AuthPage({ onSuccess, onGuest, initialMode = 'login' }: 
           daily_plays_count: 0,
           onboarding_done: false,
         })
+        // Record referral if came from referral link
+        if (refCode && data.user) {
+          import('../lib/missions').then(m => m.recordReferral(data.user!.id, refCode))
+        }
       }
       // 不呼叫 onSuccess()，讓 onAuthStateChange 處理
       // 它會檢查 onboarding_done 並正確導向 onboarding 畫面
