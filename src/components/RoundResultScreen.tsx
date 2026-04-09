@@ -15,6 +15,9 @@ interface Props {
 export default function RoundResultScreen({
   total, correct, streak, score, userId, userName, stackBb, onNext
 }: Props) {
+  // Guard: don't render if data hasn't been set yet
+  if (total <= 0) return null
+
   const accuracy = Math.round((correct / total) * 100)
 
   // 自動儲存結果
