@@ -669,9 +669,6 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
         userName={userName}
         stackBb={typeof config?.stackDepth === 'number' ? config.stackDepth : undefined}
         onNext={async () => {
-          // 先切畫面，避免 state 重設導致結果頁閃現 NaN
-          setScreen('setup')
-          setPhase('question_step1')
           setTotal(0)
           setCorrect(0)
           setStreak(0)
@@ -679,6 +676,9 @@ export default function TrainTab({ guestMode: _guestMode = false, userId = null,
           setInterruptedTotal(0)
           setHandSetup(null)
           if (onRoundComplete) await onRoundComplete()
+          // onRoundComplete 可能設 showLimit，等它執行完再回設定頁
+          setScreen('setup')
+          setPhase('question_step1')
         }}
       />
     )
