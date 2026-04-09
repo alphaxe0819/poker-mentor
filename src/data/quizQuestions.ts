@@ -160,7 +160,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     type: 'scenario',
-    prompt: '6-max 現金桌，100BB 深籌。翻前你在 BTN 加注，BB 跟注。\n翻牌 A♠ 8♦ 3♣ → 雙方過牌。轉牌 5♠ → 雙方過牌。\n河牌 J♠（第三張黑桃），BB 下注 20BB（底池約 30BB）。你沒有黑桃。',
+    prompt: '6-max 現金桌，100BB 深籌。翻前你在 BTN 加注到 2.5BB，BB 跟注。底池 5.5BB。\n翻牌 A♠ 8♦ 3♣，BB 過牌，你下注 2BB，BB 跟注。底池 9.5BB。\n轉牌 5♠，BB 過牌，你下注 6BB，BB 跟注。底池 21.5BB。\n河牌 J♠（第三張黑桃），BB 下注 20BB。你沒有黑桃。',
     hand: 'AKo',
     heroPos: 'BTN',
     options: [
