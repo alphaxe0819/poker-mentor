@@ -29,7 +29,8 @@ const LazyFallback = () => (
   </div>
 )
 
-type Tab = 'train' | 'course' | 'coach' | 'stats' | 'analysis' | 'profile'
+type Tab = 'coach' | 'train' | 'stats' | 'analysis' | 'profile'
+type TrainSubTab = 'practice' | 'course'
 type AppMode = 'loading' | 'auth' | 'guest' | 'quiz-detail' | 'onboarding' | 'app' | 'upgrade'
 
 export default function App() {
@@ -45,6 +46,7 @@ export default function App() {
   const [user,      setUser]      = useState<User | null>(null)
   const [profile,   setProfile]   = useState<UserProfile | null>(null)
   const [tab,       setTab]       = useState<Tab>('train')
+  const [trainSubTab, setTrainSubTab] = useState<TrainSubTab>('practice')
   const [showLimit, setShowLimit] = useState(false)
   const [authInitialMode, setAuthInitialMode] = useState<'login' | 'register'>('login')
   const [points, setPoints] = useState(0)
@@ -240,7 +242,8 @@ export default function App() {
         result={pendingQuizResult}
         onContinue={() => {
           setPendingQuizResult(null)
-          setTab('course')
+          setTab('train')
+          setTrainSubTab('course')
           if (postQuizMode === 'onboarding' && user) {
             setAppMode('onboarding')
           } else {
@@ -288,39 +291,59 @@ export default function App() {
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
       <div className="flex-1 overflow-y-auto pb-20">
         <div style={{ display: tab === 'train' ? 'block' : 'none' }}>
-          {showLimit ? (
-            <DailyLimitScreen
-              onUpgrade={() => { setShowLimit(false); setAppMode('upgrade') }}
-            />
-          ) : (
-            <TrainTab
-              isTabActive={tab === 'train'}
-              guestMode={false}
-              userId={user?.id ?? null}
-              userName={profile?.name ?? '玩家'}
-              isPaid={profile ? isUserPaid(profile) : false}
-              points={points}
-              onStartRound={handleStartRound}
-              onPointsChanged={refreshPoints}
-              onRoundComplete={async () => {
-                if (!user) return
-                // 完成一關後才計數
-                const currentProfile = await getProfile()
-                if (currentProfile && !isUserPaid(currentProfile)) {
-                  await incrementDailyPlays(user.id, currentProfile)
-                }
-                const latestProfile = await getProfile()
-                setProfile(latestProfile)
-                if (!latestProfile || isUserPaid(latestProfile)) return
-                if (isDailyLimitReached(latestProfile)) {
-                  setShowLimit(true)
-                }
-              }}
-            />
+          {/* Sub-tab toggle: 練習 / 課程 */}
+          <div className="flex px-4 pt-3 pb-1 gap-1">
+            {([['practice', '練習'], ['course', '課程']] as [TrainSubTab, string][]).map(([key, label]) => (
+              <button key={key} onClick={() => setTrainSubTab(key)}
+                className="flex-1 py-2 rounded-full text-xs font-medium transition"
+                style={{
+                  background: trainSubTab === key ? '#7c3aed' : '#111',
+                  color: trainSubTab === key ? '#fff' : '#555',
+                }}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {trainSubTab === 'practice' && (
+            showLimit ? (
+              <DailyLimitScreen
+                onUpgrade={() => { setShowLimit(false); setAppMode('upgrade') }}
+              />
+            ) : (
+              <TrainTab
+                isTabActive={tab === 'train' && trainSubTab === 'practice'}
+                guestMode={false}
+                userId={user?.id ?? null}
+                userName={profile?.name ?? '玩家'}
+                isPaid={profile ? isUserPaid(profile) : false}
+                points={points}
+                onStartRound={handleStartRound}
+                onPointsChanged={refreshPoints}
+                onRoundComplete={async () => {
+                  if (!user) return
+                  const currentProfile = await getProfile()
+                  if (currentProfile && !isUserPaid(currentProfile)) {
+                    await incrementDailyPlays(user.id, currentProfile)
+                  }
+                  const latestProfile = await getProfile()
+                  setProfile(latestProfile)
+                  if (!latestProfile || isUserPaid(latestProfile)) return
+                  if (isDailyLimitReached(latestProfile)) {
+                    setShowLimit(true)
+                  }
+                }}
+              />
+            )
+          )}
+
+          {trainSubTab === 'course' && (
+            <Suspense fallback={<LazyFallback />}>
+              <CourseTab points={points} userId={user?.id ?? null} onPointsChanged={refreshPoints} />
+            </Suspense>
           )}
         </div>
         <Suspense fallback={<LazyFallback />}>
-          {tab === 'course'   && <CourseTab points={points} userId={user?.id ?? null} onPointsChanged={refreshPoints} />}
           {tab === 'coach'    && user && <CoachScreen
             userId={user.id}
             points={points}
