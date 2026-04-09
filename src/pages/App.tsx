@@ -322,7 +322,7 @@ export default function App() {
           {tab === 'course'   && <CourseTab points={points} userId={user?.id ?? null} onPointsChanged={refreshPoints} />}
           {tab === 'stats'    && <StatsTab userId={user?.id ?? null} isPaid={profile ? isUserPaid(profile) : false} onNavigateAnalysis={() => setTab('analysis')} />}
           {tab === 'analysis' && <AnalysisTab userId={user?.id ?? null} isPaid={profile ? isUserPaid(profile) : false} points={points} onPointsChanged={refreshPoints} />}
-          {tab === 'profile'  && <ProfileTab points={points} onPromoRedeemed={async () => {
+          {tab === 'profile'  && <ProfileTab points={points} userId={user?.id ?? null} onPointsChanged={refreshPoints} onPromoRedeemed={async () => {
             const p = await getProfile()
             setProfile(p)
           }} />}

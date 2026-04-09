@@ -4,16 +4,19 @@ import { getSubscription, getSubscriptionDisplayInfo } from '../lib/lemonsqueezy
 import type { Subscription } from '../lib/lemonsqueezy'
 import type { User } from '@supabase/supabase-js'
 import PromoCodeInput from '../components/PromoCodeInput'
+import MissionsSection from '../components/MissionsSection'
 
 const DEMO_EMAIL    = 'student@demo.com'
 const DEMO_PASSWORD = 'demo1234'
 
 interface ProfileTabProps {
   points: number
+  userId?: string | null
   onPromoRedeemed?: () => void
+  onPointsChanged?: () => void
 }
 
-export default function ProfileTab({ points, onPromoRedeemed }: ProfileTabProps) {
+export default function ProfileTab({ points, userId, onPromoRedeemed, onPointsChanged }: ProfileTabProps) {
   const [user, setUser]       = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [sub, setSub]         = useState<Subscription | null>(null)
@@ -136,6 +139,15 @@ export default function ProfileTab({ points, onPromoRedeemed }: ProfileTabProps)
               練習答對 +1 點
             </div>
           </div>
+
+          {/* 任務與獎勵 */}
+          {(userId ?? user?.id) && onPointsChanged && (
+            <MissionsSection
+              userId={(userId ?? user?.id)!}
+              points={points}
+              onPointsChanged={onPointsChanged}
+            />
+          )}
 
           {/* 登出 */}
           <button
