@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import { QUIZ_QUESTIONS, computeQuizResult, saveQuizResultLocal } from '../data/quizQuestions'
 import type { QuizResult } from '../data/quizQuestions'
 import HoleCards from './HoleCards'
-import QuizResultScreen from './QuizResultScreen'
+import QuizDetailScreen from './QuizDetailScreen'
 
 interface Props {
   onFinish: () => void
@@ -39,8 +39,9 @@ export default function QuizScreen({ onFinish, onRegister }: Props) {
 
   if (result) {
     return (
-      <QuizResultScreen
+      <QuizDetailScreen
         result={result}
+        showRegisterCTA
         onRegister={onRegister}
         onBack={onFinish}
       />
