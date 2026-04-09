@@ -39,6 +39,7 @@ export default function CoachScreen({ userId, points, coachOnboardingDone, onPoi
   const [sending, setSending] = useState(false)
   const [onboardingStep, setOnboardingStep] = useState(0)
   const [onboardingDone, setOnboardingDone] = useState(coachOnboardingDone)
+  const [answeredKeys, setAnsweredKeys] = useState<Set<string>>(new Set())
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to bottom
@@ -57,27 +58,39 @@ export default function CoachScreen({ userId, points, coachOnboardingDone, onPoi
     }
   }, [])
 
-  // Handle onboarding choice
+  // Handle onboarding choice — allow all 3 questions
   const handleOnboardingChoice = useCallback((choiceLabel: string, responseKey: string) => {
     const response = ONBOARDING_RESPONSES[responseKey]
     if (!response) return
+
+    const newAnswered = new Set(answeredKeys)
+    newAnswered.add(responseKey)
+    setAnsweredKeys(newAnswered)
 
     const newMsgs: ChatMessage[] = [
       ...messages,
       { role: 'user', content: choiceLabel },
       { role: 'assistant', content: response.text },
-      { role: 'assistant', content: ONBOARDING_OUTRO },
     ]
-    setMessages(newMsgs)
-    setOnboardingDone(true)
 
-    // Mark onboarding done in DB
+    // All 3 answered → auto finish
+    const allChoices = ONBOARDING_STEPS[1]?.choices ?? []
+    if (newAnswered.size >= allChoices.length) {
+      newMsgs.push({ role: 'assistant', content: ONBOARDING_OUTRO })
+      setMessages(newMsgs)
+      finishOnboarding()
+    } else {
+      newMsgs.push({ role: 'assistant', content: '還想問其他問題嗎？選一個繼續，或直接開始正式對話：' })
+      setMessages(newMsgs)
+    }
+  }, [messages, answeredKeys])
+
+  const finishOnboarding = useCallback(() => {
+    setOnboardingDone(true)
     supabase.from('profiles').update({ coach_onboarding_done: true }).eq('id', userId)
     onOnboardingDone()
-
-    // Save to localStorage for real conversation
     saveMessages([])
-  }, [messages, userId, onOnboardingDone])
+  }, [userId, onOnboardingDone])
 
   // Handle real message send
   const handleSend = useCallback(async () => {
@@ -176,18 +189,28 @@ export default function CoachScreen({ userId, points, coachOnboardingDone, onPoi
         ))}
 
         {/* Onboarding choices */}
-        {!onboardingDone && onboardingStep === 1 && (
-          <div className="flex flex-col gap-2 mt-2">
-            {ONBOARDING_STEPS[1]?.choices?.map((choice) => (
-              <button key={choice.responseKey}
-                onClick={() => handleOnboardingChoice(choice.label, choice.responseKey)}
-                className="text-left px-4 py-3 rounded-xl text-sm transition active:scale-[0.98]"
-                style={{ background: '#111', border: '1px solid #7c3aed', color: '#a78bfa' }}>
-                {choice.label}
-              </button>
-            ))}
-          </div>
-        )}
+        {!onboardingDone && onboardingStep === 1 && (() => {
+          const remaining = (ONBOARDING_STEPS[1]?.choices ?? []).filter(c => !answeredKeys.has(c.responseKey))
+          return (
+            <div className="flex flex-col gap-2 mt-2">
+              {remaining.map((choice) => (
+                <button key={choice.responseKey}
+                  onClick={() => handleOnboardingChoice(choice.label, choice.responseKey)}
+                  className="text-left px-4 py-3 rounded-xl text-sm transition active:scale-[0.98]"
+                  style={{ background: '#111', border: '1px solid #7c3aed', color: '#a78bfa' }}>
+                  {choice.label}
+                </button>
+              ))}
+              {answeredKeys.size > 0 && remaining.length > 0 && (
+                <button onClick={finishOnboarding}
+                  className="py-2.5 rounded-xl text-xs font-medium transition"
+                  style={{ background: '#111', border: '1px solid #333', color: '#888' }}>
+                  跳過，開始正式對話
+                </button>
+              )}
+            </div>
+          )
+        })()}
 
         {/* Typing indicator */}
         {sending && (
