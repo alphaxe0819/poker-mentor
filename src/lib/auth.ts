@@ -17,6 +17,7 @@ export interface UserProfile {
   claimed_milestones: number[]
   referral_code: string | null
   referred_by: string | null
+  coach_onboarding_done: boolean
 }
 
 /** 判斷用戶是否為付費狀態（訂閱 或 序號體驗有效） */

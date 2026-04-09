@@ -1,6 +1,6 @@
 import { memo } from 'react'
 
-type Tab = 'train' | 'course' | 'stats' | 'analysis' | 'profile'
+type Tab = 'train' | 'course' | 'coach' | 'stats' | 'analysis' | 'profile'
 
 interface Props {
   current: Tab
@@ -10,6 +10,7 @@ interface Props {
 const TABS: { key: Tab; label: string }[] = [
   { key: 'train',    label: '練習' },
   { key: 'course',   label: '課程' },
+  { key: 'coach',    label: '教練' },
   { key: 'stats',    label: '統計' },
   { key: 'analysis', label: '分析' },
   { key: 'profile',  label: '帳號' },

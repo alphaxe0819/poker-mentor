@@ -18,6 +18,7 @@ const StatsTab       = lazy(() => import('../tabs/StatsTab'))
 const AnalysisTab    = lazy(() => import('../tabs/AnalysisTab'))
 const ProfileTab     = lazy(() => import('../tabs/ProfileTab'))
 const CourseTab      = lazy(() => import('../tabs/CourseTab'))
+const CoachScreen    = lazy(() => import('../components/CoachScreen'))
 const UpgradePage    = lazy(() => import('./UpgradePage'))
 const SharePage      = lazy(() => import('./SharePage'))
 const AdminDashboard = lazy(() => import('./AdminDashboard'))
@@ -28,7 +29,7 @@ const LazyFallback = () => (
   </div>
 )
 
-type Tab = 'train' | 'course' | 'stats' | 'analysis' | 'profile'
+type Tab = 'train' | 'course' | 'coach' | 'stats' | 'analysis' | 'profile'
 type AppMode = 'loading' | 'auth' | 'guest' | 'quiz-detail' | 'onboarding' | 'app' | 'upgrade'
 
 export default function App() {
@@ -320,6 +321,16 @@ export default function App() {
         </div>
         <Suspense fallback={<LazyFallback />}>
           {tab === 'course'   && <CourseTab points={points} userId={user?.id ?? null} onPointsChanged={refreshPoints} />}
+          {tab === 'coach'    && user && <CoachScreen
+            userId={user.id}
+            points={points}
+            coachOnboardingDone={profile?.coach_onboarding_done ?? false}
+            onPointsChanged={refreshPoints}
+            onOnboardingDone={async () => {
+              const p = await getProfile()
+              setProfile(p)
+            }}
+          />}
           {tab === 'stats'    && <StatsTab userId={user?.id ?? null} isPaid={profile ? isUserPaid(profile) : false} onNavigateAnalysis={() => setTab('analysis')} />}
           {tab === 'analysis' && <AnalysisTab userId={user?.id ?? null} isPaid={profile ? isUserPaid(profile) : false} points={points} onPointsChanged={refreshPoints} />}
           {tab === 'profile'  && <ProfileTab points={points} userId={user?.id ?? null} onPointsChanged={refreshPoints} onPromoRedeemed={async () => {
