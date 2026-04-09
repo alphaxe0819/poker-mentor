@@ -96,14 +96,6 @@ export async function checkDailyLogin(userId: string): Promise<{ earned: number;
  */
 export async function claimMilestones(userId: string): Promise<{ earned: number; claimed: number[] }> {
   // Get total answered count
-  const { data: records } = await supabase
-    .from('answer_records')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', userId)
-
-  const totalAnswered = (records as unknown as number) ?? 0
-
-  // Actually get the count properly
   const { count } = await supabase
     .from('answer_records')
     .select('*', { count: 'exact', head: true })
