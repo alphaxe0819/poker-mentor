@@ -1,0 +1,1003 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poker Goal v2.0 — Product Architecture Whiteboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: #fef7f2;
+    overflow: hidden;
+    width: 100vw; height: 100vh;
+    cursor: grab;
+  }
+  body:active { cursor: grabbing; }
+
+  .toolbar {
+    position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 200;
+    display: flex; gap: 6px; align-items: center;
+    background: #fff; border: 1px solid #e5e5e5; border-radius: 12px;
+    padding: 6px 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .toolbar .logo { font-weight: 900; font-size: 16px; color: #e94560; margin-right: 8px; border-right: 1px solid #eee; padding-right: 12px; }
+  .toolbar button {
+    background: none; border: 1px solid #e5e5e5; border-radius: 8px;
+    padding: 5px 10px; cursor: pointer; font-size: 13px; font-family: inherit; color: #555;
+  }
+  .toolbar button:hover { background: #f5f5f5; }
+  .toolbar .zoom-label { font-size: 12px; color: #999; min-width: 40px; text-align: center; }
+
+  #canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+
+  .zone-label {
+    position: absolute; font-size: 13px; font-weight: 700; color: #999;
+    letter-spacing: 4px; text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .title {
+    position: absolute; font-size: 22px; font-weight: 900; color: #222;
+    white-space: nowrap;
+  }
+
+  .sticky {
+    position: absolute; border-radius: 6px; padding: 20px 24px;
+    font-size: 14px; line-height: 1.8; box-shadow: 2px 3px 10px rgba(0,0,0,0.08);
+  }
+  .sticky h3 { font-size: 18px; font-weight: 900; margin-bottom: 8px; }
+  .s-orange { background: #ff9f43; color: #000; }
+  .s-yellow { background: #ffeaa7; color: #000; }
+  .s-pink   { background: #fd79a8; color: #fff; }
+  .s-green  { background: #a8e6cf; color: #000; }
+  .s-purple { background: #d6a4ff; color: #000; }
+  .s-blue   { background: #74b9ff; color: #000; }
+
+  .card {
+    position: absolute; background: #fff; border: 1px solid #ddd; border-radius: 10px;
+    padding: 18px 22px; font-size: 13px; line-height: 1.8;
+    box-shadow: 1px 2px 8px rgba(0,0,0,0.05);
+  }
+  .card h4 { font-size: 15px; font-weight: 700; margin-bottom: 8px; color: #222; }
+  .card ul { list-style: none; }
+  .card li { padding: 2px 0; color: #444; }
+  .card li::before { content: '• '; color: #e94560; font-weight: 700; }
+
+  .hl {
+    position: absolute; border-radius: 8px; padding: 16px 20px;
+    font-size: 13px; line-height: 1.7;
+  }
+  .hl-yellow { background: #fff9c4; border: 1px solid #f9e547; }
+  .hl-green  { background: #e8f5e9; border: 1px solid #a5d6a7; }
+  .hl-pink   { background: #fce4ec; border: 1px solid #f8bbd0; }
+  .hl-purple { background: #f3e5f5; border: 1px solid #ce93d8; }
+
+  .dtable {
+    position: absolute; background: #fff; border: 1px solid #ddd; border-radius: 10px;
+    overflow: hidden; box-shadow: 1px 2px 8px rgba(0,0,0,0.05);
+  }
+  .dtable table { border-collapse: collapse; font-size: 12px; width: 100%; }
+  .dtable th { background: #2d3436; color: #fff; padding: 10px 14px; text-align: left; font-weight: 500; white-space: nowrap; }
+  .dtable td { padding: 8px 14px; border-bottom: 1px solid #f0f0f0; color: #444; white-space: nowrap; }
+
+  .phone {
+    position: absolute; width: 200px; background: #1a1a2e; border-radius: 26px;
+    padding: 10px; box-shadow: 4px 6px 24px rgba(0,0,0,0.2);
+  }
+  .ph-in {
+    background: #0f172a; border-radius: 18px; overflow: hidden;
+    font-size: 11px; color: #fff;
+  }
+  .ph-bar { display: flex; justify-content: space-between; padding: 6px 12px; font-size: 9px; color: rgba(255,255,255,0.4); }
+
+  .group-box {
+    position: absolute; border: 2.5px solid #e94560; border-radius: 14px;
+  }
+  .group-box.dashed { border-style: dashed; border-color: #999; }
+
+  .badge {
+    display: inline-block; padding: 4px 12px; border-radius: 8px;
+    font-size: 12px; font-weight: 700; margin-bottom: 6px;
+  }
+
+  .mc { background: rgba(255,255,255,0.08); border-radius: 10px; padding: 8px 10px; margin: 5px 10px; display: flex; gap: 10px; align-items: center; }
+  .mc .av { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .mc .nm { font-weight: 700; font-size: 11px; }
+  .mc .ds { font-size: 9px; color: rgba(255,255,255,0.4); }
+  .mc .tg { font-size: 8px; background: rgba(233,69,96,0.3); color: #e94560; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 3px; }
+
+  .bb { padding: 8px 12px; border-radius: 12px; font-size: 11px; margin: 5px 10px; line-height: 1.5; max-width: 78%; }
+  .bb-ai { background: #1e293b; border-bottom-left-radius: 3px; }
+  .bb-u { background: #e94560; margin-left: auto; border-bottom-right-radius: 3px; display: table; }
+  .qb { display: inline-block; border: 1px solid rgba(255,255,255,0.25); border-radius: 14px; padding: 4px 10px; font-size: 9px; margin: 2px; color: rgba(255,255,255,0.6); }
+
+  .bnav { display: flex; justify-content: space-around; padding: 8px; background: #111827; border-top: 1px solid rgba(255,255,255,0.1); }
+  .bnav div { text-align: center; font-size: 14px; }
+  .bnav .lb { font-size: 8px; color: rgba(255,255,255,0.3); }
+  .bnav .active .lb { color: #e94560; }
+
+  #conn-svg { position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible; }
+  .conn-line { stroke: #e94560; stroke-width: 2.5; fill: none; stroke-linecap: round; }
+  .conn-line.dashed { stroke-dasharray: 8 5; }
+  .conn-line.blue { stroke: #3b82f6; }
+  .conn-line.purple { stroke: #7c3aed; }
+  .conn-line.green { stroke: #059669; }
+  .conn-line.orange { stroke: #f59e0b; }
+
+  /* Edit Mode */
+  body.edit-mode { cursor: default !important; }
+  body.edit-mode #canvas { cursor: default !important; }
+  body.edit-mode .sticky,
+  body.edit-mode .card,
+  body.edit-mode .hl,
+  body.edit-mode .title,
+  body.edit-mode .zone-label,
+  body.edit-mode .dtable td,
+  body.edit-mode .dtable th { cursor: text; outline: 2px dashed rgba(233,69,96,0.35); outline-offset: 2px; }
+  body.edit-mode .sticky:hover,
+  body.edit-mode .card:hover,
+  body.edit-mode .hl:hover,
+  body.edit-mode .title:hover { outline-color: #e94560; background-clip: padding-box; }
+  .toolbar .edit-btn { background: none; border: 1px solid #e5e5e5; border-radius: 8px; padding: 5px 10px; cursor: pointer; font-size: 13px; font-family: inherit; color: #555; }
+  .toolbar .edit-btn.active { background: #e94560; color: #fff; border-color: #e94560; }
+  .toolbar .save-btn { background: #059669; color: #fff; border: 1px solid #059669; border-radius: 8px; padding: 5px 12px; cursor: pointer; font-size: 13px; font-family: inherit; display: none; }
+  .toolbar .save-btn:hover { background: #047857; }
+  .toolbar .divider { width: 1px; background: #e5e5e5; height: 20px; margin: 0 4px; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="logo">♠ Poker Goal v2.0</span>
+  <button onclick="zoomIn()">＋</button>
+  <span class="zoom-label" id="zl">45%</span>
+  <button onclick="zoomOut()">－</button>
+  <button onclick="resetView()">Reset</button>
+  <button onclick="fitAll()">Fit All</button>
+  <div class="divider"></div>
+  <button class="edit-btn" id="editBtn" onclick="toggleEdit()">✏️ 編輯</button>
+  <button class="save-btn" id="saveBtn" onclick="saveHTML()">💾 儲存 HTML</button>
+</div>
+
+<div id="canvas">
+<svg id="conn-svg" width="3200" height="2800"></svg>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- ZONE A — 入口層 (y: 40~320)                         -->
+<!-- ════════════════════════════════════════════════════ -->
+<div class="zone-label" style="left:50px; top:28px;">ZONE A ── 入口流程</div>
+
+<div id="reg" class="sticky s-orange" style="left:60px; top:60px; width:300px;">
+  <h3>📋 註冊流程</h3>
+  • Google 登入<br>
+  • Apple 登入（iOS 必備）<br>
+  • Email + 密碼<br>
+  • 訪客體驗 → MBTI 測驗 → 引導註冊<br>
+  • 邀請碼系統（referral +100 點）
+</div>
+
+<div id="lang" class="sticky s-yellow" style="left:460px; top:60px; width:300px;">
+  <h3>🌐 語言設定</h3>
+  • 語言：繁體中文 / 英文 / 簡中 / 日文<br>
+  • AI 教練：依用戶語言切換 system prompt<br>
+  • 推薦機制：依語言地區優先推薦<br>
+  • GTO 術語：保留英文 + 中文標註
+</div>
+
+<div id="profile" class="sticky s-green" style="left:860px; top:60px; width:280px;">
+  <h3>👤 用戶檔案</h3>
+  • MBTI 撲克類型（鯊魚/狐狸/冰山）<br>
+  • 等級 + 經驗值<br>
+  • 點數餘額<br>
+  • 弱點標籤（由 AI 標記）<br>
+  • 訂閱級別
+</div>
+
+<div id="profile-phone" class="phone" style="left:1250px; top:60px;">
+  <div class="ph-in" style="min-height:240px;">
+    <div style="background:linear-gradient(135deg,#667eea,#764ba2); padding:18px; text-align:center;">
+      <div style="font-size:28px; margin-bottom:6px;">👤</div>
+      <div style="font-weight:700; font-size:14px;">芋圓</div>
+      <div style="font-size:10px; color:rgba(255,255,255,0.5);">Lv.12 · 🦈 鯊魚型</div>
+      <div style="display:flex; justify-content:center; gap:18px; margin-top:10px;">
+        <div><div style="font-weight:700;">762</div><div style="font-size:8px; color:rgba(255,255,255,0.4);">點數</div></div>
+        <div><div style="font-weight:700;">1,234</div><div style="font-size:8px; color:rgba(255,255,255,0.4);">答題</div></div>
+        <div><div style="font-weight:700;">72%</div><div style="font-size:8px; color:rgba(255,255,255,0.4);">正確率</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- ZONE B — 核心功能層 (y: 450~1350)                    -->
+<!-- ════════════════════════════════════════════════════ -->
+<div class="zone-label" style="left:50px; top:440px;">ZONE B ── 核心功能流</div>
+
+<!-- B1: AI 教練建設 -->
+<div class="group-box dashed" style="left:40px; top:470px; width:620px; height:650px;"></div>
+<div class="title" style="left:60px; top:485px;">🤖 AI 教練建設</div>
+
+<div id="coach-build" class="phone" style="left:60px; top:540px;">
+  <div class="ph-in">
+    <div class="ph-bar"><span>11:28</span><span>建立教練</span></div>
+    <div style="padding:12px;">
+      <div style="text-align:center; font-size:40px; margin:8px 0;">🦈</div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:10px; color:rgba(255,255,255,0.4); margin-bottom:4px;">教練名稱*</div>
+        <div style="background:#1e293b; border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 10px;">鯊魚教練</div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:10px; color:rgba(255,255,255,0.4); margin-bottom:4px;">專長*</div>
+        <div style="background:#1e293b; border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 10px;">Exploit · 讀人</div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:10px; color:rgba(255,255,255,0.4); margin-bottom:4px;">性格*</div>
+        <div style="display:flex; gap:6px;">
+          <span style="background:#e94560; border-radius:14px; padding:4px 10px; font-size:10px;">嚴厲</span>
+          <span style="background:#1e293b; border:1px solid rgba(255,255,255,0.15); border-radius:14px; padding:4px 10px; font-size:10px;">溫和</span>
+          <span style="background:#1e293b; border:1px solid rgba(255,255,255,0.15); border-radius:14px; padding:4px 10px; font-size:10px;">幽默</span>
+        </div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:10px; color:rgba(255,255,255,0.4); margin-bottom:4px;">教練背景*</div>
+        <div style="background:#1e293b; border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 10px; min-height:40px; color:rgba(255,255,255,0.4); font-size:10px;">我是一位嚴格的 GTO 信仰者...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="coach-info" class="card" style="left:310px; top:540px; width:330px;">
+  <h4>教練角色資料</h4>
+  <ul>
+    <li><strong>名稱 + 代號</strong>（如「鯊魚教練 Shark」）</li>
+    <li>風格化頭像（AI 生成或上傳）</li>
+    <li>1 教練 = 1 套 System Prompt</li>
+    <li>性格、專長、教學風格、位置、籌碼深度</li>
+    <li>招牌用語（獨有口頭禪）</li>
+  </ul>
+  <div style="margin-top:10px; padding:8px 12px; background:#fce4ec; border-radius:8px; font-size:12px; color:#c62828;">
+    Phase 1 平台設定 → Phase 3 開放 UGC 教練
+  </div>
+</div>
+
+<div id="coach-types" class="hl hl-yellow" style="left:310px; top:880px; width:330px;">
+  <strong>三位初始教練</strong><br>
+  🦈 鯊魚 — 凶狠 Exploit 派<br>
+  🦊 狐狸 — 老練 PRO 選手<br>
+  🧊 冰山 — 標準 GTO 專家<br>
+  <span style="color:#c62828; font-size:12px;">依 MBTI 測驗推薦初始教練</span>
+</div>
+
+
+<!-- B2: 行為準則 -->
+<div class="group-box" style="left:720px; top:470px; width:560px; height:650px;"></div>
+<div class="title" style="left:740px; top:485px;">⚖️ 行為準則 = 設定 + 系統干預</div>
+
+<div id="coach-setting" class="hl hl-purple" style="left:740px; top:540px; width:240px;">
+  <div class="badge" style="background:#7c3aed; color:#fff;">Layer 1：教練設定</div><br>
+  • System Prompt 人設<br>
+  • 語氣風格：毒舌/鼓勵/分析<br>
+  • 教學方法：蘇格拉底/直接<br>
+  • GTO / Exploit 偏好<br>
+  • 回應長度 · 招牌用語
+</div>
+
+<div id="sys-override" class="hl hl-pink" style="left:1010px; top:540px; width:240px;">
+  <div class="badge" style="background:#e94560; color:#fff;">Layer 2：系統干預</div><br>
+  • GTO 正確性護欄<br>
+  • 禁止話題過濾<br>
+  • 點數消費控制<br>
+  • 內容審核<br>
+  • Token 上限 · 角色邊界
+</div>
+
+<div id="override-demo" class="phone" style="left:810px; top:780px;">
+  <div class="ph-in" style="min-height:240px;">
+    <div style="background:#e94560; padding:8px 14px; text-align:center; font-size:11px; font-weight:700;">系統干預 Demo</div>
+    <div style="padding:10px;">
+      <div class="bb bb-ai">你在 BTN 拿到 72o，前面都 fold。GTO 建議 fold，但如果想 bluff...</div>
+      <div style="background:#ff6b6b22; margin:6px 10px; padding:8px 10px; border-radius:8px; border-left:3px solid #e94560; font-size:10px;">
+        ⚠️ 系統干預：GTO 護欄觸發<br>72o 在 BTN open 頻率 &lt;5%<br>已自動修正教練建議
+      </div>
+      <div class="bb bb-ai">72o 在 BTN 不建議 open。讓我看正確範圍...</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- B3: 首頁介面 -->
+<div class="title" style="left:1360px; top:485px;">🏠 首頁介面</div>
+
+<div id="home" class="phone" style="left:1380px; top:540px;">
+  <div class="ph-in">
+    <div class="ph-bar"><span>11:28</span><span>♠ Poker Goal</span></div>
+    <div style="padding:8px 12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div><div style="font-weight:700; font-size:13px;">芋圓 ></div><div style="font-size:9px; color:rgba(255,255,255,0.4);">Lv.12 鯊魚型</div></div>
+        <div style="background:rgba(233,69,96,0.2); color:#e94560; padding:4px 10px; border-radius:10px; font-size:11px; font-weight:700;">762 🪙</div>
+      </div>
+      <div style="font-size:9px; color:rgba(255,255,255,0.3); margin-bottom:4px;">推薦教練</div>
+      <div class="mc"><div class="av" style="background:linear-gradient(135deg,#1e40af,#3b82f6);">🦈</div><div><div class="nm">鯊魚教練</div><div class="ds">凶狠 Exploit 派</div><span class="tg">Exploit</span></div></div>
+      <div class="mc"><div class="av" style="background:linear-gradient(135deg,#b45309,#f59e0b);">🦊</div><div><div class="nm">狐狸教練</div><div class="ds">老練 PRO 選手</div><span class="tg">PRO</span></div></div>
+      <div class="mc"><div class="av" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);">🧊</div><div><div class="nm">冰山教練</div><div class="ds">標準 GTO 專家</div><span class="tg">GTO</span></div></div>
+    </div>
+    <div class="bnav">
+      <div class="active"><div>🏠</div><div class="lb">首頁</div></div>
+      <div><div>🎯</div><div class="lb">訓練</div></div>
+      <div><div>🏆</div><div class="lb">比賽</div></div>
+      <div><div>📊</div><div class="lb">統計</div></div>
+      <div><div>👤</div><div class="lb">帳號</div></div>
+    </div>
+  </div>
+</div>
+
+<div id="home-features" class="card" style="left:1360px; top:960px; width:230px;">
+  <h4>首頁功能區</h4>
+  <ul>
+    <li><strong>推薦教練</strong>（依 MBTI）</li>
+    <li>快速訓練一鍵開始</li>
+    <li>今日任務進度</li>
+    <li>即將開始的模擬賽</li>
+  </ul>
+</div>
+
+
+<!-- B4: 對話 / 推薦回覆 -->
+<div class="title" style="left:1680px; top:485px;">💬 對話 & 推薦回覆</div>
+
+<div id="chat" class="phone" style="left:1700px; top:540px;">
+  <div class="ph-in">
+    <div class="ph-bar"><span>11:32</span><span>🦈 鯊魚教練</span></div>
+    <div style="padding:6px;">
+      <div class="bb bb-ai">你在 CO 拿到 A♠T♠，前面都 fold 到你。25BB 深度，你會怎做？</div>
+      <div class="bb bb-u">我覺得應該 raise</div>
+      <div class="bb bb-ai">正確！ATs 在 CO 是標準 open raise。那 raise size 你會選多少？</div>
+      <div style="padding:6px 10px; display:flex; flex-wrap:wrap; gap:4px;">
+        <span class="qb">2.2BB</span>
+        <span class="qb">2.5BB</span>
+        <span class="qb">3BB</span>
+        <span class="qb" style="border-color:#e94560; color:#e94560;">為什麼？</span>
+      </div>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,0.1); padding:8px 10px; display:flex; gap:6px;">
+      <div style="flex:1; background:#1e293b; border-radius:14px; padding:6px 10px; font-size:10px; color:rgba(255,255,255,0.3);">自由輸入...</div>
+      <div style="background:#e94560; border-radius:14px; padding:6px 10px; font-size:10px; font-weight:600;">發送</div>
+    </div>
+  </div>
+</div>
+
+<div id="reply-mech" class="hl hl-yellow" style="left:1680px; top:960px; width:240px;">
+  <strong>推薦回覆機制</strong><br>
+  • 動作按鈕 Raise / Call / Fold<br>
+  • 追問「為什麼？」「換個例子」<br>
+  • 自由輸入任何撲克問題<br>
+  <span style="color:#c62828; font-size:12px;">推薦回覆消耗較少 token → 省點</span>
+</div>
+
+
+<!-- B5: 模擬比賽 -->
+<div class="title" style="left:2020px; top:485px;">🏆 MTT 情境模擬練習</div>
+
+<!-- 情境總覽表 -->
+<div id="tournament" class="dtable" style="left:2020px; top:540px; width:560px;">
+  <table>
+    <tr><th>情境</th><th>報名/存活</th><th>起始籌碼</th><th>權限</th></tr>
+    <tr><td><strong>🃏 SNG</strong></td><td>9 / 9</td><td>全桌 30BB</td><td style="color:#059669;">免費可玩</td></tr>
+    <tr><td><strong>🎮 一般賽 — 開局</strong></td><td>100 / 100</td><td>全桌 100BB</td><td>付費</td></tr>
+    <tr><td><strong>🎮 一般賽 — 中盤</strong></td><td>100 / 80</td><td>後手 40BB</td><td>付費</td></tr>
+    <tr><td><strong>🎮 一般賽 — 截止買入</strong></td><td>100 / 50</td><td>後手 20BB</td><td>付費</td></tr>
+    <tr><td><strong>🏅 Final Table</strong></td><td>100 / 9</td><td>5種碼量選擇</td><td>付費</td></tr>
+    <tr><td><strong>🤺 HU 對決</strong></td><td>100 / 2</td><td>5種籌碼比</td><td>付費</td></tr>
+  </table>
+</div>
+
+<!-- HU 情境詳細 -->
+<div id="tourney-hu" class="card" style="left:2020px; top:820px; width:270px;">
+  <h4>🤺 HU 對決 — 5 種籌碼比</h4>
+  <ul>
+    <li>1:5 — 你短碼，大幅落後</li>
+    <li>1:2 — 你短碼，略為落後</li>
+    <li>1:1 — 平碼，勢均力敵</li>
+    <li>2:1 — 你領先，略佔優勢</li>
+    <li>5:1 — 你大碼，壓制對手</li>
+  </ul>
+</div>
+
+<!-- FT 情境詳細 -->
+<div id="tourney-ft" class="card" style="left:2310px; top:820px; width:270px;">
+  <h4>🏅 Final Table — 5 種碼量位置</h4>
+  <ul>
+    <li>10BB — 全桌最短碼</li>
+    <li>15BB — 碼量第 7</li>
+    <li>20BB — 碼量第 5</li>
+    <li>30BB — 碼量第 2</li>
+    <li>40BB+ — 碼量第 1（Chip Leader）</li>
+  </ul>
+  <div style="margin-top:8px; font-size:12px; color:#7c3aed;">其他 8 人由電腦隨機分配籌碼</div>
+</div>
+
+<!-- 核心規則 -->
+<div id="tourney-core" class="hl hl-yellow" style="left:2620px; top:540px; width:360px;">
+  <strong>核心規則</strong> &nbsp;·&nbsp;
+  玩家只專注自己的一桌，直到獲得名次或奪冠 &nbsp;·&nbsp;
+  一般賽/FT 中非玩家座位由 <strong>AI 電腦隨機分配籌碼</strong> &nbsp;·&nbsp;
+  <strong>AI 賽後分析</strong>：針對比賽中每手牌進行教練檢討
+</div>
+
+<!-- 積分與排行榜 -->
+<div id="tourney-prize" class="card" style="left:2620px; top:680px; width:360px;">
+  <h4>🏆 賽事流程 → 積分 → 排行榜 → 獎勵</h4>
+
+  <!-- 流程圖 -->
+  <div style="display:flex; align-items:center; gap:6px; margin:10px 0; font-size:12px; flex-wrap:wrap;">
+    <div style="background:#fce4ec; color:#e94560; border-radius:8px; padding:5px 10px; font-weight:700;">🪙 消耗點數<br><span style="font-size:10px; font-weight:400;">入場費</span></div>
+    <div style="color:#bbb; font-size:16px;">→</div>
+    <div style="background:#fff3e0; color:#f59e0b; border-radius:8px; padding:5px 10px; font-weight:700;">🃏 參加比賽<br><span style="font-size:10px; font-weight:400;">SNG / 各情境</span></div>
+    <div style="color:#bbb; font-size:16px;">→</div>
+    <div style="background:#e8f5e9; color:#059669; border-radius:8px; padding:5px 10px; font-weight:700;">📊 獲得名次<br><span style="font-size:10px; font-weight:400;">依排名給積分</span></div>
+    <div style="color:#bbb; font-size:16px;">→</div>
+    <div style="background:#f3e5f5; color:#7c3aed; border-radius:8px; padding:5px 10px; font-weight:700;">🏅 排行榜結算<br><span style="font-size:10px; font-weight:400;">定期統計</span></div>
+    <div style="color:#bbb; font-size:16px;">→</div>
+    <div style="background:#e3f2fd; color:#1e40af; border-radius:8px; padding:5px 10px; font-weight:700;">🎁 兌換獎勵<br><span style="font-size:10px; font-weight:400;">實體獎勵</span></div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px;">
+    <div>
+      <div style="font-size:12px; font-weight:700; color:#059669; margin-bottom:4px;">積分規則</div>
+      <ul>
+        <li>免費用戶僅限 SNG 體驗，<strong>不計積分</strong></li>
+        <li>付費用戶所有情境皆可累積積分</li>
+        <li>名次越高，積分越多</li>
+        <li>排行榜定期結算（週 / 月）</li>
+      </ul>
+    </div>
+    <div>
+      <div style="font-size:12px; font-weight:700; color:#1e40af; margin-bottom:4px;">獎勵兌換（積分換）</div>
+      <ul>
+        <li>🎫 WINWINPOKER 指定賽事門票</li>
+        <li>🎟️ 錦標賽折價券</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- ZONE C — 底層左：技術架構 (x: 40~640)                -->
+<!-- ════════════════════════════════════════════════════ -->
+<div class="zone-label" style="left:50px; top:1418px;">ZONE C ── 技術架構 & 路線圖</div>
+
+<div class="group-box dashed" style="left:40px; top:1450px; width:620px; height:1000px;"></div>
+<div class="title" style="left:60px; top:1470px;">🛠️ 技術架構</div>
+<div style="position:absolute; left:60px; top:1510px; font-size:12px; color:#e94560; font-weight:600;">※ 目前為原型，詳細技術規格將與專業技術討論後確認</div>
+
+<div id="tech-fe" class="hl hl-green" style="left:60px; top:1520px; width:270px;">
+  <strong>🖥️ 前端</strong><br>
+  React 19 · TypeScript 5.9<br>
+  Vite 8 · Tailwind CSS<br>
+  React Router · i18n
+</div>
+
+<div id="tech-be" class="hl hl-green" style="left:360px; top:1520px; width:270px;">
+  <strong>⚡ 後端</strong><br>
+  Supabase Auth + RLS<br>
+  PostgreSQL · pgvector<br>
+  Edge Functions (Deno)
+</div>
+
+<div id="tech-ai" class="hl hl-purple" style="left:60px; top:1690px; width:270px;">
+  <strong>🤖 AI 層</strong><br>
+  Claude Haiku（教練對話）<br>
+  Claude Sonnet（深度分析）<br>
+  RAG 記憶檢索 · GTO Engine
+</div>
+
+<div id="tech-deploy" class="hl hl-pink" style="left:360px; top:1690px; width:270px;">
+  <strong>🚀 部署 & 監控</strong><br>
+  Vercel（前端自動部署）<br>
+  Supabase Cloud（後端）<br>
+  Sentry（監控）· Lemon Squeezy
+</div>
+
+<div class="title" style="left:60px; top:1860px;">📦 新增 DB Tables</div>
+
+<div id="db-schema" class="card" style="left:60px; top:1910px; width:570px;">
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+    <div>
+      <h4>核心表</h4>
+      <ul>
+        <li><strong>coaches</strong> 教練定義</li>
+        <li><strong>coach_courses</strong> 課題</li>
+        <li><strong>tournaments</strong> 比賽定義</li>
+        <li><strong>tournament_entries</strong> 參賽</li>
+      </ul>
+    </div>
+    <div>
+      <h4>擴充表</h4>
+      <ul>
+        <li><strong>memories</strong> RAG 向量</li>
+        <li><strong>subscriptions</strong> 訂閱</li>
+        <li><strong>point_transactions</strong> 點數</li>
+        <li><strong>coach_ratings</strong> 評價</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="title" style="left:60px; top:2120px;">🗺️ 開發路線圖</div>
+
+<div id="road-p1" class="sticky s-blue" style="left:60px; top:2170px; width:175px;">
+  <strong>Phase 1</strong><br><br>
+  • 雙平台版本<br>
+  • 核心訓練功能<br>
+  • 基礎 GTO 範圍資料庫<br>
+  • 數據統計表<br>
+  • 基礎 AI 教練
+</div>
+<div id="road-p2" class="sticky s-purple" style="left:255px; top:2170px; width:175px;">
+  <strong>Phase 2</strong><br><br>
+  • 課程系統<br>
+  • 訂閱功能<br>
+  • 多種 AI 教練<br>
+  • 點數系統<br>
+  • 更多情境範圍資料庫
+</div>
+<div id="road-p3" class="sticky s-orange" style="left:450px; top:2170px; width:175px;">
+  <strong>Phase 3</strong><br><br>
+  • 賽事模擬系統<br>
+  • 積分排行榜<br>
+  • 積分獎勵兌換功能
+</div>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- ZONE D — 底層中：教練主頁 + 課題 + 永久記憶           -->
+<!-- ════════════════════════════════════════════════════ -->
+<div class="zone-label" style="left:710px; top:1418px;">ZONE D ── 內容 & 記憶</div>
+
+<!-- 教練主頁 -->
+<div class="title" style="left:720px; top:1470px;">📖 教練主頁</div>
+
+<div id="coach-page" class="phone" style="left:740px; top:1520px;">
+  <div class="ph-in" style="min-height:340px;">
+    <div style="background:linear-gradient(135deg,#1e40af,#3b82f6); padding:18px; text-align:center;">
+      <div style="font-size:40px;">🦈</div>
+      <div style="font-weight:700; font-size:14px; margin-top:4px;">鯊魚教練</div>
+      <div style="font-size:10px; color:rgba(255,255,255,0.5);">凶狠 Exploit 派 · 讀人剝削</div>
+      <div style="display:flex; justify-content:center; gap:18px; margin-top:10px;">
+        <div><div style="font-weight:700; font-size:16px;">1.2K</div><div style="font-size:8px; color:rgba(255,255,255,0.3);">學生</div></div>
+        <div><div style="font-weight:700; font-size:16px;">4.8⭐</div><div style="font-size:8px; color:rgba(255,255,255,0.3);">評分</div></div>
+        <div><div style="font-weight:700; font-size:16px;">54K</div><div style="font-size:8px; color:rgba(255,255,255,0.3);">對話數</div></div>
+      </div>
+    </div>
+    <div style="display:flex; gap:3px; padding:8px;">
+      <div style="flex:1; text-align:center; padding:6px; background:#e94560; border-radius:6px; font-size:9px; font-weight:600;">簡介</div>
+      <div style="flex:1; text-align:center; padding:6px; background:#1e293b; border-radius:6px; font-size:9px; color:rgba(255,255,255,0.4);">課題</div>
+      <div style="flex:1; text-align:center; padding:6px; background:#1e293b; border-radius:6px; font-size:9px; color:rgba(255,255,255,0.4);">訓練</div>
+      <div style="flex:1; text-align:center; padding:6px; background:#1e293b; border-radius:6px; font-size:9px; color:rgba(255,255,255,0.4);">評價</div>
+    </div>
+    <div style="padding:10px; font-size:10px; color:rgba(255,255,255,0.6); line-height:1.6;">
+      別跟我談 GTO，真正的牌桌上只有贏家和輸家。找到對手的弱點然後一刀捅進去...
+    </div>
+    <div style="margin:6px 10px 10px; background:#e94560; border-radius:10px; padding:10px; text-align:center; font-weight:700; font-size:11px;">
+      💬 開始對話 · 4點/則
+    </div>
+  </div>
+</div>
+
+<div id="coach-page-info" class="card" style="left:740px; top:1960px; width:220px;">
+  <h4>教練主頁 Tabs</h4>
+  <ul>
+    <li><strong>簡介</strong>：背景 + 風格</li>
+    <li><strong>課題</strong>：3~5 專屬課程</li>
+    <li><strong>訓練</strong>：GTO 變體訓練</li>
+    <li><strong>評價</strong>：學生回饋</li>
+  </ul>
+</div>
+
+
+<!-- 課題 & 牌手 -->
+<div class="title" style="left:1040px; top:1470px;">📚 課題 & 知名牌手</div>
+
+<div id="courses" class="card" style="left:1040px; top:1520px; width:310px;">
+  <h4>每位教練 3~5 個專屬課題</h4>
+  <ul>
+    <li>🦈 鯊魚：「讀人與剝削弱點」「過度 bluff 防守」</li>
+    <li>🦊 狐狸：「實戰思維與心理戰術」「多桌管理技巧」</li>
+    <li>🧊 冰山：「GTO 平衡範圍建構」「混合策略應用」</li>
+  </ul>
+  <div style="margin-top:8px; font-size:12px; color:#7c3aed; font-weight:500;">
+    理論 → 範例 → 實戰測驗 → 教練點評
+  </div>
+</div>
+
+<div id="famous" class="card" style="left:1040px; top:1820px; width:310px;">
+  <h4>知名牌手風格（避免肖像權）</h4>
+  <ul>
+    <li><strong>「像 X 一樣打」模式</strong></li>
+    <li>🦈 ← Tom Dwan 風格啟發（凶狠激進派）</li>
+    <li>🦊 ← Phil Ivey 風格啟發（全能 PRO）</li>
+    <li>🧊 ← Fedor Holz 風格啟發（GTO 解題者）</li>
+    <li>名局重現：經典 WSOP/WPT 決策點</li>
+  </ul>
+</div>
+
+
+<!-- 永久記憶 -->
+<div class="title" style="left:1430px; top:1470px;">🧠 永久記憶系統</div>
+
+<div id="memory" class="hl hl-green" style="left:1430px; top:1520px; width:260px;">
+  <div class="badge" style="background:#059669; color:#fff;">Pro 專屬功能</div><br>
+  • 學習歷程追蹤<br>
+  • 弱點位置記憶<br>
+  • 跨 session 教學進度<br>
+  • 風格偏好記憶
+</div>
+
+<div id="memory-tech" class="card" style="left:1430px; top:1760px; width:260px;">
+  <h4>技術實現</h4>
+  <ul>
+    <li><strong>pgvector</strong> 儲存嵌入向量</li>
+    <li>對話自動<strong>生成摘要</strong></li>
+    <li><strong>RAG</strong> 檢索歷史記憶</li>
+    <li>舊記憶<strong>權重衰減</strong></li>
+  </ul>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- ZONE E — 底層右：付費邏輯 (x: 1780~2800)             -->
+<!-- ════════════════════════════════════════════════════ -->
+<div class="zone-label" style="left:1780px; top:1418px;">ZONE E ── 付費邏輯</div>
+
+<div class="group-box" style="left:1770px; top:1450px; width:1060px; height:900px;"></div>
+<div class="title" style="left:1800px; top:1470px;">💰 付費邏輯（訂閱 + 點數雙軌制）</div>
+
+<div id="sub-label" class="sticky s-pink" style="left:1800px; top:1530px; width:110px; text-align:center; padding:14px;">
+  <strong style="font-size:16px;">訂閱制</strong>
+</div>
+
+<div id="sub-table" class="dtable" style="left:1940px; top:1520px; width:820px;">
+  <table>
+    <tr>
+      <th>功能</th>
+      <th>免費</th>
+      <th style="background:#e94560;">基礎</th>
+      <th style="background:#7c3aed;">PRO</th>
+    </tr>
+    <tr>
+      <td><strong>月費</strong></td>
+      <td style="color:#999;">NT$0</td>
+      <td style="font-weight:700; color:#e94560;">NT$299</td>
+      <td style="font-weight:700; color:#7c3aed;">NT$1,000</td>
+    </tr>
+    <tr><td>每日免費教練訊息</td><td style="color:#999;">0 則</td><td>10 則/天</td><td>100 則/天</td></tr>
+    <tr><td>超額教練訊息</td><td>5 點/則</td><td>5 點/則</td><td>5 點/則</td></tr>
+    <tr><td>教練角色</td><td>1 位</td><td>全部解鎖</td><td>全部解鎖</td></tr>
+    <tr><td>GTO 資料庫</td><td>基礎翻前</td><td>全部翻前</td><td>全部翻前 + 翻後</td></tr>
+    <tr><td>弱點分析</td><td style="color:#999;">✗</td><td>標準分析</td><td>特殊教練分析</td></tr>
+    <tr><td>模擬比賽</td><td>SNG 每週 1 次</td><td>報名費 9 折</td><td>報名費 8 折</td></tr>
+    <tr><td>教練記憶</td><td style="color:#999;">✗</td><td>最近 20 則跨 session</td><td>✓ 完整歷史 + 學習檔案</td></tr>
+    <tr><td>手牌批量分析</td><td style="color:#999;">✗</td><td style="color:#999;">✗</td><td>✓ AI 批量找漏洞</td></tr>
+    <tr><td>每月贈點</td><td style="color:#999;">0</td><td>500 點</td><td>3,000 點</td></tr>
+  </table>
+</div>
+
+<div id="pts-label" class="sticky s-green" style="left:1800px; top:2010px; width:110px; text-align:center; padding:14px;">
+  <strong style="font-size:15px;">點數儲值</strong>
+</div>
+
+<div id="pts-phone" class="phone" style="left:1940px; top:1990px; width:180px;">
+  <div class="ph-in" style="min-height:220px;">
+    <div style="text-align:center; padding:12px;">
+      <div style="font-size:11px; font-weight:700;">芋圓</div>
+      <div style="font-size:28px; font-weight:900; color:#e94560; margin:6px 0;">762 🪙</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:10px;">
+        <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:8px; text-align:center;">
+          <div style="font-size:10px;">100🪙</div>
+          <div style="font-size:10px; font-weight:700; background:#e94560; border-radius:6px; padding:3px; margin-top:3px;">$30</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:8px; text-align:center;">
+          <div style="font-size:10px;">320🪙</div>
+          <div style="font-size:10px; font-weight:700; background:#7c3aed; border-radius:6px; padding:3px; margin-top:3px;">$90</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:8px; text-align:center;">
+          <div style="font-size:10px;">700🪙</div>
+          <div style="font-size:10px; font-weight:700; background:#e94560; border-radius:6px; padding:3px; margin-top:3px;">$180</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:8px; text-align:center;">
+          <div style="font-size:10px;">2000🪙</div>
+          <div style="font-size:10px; font-weight:700; background:#7c3aed; border-radius:6px; padding:3px; margin-top:3px;">$490</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="pts-table" class="dtable" style="left:2160px; top:2010px; width:520px;">
+  <table>
+    <tr><th>儲值（台幣）</th><th>點數</th><th>單價（點/元）</th><th>折扣</th></tr>
+    <tr><td>NT$30</td><td>100 點</td><td>3.33 點/元</td><td>—</td></tr>
+    <tr><td>NT$90</td><td>320 點</td><td>3.56 點/元</td><td style="color:#059669;">+7%</td></tr>
+    <tr><td>NT$180</td><td>700 點</td><td>3.89 點/元</td><td style="color:#059669;">+17%</td></tr>
+    <tr><td>NT$490</td><td>2,000 點</td><td>4.08 點/元</td><td style="color:#059669;">+22%</td></tr>
+    <tr><td>NT$990</td><td>4,500 點</td><td>4.55 點/元</td><td style="color:#059669;">+37%</td></tr>
+  </table>
+</div>
+
+<div id="cost-warning" class="hl hl-pink" style="left:2160px; top:2260px; width:520px; text-align:center; font-weight:700; color:#e94560;">
+  ⚠️ 每一個需求 TOKEN 的成本是多少需要精算清楚
+</div>
+
+
+</div><!-- end canvas -->
+
+<script>
+// ═══ Pan & Zoom ═══
+const canvas = document.getElementById('canvas');
+let scale = 0.45, panX = 20, panY = 0;
+let dragging = false, sx, sy;
+
+function apply() {
+  canvas.style.transform = `translate(${panX}px,${panY}px) scale(${scale})`;
+  document.getElementById('zl').textContent = Math.round(scale*100)+'%';
+}
+
+// mousedown handled by onMouseDown() below (defined after edit mode)
+document.addEventListener('mousemove', e => {
+  if (dragging) { panX = e.clientX - sx; panY = e.clientY - sy; apply(); }
+});
+document.addEventListener('mouseup', () => dragging = false);
+document.addEventListener('wheel', e => {
+  e.preventDefault();
+  const d = e.deltaY > 0 ? 0.92 : 1.08;
+  const ns = Math.max(0.15, Math.min(2, scale * d));
+  panX = e.clientX - (e.clientX - panX) * (ns / scale);
+  panY = e.clientY - (e.clientY - panY) * (ns / scale);
+  scale = ns; apply();
+}, { passive: false });
+
+function zoomIn() { scale = Math.min(2, scale*1.2); apply(); }
+function zoomOut() { scale = Math.max(0.15, scale*0.8); apply(); }
+function resetView() { scale = 0.45; panX = 20; panY = 0; apply(); }
+function fitAll() { scale = 0.3; panX = 10; panY = 10; apply(); }
+
+
+// ═══ Dynamic Connection Lines ═══
+const connections = [
+  // ── ZONE A: 入口橫向流 ──
+  { from: 'reg',          to: 'lang',          fromSide: 'right', toSide: 'left',   color: '' },
+  { from: 'lang',         to: 'profile',       fromSide: 'right', toSide: 'left',   color: '' },
+  { from: 'profile',      to: 'profile-phone', fromSide: 'right', toSide: 'left',   color: '' },
+
+  // ── ZONE A → B: 入口往下到核心 ──
+  { from: 'reg',          to: 'coach-build',   fromSide: 'bottom', toSide: 'top',   color: '',       label: '註冊後選教練' },
+  { from: 'lang',         to: 'coach-setting', fromSide: 'bottom', toSide: 'top',   color: 'purple', label: '語言→Prompt' },
+  { from: 'profile',      to: 'home',          fromSide: 'bottom', toSide: 'top',   color: 'blue',   label: '用戶資料→首頁' },
+
+  // ── ZONE B: 核心功能橫向流 ──
+  { from: 'coach-info',   to: 'coach-setting', fromSide: 'right', toSide: 'left',   color: '',       label: '教練→設定' },
+  { from: 'sys-override', to: 'home',          fromSide: 'right', toSide: 'left',   color: '',       label: '規則→介面' },
+  { from: 'home',         to: 'chat',          fromSide: 'right', toSide: 'left',   color: '',       label: '選教練→對話' },
+  { from: 'chat',         to: 'tournament',    fromSide: 'right', toSide: 'left',   color: '',       label: '訓練→比賽' },
+
+  // ── ZONE B → D: 首頁往下到教練主頁 ──
+  { from: 'home',         to: 'coach-page',    fromSide: 'bottom', toSide: 'top',   color: 'blue',   label: '教練列表→主頁' },
+
+  // ── ZONE D: 內容橫向流 ──
+  { from: 'coach-page',   to: 'courses',       fromSide: 'right', toSide: 'left',   color: 'purple', label: '主頁→課題' },
+  { from: 'courses',      to: 'famous',        fromSide: 'bottom', toSide: 'top',   color: 'orange' },
+  { from: 'courses',      to: 'memory',        fromSide: 'right', toSide: 'left',   color: 'green',  label: '學習記錄' },
+
+  // ── 付費往上連到核心功能（虛線 = 金流控制） ──
+  { from: 'sub-table',    to: 'chat',          fromSide: 'top',   toSide: 'bottom', color: '',       label: '訂閱控制訊息量', dashed: true },
+  { from: 'sub-table',    to: 'tournament',    fromSide: 'top',   toSide: 'bottom', color: '',       label: '訂閱控制入場',   dashed: true },
+
+  // ── 付費 → 記憶（Pro 功能） ──
+  { from: 'sub-table',    to: 'memory',        fromSide: 'left',  toSide: 'right',  color: 'green',  label: 'Pro→記憶', dashed: true },
+
+  // ── 記憶回饋到對話 ──
+  { from: 'memory',       to: 'chat',          fromSide: 'top',   toSide: 'bottom', color: 'green',  label: 'RAG→對話上下文' },
+
+  // ── Roadmap 橫向 ──
+  { from: 'road-p1', to: 'road-p2', fromSide: 'right', toSide: 'left', color: 'blue' },
+  { from: 'road-p2', to: 'road-p3', fromSide: 'right', toSide: 'left', color: 'blue' },
+];
+
+function getAnchor(el, side) {
+  const x = el.offsetLeft;
+  const y = el.offsetTop;
+  const w = el.offsetWidth;
+  const h = el.offsetHeight;
+  switch (side) {
+    case 'top':    return { x: x + w/2, y: y };
+    case 'bottom': return { x: x + w/2, y: y + h };
+    case 'left':   return { x: x,       y: y + h/2 };
+    case 'right':  return { x: x + w,   y: y + h/2 };
+  }
+}
+
+function drawConnections() {
+  const svg = document.getElementById('conn-svg');
+  svg.innerHTML = '';
+
+  // Arrow marker definitions
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  ['', 'blue', 'purple', 'green', 'orange'].forEach(c => {
+    const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+    marker.setAttribute('id', 'arrow' + (c ? '-'+c : ''));
+    marker.setAttribute('markerWidth', '10');
+    marker.setAttribute('markerHeight', '8');
+    marker.setAttribute('refX', '9');
+    marker.setAttribute('refY', '4');
+    marker.setAttribute('orient', 'auto');
+    const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    poly.setAttribute('points', '0 0, 10 4, 0 8');
+    const fills = { '': '#e94560', blue: '#3b82f6', purple: '#7c3aed', green: '#059669', orange: '#f59e0b' };
+    poly.setAttribute('fill', fills[c] || '#e94560');
+    marker.appendChild(poly);
+    defs.appendChild(marker);
+  });
+  svg.appendChild(defs);
+
+  connections.forEach(conn => {
+    const fromEl = document.getElementById(conn.from);
+    const toEl = document.getElementById(conn.to);
+    if (!fromEl || !toEl) return;
+
+    const a = getAnchor(fromEl, conn.fromSide);
+    const b = getAnchor(toEl, conn.toSide);
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+
+    let c1x, c1y, c2x, c2y;
+
+    const isHoriz = (conn.fromSide === 'right' && conn.toSide === 'left') ||
+                    (conn.fromSide === 'left' && conn.toSide === 'right');
+    const isVert = (conn.fromSide === 'bottom' && conn.toSide === 'top') ||
+                   (conn.fromSide === 'top' && conn.toSide === 'bottom');
+
+    if (isHoriz) {
+      const t = Math.min(Math.abs(dx) * 0.45, 100);
+      c1x = a.x + (conn.fromSide === 'right' ? t : -t);
+      c1y = a.y;
+      c2x = b.x + (conn.toSide === 'left' ? -t : t);
+      c2y = b.y;
+    } else if (isVert) {
+      const t = Math.min(Math.abs(dy) * 0.45, 100);
+      c1x = a.x;
+      c1y = a.y + (conn.fromSide === 'bottom' ? t : -t);
+      c2x = b.x;
+      c2y = b.y + (conn.toSide === 'top' ? -t : t);
+    } else {
+      // Mixed — L-shape bezier
+      if (conn.fromSide === 'bottom' || conn.fromSide === 'top') {
+        c1x = a.x;
+        c1y = a.y + (conn.fromSide === 'bottom' ? Math.abs(dy)*0.5 : -Math.abs(dy)*0.5);
+        c2x = b.x;
+        c2y = b.y + (conn.toSide === 'top' ? -Math.abs(dy)*0.2 : conn.toSide === 'bottom' ? Math.abs(dy)*0.2 : 0);
+      } else {
+        c1x = a.x + (conn.fromSide === 'right' ? Math.abs(dx)*0.5 : -Math.abs(dx)*0.5);
+        c1y = a.y;
+        c2x = b.x;
+        c2y = b.y + (conn.toSide === 'top' ? -Math.abs(dy)*0.3 : conn.toSide === 'bottom' ? Math.abs(dy)*0.3 : 0);
+      }
+    }
+
+    // Draw path
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M ${a.x} ${a.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${b.x} ${b.y}`);
+    let cls = 'conn-line';
+    if (conn.color) cls += ' ' + conn.color;
+    if (conn.dashed) cls += ' dashed';
+    path.setAttribute('class', cls);
+    path.setAttribute('marker-end', `url(#arrow${conn.color ? '-'+conn.color : ''})`);
+    svg.appendChild(path);
+
+    // Draw label at midpoint
+    if (conn.label) {
+      const mx = (a.x + b.x) / 2;
+      const my = (a.y + b.y) / 2;
+      const fills = { '': '#e94560', blue: '#3b82f6', purple: '#7c3aed', green: '#059669', orange: '#f59e0b' };
+      const bgs = { '': '#fce4ec', blue: '#dbeafe', purple: '#f3e5f5', green: '#e8f5e9', orange: '#fef3c7' };
+      const c = conn.color || '';
+      const fo = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+      fo.setAttribute('x', mx - 65);
+      fo.setAttribute('y', my - 12);
+      fo.setAttribute('width', 130);
+      fo.setAttribute('height', 24);
+      fo.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="
+        font-family:'Noto Sans TC',sans-serif; font-size:10px; font-weight:700;
+        color:${fills[c]}; background:${bgs[c]}; padding:2px 6px;
+        border-radius:4px; text-align:center; white-space:nowrap; display:inline-block;
+        position:relative; left:50%; transform:translateX(-50%);
+      ">${conn.label}</div>`;
+      svg.appendChild(fo);
+    }
+  });
+}
+
+// ═══ Edit Mode ═══
+let editMode = false;
+const EDITABLE_SELECTORS = '.sticky, .card, .hl, .title, .zone-label, .dtable td, .dtable th';
+
+function toggleEdit() {
+  editMode = !editMode;
+  const btn = document.getElementById('editBtn');
+  const saveBtn = document.getElementById('saveBtn');
+
+  if (editMode) {
+    // 開啟編輯模式
+    document.body.classList.add('edit-mode');
+    btn.classList.add('active');
+    btn.textContent = '✏️ 完成編輯';
+    saveBtn.style.display = 'inline-block';
+
+    // 讓所有文字元素可編輯
+    document.querySelectorAll(EDITABLE_SELECTORS).forEach(el => {
+      el.contentEditable = 'true';
+      el.spellcheck = false;
+    });
+
+    // 編輯模式下禁止拖拉 canvas
+    document.removeEventListener('mousedown', onMouseDown);
+  } else {
+    // 關閉編輯模式
+    document.body.classList.remove('edit-mode');
+    btn.classList.remove('active');
+    btn.textContent = '✏️ 編輯';
+
+    // 移除 contenteditable
+    document.querySelectorAll(EDITABLE_SELECTORS).forEach(el => {
+      el.contentEditable = 'false';
+    });
+
+    // 恢復拖拉
+    document.addEventListener('mousedown', onMouseDown);
+  }
+}
+
+function saveHTML() {
+  // 暫時關掉 contenteditable 再存（避免瀏覽器把屬性寫進去）
+  document.querySelectorAll(EDITABLE_SELECTORS).forEach(el => {
+    el.removeAttribute('contenteditable');
+    el.removeAttribute('spellcheck');
+  });
+  document.body.classList.remove('edit-mode');
+
+  const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+
+  // 恢復狀態
+  if (editMode) {
+    document.body.classList.add('edit-mode');
+    document.querySelectorAll(EDITABLE_SELECTORS).forEach(el => {
+      el.contentEditable = 'true';
+      el.spellcheck = false;
+    });
+  }
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'poker-goal-whiteboard.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// 把 mousedown 抽成具名函式，方便 add/remove
+function onMouseDown(e) {
+  if (e.target.closest('.toolbar')) return;
+  dragging = true; sx = e.clientX - panX; sy = e.clientY - panY;
+}
+document.addEventListener('mousedown', onMouseDown);
+
+apply();
+setTimeout(drawConnections, 300);
+window.addEventListener('resize', drawConnections);
+</script>
+</body>
+</html>
+
