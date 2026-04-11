@@ -20,8 +20,7 @@
 
 param(
     [switch]$KeepJson,
-    [switch]$StopOnError,
-    [switch]$SkipExisting
+    [switch]$StopOnError
 )
 
 $ErrorActionPreference = "Stop"
@@ -98,17 +97,6 @@ for ($i = 0; $i -lt $totalCount; $i++) {
     Write-Host "===========================================" -ForegroundColor Cyan
     Write-Host "$progress $baseName" -ForegroundColor Cyan
     Write-Host "===========================================" -ForegroundColor Cyan
-
-    # Skip if TS file already exists (when -SkipExisting)
-    if ($SkipExisting) {
-        $ProjectRoot = (Resolve-Path (Join-Path $ScriptDir "..\..")).Path
-        $tsFile = Join-Path $ProjectRoot "src\lib\gto\gtoData_$baseName.ts"
-        if (Test-Path $tsFile) {
-            Write-Host "  SKIP: TS file already exists" -ForegroundColor Yellow
-            $succeeded += $baseName
-            continue
-        }
-    }
 
     # Copy input into solver dir (cwd-relative dump_result paths)
     $copiedInput = Join-Path $SolverDir "batch_input.txt"
