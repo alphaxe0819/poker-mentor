@@ -30,7 +30,7 @@ export function getGTOAction(
     else canonicalBB = 15;
   }
 
-  const key = `${gameType}_${tableType}_${canonicalBB}bb_${position}_${scenario}`;
+  const key = `${gameTypeKey}_${canonicalBB}bb_${position}_${scenario}`;
   const range = db[key];
   if (!range) return { action: 'f', note: '此情境無資料' };
 
