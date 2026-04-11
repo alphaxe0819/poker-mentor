@@ -20,34 +20,6 @@ import { HU_40BB_SRP_FLOP_7S7D2H } from './gtoData_hu_40bb_srp_flop_7s7d2h'
 import { HU_40BB_SRP_FLOP_KCKD5H } from './gtoData_hu_40bb_srp_flop_KcKd5h'
 import { HU_40BB_SRP_FLOP_QSJH2H } from './gtoData_hu_40bb_srp_flop_QsJh2h'
 
-import { HU_25BB_SRP_FLOP_AS7D2C } from './gtoData_hu_25bb_srp_flop_As7d2c'
-import { HU_25BB_SRP_FLOP_KC8H3S } from './gtoData_hu_25bb_srp_flop_Kc8h3s'
-import { HU_25BB_SRP_FLOP_JC7D2H } from './gtoData_hu_25bb_srp_flop_Jc7d2h'
-import { HU_25BB_SRP_FLOP_9D5C2H } from './gtoData_hu_25bb_srp_flop_9d5c2h'
-import { HU_25BB_SRP_FLOP_KSQD4H } from './gtoData_hu_25bb_srp_flop_KsQd4h'
-import { HU_25BB_SRP_FLOP_TD8H4C } from './gtoData_hu_25bb_srp_flop_Td8h4c'
-import { HU_25BB_SRP_FLOP_JS9C3H } from './gtoData_hu_25bb_srp_flop_Js9c3h'
-import { HU_25BB_SRP_FLOP_JSTC9H } from './gtoData_hu_25bb_srp_flop_JsTc9h'
-import { HU_25BB_SRP_FLOP_9H8D7C } from './gtoData_hu_25bb_srp_flop_9h8d7c'
-import { HU_25BB_SRP_FLOP_TC9C6D } from './gtoData_hu_25bb_srp_flop_Tc9c6d'
-import { HU_25BB_SRP_FLOP_7S7D2H } from './gtoData_hu_25bb_srp_flop_7s7d2h'
-import { HU_25BB_SRP_FLOP_KCKD5H } from './gtoData_hu_25bb_srp_flop_KcKd5h'
-import { HU_25BB_SRP_FLOP_QSJH2H } from './gtoData_hu_25bb_srp_flop_QsJh2h'
-
-import { HU_13BB_SRP_FLOP_AS7D2C } from './gtoData_hu_13bb_srp_flop_As7d2c'
-import { HU_13BB_SRP_FLOP_KC8H3S } from './gtoData_hu_13bb_srp_flop_Kc8h3s'
-import { HU_13BB_SRP_FLOP_JC7D2H } from './gtoData_hu_13bb_srp_flop_Jc7d2h'
-import { HU_13BB_SRP_FLOP_9D5C2H } from './gtoData_hu_13bb_srp_flop_9d5c2h'
-import { HU_13BB_SRP_FLOP_KSQD4H } from './gtoData_hu_13bb_srp_flop_KsQd4h'
-import { HU_13BB_SRP_FLOP_TD8H4C } from './gtoData_hu_13bb_srp_flop_Td8h4c'
-import { HU_13BB_SRP_FLOP_JS9C3H } from './gtoData_hu_13bb_srp_flop_Js9c3h'
-import { HU_13BB_SRP_FLOP_JSTC9H } from './gtoData_hu_13bb_srp_flop_JsTc9h'
-import { HU_13BB_SRP_FLOP_9H8D7C } from './gtoData_hu_13bb_srp_flop_9h8d7c'
-import { HU_13BB_SRP_FLOP_TC9C6D } from './gtoData_hu_13bb_srp_flop_Tc9c6d'
-import { HU_13BB_SRP_FLOP_7S7D2H } from './gtoData_hu_13bb_srp_flop_7s7d2h'
-import { HU_13BB_SRP_FLOP_KCKD5H } from './gtoData_hu_13bb_srp_flop_KcKd5h'
-import { HU_13BB_SRP_FLOP_QSJH2H } from './gtoData_hu_13bb_srp_flop_QsJh2h'
-
 export type HuPostflopRange = Record<string, string>
 
 /**
@@ -70,44 +42,6 @@ export const HU_40BB_FLOP_SRP_DB: Record<string, Record<string, HuPostflopRange>
   '7s7d2h': HU_40BB_SRP_FLOP_7S7D2H,
   KcKd5h: HU_40BB_SRP_FLOP_KCKD5H,
   QsJh2h: HU_40BB_SRP_FLOP_QSJH2H,
-}
-
-export const HU_25BB_FLOP_SRP_DB: Record<string, Record<string, HuPostflopRange>> = {
-  As7d2c: HU_25BB_SRP_FLOP_AS7D2C,
-  Kc8h3s: HU_25BB_SRP_FLOP_KC8H3S,
-  Jc7d2h: HU_25BB_SRP_FLOP_JC7D2H,
-  '9d5c2h': HU_25BB_SRP_FLOP_9D5C2H,
-  KsQd4h: HU_25BB_SRP_FLOP_KSQD4H,
-  Td8h4c: HU_25BB_SRP_FLOP_TD8H4C,
-  Js9c3h: HU_25BB_SRP_FLOP_JS9C3H,
-  JsTc9h: HU_25BB_SRP_FLOP_JSTC9H,
-  '9h8d7c': HU_25BB_SRP_FLOP_9H8D7C,
-  Tc9c6d: HU_25BB_SRP_FLOP_TC9C6D,
-  '7s7d2h': HU_25BB_SRP_FLOP_7S7D2H,
-  KcKd5h: HU_25BB_SRP_FLOP_KCKD5H,
-  QsJh2h: HU_25BB_SRP_FLOP_QSJH2H,
-}
-
-export const HU_13BB_FLOP_SRP_DB: Record<string, Record<string, HuPostflopRange>> = {
-  As7d2c: HU_13BB_SRP_FLOP_AS7D2C,
-  Kc8h3s: HU_13BB_SRP_FLOP_KC8H3S,
-  Jc7d2h: HU_13BB_SRP_FLOP_JC7D2H,
-  '9d5c2h': HU_13BB_SRP_FLOP_9D5C2H,
-  KsQd4h: HU_13BB_SRP_FLOP_KSQD4H,
-  Td8h4c: HU_13BB_SRP_FLOP_TD8H4C,
-  Js9c3h: HU_13BB_SRP_FLOP_JS9C3H,
-  JsTc9h: HU_13BB_SRP_FLOP_JSTC9H,
-  '9h8d7c': HU_13BB_SRP_FLOP_9H8D7C,
-  Tc9c6d: HU_13BB_SRP_FLOP_TC9C6D,
-  '7s7d2h': HU_13BB_SRP_FLOP_7S7D2H,
-  KcKd5h: HU_13BB_SRP_FLOP_KCKD5H,
-  QsJh2h: HU_13BB_SRP_FLOP_QSJH2H,
-}
-
-export function getPostflopDB(effectiveStackBB: number): { db: Record<string, Record<string, HuPostflopRange>>; stackLabel: '13bb' | '25bb' | '40bb' } {
-  if (effectiveStackBB <= 18) return { db: HU_13BB_FLOP_SRP_DB, stackLabel: '13bb' }
-  if (effectiveStackBB <= 32) return { db: HU_25BB_FLOP_SRP_DB, stackLabel: '25bb' }
-  return { db: HU_40BB_FLOP_SRP_DB, stackLabel: '40bb' }
 }
 
 export const SUPPORTED_FLOP_BOARDS = Object.keys(HU_40BB_FLOP_SRP_DB)
