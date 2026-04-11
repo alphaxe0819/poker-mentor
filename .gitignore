@@ -26,3 +26,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# TexasSolver binary (AGPL-3.0, must not be committed) + solver output
+scripts/gto-pipeline/TexasSolver-v0.2.0-Windows/
+scripts/gto-pipeline/TexasSolver-v0.2.0-Linux/
+scripts/gto-pipeline/TexasSolver-v0.2.0-MacOs/
+scripts/gto-pipeline/output/
+# Brainstorm visual companion cache
+.superpowers/
