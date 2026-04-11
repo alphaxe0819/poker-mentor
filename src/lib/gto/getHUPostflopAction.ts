@@ -8,7 +8,7 @@
 // 其他 spot（turn / river / 3BP / 4BP / 沒準備的 board）走 heuristic。
 // =============================================================
 
-import { getPostflopDB, findSupportedBoard } from './gtoData_hu_postflop_index'
+import { HU_40BB_FLOP_SRP_DB, findSupportedBoard } from './gtoData_hu_postflop_index'
 import { getHeuristicAction, type HeuristicContext, type Personality } from './huHeuristics'
 
 // ── Types ──────────────────────────────────────────────
@@ -87,11 +87,10 @@ function lookupGTO(ctx: PostflopContext): ActionDecision | null {
   if (!boardKey) return null
 
   // 從 board 的 5 個 scenario 找該 role
-  const { db, stackLabel } = getPostflopDB(ctx.effectiveStackBB)
-  const boardDb = db[boardKey]
+  const boardDb = HU_40BB_FLOP_SRP_DB[boardKey]
   if (!boardDb) return null
 
-  const scenarioKey = `hu_${stackLabel}_srp_flop_${boardKey}_${ctx.role}`
+  const scenarioKey = `hu_40bb_srp_flop_${boardKey}_${ctx.role}`
   const range = boardDb[scenarioKey]
   if (!range) return null
 
