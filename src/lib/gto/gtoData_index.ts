@@ -10,7 +10,12 @@ async function load(key: string, loader: () => Promise<any>): Promise<DBModule> 
   if (cached) return cached
   const mod = await loader()
   // Handle both default exports and named exports
-  const db: DBModule = mod.default ?? mod.DB_CASH_6MAX_100BB ?? mod.DB_CASH_4MAX_100BB ?? mod.DB_CASH_HU_100BB ?? mod
+  const db: DBModule = mod.default
+    ?? mod.DB_CASH_6MAX_100BB
+    ?? mod.DB_CASH_4MAX_100BB
+    ?? mod.DB_CASH_HU_100BB
+    ?? mod.DB_TOURN_HU_40BB
+    ?? mod
   cache.set(key, db)
   return db
 }
@@ -31,6 +36,7 @@ function resolveKey(gameTypeKey: string, stackBB: number): string {
   if (gameTypeKey === 'cash_6max') return 'c6'
   if (gameTypeKey === 'cash_4max') return 'c4'
   if (gameTypeKey === 'cash_hu')   return 'chu'
+  if (gameTypeKey === 'tourn_hu')  return 'thu40'  // v1.0 only has 40BB
   if (stackBB >= 88) return 't100'
   if (stackBB >= 58) return 't75'
   if (stackBB >= 33) return 't40'
@@ -48,6 +54,7 @@ function loadByKey(key: string): Promise<DBModule> {
     case 'c6':   return load(key, () => import('./gtoData_cash_6max_100bb'))
     case 'c4':   return load(key, () => import('./gtoData_cash_4max_100bb'))
     case 'chu':  return load(key, () => import('./gtoData_cash_hu_100bb'))
+    case 'thu40': return load(key, () => import('./gtoData_tourn_hu_40bb'))
     default:     return load('t100', () => import('./gtoData_tourn_9max_100bb'))
   }
 }
