@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createMatch, dealNewHand } from '../../lib/hu/engine'
+import { createMatch, dealNewHand, applyAction } from '../../lib/hu/engine'
 import type { MatchConfig } from '../../lib/hu/types'
 
 describe('engine - match init', () => {
@@ -119,5 +119,86 @@ describe('engine - match init', () => {
       const updated = dealNewHand(m)
       expect(updated.currentHand!.isComplete).toBe(false)
     })
+  })
+})
+
+describe('engine - action processing', () => {
+  const config1to1: MatchConfig = {
+    totalStackBB: 80, stackRatio: '1:1', playerSide: 'equal', sbBB: 0.5, bbBB: 1,
+  }
+
+  it('fold ends hand and marks folder', () => {
+    let m = createMatch(config1to1)
+    m = dealNewHand(m)
+    const result = applyAction(m, { kind: 'fold', actor: 'btn', street: 'preflop' })
+    expect(result.currentHand!.isComplete).toBe(true)
+    // Hero is BTN on hand 1, so hero folded
+    expect(result.currentHand!.hero.hasFolded).toBe(true)
+  })
+
+  it('call matches current bet', () => {
+    let m = createMatch(config1to1)
+    m = dealNewHand(m)
+    // BTN posted SB 0.5, faces BB 1. Calling adds 0.5
+    const result = applyAction(m, { kind: 'call', actor: 'btn', street: 'preflop' })
+    expect(result.currentHand!.hero.streetCommitBB).toBe(1)
+    expect(result.currentHand!.potBB).toBe(2)
+    expect(result.currentHand!.toAct).toBe('bb')  // Now BB has option
+    expect(result.currentHand!.isComplete).toBe(false)
+  })
+
+  it('raise increases current bet', () => {
+    let m = createMatch(config1to1)
+    m = dealNewHand(m)
+    // BTN raises to 2.5BB total
+    const result = applyAction(m, { kind: 'raise', actor: 'btn', amount: 2.5, street: 'preflop' })
+    expect(result.currentHand!.currentBetBB).toBe(2.5)
+    expect(result.currentHand!.toAct).toBe('bb')
+    expect(result.currentHand!.isComplete).toBe(false)
+  })
+
+  it('two checks on flop advances to turn', () => {
+    let m = createMatch(config1to1)
+    m = dealNewHand(m)
+    // Preflop: BTN call, BB check → goes to flop
+    m = applyAction(m, { kind: 'call', actor: 'btn', street: 'preflop' })
+    m = applyAction(m, { kind: 'check', actor: 'bb', street: 'preflop' })
+    expect(m.currentHand!.street).toBe('flop')
+    expect(m.currentHand!.board).toHaveLength(3)
+    // BB acts first postflop in HU
+    expect(m.currentHand!.toAct).toBe('bb')
+  })
+
+  it('check then bet then call advances flop → turn', () => {
+    let m = createMatch(config1to1)
+    m = dealNewHand(m)
+    m = applyAction(m, { kind: 'call', actor: 'btn', street: 'preflop' })
+    m = applyAction(m, { kind: 'check', actor: 'bb', street: 'preflop' })
+    // On flop. BB acts first postflop.
+    m = applyAction(m, { kind: 'check', actor: 'bb', street: 'flop' })
+    m = applyAction(m, { kind: 'bet', actor: 'btn', amount: 1, street: 'flop' })
+    m = applyAction(m, { kind: 'call', actor: 'bb', street: 'flop' })
+    expect(m.currentHand!.street).toBe('turn')
+    expect(m.currentHand!.board).toHaveLength(4)
+  })
+
+  it('all-in caps amount at remaining stack', () => {
+    let m = createMatch(config1to1)
+    m = dealNewHand(m)
+    // Hero stack after SB = 39.5BB
+    const result = applyAction(m, { kind: 'allin', actor: 'btn', street: 'preflop' })
+    expect(result.currentHand!.hero.stackBB).toBe(0)
+    expect(result.currentHand!.hero.isAllIn).toBe(true)
+    // streetCommit went from 0.5 → 40 (the full stack)
+    expect(result.currentHand!.hero.streetCommitBB).toBe(40)
+  })
+
+  it('preflop all-in followed by fold ends hand', () => {
+    let m = createMatch(config1to1)
+    m = dealNewHand(m)
+    m = applyAction(m, { kind: 'allin', actor: 'btn', street: 'preflop' })
+    m = applyAction(m, { kind: 'fold', actor: 'bb', street: 'preflop' })
+    expect(m.currentHand!.isComplete).toBe(true)
+    expect(m.currentHand!.villain.hasFolded).toBe(true)
   })
 })
