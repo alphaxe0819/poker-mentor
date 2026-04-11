@@ -4,6 +4,7 @@ import type {
   Action,
 } from './types'
 import { newDeck, shuffleDeck, dealCards } from './deck'
+import { evaluateHand, compareHands } from './handEvaluator'
 
 // ── Match init ──────────────────────────────────────
 
@@ -230,4 +231,59 @@ export function advanceStreet(hand: HandState): HandState {
     next.toAct = 'bb'
   }
   return next
+}
+
+// ── Resolve hand ────────────────────────────────────
+
+/**
+ * Settle the current hand: determine winner, distribute pot, update match-level
+ * stacks, detect bust, move hand to history.
+ *
+ * Must be called by the controller AFTER `currentHand.isComplete === true`.
+ */
+export function resolveHand(match: MatchState): MatchState {
+  if (!match.currentHand) throw new Error('No current hand to resolve')
+  const hand = match.currentHand
+
+  let heroDelta = 0  // chips won/lost by hero this hand
+  let villainDelta = 0
+
+  if (hand.hero.hasFolded) {
+    villainDelta = hand.hero.committedBB
+    heroDelta = -hand.hero.committedBB
+  } else if (hand.villain.hasFolded) {
+    heroDelta = hand.villain.committedBB
+    villainDelta = -hand.villain.committedBB
+  } else {
+    // Showdown: evaluate best hand from hole + board
+    const heroBest = evaluateHand([...hand.hero.holeCards, ...hand.board])
+    const villainBest = evaluateHand([...hand.villain.holeCards, ...hand.board])
+    const cmp = compareHands(heroBest, villainBest)
+    if (cmp > 0) {
+      heroDelta = hand.villain.committedBB
+      villainDelta = -hand.villain.committedBB
+    } else if (cmp < 0) {
+      heroDelta = -hand.hero.committedBB
+      villainDelta = hand.hero.committedBB
+    }
+    // tie → both deltas stay 0 (commitments returned)
+  }
+
+  // Update match-level stacks
+  const newPlayerStack = match.playerStackBB + heroDelta
+  const newBotStack = match.botStackBB + villainDelta
+
+  // Detect bust
+  let result: MatchState['result'] = 'in_progress'
+  if (newPlayerStack <= 0) result = 'player_lost'
+  else if (newBotStack <= 0) result = 'player_won'
+
+  return {
+    ...match,
+    handHistory: [...match.handHistory, hand],
+    currentHand: null,
+    playerStackBB: Math.max(0, newPlayerStack),
+    botStackBB: Math.max(0, newBotStack),
+    result,
+  }
 }

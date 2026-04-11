@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createMatch, dealNewHand, applyAction } from '../../lib/hu/engine'
+import { createMatch, dealNewHand, applyAction, resolveHand } from '../../lib/hu/engine'
 import type { MatchConfig } from '../../lib/hu/types'
 
 describe('engine - match init', () => {
@@ -200,5 +200,75 @@ describe('engine - action processing', () => {
     m = applyAction(m, { kind: 'fold', actor: 'bb', street: 'preflop' })
     expect(m.currentHand!.isComplete).toBe(true)
     expect(m.currentHand!.villain.hasFolded).toBe(true)
+  })
+})
+
+describe('engine - showdown and resolution', () => {
+  const config1to1: MatchConfig = {
+    totalStackBB: 80, stackRatio: '1:1', playerSide: 'equal', sbBB: 0.5, bbBB: 1,
+  }
+
+  it('fold awards pot to non-folder and updates match stacks', () => {
+    let m = createMatch(config1to1)
+    m = dealNewHand(m)
+    // Hero is BTN, posts 0.5 SB
+    m = applyAction(m, { kind: 'fold', actor: 'btn', street: 'preflop' })
+    m = resolveHand(m)
+    // Hero (BTN) folded → loses the 0.5 SB. Bot wins 0.5 net.
+    expect(m.playerStackBB).toBe(40 - 0.5)
+    expect(m.botStackBB).toBe(40 + 0.5)
+    expect(m.result).toBe('in_progress')
+  })
+
+  it('moves currentHand to handHistory after resolve', () => {
+    let m = createMatch(config1to1)
+    m = dealNewHand(m)
+    m = applyAction(m, { kind: 'fold', actor: 'btn', street: 'preflop' })
+    m = resolveHand(m)
+    expect(m.handHistory).toHaveLength(1)
+    expect(m.currentHand).toBeNull()
+  })
+
+  it('villain fold awards pot to hero', () => {
+    let m = createMatch(config1to1)
+    // Hand 2: hero is BB, villain is BTN
+    m = { ...m, handHistory: [{} as any], currentHand: null }
+    m = dealNewHand(m)
+    expect(m.currentHand!.hero.position).toBe('bb')
+    // Villain (BTN) folds preflop → loses 0.5
+    m = applyAction(m, { kind: 'fold', actor: 'btn', street: 'preflop' })
+    m = resolveHand(m)
+    // Hero (BB) won 0.5 (villain's SB)
+    expect(m.playerStackBB).toBe(40 + 0.5)
+    expect(m.botStackBB).toBe(40 - 0.5)
+  })
+
+  it('detects player bust → result = player_lost (synthetic)', () => {
+    // Synthetic: build a hand where hero committed everything and lost
+    let m = createMatch({ ...config1to1, totalStackBB: 4 })
+    // playerStack=2, botStack=2
+    m = dealNewHand(m)
+    // We synthetically modify state then call resolveHand to test the bust path.
+    // (This is white-box test of resolveHand's bust detection logic)
+    if (m.currentHand) {
+      m.currentHand.hero.committedBB = 2  // hero put in everything
+      m.currentHand.villain.committedBB = 2
+      m.currentHand.hero.hasFolded = true  // hero folded → loses 2
+      m.currentHand.isComplete = true
+    }
+    m = resolveHand(m)
+    // Hero loses 2 → playerStack 2 - 2 = 0 → bust
+    expect(m.result).toBe('player_lost')
+    expect(m.playerStackBB).toBe(0)
+  })
+
+  it('match.result stays in_progress when both still have chips', () => {
+    let m = createMatch(config1to1)
+    m = dealNewHand(m)
+    m = applyAction(m, { kind: 'fold', actor: 'btn', street: 'preflop' })
+    m = resolveHand(m)
+    expect(m.result).toBe('in_progress')
+    expect(m.playerStackBB).toBeGreaterThan(0)
+    expect(m.botStackBB).toBeGreaterThan(0)
   })
 })
