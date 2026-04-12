@@ -12,7 +12,14 @@ import { writeFileSync, mkdirSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { BOARDS, STACK_RATIOS, HU_40BB_RANGES } from './boards.mjs'
+import { BOARDS, STACK_RATIOS, HU_40BB_RANGES, HU_25BB_RANGES, HU_13BB_RANGES } from './boards.mjs'
+
+// Pick the right ranges for each stack depth
+function getRanges(slug) {
+  if (slug === '13bb') return HU_13BB_RANGES
+  if (slug === '25bb') return HU_25BB_RANGES
+  return HU_40BB_RANGES
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const INPUT_DIR = resolve(__dirname, 'inputs')
@@ -23,8 +30,9 @@ function buildInput(board, stack) {
   lines.push(`set_pot ${stack.pot_bb}`)
   lines.push(`set_effective_stack ${stack.effective_stack_bb}`)
   lines.push(`set_board ${board.cards}`)
-  lines.push(`set_range_ip ${HU_40BB_RANGES.ip}`)
-  lines.push(`set_range_oop ${HU_40BB_RANGES.oop}`)
+  const ranges = getRanges(stack.slug)
+  lines.push(`set_range_ip ${ranges.ip}`)
+  lines.push(`set_range_oop ${ranges.oop}`)
 
   // Bet sizes — same for all boards (matches UI buckets 33/50/100 + allin)
   for (const pos of ['oop', 'ip']) {
