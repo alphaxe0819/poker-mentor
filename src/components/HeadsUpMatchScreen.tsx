@@ -33,6 +33,8 @@ export default function HeadsUpMatchScreen({
   const [waitingForBot, setWaitingForBot] = useState(false)
   const waitingRef = useRef(false)
   const [error, setError] = useState<string | null>(null)
+  /** Brief result display between hands: '+3 BB 🏆' or '-2 BB' */
+  const [handResult, setHandResult] = useState<{ delta: number; won: boolean } | null>(null)
   const violationsRef = useRef(0)
   const flagsRef = useRef<FlagsByHand>({})
 
@@ -93,10 +95,27 @@ export default function HeadsUpMatchScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [match?.currentHand?.toAct, match?.currentHand?.handNumber, match?.currentHand?.street])
 
-  // ── Hand complete → resolve and deal next ──
+  // ── Hand complete → show result briefly → resolve and deal next ──
   useEffect(() => {
     if (!match?.currentHand?.isComplete) return
+    const hand = match.currentHand
+
+    // Compute hand result for display
+    let delta = 0
+    let won = false
+    if (hand.villain.hasFolded) {
+      delta = hand.villain.committedBB
+      won = true
+    } else if (hand.hero.hasFolded) {
+      delta = -hand.hero.committedBB
+      won = false
+    }
+    // Showdown delta would need evaluateHand — skip for now, show 0
+    setHandResult({ delta, won })
+
+    // After 2.5s, resolve and move to next hand (or match end)
     const timer = setTimeout(() => {
+      setHandResult(null)
       const resolved = resolveHand(match)
       if (resolved.result !== 'in_progress') {
         const cappedViolationPoints = Math.min(violationsRef.current * 2, 10)
@@ -105,9 +124,9 @@ export default function HeadsUpMatchScreen({
       } else {
         setMatch(dealNewHand(resolved))
       }
-    }, 1500)
+    }, 2500)
     return () => clearTimeout(timer)
-  }, [match, onMatchComplete])
+  }, [match?.currentHand?.isComplete, match?.currentHand?.handNumber])
 
   // ── Player action handler ──
   const handlePlayerAction = useCallback((choice: ActionChoice) => {
@@ -292,9 +311,26 @@ export default function HeadsUpMatchScreen({
         {/* Status indicator */}
         <div className="text-center text-xs h-4">
           {waitingForBot && <span className="text-purple-300">🤖 對手思考中...</span>}
-          {!waitingForBot && hand.isComplete && <span className="text-gray-500">結算中...</span>}
           {!waitingForBot && isPlayerTurn && !hand.isComplete && <span className="text-green-400">輪到你決策</span>}
         </div>
+
+        {/* Hand result overlay — shown briefly when hand ends */}
+        {handResult && (
+          <div className="text-center py-3 rounded-xl mx-4 mb-2 animate-pulse"
+               style={{
+                 background: handResult.won ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+                 border: `1px solid ${handResult.won ? '#10b981' : '#ef4444'}`,
+               }}>
+            <div className="text-2xl mb-1">{handResult.won ? '🏆' : '💔'}</div>
+            <div className="font-bold text-lg"
+                 style={{ color: handResult.won ? '#10b981' : '#ef4444' }}>
+              {handResult.delta >= 0 ? '+' : ''}{handResult.delta.toFixed(1)} BB
+            </div>
+            <div className="text-gray-400 text-xs mt-1">
+              {hand.hero.hasFolded ? '你棄牌' : hand.villain.hasFolded ? '對手棄牌' : 'Showdown'}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Action bar — preflop uses fixed GTO sizes, postflop uses pot-% sizes */}
