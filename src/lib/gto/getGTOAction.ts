@@ -22,6 +22,9 @@ export function getGTOAction(
   let canonicalBB: number;
   if (gameType === 'cash') {
     canonicalBB = 100;
+  } else if (tableType === 'hu') {
+    // HU tournament DB only has 40BB data — always use that key regardless of effective stack
+    canonicalBB = 40;
   } else {
     if (stackBB >= 88) canonicalBB = 100;
     else if (stackBB >= 58) canonicalBB = 75;
