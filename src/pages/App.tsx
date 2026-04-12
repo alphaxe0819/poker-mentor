@@ -33,6 +33,17 @@ const LazyFallback = () => (
   </div>
 )
 
+/** Derive hero win/loss from in-memory hand state (post-resolve). */
+async function computeHeroWonForHand(hand: import('../lib/hu/types').HandState): Promise<boolean> {
+  if (hand.villain.hasFolded) return true
+  if (hand.hero.hasFolded) return false
+  // Showdown: re-evaluate hand strengths
+  const { evaluateHand, compareHands } = await import('../lib/hu/handEvaluator')
+  const heroBest = evaluateHand([...hand.hero.holeCards, ...hand.board])
+  const villainBest = evaluateHand([...hand.villain.holeCards, ...hand.board])
+  return compareHands(heroBest, villainBest) > 0
+}
+
 type Tab = 'coach' | 'train' | 'stats' | 'analysis' | 'profile'
 type TrainSubTab = 'practice' | 'course'
 type AppMode = 'loading' | 'auth' | 'guest' | 'quiz-detail' | 'onboarding' | 'app' | 'upgrade' | 'hu-select' | 'hu-match' | 'hu-review'
@@ -343,6 +354,26 @@ export default function App() {
           config={huConfig}
           personality="standard"
           onAbandon={() => {
+            // Fire-and-forget abandon finalization (non-blocking, non-fatal)
+            if (huSessionId) {
+              import('../lib/hu/sessionStorage').then(async ({ finalizeSession }) => {
+                const abandonedMatch: import('../lib/hu/types').MatchState = {
+                  config: huConfig!,
+                  handHistory: [],
+                  currentHand: null,
+                  playerStackBB: 0,
+                  botStackBB: 0,
+                  result: 'in_progress',
+                  analysisPointsSpent: 0,
+                  violationPoints: 0,
+                }
+                try {
+                  await finalizeSession(huSessionId, abandonedMatch)
+                } catch (e) {
+                  console.error('abandon finalize failed:', e)
+                }
+              })
+            }
             setAppMode('app')
             setHuConfig(null)
             setHuSessionId(null)
@@ -353,7 +384,8 @@ export default function App() {
               try {
                 const { finalizeSession, logHand } = await import('../lib/hu/sessionStorage')
                 for (const hand of finalState.handHistory) {
-                  await logHand(huSessionId, hand, 0, 0, [])
+                  const heroWon = await computeHeroWonForHand(hand)
+                  await logHand(huSessionId, hand, 0, 0, heroWon, [])
                 }
                 await finalizeSession(huSessionId, finalState)
               } catch (e) {
@@ -395,7 +427,7 @@ export default function App() {
                 board: hand.board.length > 0 ? formatBoard(hand.board) : null,
                 action_sequence: hand.actions,
                 pot_total_bb: Math.round(hand.potBB),
-                hero_won: false,  // v1.1 will derive from stored deltas
+                hero_won: await computeHeroWonForHand(hand),
               },
             })
             await refreshPoints()
