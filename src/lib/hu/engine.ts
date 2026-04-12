@@ -170,7 +170,12 @@ export function applyAction(match: MatchState, action: Action): MatchState {
 
   if (!hand.isComplete) {
     if (isStreetClosed(hand)) {
-      const advanced = advanceStreet(hand)
+      let advanced = advanceStreet(hand)
+      // If both players are all-in, fast-forward through remaining streets
+      // to showdown (no more actions possible).
+      while (!advanced.isComplete && advanced.hero.isAllIn && advanced.villain.isAllIn) {
+        advanced = advanceStreet(advanced)
+      }
       return { ...match, currentHand: advanced }
     }
     // Pass turn to other player
