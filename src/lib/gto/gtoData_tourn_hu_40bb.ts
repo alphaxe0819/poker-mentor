@@ -26,7 +26,7 @@
 //   'allin'     = 全押
 // =============================================================
 
-import { makeRange, makeRangeDefaultCall, makeRangeDefaultRaise, type GtoDB } from './helpers'
+import { makeRange, makeRangeDefaultRaise, type GtoDB } from './helpers'
 
 export const DB_TOURN_HU_40BB: GtoDB = {
 

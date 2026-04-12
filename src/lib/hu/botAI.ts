@@ -17,7 +17,7 @@ import type { Personality } from '../gto/huHeuristics'
  */
 export function decideBotAction(
   hand: HandState,
-  config: MatchConfig,
+  _config: MatchConfig,
   personality: Personality
 ): Action {
   const botPos = hand.toAct
