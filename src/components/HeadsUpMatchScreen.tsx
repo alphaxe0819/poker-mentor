@@ -4,6 +4,7 @@ import PokerFelt from './PokerFelt'
 import HoleCards from './HoleCards'
 import CommunityCards from './CommunityCards'
 import PostflopActionBar, { type ActionChoice } from './PostflopActionBar'
+import PreflopActionBar, { type PreflopAction } from './PreflopActionBar'
 import type { MatchConfig, MatchState, Action } from '../lib/hu/types'
 import { createMatch, dealNewHand, applyAction, resolveHand } from '../lib/hu/engine'
 import { decideBotAction, preloadBotData } from '../lib/hu/botAI'
@@ -127,6 +128,43 @@ export default function HeadsUpMatchScreen({
     setMatch(applyAction(match, action))
   }, [match])
 
+  // ── Preflop action handler ──
+  const handlePreflopAction = useCallback((choice: PreflopAction) => {
+    if (!match?.currentHand) return
+    const hand = match.currentHand
+    const heroPos = hand.hero.position
+    let action: Action
+    switch (choice.kind) {
+      case 'fold':
+        action = { kind: 'fold', actor: heroPos, street: hand.street }
+        break
+      case 'check':
+        action = { kind: 'check', actor: heroPos, street: hand.street }
+        break
+      case 'call':
+        action = { kind: 'call', actor: heroPos, street: hand.street }
+        break
+      case 'raise':
+        action = { kind: 'raise', amount: choice.bbAmount, actor: heroPos, street: hand.street }
+        break
+      case 'allin':
+        action = { kind: 'allin', actor: heroPos, street: hand.street }
+        break
+    }
+
+    // Detect preflop violation
+    const isViolation = isPreflopViolation(hand, heroPos, choice.kind)
+    const flag: GtoFlag = { street: 'preflop', actor: heroPos, pass: !isViolation }
+    const handNum = hand.handNumber
+    const existing = flagsRef.current[handNum] ?? []
+    flagsRef.current = { ...flagsRef.current, [handNum]: [...existing, flag] }
+    if (isViolation) {
+      violationsRef.current = violationsRef.current + 1
+    }
+
+    setMatch(applyAction(match, action))
+  }, [match])
+
   // ── Render guards ──
   if (!match || !match.currentHand) {
     return <div className="flex items-center justify-center min-h-screen text-gray-400"
@@ -158,10 +196,16 @@ export default function HeadsUpMatchScreen({
   const canBet = !hand.isComplete && toCallBB === 0 && hand.hero.stackBB > 0
   const canRaise = !hand.isComplete && toCallBB > 0 && hand.hero.stackBB > toCallBB
 
-  // ── Hidden buttons reveal logic ──
+  // ── Preflop raise sizing (GTO-correct fixed sizes) ──
+  const preflopRaises = hand.actions.filter(a => a.street === 'preflop' && (a.kind === 'raise' || a.kind === 'bet')).length
+  const preflopRaiseAmount = preflopRaises === 0 ? 2.5 : preflopRaises === 1 ? 9 : 22
+  const preflopRaiseLabel = preflopRaises === 0 ? `Raise ${preflopRaiseAmount}` : preflopRaises === 1 ? `3-Bet ${preflopRaiseAmount}` : `4-Bet ${preflopRaiseAmount}`
+  const isPreflop = hand.street === 'preflop'
+
+  // ── Hidden buttons reveal logic (postflop only) ──
   const effStack = Math.min(hand.hero.stackBB, hand.villain.stackBB)
   const spr = hand.potBB > 0 ? effStack / hand.potBB : 10
-  const showXS = spr > 10
+  const showXS = !isPreflop && spr > 10
   const showXL = hand.street === 'river' && hand.potBB > 20
 
   // ── In-hand chip totals (stack already committed this hand) ──
@@ -226,8 +270,21 @@ export default function HeadsUpMatchScreen({
         </div>
       </div>
 
-      {/* Action bar */}
-      {isPlayerTurn && (
+      {/* Action bar — preflop uses fixed GTO sizes, postflop uses pot-% sizes */}
+      {isPlayerTurn && isPreflop && (
+        <PreflopActionBar
+          canFold={canFold}
+          canCheck={canCheck}
+          canCall={canCall}
+          callAmount={toCallBB}
+          canRaise={canRaise}
+          raiseAmount={preflopRaiseAmount}
+          raiseLabel={preflopRaiseLabel}
+          effectiveStackBB={hand.hero.stackBB}
+          onAction={handlePreflopAction}
+        />
+      )}
+      {isPlayerTurn && !isPreflop && (
         <PostflopActionBar
           canFold={canFold}
           canCheck={canCheck}

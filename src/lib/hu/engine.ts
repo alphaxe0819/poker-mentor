@@ -144,8 +144,10 @@ export function applyAction(match: MatchState, action: Action): MatchState {
     case 'bet':
     case 'raise': {
       const target = action.amount ?? 0
-      const additional = target - player.streetCommitBB
-      const amount = Math.min(additional, player.stackBB)
+      // Guard: raise target must exceed current street commitment; if not, treat as min-raise
+      const effectiveTarget = Math.max(target, hand.currentBetBB + hand.minRaiseBB)
+      const additional = effectiveTarget - player.streetCommitBB
+      const amount = Math.max(0, Math.min(additional, player.stackBB))
       player.stackBB -= amount
       player.committedBB += amount
       player.streetCommitBB += amount
