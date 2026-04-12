@@ -34,11 +34,12 @@ export default memo(function PostflopActionBar({
   showXS, showXL, onAction, disabled,
 }: Props) {
 
+  // All bet sizes must be at least 1 BB (poker minimum bet rule)
   const xsAmount = Math.max(1, Math.round(potBB * 0.15 * 10) / 10)
-  const smallAmount = Math.round(potBB * 0.33 * 10) / 10
-  const midAmount = Math.round(potBB * 0.5 * 10) / 10
-  const largeAmount = Math.round(potBB * 1.0 * 10) / 10
-  const xlAmount = Math.round(potBB * 2.0 * 10) / 10
+  const smallAmount = Math.max(1, Math.round(potBB * 0.33 * 10) / 10)
+  const midAmount = Math.max(1, Math.round(potBB * 0.5 * 10) / 10)
+  const largeAmount = Math.max(1, Math.round(potBB * 1.0 * 10) / 10)
+  const xlAmount = Math.max(1, Math.round(potBB * 2.0 * 10) / 10)
 
   function handleSize(amt: number) {
     // Cap at effective stack → all-in
