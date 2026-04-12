@@ -40,19 +40,40 @@ function decidePreflop(
   handClass: string
 ): Action {
   const scenario = preflopScenarioFromActions(hand, botPos)
+
+  // Special case: BB vs SB limp — no GTO chart for this spot.
+  // GTO almost never limps in HU, so when hero limps as BTN,
+  // bot (BB) should mostly check (see flop) or raise with strong hands.
+  if (scenario === 'BB_LIMP') {
+    return decideBBvsLimp(hand, botPos, handClass)
+  }
+
   const stackBB = botPos === hand.hero.position
     ? hand.hero.stackBB + hand.hero.streetCommitBB
     : hand.villain.stackBB + hand.villain.streetCommitBB
 
-  // Map our position to the scenario key format used in gtoData_tourn_hu_40bb.ts
   const positionLabel = botPos === 'btn' ? 'SB' : 'BB'
   const result = getGTOAction(handClass, 'tournament', 'hu', stackBB, positionLabel, scenario)
 
   return rangeActionToEngineAction(result, hand, botPos)
 }
 
+/** BB facing SB limp: check most hands, raise premium (iso-raise) */
+function decideBBvsLimp(_hand: HandState, botPos: Position, handClass: string): Action {
+  // Premium hands → raise to 3BB (iso-raise)
+  const isoRaiseHands = new Set([
+    'AA','KK','QQ','JJ','TT','99',
+    'AKs','AKo','AQs','AQo','AJs',
+    'KQs',
+  ])
+  if (isoRaiseHands.has(handClass)) {
+    return { kind: 'raise', amount: 3, actor: botPos, street: 'preflop' }
+  }
+  // Everything else → check (take free flop)
+  return { kind: 'check', actor: botPos, street: 'preflop' }
+}
+
 function preflopScenarioFromActions(hand: HandState, botPos: Position): string {
-  // Count raises in preflop action history
   const preflop = hand.actions.filter(a => a.street === 'preflop')
   const raises = preflop.filter(a => a.kind === 'raise' || a.kind === 'bet').length
 
@@ -62,10 +83,11 @@ function preflopScenarioFromActions(hand: HandState, botPos: Position): string {
     if (raises === 2) return 'vs_BB_5bet'
   } else {
     // BB
+    if (raises === 0) return 'BB_LIMP'  // BTN limped → BB has option (check or raise)
     if (raises === 1) return 'vs_SB_open'
     if (raises === 2) return 'vs_SB_4bet'
   }
-  return 'RFI'  // safe fallback
+  return 'RFI'
 }
 
 function rangeActionToEngineAction(
