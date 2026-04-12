@@ -7,340 +7,334 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Noto Sans TC',sans-serif;background:#0f0f14;width:100vw;height:100vh;overflow:hidden;position:relative;}
-.stage{position:absolute;width:1280px;height:720px;transform-origin:top left;}
-.slide{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .3s ease;}
+
+/* ── Viewport & Stage ── */
+body{font-family:'Noto Sans TC',sans-serif;background:#0f0f14;display:flex;align-items:center;justify-content:center;height:100vh;overflow:hidden;}
+.stage{position:relative;width:1280px;height:720px;transform-origin:top left;}
+
+/* ── Slides ── */
+.slide{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .35s ease;}
 .slide.active{opacity:1;pointer-events:all;}
+
+/* ── Common Layout ── */
 .slide-inner{width:100%;height:100%;position:relative;overflow:hidden;background:#fff;}
-.col-left{position:absolute;left:0;top:0;width:380px;height:720px;background:#1a237e;display:flex;flex-direction:column;justify-content:flex-end;padding:44px 40px;}
-.col-right{position:absolute;left:380px;top:0;right:0;height:720px;padding:44px 48px 36px;overflow:hidden;}
-.content-area{padding:38px 56px 32px;}
+.col-left{position:absolute;left:0;top:0;width:380px;height:720px;background:#1a237e;display:flex;flex-direction:column;justify-content:flex-end;padding:48px 44px;}
+.col-right{position:absolute;left:380px;top:0;right:0;height:720px;padding:48px 52px 40px;overflow:hidden;}
+.content-area{padding:52px 60px 40px;}
 
-/* Typography */
-.slide-no{font-size:10px;font-weight:700;letter-spacing:3px;color:#9ca3af;text-transform:uppercase;margin-bottom:6px;}
-.slide-title{font-size:30px;font-weight:900;color:#1a237e;margin-bottom:4px;}
-.slide-sub{font-size:13px;color:#6b7280;margin-bottom:20px;line-height:1.5;}
-h2{font-size:26px;font-weight:900;color:#1a237e;margin-bottom:4px;}
-h3{font-size:15px;font-weight:700;color:#1a237e;margin-bottom:5px;}
-p{font-size:12px;color:#374151;line-height:1.65;}
-.muted{color:#9ca3af;font-size:11px;}
-.accent-purple{color:#5c35bf;}.accent-green{color:#00b894;}.accent-blue{color:#2563eb;}.accent-orange{color:#f97316;}.accent-red{color:#e94560;}
+/* ── Typography ── */
+.slide-no{font-size:11px;font-weight:700;letter-spacing:3px;color:#9ca3af;text-transform:uppercase;margin-bottom:8px;}
+.slide-title{font-size:32px;font-weight:900;color:#1a237e;margin-bottom:6px;}
+.slide-sub{font-size:14px;color:#6b7280;margin-bottom:32px;line-height:1.6;}
+h2{font-size:28px;font-weight:900;color:#1a237e;margin-bottom:4px;}
+h3{font-size:16px;font-weight:700;color:#1a237e;margin-bottom:6px;}
+p{font-size:13px;color:#374151;line-height:1.7;}
+.muted{color:#9ca3af;font-size:12px;}
+.accent-purple{color:#5c35bf;}
+.accent-green{color:#00b894;}
+.accent-blue{color:#2563eb;}
+.accent-orange{color:#f97316;}
+.accent-red{color:#e94560;}
 
-/* KPI Card */
-.kpi-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(92,53,191,.06);}
+/* ── KPI Card (cover) ── */
+.kpi-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;gap:16px;box-shadow:0 2px 12px rgba(92,53,191,.07);}
 .kpi-bar{width:5px;border-radius:4px;align-self:stretch;flex-shrink:0;}
-.kpi-bar.purple{background:#5c35bf;}.kpi-bar.green{background:#00b894;}.kpi-bar.blue{background:#2563eb;}.kpi-bar.orange{background:#f97316;}
-.kpi-num{font-family:'Arial Black',sans-serif;font-size:26px;font-weight:900;line-height:1;}
-.kpi-label{font-size:11px;color:#6b7280;margin-top:3px;}
+.kpi-bar.purple{background:#5c35bf;}
+.kpi-bar.green{background:#00b894;}
+.kpi-bar.blue{background:#2563eb;}
+.kpi-bar.orange{background:#f97316;}
+.kpi-num{font-family:'Arial Black',sans-serif;font-size:28px;font-weight:900;line-height:1;}
+.kpi-label{font-size:12px;color:#6b7280;margin-top:4px;}
 
-/* Cards */
-.card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:18px 20px;box-shadow:0 2px 6px rgba(92,53,191,.04);}
+/* ── Info Card ── */
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px 22px;box-shadow:0 2px 8px rgba(92,53,191,.05);}
 .card-accent{border-left:4px solid #5c35bf;}
-.card-accent.green{border-left-color:#00b894;}.card-accent.blue{border-left-color:#2563eb;}.card-accent.orange{border-left-color:#f97316;}.card-accent.red{border-left-color:#e94560;}
+.card-accent.green{border-left-color:#00b894;}
+.card-accent.blue{border-left-color:#2563eb;}
+.card-accent.orange{border-left-color:#f97316;}
+.card-accent.red{border-left-color:#e94560;}
 
-/* Grid */
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
-.grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;}
+/* ── Grid layouts ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;}
 
-/* Tag */
-.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;}
-.tag-purple{background:#f3e8ff;color:#5c35bf;}.tag-green{background:#d1fae5;color:#059669;}
-.tag-blue{background:#dbeafe;color:#1d4ed8;}.tag-orange{background:#fff7ed;color:#c2410c;}
-.tag-red{background:#ffe4e6;color:#e94560;}.tag-gray{background:#f3f4f6;color:#6b7280;}
+/* ── Tag ── */
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.tag-purple{background:#f3e8ff;color:#5c35bf;}
+.tag-green{background:#d1fae5;color:#059669;}
+.tag-blue{background:#dbeafe;color:#1d4ed8;}
+.tag-orange{background:#fff7ed;color:#c2410c;}
+.tag-red{background:#ffe4e6;color:#e94560;}
+.tag-gray{background:#f3f4f6;color:#6b7280;}
 
-/* Feat box */
-.feat{display:flex;gap:12px;align-items:flex-start;}
-.feat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
-.feat-icon.purple{background:#f3e8ff;}.feat-icon.green{background:#d1fae5;}
-.feat-icon.blue{background:#dbeafe;}.feat-icon.orange{background:#fff7ed;}
-.feat-icon.red{background:#ffe4e6;}.feat-icon.teal{background:#ccfbf1;}
-.feat h4{font-size:13px;font-weight:700;color:#1a237e;margin-bottom:2px;}
-.feat p{font-size:11px;color:#6b7280;line-height:1.55;}
+/* ── Feature icon box ── */
+.feat{display:flex;gap:14px;align-items:flex-start;}
+.feat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.feat-icon.purple{background:#f3e8ff;}
+.feat-icon.green{background:#d1fae5;}
+.feat-icon.blue{background:#dbeafe;}
+.feat-icon.orange{background:#fff7ed;}
+.feat-icon.red{background:#ffe4e6;}
+.feat-icon.teal{background:#ccfbf1;}
+.feat h4{font-size:14px;font-weight:700;color:#1a237e;margin-bottom:3px;}
+.feat p{font-size:12px;color:#6b7280;line-height:1.6;}
 
-/* Financial table */
-.fin-table{width:100%;border-collapse:collapse;font-size:11px;}
-.fin-table th{background:#1a237e;color:#fff;padding:7px 8px;text-align:center;font-weight:600;white-space:nowrap;}
-.fin-table th:first-child{text-align:left;padding-left:12px;min-width:84px;}
-.fin-table td{padding:6px 8px;border-bottom:1px solid #f3f4f6;text-align:center;color:#374151;white-space:nowrap;}
-.fin-table td:first-child{text-align:left;padding-left:12px;font-weight:600;color:#1a237e;}
+/* ── Table ── */
+.fin-table{width:100%;border-collapse:collapse;font-size:12px;}
+.fin-table th{background:#1a237e;color:#fff;padding:9px 10px;text-align:center;font-weight:600;white-space:nowrap;}
+.fin-table th:first-child{text-align:left;padding-left:14px;}
+.fin-table td{padding:8px 10px;border-bottom:1px solid #f3f4f6;text-align:center;color:#374151;white-space:nowrap;}
+.fin-table td:first-child{text-align:left;padding-left:14px;font-weight:600;color:#1a237e;}
 .fin-table tr:last-child td{border-bottom:none;}
 .fin-table tr.bep td{background:#f0fdf4!important;font-weight:700;}
 .fin-table tr.bep td:first-child{color:#059669;}
-.fin-table tr:hover:not(.bep) td{background:#f8fafc;}
-.neg{color:#e94560;}.pos{color:#059669;}
+.neg{color:#e94560;}
+.pos{color:#059669;}
+.fin-table tr:hover td{background:#f8fafc;}
 
-/* Comparison table */
-.cmp-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
-.cmp-table th{background:#1a237e;color:#fff;padding:8px 12px;text-align:left;font-weight:600;white-space:nowrap;}
-.cmp-table td{padding:8px 12px;border-bottom:1px solid #f3f4f6;white-space:nowrap;}
-.cmp-table tr.us td{background:#f0fdf9;font-weight:700;border-top:2px solid #00b894;border-bottom:none;}
-.cmp-table tr:hover:not(.us) td{background:#f8fafc;}
-.c-yes{color:#059669;font-weight:700;}.c-no{color:#e94560;}.c-half{color:#f97316;}
+/* ── Timeline ── */
+.timeline{display:flex;gap:0;margin-top:8px;}
+.tl-item{flex:1;position:relative;padding:16px 16px 16px 20px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;margin-right:12px;}
+.tl-item:last-child{margin-right:0;}
+.tl-dot{width:12px;height:12px;border-radius:50%;position:absolute;left:-6px;top:22px;}
+.tl-phase{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+.tl-title{font-size:14px;font-weight:700;color:#1a237e;margin-bottom:8px;}
+.tl-goal{font-size:12px;font-weight:700;margin-top:10px;padding:6px 10px;border-radius:6px;}
 
-/* Timeline */
-.timeline{display:flex;gap:10px;margin-top:8px;}
-.tl-item{flex:1;position:relative;padding:14px 14px 14px 18px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;}
-.tl-phase{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
-.tl-title{font-size:14px;font-weight:700;color:#1a237e;margin-bottom:6px;}
-.tl-body{font-size:11px;color:#6b7280;line-height:1.7;}
-.tl-goal{font-size:11px;font-weight:700;margin-top:8px;padding:5px 10px;border-radius:6px;display:inline-block;}
+/* ── Market flags ── */
+.market-flow{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap;}
+.mkt{display:flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;}
+.mkt-flag{font-size:24px;}
+.mkt-info .mkt-name{font-size:13px;font-weight:700;color:#1a237e;}
+.mkt-info .mkt-time{font-size:11px;color:#9ca3af;}
+.mkt-arrow{color:#d1d5db;font-size:18px;font-weight:300;}
 
-/* Market flow */
-.market-flow{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:nowrap;}
-.mkt{display:flex;align-items:center;gap:7px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;}
-.mkt-flag{font-size:22px;}
-.mkt-name{font-size:12px;font-weight:700;color:#1a237e;}
-.mkt-time{font-size:10px;color:#9ca3af;}
-.mkt-arrow{color:#d1d5db;font-size:16px;}
-
-/* Budget */
-.budget-item{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:8px;}
-.budget-label{font-size:13px;font-weight:600;color:#1a237e;}
-.budget-sub{font-size:11px;color:#6b7280;margin-top:1px;}
+/* ── Budget item ── */
+.budget-item{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:10px;}
+.budget-label{font-size:14px;font-weight:600;color:#1a237e;}
+.budget-sub{font-size:12px;color:#6b7280;margin-top:2px;}
 .budget-amt{text-align:right;}
-.budget-main{font-size:18px;font-weight:900;}
-.budget-note{font-size:10px;color:#9ca3af;}
+.budget-main{font-size:20px;font-weight:900;}
+.budget-note{font-size:11px;color:#9ca3af;}
 
-/* Infra table */
-.infra-table{width:100%;border-collapse:collapse;font-size:11px;}
-.infra-table td{padding:6px 10px;border-bottom:1px solid #f3f4f6;}
-.infra-table td:first-child{color:#1a237e;font-weight:600;}
-.infra-table td:last-child{text-align:right;font-weight:700;color:#374151;}
-.infra-table tr.total td{background:#f8fafc;font-weight:900;border-top:2px solid #e5e7eb;border-bottom:none;}
-
-/* Progress & Nav */
+/* ── Progress bar ── */
 .progress{position:fixed;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,.08);}
-.progress-fill{height:100%;background:linear-gradient(90deg,#5c35bf,#00b894);transition:width .3s ease;}
-.nav{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:center;z-index:100;}
-.nav button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:5px 16px;cursor:pointer;font-size:12px;font-family:inherit;transition:background .2s;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#5c35bf,#00b894);transition:width .35s ease;}
+
+/* ── Nav ── */
+.nav{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:center;z-index:100;}
+.nav button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:6px 18px;cursor:pointer;font-size:13px;font-family:inherit;transition:background .2s;}
 .nav button:hover{background:rgba(255,255,255,.22);}
-.nav .counter{color:rgba(255,255,255,.5);font-size:12px;min-width:48px;text-align:center;}
+.nav .counter{color:rgba(255,255,255,.5);font-size:12px;min-width:52px;text-align:center;}
 
-/* Cover */
-.cover-logo{font-size:44px;margin-bottom:4px;opacity:.2;letter-spacing:6px;}
-.cover-poker{font-family:'Arial Black',sans-serif;font-size:68px;font-weight:900;color:#fff;line-height:.9;}
-.cover-goal{font-family:'Arial Black',sans-serif;font-size:68px;font-weight:900;color:#00b894;line-height:.9;}
-.cover-tagline{font-size:13px;color:rgba(255,255,255,.45);margin-top:14px;line-height:1.8;}
-.cover-date{font-size:11px;color:rgba(255,255,255,.25);font-style:italic;margin-top:6px;}
-.cover-right-title{font-family:'Arial Black',sans-serif;font-size:20px;font-weight:900;color:#5c35bf;margin-bottom:4px;}
-.cover-right-sub{font-size:11px;color:#9ca3af;margin-bottom:20px;}
+/* ── Cover specific ── */
+.cover-logo{font-size:48px;margin-bottom:4px;opacity:.25;letter-spacing:8px;}
+.cover-poker{font-family:'Arial Black',sans-serif;font-size:72px;font-weight:900;color:#fff;line-height:.9;}
+.cover-goal{font-family:'Arial Black',sans-serif;font-size:72px;font-weight:900;color:#00b894;line-height:.9;}
+.cover-tagline{font-size:14px;color:rgba(255,255,255,.5);margin-top:16px;line-height:1.8;}
+.cover-date{font-size:12px;color:rgba(255,255,255,.3);font-style:italic;margin-top:8px;}
+.cover-right-title{font-family:'Arial Black',sans-serif;font-size:22px;font-weight:900;color:#5c35bf;margin-bottom:6px;}
+.cover-right-sub{font-size:12px;color:#9ca3af;margin-bottom:24px;}
 
-/* Closing */
+/* ── Closing slide ── */
 .close-right{background:#f8fafc;}
-.summary-item{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px;}
-.summary-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
-.summary-dot.purple{background:#5c35bf;}.summary-dot.green{background:#00b894;}
-.summary-dot.blue{background:#2563eb;}.summary-dot.orange{background:#f97316;}
-.summary-title{font-size:13px;font-weight:700;color:#1a237e;margin-bottom:2px;}
-.summary-desc{font-size:11px;color:#6b7280;line-height:1.55;}
+.summary-item{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px;}
+.summary-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:6px;}
+.summary-dot.purple{background:#5c35bf;}
+.summary-dot.green{background:#00b894;}
+.summary-dot.blue{background:#2563eb;}
+.summary-dot.orange{background:#f97316;}
+.summary-title{font-size:14px;font-weight:700;color:#1a237e;margin-bottom:2px;}
+.summary-desc{font-size:12px;color:#6b7280;line-height:1.6;}
+
+/* ── Responsive scale ── */
 </style>
 </head>
 <body>
+
 <div class="stage" id="stage">
 
-<!-- ══ SLIDE 1 — COVER ══ -->
+<!-- ══════════════════════════════════════
+     SLIDE 1 — COVER
+══════════════════════════════════════ -->
 <div class="slide active" id="slide-1">
 <div class="slide-inner">
   <div class="col-left">
     <div class="cover-logo">♠ ♥ ♦ ♣</div>
     <div class="cover-poker">POKER</div>
     <div class="cover-goal">GOAL</div>
-    <div class="cover-tagline">繁體中文 × 英文雙語 GTO 訓練平台<br>AI 弱點分析 × 多籌碼深度 × 雙平台上架</div>
+    <div class="cover-tagline">繁體中文 GTO 訓練平台<br>AI 弱點分析 × 多籌碼深度</div>
     <div class="cover-date">APR 2026 &nbsp;·&nbsp; 營運計劃書</div>
   </div>
   <div class="col-right" style="display:flex;flex-direction:column;justify-content:center;">
     <div class="cover-right-title">Poker Goal</div>
-    <div class="cover-right-sub">亞洲市場首選撲克訓練平台 — 中英雙語，iOS / Android / Web</div>
+    <div class="cover-right-sub">亞洲市場首選撲克訓練平台</div>
     <div class="kpi-card">
       <div class="kpi-bar purple"></div>
-      <div><div class="kpi-num accent-purple">唯一</div><div class="kpi-label">繁體中文 + 英文 GTO 訓練平台，Claude AI 對話教練</div></div>
+      <div>
+        <div class="kpi-num accent-purple">唯一</div>
+        <div class="kpi-label">繁體中文 GTO 訓練平台</div>
+      </div>
     </div>
     <div class="kpi-card">
       <div class="kpi-bar green"></div>
-      <div><div class="kpi-num accent-green">NT$299+</div><div class="kpi-label">月費方案（Basic / PRO NT$1,000）比龍頭低 19～76%</div></div>
+      <div>
+        <div class="kpi-num accent-green">NT$299+</div>
+        <div class="kpi-label">月費方案（Basic / PRO NT$1,000）</div>
+      </div>
     </div>
     <div class="kpi-card">
       <div class="kpi-bar blue"></div>
-      <div><div class="kpi-num accent-blue">NT$31.2萬</div><div class="kpi-label">月固定成本（行銷 NT$30萬 + 正式基礎設施 NT$1.2萬）</div></div>
+      <div>
+        <div class="kpi-num accent-blue">NT$0</div>
+        <div class="kpi-label">固定月成本（啟動期）</div>
+      </div>
     </div>
     <div class="kpi-card">
       <div class="kpi-bar orange"></div>
-      <div><div class="kpi-num accent-orange">M9</div><div class="kpi-label">月淨利損益平衡（894 付費用戶，含平台手續費與基礎設施）</div></div>
+      <div>
+        <div class="kpi-num accent-orange">M7</div>
+        <div class="kpi-label">月淨利損益平衡（月推廣 NT$30萬）</div>
+      </div>
     </div>
   </div>
 </div>
 </div>
 
-<!-- ══ SLIDE 2 — 競品分析 ══ -->
+<!-- ══════════════════════════════════════
+     SLIDE 2 — 競品分析
+══════════════════════════════════════ -->
 <div class="slide" id="slide-2">
 <div class="slide-inner">
-<div class="content-area" style="padding-top:32px;">
+<div class="content-area">
   <div class="slide-no">01</div>
   <h2>競品分析</h2>
-  <div class="slide-sub">市場已有 AI 教練工具，但均缺乏中文介面與亞洲市場服務</div>
-  <table class="cmp-table">
-    <thead>
-      <tr>
-        <th style="width:140px;">競品</th>
-        <th style="width:130px;">月費</th>
-        <th style="width:120px;">AI 對話教練</th>
-        <th style="width:100px;">繁體中文</th>
-        <th style="width:110px;">行動 App</th>
-        <th style="width:90px;">翻後 GTO</th>
-        <th>定位</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>GTO Wizard</strong></td>
-        <td>$39～$229/月</td>
-        <td class="c-no">✗ 純解算器</td>
-        <td class="c-no">✗</td>
-        <td class="c-no">✗ 僅 Web</td>
-        <td class="c-yes">✓✓ 最強</td>
-        <td><span class="tag tag-purple">龍頭</span></td>
-      </tr>
-      <tr>
-        <td><strong>PokerOS</strong></td>
-        <td>$50/月</td>
-        <td class="c-yes">✓ LLM 對話</td>
-        <td class="c-no">✗</td>
-        <td class="c-yes">✓ iOS</td>
-        <td class="c-no">✗</td>
-        <td><span class="tag tag-blue">AI 新秀</span></td>
-      </tr>
-      <tr>
-        <td><strong>PokerSnowie</strong></td>
-        <td>$8～$19/月</td>
-        <td class="c-half">△ AI 弱點分析</td>
-        <td class="c-no">✗</td>
-        <td class="c-half">△ 部分</td>
-        <td class="c-no">✗</td>
-        <td><span class="tag tag-gray">老牌 AI</span></td>
-      </tr>
-      <tr>
-        <td><strong>Lucid Poker</strong></td>
-        <td>$49/月</td>
-        <td class="c-no">✗</td>
-        <td class="c-no">✗</td>
-        <td class="c-half">△ 不穩</td>
-        <td class="c-half">△ 部分</td>
-        <td><span class="tag tag-blue">WPT 旗下</span></td>
-      </tr>
-      <tr>
-        <td><strong>Poker Academy</strong></td>
-        <td>€39～€55/月</td>
-        <td class="c-no">✗</td>
-        <td class="c-no">✗</td>
-        <td class="c-no">✗ 僅 Web</td>
-        <td class="c-yes">✓ 圖表庫</td>
-        <td><span class="tag tag-orange">圖表龍頭</span></td>
-      </tr>
-      <tr class="us">
-        <td>🏆 <strong>Poker Goal</strong></td>
-        <td style="color:#059669;">NT$299～1,000</td>
-        <td class="c-yes">✓ Claude AI</td>
-        <td class="c-yes">✓ 中文 + 英文</td>
-        <td class="c-yes">✓ iOS + Android</td>
-        <td class="c-yes">✓ GTO 資料庫</td>
-        <td><span class="tag tag-green">我們的定位 ★</span></td>
-      </tr>
-    </tbody>
-  </table>
-  <div class="card card-accent" style="border-left-color:#00b894;margin-top:12px;background:#f0fdf9;padding:10px 18px;">
-    <p style="font-size:12px;font-weight:700;color:#059669;">📍 市場空白 → AI 教練競品均無繁體中文介面，亞洲市場完全未被服務。我們是唯一同時具備 Claude AI 教練 × 繁中英文 × iOS/Android 的平台。</p>
+  <div class="slide-sub">Poker Goal 專注於目前市場空缺：繁體中文 × GTO Preflop 專精 × AI 解說</div>
+  <div class="grid-4" style="margin-top:4px;">
+    <div class="card card-accent" style="border-left-color:#7c3aed;">
+      <div class="tag tag-purple" style="margin-bottom:10px;">龍頭</div>
+      <h3 style="font-size:15px;">🏆 GTO Wizard</h3>
+      <p class="muted" style="margin:4px 0 10px;">$39～$229/月・NT$1,248～7,328</p>
+      <p style="font-size:12px;color:#059669;font-weight:600;">✓ 業界龍頭・最大解算庫</p>
+      <p style="font-size:12px;color:#e94560;font-weight:600;margin-top:4px;">✗ 純解算器・無 AI 教練</p>
+    </div>
+    <div class="card card-accent" style="border-left-color:#2563eb;">
+      <div class="tag tag-blue" style="margin-bottom:10px;">WPT旗下</div>
+      <h3 style="font-size:15px;">Lucid Poker</h3>
+      <p class="muted" style="margin:4px 0 10px;">$49/月・NT$1,568</p>
+      <p style="font-size:12px;color:#059669;font-weight:600;">✓ Doug Polk 品牌背書</p>
+      <p style="font-size:12px;color:#e94560;font-weight:600;margin-top:4px;">✗ 無中文・App 不穩</p>
+    </div>
+    <div class="card card-accent" style="border-left-color:#f97316;">
+      <div class="tag tag-orange" style="margin-bottom:10px;">最大圖表庫</div>
+      <h3 style="font-size:15px;">Poker Academy</h3>
+      <p class="muted" style="margin:4px 0 10px;">€39～€55/月・NT$1,365～1,925</p>
+      <p style="font-size:12px;color:#059669;font-weight:600;">✓ 150萬+ MTT Preflop 圖表</p>
+      <p style="font-size:12px;color:#e94560;font-weight:600;margin-top:4px;">✗ 無 AI 解說・無中文</p>
+    </div>
+    <div class="card card-accent" style="border-left-color:#00b894;background:#f0fdf9;">
+      <div class="tag tag-green" style="margin-bottom:10px;">我們的定位 ★</div>
+      <h3 style="font-size:15px;">Poker Goal</h3>
+      <p class="muted" style="margin:4px 0 10px;">NT$299～1,000/月</p>
+      <p style="font-size:12px;color:#059669;font-weight:600;">✓ 中文 × Claude AI 教練</p>
+      <p style="font-size:12px;color:#e94560;font-weight:600;margin-top:4px;">✗ 品牌初建・待擴 Postflop</p>
+    </div>
+  </div>
+  <div class="card card-accent" style="border-left-color:#00b894;margin-top:18px;background:#f0fdf9;padding:14px 20px;">
+    <p style="font-size:13px;font-weight:700;color:#059669;">📍 市場空白 → 我們的切入點：唯一繁體中文 × 對話式 AI 教練 × 親民定價（比 GTO Wizard Starter 低 19%，比 Lucid 低 36%）</p>
   </div>
 </div>
 </div>
 </div>
 
-<!-- ══ SLIDE 3 — 痛點 ══ -->
+<!-- ══════════════════════════════════════
+     SLIDE 3 — 問題分析
+══════════════════════════════════════ -->
 <div class="slide" id="slide-3">
 <div class="slide-inner">
 <div class="content-area">
   <div class="slide-no">02</div>
-  <h2>對標產品痛點分析</h2>
-  <div class="slide-sub">三大痛點驅動亞洲撲克玩家的未被滿足需求</div>
-  <div class="grid-3" style="gap:16px;">
-    <div class="card card-accent red" style="padding:22px 20px;">
-      <div style="font-size:32px;margin-bottom:12px;">😡</div>
-      <h3 style="font-size:16px;margin-bottom:8px;">價格門檻阻礙滲透</h3>
-      <p>GTO Wizard $39/月（NT$1,248）、PokerOS $50/月（NT$1,600）對台灣及東南亞玩家偏高。五大競品全無繁體中文介面，亞洲市場嚴重缺乏服務。</p>
+  <h2>對標產品問題分析</h2>
+  <div class="slide-sub" style="margin-bottom:24px;">三大痛點驅動亞洲市場需求</div>
+  <div class="grid-3" style="gap:20px;">
+    <div class="card card-accent red" style="padding:28px 24px;">
+      <div style="font-size:36px;margin-bottom:16px;">😡</div>
+      <h3 style="font-size:17px;margin-bottom:10px;">價格門檻阻礙滲透</h3>
+      <p>GTO Wizard $39/月（NT$1,248）、Lucid $49/月（NT$1,568）對台灣及東南亞玩家偏高。三大競品全無繁體中文介面，亞洲市場嚴重缺乏服務。</p>
     </div>
-    <div class="card card-accent orange" style="padding:22px 20px;">
-      <div style="font-size:32px;margin-bottom:12px;">😨</div>
-      <h3 style="font-size:16px;margin-bottom:8px;">有 AI 但不懂中文</h3>
-      <p>PokerOS、PokerSnowie 等 AI 教練工具均以英文為主。亞洲玩家使用英文 AI 教練時理解障礙高，學習效果有限，付費意願低。</p>
+    <div class="card card-accent orange" style="padding:28px 24px;">
+      <div style="font-size:36px;margin-bottom:16px;">😨</div>
+      <h3 style="font-size:17px;margin-bottom:10px;">缺少「為什麼」的解說</h3>
+      <p>競品只告訴玩家「這樣做是對的」，但不解釋 GTO 邏輯。玩家無法真正內化，學習效果有限，流失率高。</p>
     </div>
-    <div class="card card-accent" style="border-left-color:#5c35bf;padding:22px 20px;">
-      <div style="font-size:32px;margin-bottom:12px;">🥶</div>
-      <h3 style="font-size:16px;margin-bottom:8px;">Web 限制行動學習</h3>
-      <p>GTO Wizard、Poker Academy 均無原生 App。現代用戶習慣在手機上學習，無 App 嚴重限制使用頻率與留存率，亞洲手機用戶比例更高。</p>
+    <div class="card card-accent" style="border-left-color:#5c35bf;padding:28px 24px;">
+      <div style="font-size:36px;margin-bottom:16px;">🥶</div>
+      <h3 style="font-size:17px;margin-bottom:10px;">Preflop 訓練分散不完整</h3>
+      <p>各競品要麼只有 Push/Fold 短籌碼，要麼以 Postflop 為主。完整 Preflop GTO 多籌碼深度訓練是明確市場缺口。</p>
     </div>
   </div>
-  <div class="card" style="margin-top:16px;padding:14px 20px;background:#f8fafc;border-style:dashed;">
+  <div class="card" style="margin-top:20px;padding:16px 22px;background:#f8fafc;border-style:dashed;">
     <div class="grid-3" style="gap:0;text-align:center;">
-      <div><div style="font-size:22px;font-weight:900;color:#5c35bf;">NT$1,248+</div><div class="muted">競品最低月費（GTO Wizard Starter）</div></div>
-      <div style="border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb;">
-        <div style="font-size:22px;font-weight:900;color:#e94560;">0</div>
-        <div class="muted">具繁體中文介面的 AI 教練平台</div>
-      </div>
-      <div><div style="font-size:22px;font-weight:900;color:#f97316;">5+</div><div class="muted">個主流工具需要英文操作</div></div>
+      <div><div style="font-size:22px;font-weight:900;color:#5c35bf;">NT$1,248+</div><div class="muted">競品最低月費</div></div>
+      <div style="border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb;"><div style="font-size:22px;font-weight:900;color:#e94560;">0</div><div class="muted">繁體中文競品數</div></div>
+      <div><div style="font-size:22px;font-weight:900;color:#f97316;">0</div><div class="muted">含 AI 對話教練競品數</div></div>
     </div>
   </div>
 </div>
 </div>
 </div>
 
-<!-- ══ SLIDE 4 — 差異化 ══ -->
+<!-- ══════════════════════════════════════
+     SLIDE 4 — 產品差異化
+══════════════════════════════════════ -->
 <div class="slide" id="slide-4">
 <div class="slide-inner">
 <div class="content-area">
   <div class="slide-no">03</div>
   <h2>產品差異化</h2>
-  <div class="slide-sub">六大核心優勢，打造亞洲市場第一個 AI 驅動雙語撲克訓練平台</div>
-  <div class="grid-3" style="gap:12px;">
+  <div class="slide-sub">透過 AI 驅動的 GTO 解說 + 繁體中文介面，打造亞洲市場首選 Preflop 訓練平台</div>
+  <div class="grid-3" style="gap:14px;">
     <div class="feat">
       <div class="feat-icon purple">🤖</div>
       <div>
-        <h4>Claude AI 對話教練</h4>
-        <p>每題 GTO 邏輯解說、跨 session 學習記憶、PRO 批量手牌深度分析</p>
+        <h4>AI 對話教練</h4>
+        <p>Claude API 驅動，每題都有 GTO 邏輯解說，跨 session 學習記憶，批量手牌分析（PRO）</p>
       </div>
     </div>
     <div class="feat">
       <div class="feat-icon green">🌏</div>
       <div>
-        <h4>中英雙語，Day 1 上線</h4>
-        <p>繁體中文 + English 同步推出，台灣→香港→東南亞→美國一套產品打通</p>
+        <h4>繁體中文原生</h4>
+        <p>台灣 × 香港 × 馬來西亞 × 新加坡華人市場，目前零競品覆蓋</p>
       </div>
     </div>
     <div class="feat">
-      <div class="feat-icon blue">📱</div>
+      <div class="feat-icon blue">💰</div>
       <div>
-        <h4>iOS + Android + Web 三端</h4>
-        <p>React Native 原生 App + Web，RevenueCat 跨平台訂閱管理，進度全端同步</p>
+        <h4>親民分層定價</h4>
+        <p>免費 / Basic NT$299 / PRO NT$1,000，比 GTO Wizard Starter 低 19%，比 Lucid 低 36%</p>
       </div>
     </div>
     <div class="feat">
-      <div class="feat-icon orange">💰</div>
+      <div class="feat-icon orange">🌐</div>
       <div>
-        <h4>分層訂閱 + 點數消耗</h4>
-        <p>Free / Basic NT$299 / PRO NT$1,000，點數制 AI 對話 + 模擬入場，靈活變現</p>
+        <h4>Web App 優先</h4>
+        <p>無需下載，即開即用，跨裝置進度同步，降低使用門檻</p>
       </div>
     </div>
     <div class="feat">
       <div class="feat-icon red">🏆</div>
       <div>
-        <h4>MTT 情境模擬引擎</h4>
-        <p>HU → SNG → Final Table → MTT 完整路線圖，消耗點數入場，GTO 賽後報告</p>
+        <h4>MTT 情境模擬</h4>
+        <p>SNG / 開局 / 中盤 / FT / HU 對決，消耗點數入場，積分→排行榜→獎勵</p>
       </div>
     </div>
     <div class="feat">
-      <div class="feat-icon teal">⚙️</div>
+      <div class="feat-icon teal">📊</div>
       <div>
-        <h4>生產級技術架構</h4>
-        <p>React Native + Node.js + PostgreSQL + Redis + AWS/GCP，非原型免費層</p>
+        <h4>多籌碼深度</h4>
+        <p>15/25/40/75/100BB，錦標賽 + 現金 + HU，8 個完整 GTO 資料庫</p>
       </div>
     </div>
   </div>
@@ -348,78 +342,108 @@ p{font-size:12px;color:#374151;line-height:1.65;}
 </div>
 </div>
 
-<!-- ══ SLIDE 5 — 時程 ══ -->
+<!-- ══════════════════════════════════════
+     SLIDE 5 — 產品時程
+══════════════════════════════════════ -->
 <div class="slide" id="slide-5">
 <div class="slide-inner">
 <div class="content-area">
   <div class="slide-no">04</div>
-  <h2>產品時程與市場拓展</h2>
-  <div class="slide-sub">M1 台灣中英雙語上線 → 24 個月完成全球佈局（含美國市場）</div>
+  <h2>產品時程</h2>
+  <div class="slide-sub">M1 正式上線 → 24 個月完成四大市場佈局</div>
   <div class="timeline">
     <div class="tl-item" style="border-top:3px solid #5c35bf;">
-      <div class="tl-phase" style="color:#5c35bf;">Q1–Q2 &nbsp;M1–M6</div>
-      <div class="tl-title">🇹🇼 台灣深耕</div>
-      <div class="tl-body">• iOS + Android + Web 同步上架<br>• 中文 + 英文雙語介面<br>• 行銷 NT$30萬/月啟動<br>• HU 模擬器 + Preflop GTO</div>
-      <div class="tl-goal" style="background:#f3e8ff;color:#5c35bf;">目標：600 付費用戶</div>
+      <div class="tl-phase" style="color:#5c35bf;">M1 – M3</div>
+      <div class="tl-title">正式上線</div>
+      <p class="muted" style="font-size:12px;line-height:1.8;">• Stripe 付費整合完成<br>• Vercel 正式部署<br>• 台灣市場推廣啟動</p>
+      <div class="tl-goal" style="background:#f3e8ff;color:#5c35bf;">目標：50 位付費用戶</div>
     </div>
     <div class="tl-item" style="border-top:3px solid #2563eb;">
-      <div class="tl-phase" style="color:#2563eb;">Q3–Q4 &nbsp;M7–M12</div>
-      <div class="tl-title">🌏 東南亞擴張</div>
-      <div class="tl-body">• 🇭🇰 香港 / 🇸🇬 新加坡 / 🇲🇾 馬來西亞<br>• MTT 情境模擬完整上線<br>• KOL 合作擴大品牌聲量<br>• 月損益平衡達成（M9）</div>
-      <div class="tl-goal" style="background:#dbeafe;color:#1d4ed8;">目標：1,100 付費用戶</div>
+      <div class="tl-phase" style="color:#2563eb;">M4 – M6</div>
+      <div class="tl-title">功能強化</div>
+      <p class="muted" style="font-size:12px;line-height:1.8;">• 排行榜 + 每日挑戰升級<br>• AI 教練記憶分層上線<br>• 用戶留存機制強化</p>
+      <div class="tl-goal" style="background:#dbeafe;color:#1d4ed8;">目標：150 位付費用戶</div>
     </div>
     <div class="tl-item" style="border-top:3px solid #00b894;">
-      <div class="tl-phase" style="color:#00b894;">Y2 H1 &nbsp;M13–M18</div>
-      <div class="tl-title">📈 SEA 規模化</div>
-      <div class="tl-body">• 行銷擴大至 NT$60萬/月<br>• Postflop GTO 完整資料庫<br>• AI 教練深度記憶功能<br>• SNG / MTT 完整模擬</div>
-      <div class="tl-goal" style="background:#d1fae5;color:#059669;">目標：2,000 付費用戶</div>
+      <div class="tl-phase" style="color:#00b894;">M7 – M12</div>
+      <div class="tl-title">市場擴張</div>
+      <p class="muted" style="font-size:12px;line-height:1.8;">• 🇭🇰 香港市場開拓<br>• MTT 情境模擬完整上線<br>• 原生 App 開發評估</p>
+      <div class="tl-goal" style="background:#d1fae5;color:#059669;">目標：500 位付費用戶</div>
     </div>
     <div class="tl-item" style="border-top:3px solid #f97316;">
-      <div class="tl-phase" style="color:#f97316;">Y2 H2 &nbsp;M19–M24</div>
-      <div class="tl-title">🌎 全球佈局</div>
-      <div class="tl-body">• 🇺🇸 美國英語市場主攻<br>• 全球 App Store 推廣<br>• 社群 + KOL 全球網路<br>• 累計損益平衡（M21）</div>
-      <div class="tl-goal" style="background:#fff7ed;color:#c2410c;">目標：3,000+ 付費用戶</div>
+      <div class="tl-phase" style="color:#f97316;">Year 2</div>
+      <div class="tl-title">規模化</div>
+      <p class="muted" style="font-size:12px;line-height:1.8;">• 🇲🇾🇸🇬 馬來西亞 / 新加坡<br>• Postflop GTO 上線<br>• 教練市場功能評估</p>
+      <div class="tl-goal" style="background:#fff7ed;color:#c2410c;">目標：1,000+ 付費用戶</div>
     </div>
   </div>
 </div>
 </div>
 </div>
 
-<!-- ══ SLIDE 6 — 經費 ══ -->
+<!-- ══════════════════════════════════════
+     SLIDE 6 — 經費使用
+══════════════════════════════════════ -->
 <div class="slide" id="slide-6">
 <div class="slide-inner">
-<div class="content-area" style="padding-top:34px;">
+<div class="content-area" style="padding-top:44px;">
   <div class="slide-no">05</div>
   <h2>經費使用</h2>
-  <div class="slide-sub">正式產品生產級架構，非免費層估算。行銷為最大單項支出。</div>
+  <div class="slide-sub">月推廣預算 NT$300,000 × 24 個月。初期固定成本幾乎為零。</div>
   <div class="grid-2" style="gap:18px;align-items:start;">
     <div>
-      <div class="budget-item">
-        <div><div class="budget-label">📣 行銷推廣（最大單項）</div><div class="budget-sub">台灣 Q1→東南亞 Q3→全球 Y2，CAC NT$3,000</div></div>
-        <div class="budget-amt"><div class="budget-main" style="color:#e94560;">NT$30萬</div><div class="budget-note">Y1 / 月 → NT$60萬 Y2</div></div>
+      <div class="kpi-card" style="border-left:4px solid #e94560;background:#fff5f7;margin-bottom:14px;">
+        <div class="kpi-bar red"></div>
+        <div>
+          <div class="kpi-num" style="color:#e94560;">NT$7,200,000</div>
+          <div class="kpi-label">總行銷預算（24個月）</div>
+        </div>
       </div>
       <div class="budget-item">
-        <div><div class="budget-label">💳 雙平台手續費</div><div class="budget-sub">App Store 30%・Google Play 15%・Web Stripe 2.9%</div></div>
-        <div class="budget-amt"><div class="budget-main" style="color:#f97316;">~18%</div><div class="budget-note">收入混合預估（淨留存 82%）</div></div>
+        <div>
+          <div class="budget-label">📣 行銷推廣</div>
+          <div class="budget-sub">台灣→香港→馬來西亞→新加坡輪動</div>
+        </div>
+        <div class="budget-amt">
+          <div class="budget-main" style="color:#e94560;">NT$30萬</div>
+          <div class="budget-note">/月固定預算</div>
+        </div>
       </div>
       <div class="budget-item">
-        <div><div class="budget-label">🤖 Claude Haiku API</div><div class="budget-sub">~NT$0.05/則，30% 活躍率，平均 10 則/活躍用戶/天</div></div>
-        <div class="budget-amt"><div class="budget-main" style="color:#5c35bf;">~NT$10</div><div class="budget-note">/付費用戶/月（均值）</div></div>
+        <div>
+          <div class="budget-label">🛠️ 技術維運</div>
+          <div class="budget-sub">Supabase + Vercel 免費層，支撐至 1,000 MAU</div>
+        </div>
+        <div class="budget-amt">
+          <div class="budget-main" style="color:#00b894;">NT$0</div>
+          <div class="budget-note">固定月成本</div>
+        </div>
       </div>
     </div>
     <div>
-      <div style="font-size:12px;font-weight:700;color:#1a237e;margin-bottom:8px;">☁️ 生產級基礎設施（月固定）</div>
-      <table class="infra-table">
-        <tr><td>後端伺服器（AWS/GCP 2 instances）</td><td>NT$3,200</td></tr>
-        <tr><td>資料庫（PostgreSQL Managed）</td><td>NT$3,200</td></tr>
-        <tr><td>Redis 快取 + Cloudflare CDN</td><td>NT$1,600</td></tr>
-        <tr><td>監控 + 分析（Sentry + Mixpanel）</td><td>NT$1,600</td></tr>
-        <tr><td>RevenueCat 跨平台訂閱管理</td><td>NT$3,200</td></tr>
-        <tr><td>Apple / Google Dev 帳號</td><td>NT$300</td></tr>
-        <tr class="total"><td><strong>小計</strong></td><td><strong>NT$13,100</strong></td></tr>
-      </table>
-      <div class="card" style="margin-top:10px;padding:10px 14px;background:#f0fdf9;border-color:#a7f3d0;">
-        <p style="font-size:11px;color:#374151;">💡 基礎設施佔總費用 <strong style="color:#059669;">&lt;4%</strong>，最大成本為行銷。點數超額消耗由用戶付費，AI API 邊際成本可控。</p>
+      <div class="budget-item">
+        <div>
+          <div class="budget-label">🤖 Claude API</div>
+          <div class="budget-sub">Haiku 3.5，Basic NT$6.6/人・PRO NT$41/人</div>
+        </div>
+        <div class="budget-amt">
+          <div class="budget-main" style="color:#5c35bf;">~NT$10</div>
+          <div class="budget-note">/付費用戶/月（均值）</div>
+        </div>
+      </div>
+      <div class="budget-item">
+        <div>
+          <div class="budget-label">💳 金流費用</div>
+          <div class="budget-sub">Stripe（Lemon Squeezy 拒審後改用）</div>
+        </div>
+        <div class="budget-amt">
+          <div class="budget-main" style="color:#f97316;">2.9%</div>
+          <div class="budget-note">+$0.30/筆</div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px;padding:16px 18px;background:#f0fdf9;border-color:#a7f3d0;">
+        <div style="font-size:13px;font-weight:700;color:#059669;margin-bottom:6px;">💡 邊際成本結構</div>
+        <p style="font-size:12px;color:#374151;">Claude API 邊際成本 &lt;3% 總收入<br>超額使用由<strong>用戶點數付費</strong>，成本轉嫁，毛利率 ~90%+</p>
       </div>
     </div>
   </div>
@@ -427,251 +451,254 @@ p{font-size:12px;color:#374151;line-height:1.65;}
 </div>
 </div>
 
-<!-- ══ SLIDE 7 — 財務預測 Y1 ══ -->
+<!-- ══════════════════════════════════════
+     SLIDE 7 — 團隊
+══════════════════════════════════════ -->
 <div class="slide" id="slide-7">
 <div class="slide-inner">
-<div class="content-area" style="padding-top:32px;">
+<div class="content-area">
   <div class="slide-no">06</div>
-  <h2>財務預測 <span style="font-size:18px;color:#6b7280;">Year 1（NTD 台幣）</span></h2>
-  <div class="slide-sub" style="margin-bottom:10px;">ARPPU NT$440 毛收入 × 82% 淨留存（含雙平台費）+ 點數 NT$35/人 = 淨 NT$396／人・固定費 31.2萬／月・變動 NT$10／用戶（API）</div>
-  <table class="fin-table">
-    <thead>
-      <tr>
-        <th>項目</th><th>M1</th><th>M2</th><th>M3</th><th>M4</th><th>M5</th><th>M6</th><th>M7</th><th>M8</th><th style="background:#1e3a5f;">M9 🎯</th><th>M10</th><th>M11</th><th>M12</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>月末付費用戶</td><td>60</td><td>185</td><td>280</td><td>396</td><td>506</td><td>611</td><td>710</td><td>804</td>
-        <td style="background:#f0fdf4;font-weight:700;color:#059669;">894</td>
-        <td>979</td><td>1,060</td><td>1,137</td>
-      </tr>
-      <tr>
-        <td>Gross MRR（萬）</td><td>2.6</td><td>8.1</td><td>12.3</td><td>17.4</td><td>22.3</td><td>26.9</td><td>31.2</td><td>35.4</td>
-        <td style="background:#f0fdf4;">39.3</td>
-        <td>43.1</td><td>46.6</td><td>50.0</td>
-      </tr>
-      <tr>
-        <td>淨收入（萬）<span style="font-size:9px;color:#9ca3af;"> ×82%+點數</span></td>
-        <td>2.4</td><td>7.3</td><td>11.1</td><td>15.7</td><td>20.0</td><td>24.2</td><td>28.1</td><td>31.8</td>
-        <td style="background:#f0fdf4;">35.4</td>
-        <td>38.8</td><td>42.0</td><td>45.0</td>
-      </tr>
-      <tr>
-        <td>總費用（萬）<span style="font-size:9px;color:#9ca3af;"> 行銷+基礎設施+API</span></td>
-        <td>31.3</td><td>31.4</td><td>31.5</td><td>31.6</td><td>31.7</td><td>31.8</td><td>31.9</td><td>32.0</td>
-        <td style="background:#f0fdf4;">32.1</td>
-        <td>32.2</td><td>32.3</td><td>32.3</td>
-      </tr>
-      <tr>
-        <td>月淨利（萬）</td>
-        <td class="neg">(28.9)</td><td class="neg">(24.1)</td><td class="neg">(20.4)</td><td class="neg">(15.9)</td><td class="neg">(11.7)</td><td class="neg">(7.6)</td><td class="neg">(3.8)</td><td class="neg">(0.2)</td>
-        <td style="background:#f0fdf4;font-weight:700;" class="pos">+3.3</td>
-        <td class="pos">+6.6</td><td class="pos">+9.7</td><td class="pos">+12.7</td>
-      </tr>
-      <tr style="background:#fafafa;">
-        <td>累計淨利（萬）</td>
-        <td class="neg">(28.9)</td><td class="neg">(53.0)</td><td class="neg">(73.4)</td><td class="neg">(89.3)</td><td class="neg">(101.0)</td><td class="neg">(108.6)</td><td class="neg">(112.4)</td><td class="neg">(112.6)</td>
-        <td style="background:#f0fdf4;font-weight:700;color:#059669;">(109.3)</td>
-        <td class="neg">(102.7)</td><td class="neg">(93.0)</td><td class="neg">(80.3)</td>
-      </tr>
-    </tbody>
-  </table>
-  <div style="display:flex;gap:12px;margin-top:12px;">
-    <div class="card card-accent" style="border-left-color:#00b894;flex:1;padding:10px 14px;background:#f0fdf9;">
-      <div style="font-size:10px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:1px;">月損益平衡</div>
-      <div style="font-size:22px;font-weight:900;color:#059669;font-family:'Arial Black',sans-serif;">M9</div>
-      <div style="font-size:10px;color:#6b7280;">894 付費用戶時轉正</div>
+  <h2>團隊</h2>
+  <div class="slide-sub">創辦人 / 全端工程師</div>
+  <div class="grid-2" style="gap:24px;align-items:start;margin-top:8px;">
+    <div class="card card-accent" style="padding:28px 26px;">
+      <div style="font-size:44px;margin-bottom:12px;">👨‍💻</div>
+      <h3 style="font-size:20px;margin-bottom:4px;">Ray（游騰宇）</h3>
+      <p class="muted" style="margin-bottom:16px;">創辦人 · 全端工程師 · 撲克玩家</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <span class="tag tag-purple">React / TypeScript</span>
+        <span class="tag tag-blue">Supabase / Vite</span>
+        <span class="tag tag-green">Claude API</span>
+        <span class="tag tag-orange">GTO 資料庫建置</span>
+        <span class="tag tag-gray">產品設計</span>
+        <span class="tag tag-gray">內容行銷</span>
+      </div>
     </div>
-    <div class="card card-accent" style="border-left-color:#5c35bf;flex:1;padding:10px 14px;">
-      <div style="font-size:10px;font-weight:700;color:#5c35bf;text-transform:uppercase;letter-spacing:1px;">Y1 累計</div>
-      <div style="font-size:22px;font-weight:900;color:#e94560;font-family:'Arial Black',sans-serif;">-80.3萬</div>
-      <div style="font-size:10px;color:#6b7280;">持續投資期，Y2 回收</div>
-    </div>
-    <div class="card card-accent" style="border-left-color:#f97316;flex:1;padding:10px 14px;">
-      <div style="font-size:10px;font-weight:700;color:#f97316;text-transform:uppercase;letter-spacing:1px;">M12 Gross MRR</div>
-      <div style="font-size:22px;font-weight:900;color:#f97316;font-family:'Arial Black',sans-serif;">NT$50萬</div>
-      <div style="font-size:10px;color:#6b7280;">1,137 付費用戶</div>
-    </div>
-    <div class="card card-accent" style="border-left-color:#2563eb;flex:1;padding:10px 14px;">
-      <div style="font-size:10px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:1px;">M12 月淨利</div>
-      <div style="font-size:22px;font-weight:900;color:#2563eb;font-family:'Arial Black',sans-serif;">+12.7萬</div>
-      <div style="font-size:10px;color:#6b7280;">毛利率 ~39%（平台費後）</div>
+    <div>
+      <div class="feat" style="margin-bottom:18px;">
+        <div class="feat-icon purple">🎨</div>
+        <div><h4>產品設計</h4><p>功能規劃、UX 設計、GTO 資料庫建置、用戶旅程設計</p></div>
+      </div>
+      <div class="feat" style="margin-bottom:18px;">
+        <div class="feat-icon blue">⚙️</div>
+        <div><h4>全端開發</h4><p>React + TypeScript + Supabase + Vite + Vercel CI/CD</p></div>
+      </div>
+      <div class="feat" style="margin-bottom:18px;">
+        <div class="feat-icon green">🤖</div>
+        <div><h4>AI 分析引擎</h4><p>Claude Haiku 驅動，弱點分析邏輯，Prompt 工程優化</p></div>
+      </div>
+      <div class="card" style="padding:14px 18px;background:#fffbeb;border-color:#fde68a;border-left:4px solid #f59e0b;margin-top:4px;">
+        <p style="font-size:12px;color:#92400e;">🔮 後期：付費用戶 500+ 後評估引入行銷專員 &amp; 客服，1,000+ 後考慮技術合夥人</p>
+      </div>
     </div>
   </div>
 </div>
 </div>
 </div>
 
-<!-- ══ SLIDE 8 — 財務預測 Y2 ══ -->
+<!-- ══════════════════════════════════════
+     SLIDE 8 — 財務預測 Year 1
+══════════════════════════════════════ -->
 <div class="slide" id="slide-8">
 <div class="slide-inner">
-<div class="content-area" style="padding-top:32px;">
+<div class="content-area" style="padding-top:40px;">
   <div class="slide-no">07</div>
-  <h2>財務預測 <span style="font-size:18px;color:#6b7280;">Year 2（NTD 台幣）</span></h2>
-  <div class="slide-sub" style="margin-bottom:10px;">行銷倍增至 NT$60萬/月（SEA+全球）・新用戶 200→300/月・固定費 62.2萬/月・Y2 月損益平衡 M16</div>
+  <h2>財務預測 <span style="font-size:20px;color:#6b7280;">Year 1（NTD 台幣）</span></h2>
+  <div class="slide-sub" style="margin-bottom:14px;">CAC NT$3,000 × 月推廣 NT$30萬 → 每月新增 100 位付費用戶 &nbsp;|&nbsp; ARPU NT$440（Basic 80% + PRO 20%）&nbsp;|&nbsp; 單位：萬元 NTD</div>
   <table class="fin-table">
     <thead>
       <tr>
-        <th>項目</th><th>M13</th><th>M14</th><th>M15</th><th style="background:#1e3a5f;">M16 🎯</th><th>M17</th><th>M18</th><th>M19</th><th>M20</th><th style="background:#1a3a5f;">M21 💰</th><th>M22</th><th>M23</th><th>M24</th>
+        <th>項目</th><th>M1</th><th>M2</th><th>M3</th><th>M4</th><th>M5</th><th>M6</th><th style="background:#1e3a5f;">M7 🎯</th><th>M8</th><th>M9</th><th>M10</th><th>M11</th><th>M12</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td>月末付費用戶</td>
-        <td>1,292</td><td>1,440</td><td>1,582</td>
-        <td style="background:#f0fdf4;font-weight:700;color:#059669;">1,719</td>
-        <td>1,850</td><td>1,976</td><td>2,197</td><td>2,409</td>
-        <td style="background:#fff9f0;font-weight:700;color:#f97316;">2,613</td>
-        <td>2,808</td><td>2,996</td><td>3,176</td>
+        <td>月末付費用戶</td><td>100</td><td>180</td><td>269</td><td>349</td><td>423</td><td>515</td><td style="background:#f0fdf4;font-weight:700;color:#059669;">701</td><td>864</td><td>1,057</td><td>1,234</td><td>1,400</td><td>1,601</td>
       </tr>
       <tr>
-        <td>Gross MRR（萬）</td>
-        <td>56.8</td><td>63.4</td><td>69.6</td>
-        <td style="background:#f0fdf4;">75.6</td>
-        <td>81.4</td><td>87.0</td><td>96.7</td><td>106.0</td>
-        <td style="background:#fff9f0;">115.0</td>
-        <td>123.6</td><td>131.8</td><td>139.7</td>
+        <td>月 MRR（萬）</td><td>4.4</td><td>7.9</td><td>11.8</td><td>15.4</td><td>18.6</td><td>22.7</td><td style="background:#f0fdf4;font-weight:700;color:#059669;">30.8</td><td>38.0</td><td>46.5</td><td>54.3</td><td>61.6</td><td>70.4</td>
       </tr>
       <tr>
-        <td>淨收入（萬）</td>
-        <td>51.2</td><td>57.0</td><td>62.6</td>
-        <td style="background:#f0fdf4;">68.1</td>
-        <td>73.3</td><td>78.3</td><td>87.0</td><td>95.4</td>
-        <td style="background:#fff9f0;">103.5</td>
-        <td>111.2</td><td>118.6</td><td>125.8</td>
-      </tr>
-      <tr>
-        <td>總費用（萬）</td>
-        <td>63.5</td><td>63.6</td><td>63.8</td>
-        <td style="background:#f0fdf4;">63.9</td>
-        <td>64.1</td><td>64.2</td><td>64.4</td><td>64.6</td>
-        <td style="background:#fff9f0;">64.8</td>
-        <td>65.0</td><td>65.2</td><td>65.4</td>
+        <td>行銷費用（萬）</td>
+        <td colspan="12" style="color:#e94560;font-weight:700;text-align:center;">30萬 / 月（固定）</td>
       </tr>
       <tr>
         <td>月淨利（萬）</td>
-        <td class="neg">(12.3)</td><td class="neg">(6.6)</td><td class="neg">(1.2)</td>
-        <td style="background:#f0fdf4;font-weight:700;" class="pos">+4.2</td>
-        <td class="pos">+9.2</td><td class="pos">+14.1</td><td class="pos">+22.6</td><td class="pos">+30.8</td>
-        <td style="background:#fff9f0;font-weight:700;" class="pos">+38.7</td>
-        <td class="pos">+46.2</td><td class="pos">+53.4</td><td class="pos">+60.4</td>
+        <td class="neg">(25.7)</td><td class="neg">(22.2)</td><td class="neg">(18.3)</td><td class="neg">(14.7)</td><td class="neg">(11.5)</td><td class="neg">(7.4)</td>
+        <td style="background:#f0fdf4;font-weight:700;" class="pos">+0.7</td>
+        <td class="pos">+7.9</td><td class="pos">+16.4</td><td class="pos">+24.2</td><td class="pos">+31.5</td><td class="pos">+40.3</td>
       </tr>
       <tr style="background:#fafafa;">
         <td>累計淨利（萬）</td>
-        <td class="neg">(92.6)</td><td class="neg">(99.2)</td><td class="neg">(100.4)</td>
-        <td style="background:#f0fdf4;color:#374151;" class="neg">(96.2)</td>
-        <td class="neg">(87.0)</td><td class="neg">(72.9)</td><td class="neg">(50.3)</td><td class="neg">(19.5)</td>
-        <td style="background:#fff9f0;font-weight:700;color:#f97316;">+19.2</td>
-        <td class="pos">+65.4</td><td class="pos">+118.8</td><td class="pos">+179.2</td>
+        <td class="neg">(25.7)</td><td class="neg">(47.9)</td><td class="neg">(66.2)</td><td class="neg">(80.9)</td><td class="neg">(92.4)</td><td class="neg">(99.8)</td>
+        <td style="background:#f0fdf4;font-weight:700;color:#059669;">(99.1)</td>
+        <td class="neg">(91.2)</td><td class="neg">(74.8)</td><td class="neg">(50.6)</td><td class="neg">(19.1)</td><td class="pos">+21.2</td>
       </tr>
     </tbody>
   </table>
-  <div style="display:flex;gap:12px;margin-top:12px;">
-    <div class="card card-accent" style="border-left-color:#00b894;flex:1;padding:10px 14px;background:#f0fdf9;">
-      <div style="font-size:10px;font-weight:700;color:#059669;letter-spacing:1px;">Y2 月損益平衡</div>
-      <div style="font-size:22px;font-weight:900;color:#059669;font-family:'Arial Black',sans-serif;">M16</div>
-      <div style="font-size:10px;color:#6b7280;">1,719 付費用戶時</div>
+  <div style="display:flex;gap:14px;margin-top:16px;">
+    <div class="card card-accent" style="border-left-color:#00b894;flex:1;padding:12px 16px;background:#f0fdf9;">
+      <div style="font-size:11px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:1px;">月損益平衡</div>
+      <div style="font-size:24px;font-weight:900;color:#059669;font-family:'Arial Black',sans-serif;">M7</div>
+      <div style="font-size:11px;color:#6b7280;">701 付費用戶時轉正</div>
     </div>
-    <div class="card card-accent" style="border-left-color:#f97316;flex:1;padding:10px 14px;background:#fff9f0;">
-      <div style="font-size:10px;font-weight:700;color:#f97316;letter-spacing:1px;">累計損益平衡</div>
-      <div style="font-size:22px;font-weight:900;color:#f97316;font-family:'Arial Black',sans-serif;">M21</div>
-      <div style="font-size:10px;color:#6b7280;">全回收投資成本</div>
+    <div class="card card-accent" style="border-left-color:#5c35bf;flex:1;padding:12px 16px;">
+      <div style="font-size:11px;font-weight:700;color:#5c35bf;text-transform:uppercase;letter-spacing:1px;">累計損益平衡</div>
+      <div style="font-size:24px;font-weight:900;color:#5c35bf;font-family:'Arial Black',sans-serif;">M12</div>
+      <div style="font-size:11px;color:#6b7280;">Year 1 末累計轉正</div>
     </div>
-    <div class="card card-accent" style="border-left-color:#5c35bf;flex:1;padding:10px 14px;">
-      <div style="font-size:10px;font-weight:700;color:#5c35bf;letter-spacing:1px;">M24 付費用戶</div>
-      <div style="font-size:22px;font-weight:900;color:#5c35bf;font-family:'Arial Black',sans-serif;">3,176</div>
-      <div style="font-size:10px;color:#6b7280;">臺灣+東南亞+全球英語</div>
+    <div class="card card-accent" style="border-left-color:#f97316;flex:1;padding:12px 16px;">
+      <div style="font-size:11px;font-weight:700;color:#f97316;text-transform:uppercase;letter-spacing:1px;">Y1 累計淨利</div>
+      <div style="font-size:24px;font-weight:900;color:#f97316;font-family:'Arial Black',sans-serif;">+21.2萬</div>
+      <div style="font-size:11px;color:#6b7280;">M12 累計轉正</div>
     </div>
-    <div class="card card-accent" style="border-left-color:#e94560;flex:1;padding:10px 14px;background:#fff5f7;">
-      <div style="font-size:10px;font-weight:700;color:#e94560;letter-spacing:1px;">M24 月淨利</div>
-      <div style="font-size:22px;font-weight:900;color:#e94560;font-family:'Arial Black',sans-serif;">NT$60.4萬</div>
-      <div style="font-size:10px;color:#6b7280;">累計淨利 NT$179.2萬</div>
+    <div class="card card-accent" style="border-left-color:#2563eb;flex:1;padding:12px 16px;">
+      <div style="font-size:11px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:1px;">ARPU 更新</div>
+      <div style="font-size:24px;font-weight:900;color:#2563eb;font-family:'Arial Black',sans-serif;">NT$440</div>
+      <div style="font-size:11px;color:#6b7280;">Basic 80% + PRO 20%</div>
     </div>
   </div>
 </div>
 </div>
 </div>
 
-<!-- ══ SLIDE 9 — 行銷策略 ══ -->
+<!-- ══════════════════════════════════════
+     SLIDE 9 — 財務預測 Year 2
+══════════════════════════════════════ -->
 <div class="slide" id="slide-9">
+<div class="slide-inner">
+<div class="content-area" style="padding-top:40px;">
+  <div class="slide-no">07</div>
+  <h2>財務預測 <span style="font-size:20px;color:#6b7280;">Year 2（NTD 台幣）</span></h2>
+  <div class="slide-sub" style="margin-bottom:14px;">M7 香港 · M13 馬來西亞 · M19 新加坡 &nbsp;|&nbsp; 單位：萬元 NTD</div>
+  <table class="fin-table">
+    <thead>
+      <tr>
+        <th>項目</th><th>M13</th><th>M14</th><th>M15</th><th>M16</th><th>M17</th><th>M18</th><th>M19</th><th>M20</th><th>M21</th><th>M22</th><th>M23</th><th>M24</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>月末付費用戶</td><td>1,886</td><td>2,137</td><td>2,412</td><td>2,668</td><td>2,913</td><td>3,189</td><td>3,545</td><td>3,870</td><td>4,217</td><td>4,539</td><td>4,851</td><td>5,192</td>
+      </tr>
+      <tr>
+        <td>月 MRR（萬）</td><td>83.0</td><td>94.0</td><td>106.1</td><td>117.4</td><td>128.2</td><td>140.3</td><td>156.0</td><td>170.3</td><td>185.5</td><td>199.7</td><td>213.4</td><td>228.4</td>
+      </tr>
+      <tr>
+        <td>行銷費用（萬）</td>
+        <td colspan="12" style="color:#e94560;font-weight:700;text-align:center;">30萬 / 月（固定）</td>
+      </tr>
+      <tr>
+        <td>月淨利（萬）</td>
+        <td class="pos">52.7</td><td class="pos">63.7</td><td class="pos">75.8</td><td class="pos">87.1</td><td class="pos">97.9</td><td class="pos">110.0</td><td class="pos">125.7</td><td class="pos">140.0</td><td class="pos">155.2</td><td class="pos">169.4</td><td class="pos">183.1</td><td class="pos">198.1</td>
+      </tr>
+      <tr style="background:#fafafa;">
+        <td>累計淨利（萬）</td>
+        <td class="pos">73.9</td><td class="pos">137.6</td><td class="pos">213.4</td><td class="pos">300.5</td><td class="pos">398.4</td><td class="pos">508.4</td><td class="pos">634.1</td><td class="pos">774.1</td><td class="pos">929.3</td><td class="pos">1,098.7</td><td class="pos">1,281.8</td><td class="pos">1,479.9</td>
+      </tr>
+    </tbody>
+  </table>
+  <div style="display:flex;gap:14px;margin-top:16px;">
+    <div class="card card-accent" style="border-left-color:#00b894;flex:1;padding:12px 16px;background:#f0fdf9;">
+      <div style="font-size:11px;font-weight:700;color:#059669;letter-spacing:1px;">M24 付費用戶</div>
+      <div style="font-size:26px;font-weight:900;color:#059669;font-family:'Arial Black',sans-serif;">5,192</div>
+    </div>
+    <div class="card card-accent" style="border-left-color:#5c35bf;flex:1;padding:12px 16px;">
+      <div style="font-size:11px;font-weight:700;color:#5c35bf;letter-spacing:1px;">M24 月 MRR</div>
+      <div style="font-size:26px;font-weight:900;color:#5c35bf;font-family:'Arial Black',sans-serif;">NT$228萬</div>
+    </div>
+    <div class="card card-accent" style="border-left-color:#f97316;flex:1;padding:12px 16px;">
+      <div style="font-size:11px;font-weight:700;color:#f97316;letter-spacing:1px;">M24 月淨利</div>
+      <div style="font-size:26px;font-weight:900;color:#f97316;font-family:'Arial Black',sans-serif;">NT$198萬</div>
+    </div>
+    <div class="card card-accent" style="border-left-color:#e94560;flex:1;padding:12px 16px;background:#fff5f7;">
+      <div style="font-size:11px;font-weight:700;color:#e94560;letter-spacing:1px;">Y2 累計淨利</div>
+      <div style="font-size:26px;font-weight:900;color:#e94560;font-family:'Arial Black',sans-serif;">NT$1,458萬</div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLIDE 10 — 行銷策略
+══════════════════════════════════════ -->
+<div class="slide" id="slide-10">
 <div class="slide-inner">
 <div class="content-area">
   <div class="slide-no">08</div>
   <h2>上市行銷策略</h2>
-  <div class="slide-sub" style="margin-bottom:16px;">雙語定向投放 × KOL 合作 × 社群裂變，逐步從台灣到全球降低 CAC</div>
-  <div class="grid-3" style="gap:14px;margin-bottom:16px;">
-    <div class="card card-accent" style="padding:18px;">
-      <div class="feat-icon purple" style="margin-bottom:10px;width:38px;height:38px;font-size:18px;">🎯</div>
-      <h3 style="margin-bottom:6px;">精準數位投放</h3>
-      <p>Facebook / Instagram / YouTube 鎖定撲克受眾。中文廣告鎖定台灣、港、馬、新；英文廣告鎖定東南亞英語用戶及美國。CAC 目標 NT$3,000，Y2 優化至 NT$2,000。</p>
+  <div class="slide-sub" style="margin-bottom:20px;">三管齊下降低 CAC，逐步從 NT$3,000 優化至 NT$1,500</div>
+  <div class="grid-3" style="gap:16px;margin-bottom:20px;">
+    <div class="card card-accent" style="padding:20px;">
+      <div class="feat-icon purple" style="margin-bottom:12px;width:40px;height:40px;font-size:20px;">🎯</div>
+      <h3 style="margin-bottom:8px;">精準投放</h3>
+      <p>Facebook / Instagram / YouTube 鎖定德州撲克玩家受眾。初期聚焦台灣，CAC 目標 NT$3,000，成熟後降至 NT$1,650。</p>
     </div>
-    <div class="card card-accent green" style="padding:18px;">
-      <div class="feat-icon green" style="margin-bottom:10px;width:38px;height:38px;font-size:18px;">🎬</div>
-      <h3 style="margin-bottom:6px;">KOL / 內容合作</h3>
-      <p>台灣撲克 YouTuber + 東南亞英語 Poker Vlogger 合作，教學影片 + 實測體驗。Y2 目標美國 Poker Influencer，借助英語社群快速打入海外市場。</p>
+    <div class="card card-accent green" style="padding:20px;">
+      <div class="feat-icon green" style="margin-bottom:12px;width:40px;height:40px;font-size:20px;">🎬</div>
+      <h3 style="margin-bottom:8px;">KOL / 內容合作</h3>
+      <p>台灣撲克 YouTuber / 實況主合作，教學影片 + 實測體驗分享，降低新手門檻，目標降 CAC 至 NT$1,500。</p>
     </div>
-    <div class="card card-accent blue" style="padding:18px;">
-      <div class="feat-icon blue" style="margin-bottom:10px;width:38px;height:38px;font-size:18px;">🔗</div>
-      <h3 style="margin-bottom:6px;">社群裂變傳播</h3>
-      <p>訓練結果一鍵分享，PTT 撲克 / Dcard / Discord / Reddit poker 社群導流，中英文雙語分享卡，自然擴散持續降低 CAC，目標 Y2 有機佔比達 30%。</p>
+    <div class="card card-accent blue" style="padding:20px;">
+      <div class="feat-icon blue" style="margin-bottom:12px;width:40px;height:40px;font-size:20px;">🔗</div>
+      <h3 style="margin-bottom:8px;">社群病毒傳播</h3>
+      <p>訓練結果一鍵分享 URL，PTT 撲克版 / Dcard / Discord 社群導流，自然擴散持續降低 CAC。</p>
     </div>
   </div>
-  <div class="card" style="padding:14px 20px;background:#f8fafc;">
-    <div style="font-size:12px;font-weight:700;color:#1a237e;margin-bottom:10px;">📍 市場展開時序（中英雙語從 Day 1 同步）</div>
+  <div class="card" style="padding:18px 22px;background:#f8fafc;">
+    <div style="font-size:13px;font-weight:700;color:#1a237e;margin-bottom:12px;">📍 市場展開時序</div>
     <div class="market-flow">
-      <div class="mkt"><div class="mkt-flag">🇹🇼</div><div class="mkt-info"><div class="mkt-name">台灣</div><div class="mkt-time">M1 啟動</div></div></div>
+      <div class="mkt"><div class="mkt-flag">🇹🇼</div><div class="mkt-info"><div class="mkt-name">台灣</div><div class="mkt-time">M1 開始</div></div></div>
       <div class="mkt-arrow">→</div>
-      <div class="mkt"><div class="mkt-flag">🇭🇰</div><div class="mkt-info"><div class="mkt-name">香港</div><div class="mkt-time">M7</div></div></div>
+      <div class="mkt"><div class="mkt-flag">🇭🇰</div><div class="mkt-info"><div class="mkt-name">香港</div><div class="mkt-time">M7 開始</div></div></div>
       <div class="mkt-arrow">→</div>
-      <div class="mkt"><div class="mkt-flag">🇸🇬</div><div class="mkt-info"><div class="mkt-name">新加坡</div><div class="mkt-time">M9</div></div></div>
+      <div class="mkt"><div class="mkt-flag">🇲🇾</div><div class="mkt-info"><div class="mkt-name">馬來西亞</div><div class="mkt-time">M13 開始</div></div></div>
       <div class="mkt-arrow">→</div>
-      <div class="mkt"><div class="mkt-flag">🇲🇾</div><div class="mkt-info"><div class="mkt-name">馬來西亞</div><div class="mkt-time">M11</div></div></div>
-      <div class="mkt-arrow">→</div>
-      <div class="mkt"><div class="mkt-flag">🇺🇸</div><div class="mkt-info"><div class="mkt-name">美國</div><div class="mkt-time">M19 主攻</div></div></div>
-      <div class="mkt-arrow">→</div>
-      <div class="mkt"><div class="mkt-flag">🌐</div><div class="mkt-info"><div class="mkt-name">全球</div><div class="mkt-time">M21+</div></div></div>
+      <div class="mkt"><div class="mkt-flag">🇸🇬</div><div class="mkt-info"><div class="mkt-name">新加坡</div><div class="mkt-time">M19 開始</div></div></div>
     </div>
   </div>
 </div>
 </div>
 </div>
 
-<!-- ══ SLIDE 10 — CLOSING ══ -->
-<div class="slide" id="slide-10">
+<!-- ══════════════════════════════════════
+     SLIDE 11 — CLOSING
+══════════════════════════════════════ -->
+<div class="slide" id="slide-11">
 <div class="slide-inner">
   <div class="col-left">
     <div class="cover-logo">♠ ♥ ♦ ♣</div>
     <div class="cover-poker">THANKS</div>
     <div style="margin-top:20px;">
-      <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:3px;">網址</div>
-      <div style="font-size:15px;color:#00b894;font-weight:700;">poker-goal.vercel.app</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.4);margin-bottom:4px;">網址</div>
+      <div style="font-size:16px;color:#00b894;font-weight:700;">poker-goal.vercel.app</div>
     </div>
-    <div style="margin-top:14px;">
-      <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:3px;">簡報</div>
-      <div style="font-size:12px;color:rgba(255,255,255,.4);">poker-goal.vercel.app/deck.html</div>
+    <div style="margin-top:16px;">
+      <div style="font-size:13px;color:rgba(255,255,255,.4);margin-bottom:4px;">架構白板</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.5);">poker-goal.vercel.app/whiteboard.html</div>
     </div>
   </div>
   <div class="col-right close-right" style="display:flex;flex-direction:column;justify-content:center;">
-    <div style="margin-bottom:24px;">
-      <div class="slide-no" style="font-size:11px;">SUMMARY</div>
-      <h2 style="font-size:24px;">Poker Goal 核心亮點</h2>
+    <div style="margin-bottom:28px;">
+      <div class="slide-no" style="font-size:12px;">SUMMARY</div>
+      <h2 style="font-size:26px;">Poker Goal 核心亮點</h2>
     </div>
     <div class="summary-item">
       <div class="summary-dot purple"></div>
-      <div><div class="summary-title">唯一繁體中文 + 英文雙語 AI 教練平台</div><div class="summary-desc">Claude AI 對話教練，五大競品均無繁中介面，iOS + Android + Web 三端</div></div>
+      <div><div class="summary-title">唯一繁體中文 GTO 訓練平台</div><div class="summary-desc">台灣→香港→馬來西亞→新加坡，全球華人撲克玩家</div></div>
     </div>
     <div class="summary-item">
       <div class="summary-dot green"></div>
-      <div><div class="summary-title">市場拓展：台灣 → 東南亞 → 美國全球</div><div class="summary-desc">Q1 台灣、Q3 東南亞、Y2H2 美國主攻，雙語從 Day 1 支援全市場</div></div>
+      <div><div class="summary-title">Claude AI 對話教練 + 分層訂閱</div><div class="summary-desc">Free / Basic NT$299 / PRO NT$1,000，比競品低 19～86%</div></div>
     </div>
     <div class="summary-item">
       <div class="summary-dot blue"></div>
-      <div><div class="summary-title">財務：月 BEP M9・累計 BEP M21</div><div class="summary-desc">含平台手續費（18%）+ 正式基礎設施費用，M24 月淨利 NT$60萬，累計 NT$179萬</div></div>
+      <div><div class="summary-title">財務：月 BEP M7，累計 BEP M12</div><div class="summary-desc">NT$30萬/月行銷，Y2 累計淨利 NT$1,458萬</div></div>
     </div>
     <div class="summary-item">
       <div class="summary-dot orange"></div>
-      <div><div class="summary-title">雙平台手續費是主要費用挑戰</div><div class="summary-desc">優化策略：提升 Web 直購比例（Stripe 2.9% vs App Store 30%），長期目標 Web 佔比 50%+</div></div>
+      <div><div class="summary-title">邊際成本極低，可持續規模化</div><div class="summary-desc">Claude API 成本 &lt;3% 總收入，超額使用由點數轉嫁</div></div>
     </div>
   </div>
 </div>
@@ -679,16 +706,20 @@ p{font-size:12px;color:#374151;line-height:1.65;}
 
 </div><!-- end stage -->
 
+<!-- ── Progress ── -->
 <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+
+<!-- ── Nav ── -->
 <div class="nav">
   <button onclick="prev()">← 上一頁</button>
-  <span class="counter" id="counter">1 / 10</span>
+  <span class="counter" id="counter">1 / 11</span>
   <button onclick="next()">下一頁 →</button>
 </div>
 
 <script>
-const TOTAL = 10;
+const TOTAL = 11;
 let cur = 1;
+
 function go(n) {
   document.getElementById('slide-' + cur).classList.remove('active');
   cur = Math.max(1, Math.min(TOTAL, n));
@@ -698,10 +729,13 @@ function go(n) {
 }
 function next() { go(cur + 1); }
 function prev() { go(cur - 1); }
+
 document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
   if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
 });
+
+// Responsive scale
 function resize() {
   const stage = document.getElementById('stage');
   const sw = window.innerWidth, sh = window.innerHeight;
@@ -712,6 +746,8 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 resize();
+
+// Init progress
 document.getElementById('progressFill').style.width = (1 / TOTAL * 100) + '%';
 </script>
 </body>
