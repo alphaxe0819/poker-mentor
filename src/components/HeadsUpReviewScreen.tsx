@@ -3,17 +3,19 @@ import { useState } from 'react'
 import type { MatchState, HandState } from '../lib/hu/types'
 import { handToCanonical } from '../lib/hu/handToCanonical'
 import { formatCard } from '../lib/hu/cards'
+import type { FlagsByHand } from './HeadsUpMatchScreen'
 
 interface Props {
   match: MatchState
   userTier: 'free' | 'basic' | 'pro'
+  gtoFlagsByHand: FlagsByHand
   /** Returns the analysis text for hand at index. Implementation must charge points. */
   onAnalyzeHand: (handIndex: number) => Promise<string>
   onBack: () => void
 }
 
 export default function HeadsUpReviewScreen({
-  match, userTier, onAnalyzeHand, onBack,
+  match, userTier, gtoFlagsByHand, onAnalyzeHand, onBack,
 }: Props) {
   const [expanded, setExpanded] = useState<number | null>(null)
   const [analyses, setAnalyses] = useState<Record<number, string>>({})
@@ -84,7 +86,8 @@ export default function HeadsUpReviewScreen({
         </div>
 
         {match.handHistory.map((hand, idx) => {
-          const isFlagged = false  // v1.0: gto_flags not yet wired through — placeholder
+          const handFlags = gtoFlagsByHand[hand.handNumber] ?? []
+          const isFlagged = handFlags.some(f => !f.pass)
           const heroDelta = computeHeroDelta(hand)
           const isExpanded = expanded === idx
           return (
