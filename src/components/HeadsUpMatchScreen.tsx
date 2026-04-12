@@ -31,6 +31,7 @@ export default function HeadsUpMatchScreen({
 }: Props) {
   const [match, setMatch] = useState<MatchState | null>(null)
   const [waitingForBot, setWaitingForBot] = useState(false)
+  const waitingRef = useRef(false)
   const [error, setError] = useState<string | null>(null)
   const violationsRef = useRef(0)
   const flagsRef = useRef<FlagsByHand>({})
@@ -43,28 +44,45 @@ export default function HeadsUpMatchScreen({
   }, [config])
 
   // ── Bot turn handler ──
+  // Schedules bot action 1s after detecting it's bot's turn.
+  // Uses a ref to prevent duplicate scheduling and to hold latest match.
+  const matchRef = useRef(match)
+  matchRef.current = match
+
   useEffect(() => {
     if (!match?.currentHand) return
     if (match.currentHand.isComplete) return
     const isBotTurn = match.currentHand.toAct !== match.currentHand.hero.position
     if (!isBotTurn) return
-    if (waitingForBot) return
+    if (waitingRef.current) return
 
+    waitingRef.current = true
     setWaitingForBot(true)
+
     const timer = setTimeout(() => {
+      const currentMatch = matchRef.current
+      if (!currentMatch?.currentHand || currentMatch.currentHand.isComplete) {
+        waitingRef.current = false
+        setWaitingForBot(false)
+        return
+      }
       try {
-        const botAction = decideBotAction(match.currentHand!, config, personality)
-        const updated = applyAction(match, botAction)
+        const botAction = decideBotAction(currentMatch.currentHand, config, personality)
+        const updated = applyAction(currentMatch, botAction)
         setMatch(updated)
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e)
         setError(`Bot error: ${msg}`)
       } finally {
+        waitingRef.current = false
         setWaitingForBot(false)
       }
-    }, 1000)  // 1s decision delay per spec
-    return () => clearTimeout(timer)
-  }, [match, waitingForBot, config, personality])
+    }, 1000)
+
+    // Do NOT return cleanup — we want the timer to survive re-renders.
+    // waitingRef.current prevents duplicate scheduling.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [match?.currentHand?.toAct, match?.currentHand?.handNumber, match?.currentHand?.street])
 
   // ── Hand complete → resolve and deal next ──
   useEffect(() => {
