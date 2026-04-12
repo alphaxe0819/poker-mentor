@@ -32,6 +32,7 @@ export async function logHand(
   hand: HandState,
   heroStackBefore: number,
   heroStackAfter: number,
+  heroWon: boolean,
   gtoFlags: Array<{ street: string; actor: string; pass: boolean }>
 ): Promise<void> {
   const bothShown = hand.isComplete && !hand.hero.hasFolded && !hand.villain.hasFolded
@@ -49,7 +50,7 @@ export async function logHand(
       pot_total_bb: Math.round(hand.potBB),
       hero_stack_before: heroStackBefore,
       hero_stack_after: heroStackAfter,
-      hero_won: heroStackAfter > heroStackBefore,
+      hero_won: heroWon,
       gto_flags: gtoFlags,
     })
   if (error) throw new Error(`logHand failed: ${error.message}`)
