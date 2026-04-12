@@ -1,5 +1,28 @@
 # Changelog
 
+## v0.8.0 — 2026-04-11
+
+### 新功能
+- **MTT HU 對決模擬器 v1.0**：和 AI bot 打完整 80BB HU 對戰
+  - 5 種起始籌碼比（1:5 / 1:2 / 1:1 / 2:1 / 5:1）
+  - 入場費 30 點 / 場
+  - Bot 翻前用 GTO 範圍（HU 40BB 手寫近似），翻後 13 個 board GTO + 啟發式 fallback
+  - 三種 bot 個性（standard / rock / aggressive，只影響 fallback heuristic）
+  - 1 秒機器人決策動畫
+  - 賽後報告頁附 GTO 紅標 + AI 深度分析（付費用戶 3 點 / 手）
+  - PRO 訂閱享賽事 log 1 年保留
+
+### 技術
+- 新增 13 個 HU 翻後 GTO range（`src/lib/gto/gtoData_hu_40bb_srp_flop_*.ts`）
+- 新增 HU 翻前 GTO chart（`src/lib/gto/gtoData_tourn_hu_40bb.ts`）
+- 新增 HU 純引擎 + 手牌評估（`src/lib/hu/`）
+- 新增 bot AI 整合 + fallback 啟發式
+- 新增 UI 元件：`HeadsUpMatchScreen`、`HeadsUpReviewScreen`、`HeadsUpScenarioSelect`、`PostflopActionBar`、`CommunityCards`
+- 新增 Supabase tables：`tournament_sessions`、`tournament_hands`（migration 在 `supabase/migrations/`，需手動執行）
+- 新增 Edge Function：`analyze-hu-hand`（Claude Haiku，需手動部署）
+- 新增 TexasSolver CLI 資料管線（`scripts/gto-pipeline/`）
+- 修復 `src/lib/gto/getGTOAction.ts` key 建構 bug（之前使用 `gameType` 字面字串，現改用 `gameTypeKey`）
+
 ## v0.7.2 (2026-04-10)
 
 ### 文件
