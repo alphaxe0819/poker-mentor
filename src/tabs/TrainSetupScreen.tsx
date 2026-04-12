@@ -20,6 +20,7 @@ interface Props {
   points?: number
   isPaid?: boolean
   onNavigateToMissions?: () => void
+  onNavigateToHU?: () => void
   onStart: (config: {
     gameTypeKey: GameTypeKey
     stackDepth: number | 'random'
@@ -29,7 +30,7 @@ interface Props {
   }) => void
 }
 
-export default function TrainSetupScreen({ points = 0, isPaid = false, onNavigateToMissions, onStart }: Props) {
+export default function TrainSetupScreen({ points = 0, isPaid = false, onNavigateToMissions, onNavigateToHU, onStart }: Props) {
   const [gameTypeKey, setGameTypeKey] = useState<GameTypeKey>(isPaid ? 'random' : 'random')
   const [stackDepth,  setStackDepth]  = useState<StackDepthOption>('random')
   const trainMode = 'multi'
@@ -145,6 +146,17 @@ export default function TrainSetupScreen({ points = 0, isPaid = false, onNavigat
         />
         <span className="text-gray-400 text-xs">答錯時顯示策略說明</span>
       </label>
+
+      {/* MTT 情境模擬器入口 */}
+      {onNavigateToHU && (
+        <button
+          onClick={onNavigateToHU}
+          className="w-full p-4 rounded-2xl text-left"
+          style={{ background: '#1a1a2e', border: '1px solid #7c3aed' }}>
+          <div className="text-white font-bold text-sm mb-1">🥊 HU 對決（新）</div>
+          <div className="text-gray-400 text-xs">和 AI 打 1v1 完整 80BB 對局 · 30 點 / 場</div>
+        </button>
+      )}
 
       <button
         onClick={() => onStart({
