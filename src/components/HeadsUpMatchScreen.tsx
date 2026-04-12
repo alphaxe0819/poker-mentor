@@ -37,10 +37,19 @@ export default function HeadsUpMatchScreen({
   const flagsRef = useRef<FlagsByHand>({})
 
   // ── Init match on mount ──
+  // Must await preloadBotData() BEFORE setting the match,
+  // otherwise getDBByGameType returns undefined (cache empty)
+  // and the bot folds every hand.
   useEffect(() => {
-    preloadBotData().catch(() => { /* non-fatal */ })
-    const initial = dealNewHand(createMatch(config))
-    setMatch(initial)
+    let cancelled = false
+    async function init() {
+      await preloadBotData()
+      if (cancelled) return
+      const initial = dealNewHand(createMatch(config))
+      setMatch(initial)
+    }
+    init().catch(e => setError(`Init failed: ${e}`))
+    return () => { cancelled = true }
   }, [config])
 
   // ── Bot turn handler ──
