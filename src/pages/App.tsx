@@ -4,6 +4,7 @@ import { getProfile, isDailyLimitReached, incrementDailyPlays, isUserPaid } from
 import type { UserProfile } from '../lib/auth'
 import type { User } from '@supabase/supabase-js'
 import type { MatchState } from '../lib/hu/types'
+import type { FlagsByHand } from '../components/HeadsUpMatchScreen'
 import AuthPage from './AuthPage'
 import BottomNav from '../components/BottomNav'
 import DailyLimitScreen from '../components/DailyLimitScreen'
@@ -75,6 +76,7 @@ export default function App() {
   const [huConfig, setHuConfig] = useState<import('../lib/hu/types').MatchConfig | null>(null)
   const [huFinalMatch, setHuFinalMatch] = useState<import('../lib/hu/types').MatchState | null>(null)
   const [huSessionId, setHuSessionId] = useState<string | null>(null)
+  const [huFlagsByHand, setHuFlagsByHand] = useState<FlagsByHand>({})
 
   const handleHuAbandon = useCallback(() => {
     // Fire-and-forget abandon finalization (non-blocking, non-fatal)
@@ -102,29 +104,51 @@ export default function App() {
     setHuSessionId(null)
   }, [huSessionId, huConfig])
 
-  const handleHuMatchComplete = useCallback(async (finalState: MatchState) => {
-    if (huSessionId) {
-      try {
-        const { finalizeSession, logHand } = await import('../lib/hu/sessionStorage')
-        for (const hand of finalState.handHistory) {
-          const heroWon = await computeHeroWonForHand(hand)
-          await logHand(huSessionId, hand, 0, 0, heroWon, [])
-        }
-        await finalizeSession(huSessionId, finalState)
-      } catch (e) {
-        console.error('session persist failed:', e)
-      }
-    }
-    setHuFinalMatch(finalState)
-    setAppMode('hu-review')
-  }, [huSessionId])
-
   const refreshPoints = useCallback(async () => {
     if (!user) return
     const { getPoints } = await import('../lib/points')
     const p = await getPoints(user.id)
     setPoints(p)
   }, [user])
+
+  const handleHuMatchComplete = useCallback(async (finalState: MatchState, flagsByHand: FlagsByHand) => {
+    // Charge violation points if any
+    if (finalState.violationPoints > 0 && user) {
+      try {
+        const { spendPoints } = await import('../lib/points')
+        await spendPoints(
+          user.id,
+          finalState.violationPoints,
+          'hu_violation',
+          `HU 違規金 ${finalState.violationPoints} 點`
+        )
+        // Refresh balance after deduction
+        await refreshPoints()
+      } catch (e) {
+        console.error('violation points charge failed:', e)
+      }
+    }
+
+    // Persist hands + finalize session (non-fatal on error)
+    if (huSessionId) {
+      try {
+        const { finalizeSession, logHand } = await import('../lib/hu/sessionStorage')
+        for (const hand of finalState.handHistory) {
+          const heroWon = await computeHeroWonForHand(hand)
+          const flags = flagsByHand[hand.handNumber] ?? []
+          await logHand(huSessionId, hand, 0, 0, heroWon, flags)
+        }
+        await finalizeSession(huSessionId, finalState)
+      } catch (e) {
+        console.error('session persist failed:', e)
+      }
+    }
+
+    // Store flags alongside match for the review screen
+    setHuFlagsByHand(flagsByHand)
+    setHuFinalMatch(finalState)
+    setAppMode('hu-review')
+  }, [huSessionId, user, refreshPoints])
 
   const navigateToMissions = useCallback(() => setTab('profile'), [])
 
@@ -413,6 +437,7 @@ export default function App() {
         <HeadsUpReviewScreen
           match={huFinalMatch}
           userTier={userTier}
+          gtoFlagsByHand={huFlagsByHand}
           onAnalyzeHand={async (idx) => {
             const { analyzeHand } = await import('../lib/hu/analyzeHand')
             const { formatCard, formatBoard } = await import('../lib/hu/cards')
@@ -442,6 +467,7 @@ export default function App() {
             setHuConfig(null)
             setHuFinalMatch(null)
             setHuSessionId(null)
+            setHuFlagsByHand({})
           }}
         />
       </Suspense>

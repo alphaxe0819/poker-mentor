@@ -1,5 +1,5 @@
 // src/components/HeadsUpMatchScreen.tsx
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import PokerFelt from './PokerFelt'
 import HoleCards from './HoleCards'
 import CommunityCards from './CommunityCards'
@@ -9,11 +9,19 @@ import { createMatch, dealNewHand, applyAction, resolveHand } from '../lib/hu/en
 import { decideBotAction, preloadBotData } from '../lib/hu/botAI'
 import { handToCanonical } from '../lib/hu/handToCanonical'
 import type { Personality } from '../lib/gto/huHeuristics'
+import { isPreflopViolation } from '../lib/hu/gtoCheck'
+
+export interface GtoFlag {
+  street: string
+  actor: string
+  pass: boolean
+}
+export type FlagsByHand = Record<number, GtoFlag[]>
 
 interface Props {
   config: MatchConfig
   personality: Personality
-  onMatchComplete: (finalState: MatchState) => void
+  onMatchComplete: (finalState: MatchState, flagsByHand: FlagsByHand) => void
   onAbandon: () => void
 }
 
@@ -23,6 +31,8 @@ export default function HeadsUpMatchScreen({
   const [match, setMatch] = useState<MatchState | null>(null)
   const [waitingForBot, setWaitingForBot] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const violationsRef = useRef(0)
+  const flagsRef = useRef<FlagsByHand>({})
 
   // ── Init match on mount ──
   useEffect(() => {
@@ -61,7 +71,9 @@ export default function HeadsUpMatchScreen({
     const timer = setTimeout(() => {
       const resolved = resolveHand(match)
       if (resolved.result !== 'in_progress') {
-        onMatchComplete(resolved)
+        const cappedViolationPoints = Math.min(violationsRef.current * 2, 10)
+        const withViolations: MatchState = { ...resolved, violationPoints: cappedViolationPoints }
+        onMatchComplete(withViolations, flagsRef.current)
       } else {
         setMatch(dealNewHand(resolved))
       }
@@ -95,6 +107,23 @@ export default function HeadsUpMatchScreen({
         action = { kind: 'allin', actor: heroPos, street: hand.street }
         break
     }
+
+    // Detect preflop violation (only for preflop, v1.0 spec)
+    if (hand.street === 'preflop') {
+      const isViolation = isPreflopViolation(hand, heroPos, choice.kind)
+      const flag: GtoFlag = {
+        street: 'preflop',
+        actor: heroPos,
+        pass: !isViolation,
+      }
+      const handNum = hand.handNumber
+      const existing = flagsRef.current[handNum] ?? []
+      flagsRef.current = { ...flagsRef.current, [handNum]: [...existing, flag] }
+      if (isViolation) {
+        violationsRef.current = violationsRef.current + 1
+      }
+    }
+
     setMatch(applyAction(match, action))
   }, [match])
 
