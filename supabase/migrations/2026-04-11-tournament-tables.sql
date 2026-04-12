@@ -77,15 +77,17 @@ CREATE POLICY "Users can insert own hands"
   );
 
 -- ── Retention cleanup RPC ───────────────────────
--- Free users (no active subscription): keep latest 1 session
--- Pro users (active pro_monthly or pro_yearly subscription): keep last 365 days
--- Future basic tier (not yet in production): if added, update this function
+-- Free users (no active paid subscription): keep latest 1 session
+-- Basic users (basic_monthly / basic_yearly plans): keep latest 30 sessions
+-- Pro users (pro_monthly / pro_yearly plans): keep last 365 days
+-- Subscription is considered active if status='active' OR
+--   (status='cancelled' AND current_period_end > now())
 CREATE OR REPLACE FUNCTION cleanup_tournament_sessions(p_user_id uuid)
 RETURNS void AS $$
 DECLARE
   v_is_pro boolean;
+  v_is_basic boolean;
 BEGIN
-  -- Check if user has an active pro subscription
   SELECT EXISTS (
     SELECT 1 FROM subscriptions
     WHERE user_id = p_user_id
@@ -96,11 +98,31 @@ BEGIN
       )
   ) INTO v_is_pro;
 
+  SELECT EXISTS (
+    SELECT 1 FROM subscriptions
+    WHERE user_id = p_user_id
+      AND plan IN ('basic_monthly', 'basic_yearly')
+      AND (
+        status = 'active'
+        OR (status = 'cancelled' AND current_period_end > now())
+      )
+  ) INTO v_is_basic;
+
   IF v_is_pro THEN
     -- PRO: keep last 365 days
     DELETE FROM tournament_sessions
     WHERE user_id = p_user_id
       AND created_at < now() - interval '365 days';
+  ELSIF v_is_basic THEN
+    -- BASIC: keep latest 30 sessions
+    DELETE FROM tournament_sessions
+    WHERE user_id = p_user_id
+      AND id NOT IN (
+        SELECT id FROM tournament_sessions
+        WHERE user_id = p_user_id
+        ORDER BY created_at DESC
+        LIMIT 30
+      );
   ELSE
     -- FREE: keep only the latest 1 session
     DELETE FROM tournament_sessions

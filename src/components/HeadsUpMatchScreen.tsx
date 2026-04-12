@@ -135,6 +135,10 @@ export default function HeadsUpMatchScreen({
   const showXS = spr > 10
   const showXL = hand.street === 'river' && hand.potBB > 20
 
+  // ── In-hand chip totals (stack already committed this hand) ──
+  const heroTotalBB = hand.hero.stackBB + hand.hero.committedBB
+  const villainTotalBB = hand.villain.stackBB + hand.villain.committedBB
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0a0a0a' }}>
       {/* Header */}
@@ -142,12 +146,12 @@ export default function HeadsUpMatchScreen({
            style={{ borderColor: '#1a1a1a' }}>
         <button onClick={onAbandon} className="text-base">✕</button>
         <span>HU {config.stackRatio} · 手 #{hand.handNumber}</span>
-        <span>💎 {match.playerStackBB} BB</span>
+        <span>💎 {heroTotalBB} BB</span>
       </div>
 
       {/* Bot info */}
       <div className="text-center text-gray-300 text-xs pt-2">
-        🤖 Bot · {match.botStackBB} BB · {hand.villain.position.toUpperCase()}
+        🤖 Bot · {villainTotalBB} BB · {hand.villain.position.toUpperCase()}
       </div>
 
       {/* Table area */}
@@ -180,7 +184,7 @@ export default function HeadsUpMatchScreen({
         {/* Player info + hole cards */}
         <div className="flex flex-col items-center gap-2">
           <div className="text-gray-300 text-xs">
-            你 · {match.playerStackBB} BB · {hand.hero.position.toUpperCase()}
+            你 · {heroTotalBB} BB · {hand.hero.position.toUpperCase()}
           </div>
           <HoleCards hand={handToCanonical(hand.hero.holeCards)} />
         </div>

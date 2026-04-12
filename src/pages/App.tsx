@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { getProfile, isDailyLimitReached, incrementDailyPlays, isUserPaid } from '../lib/auth'
 import type { UserProfile } from '../lib/auth'
 import type { User } from '@supabase/supabase-js'
+import type { MatchState } from '../lib/hu/types'
 import AuthPage from './AuthPage'
 import BottomNav from '../components/BottomNav'
 import DailyLimitScreen from '../components/DailyLimitScreen'
@@ -74,6 +75,49 @@ export default function App() {
   const [huConfig, setHuConfig] = useState<import('../lib/hu/types').MatchConfig | null>(null)
   const [huFinalMatch, setHuFinalMatch] = useState<import('../lib/hu/types').MatchState | null>(null)
   const [huSessionId, setHuSessionId] = useState<string | null>(null)
+
+  const handleHuAbandon = useCallback(() => {
+    // Fire-and-forget abandon finalization (non-blocking, non-fatal)
+    if (huSessionId && huConfig) {
+      import('../lib/hu/sessionStorage').then(async ({ finalizeSession }) => {
+        const abandonedMatch: MatchState = {
+          config: huConfig,
+          handHistory: [],
+          currentHand: null,
+          playerStackBB: 0,
+          botStackBB: 0,
+          result: 'in_progress',
+          analysisPointsSpent: 0,
+          violationPoints: 0,
+        }
+        try {
+          await finalizeSession(huSessionId, abandonedMatch)
+        } catch (e) {
+          console.error('abandon finalize failed:', e)
+        }
+      })
+    }
+    setAppMode('app')
+    setHuConfig(null)
+    setHuSessionId(null)
+  }, [huSessionId, huConfig])
+
+  const handleHuMatchComplete = useCallback(async (finalState: MatchState) => {
+    if (huSessionId) {
+      try {
+        const { finalizeSession, logHand } = await import('../lib/hu/sessionStorage')
+        for (const hand of finalState.handHistory) {
+          const heroWon = await computeHeroWonForHand(hand)
+          await logHand(huSessionId, hand, 0, 0, heroWon, [])
+        }
+        await finalizeSession(huSessionId, finalState)
+      } catch (e) {
+        console.error('session persist failed:', e)
+      }
+    }
+    setHuFinalMatch(finalState)
+    setAppMode('hu-review')
+  }, [huSessionId])
 
   const refreshPoints = useCallback(async () => {
     if (!user) return
@@ -353,48 +397,8 @@ export default function App() {
         <HeadsUpMatchScreen
           config={huConfig}
           personality="standard"
-          onAbandon={() => {
-            // Fire-and-forget abandon finalization (non-blocking, non-fatal)
-            if (huSessionId) {
-              import('../lib/hu/sessionStorage').then(async ({ finalizeSession }) => {
-                const abandonedMatch: import('../lib/hu/types').MatchState = {
-                  config: huConfig!,
-                  handHistory: [],
-                  currentHand: null,
-                  playerStackBB: 0,
-                  botStackBB: 0,
-                  result: 'in_progress',
-                  analysisPointsSpent: 0,
-                  violationPoints: 0,
-                }
-                try {
-                  await finalizeSession(huSessionId, abandonedMatch)
-                } catch (e) {
-                  console.error('abandon finalize failed:', e)
-                }
-              })
-            }
-            setAppMode('app')
-            setHuConfig(null)
-            setHuSessionId(null)
-          }}
-          onMatchComplete={async (finalState) => {
-            // Persist hands + finalize session (non-fatal on error)
-            if (huSessionId) {
-              try {
-                const { finalizeSession, logHand } = await import('../lib/hu/sessionStorage')
-                for (const hand of finalState.handHistory) {
-                  const heroWon = await computeHeroWonForHand(hand)
-                  await logHand(huSessionId, hand, 0, 0, heroWon, [])
-                }
-                await finalizeSession(huSessionId, finalState)
-              } catch (e) {
-                console.error('session persist failed:', e)
-              }
-            }
-            setHuFinalMatch(finalState)
-            setAppMode('hu-review')
-          }}
+          onAbandon={handleHuAbandon}
+          onMatchComplete={handleHuMatchComplete}
         />
       </Suspense>
     )
