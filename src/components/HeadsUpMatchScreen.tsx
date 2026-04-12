@@ -7,6 +7,7 @@ import PostflopActionBar, { type ActionChoice } from './PostflopActionBar'
 import PreflopActionBar, { type PreflopAction } from './PreflopActionBar'
 import type { MatchConfig, MatchState, Action } from '../lib/hu/types'
 import { createMatch, dealNewHand, applyAction, resolveHand } from '../lib/hu/engine'
+import { evaluateHand, compareHands } from '../lib/hu/handEvaluator'
 import { decideBotAction, preloadBotData } from '../lib/hu/botAI'
 import { handToCanonical } from '../lib/hu/handToCanonical'
 import type { Personality } from '../lib/gto/huHeuristics'
@@ -100,7 +101,7 @@ export default function HeadsUpMatchScreen({
     if (!match?.currentHand?.isComplete) return
     const hand = match.currentHand
 
-    // Compute hand result for display
+    // Compute hand result for display (including showdown)
     let delta = 0
     let won = false
     if (hand.villain.hasFolded) {
@@ -109,8 +110,24 @@ export default function HeadsUpMatchScreen({
     } else if (hand.hero.hasFolded) {
       delta = -hand.hero.committedBB
       won = false
+    } else if (hand.board.length >= 5) {
+      // Showdown — evaluate hands
+      try {
+        const heroBest = evaluateHand([...hand.hero.holeCards, ...hand.board])
+        const villainBest = evaluateHand([...hand.villain.holeCards, ...hand.board])
+        const cmp = compareHands(heroBest, villainBest)
+        if (cmp > 0) {
+          delta = hand.villain.committedBB
+          won = true
+        } else if (cmp < 0) {
+          delta = -hand.hero.committedBB
+          won = false
+        }
+        // tie → delta stays 0
+      } catch {
+        // evaluation error — show 0 delta
+      }
     }
-    // Showdown delta would need evaluateHand — skip for now, show 0
     setHandResult({ delta, won })
 
     // After 2.5s, resolve and move to next hand (or match end)
@@ -232,7 +249,7 @@ export default function HeadsUpMatchScreen({
   }
 
   const hand = match.currentHand
-  const isPlayerTurn = hand.toAct === hand.hero.position && !hand.isComplete
+  const isPlayerTurn = hand.toAct === hand.hero.position && !hand.isComplete && !hand.hero.isAllIn
 
   // ── Action bar derived state ──
   const toCallBB = hand.currentBetBB - hand.hero.streetCommitBB
@@ -268,9 +285,14 @@ export default function HeadsUpMatchScreen({
         <span>💎 {heroTotalBB} BB</span>
       </div>
 
-      {/* Bot info */}
+      {/* Bot info + showdown card reveal */}
       <div className="text-center text-gray-300 text-xs pt-2">
         🤖 Bot · {villainTotalBB} BB · {hand.villain.position.toUpperCase()}
+        {hand.isComplete && !hand.hero.hasFolded && !hand.villain.hasFolded && (
+          <span className="ml-2 text-white font-bold">
+            [{hand.villain.holeCards.map(c => c.rank + c.suit).join(' ')}]
+          </span>
+        )}
       </div>
 
       {/* Table area */}

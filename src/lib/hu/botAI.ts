@@ -90,35 +90,66 @@ function preflopScenarioFromActions(hand: HandState, botPos: Position): string {
   return 'RFI'
 }
 
+/**
+ * Check if bot is pot-committed (invested > 33% of starting stack).
+ * When pot-committed, bot should never fold — always call or jam.
+ */
+function isPotCommitted(hand: HandState, botPos: Position): boolean {
+  const bot = botPos === hand.hero.position ? hand.hero : hand.villain
+  const totalStack = bot.stackBB + bot.committedBB
+  return totalStack > 0 && (bot.committedBB / totalStack) > 0.33
+}
+
+/**
+ * Clamp raise amount to effective stack. If raise would leave < 4BB behind, jam instead.
+ */
+function clampRaiseOrJam(raiseAmount: number, hand: HandState, botPos: Position): Action {
+  const bot = botPos === hand.hero.position ? hand.hero : hand.villain
+  const totalStack = bot.stackBB + bot.streetCommitBB  // what they can raise to
+  if (raiseAmount >= totalStack - 3 || bot.stackBB <= 4) {
+    // Jam — raising almost full stack or short stack
+    return { kind: 'allin', actor: botPos, street: hand.street }
+  }
+  return { kind: 'raise', amount: raiseAmount, actor: botPos, street: hand.street }
+}
+
 function rangeActionToEngineAction(
   result: { action: string; freq?: number; note: string },
   hand: HandState,
   botPos: Position
 ): Action {
   const { action, freq } = result
+  const committed = isPotCommitted(hand, botPos)
 
-  // Handle mixed strategy — getGTOAction returns action:'mixed' with freq for mr: codes,
-  // and action:'mixed_3b' with freq for mix_3b: codes
+  // ── Pot-committed override: NEVER fold when > 33% of stack invested ──
+  function noFold(fallback: Action): Action {
+    if (committed && fallback.kind === 'fold') {
+      return { kind: 'call', actor: botPos, street: hand.street }
+    }
+    return fallback
+  }
+
+  // Handle mixed strategy
   if (action === 'mixed') {
     const pct = freq ?? 50
     if (Math.random() * 100 < pct) {
-      return { kind: 'raise', amount: defaultRaiseAmount(hand), actor: botPos, street: hand.street }
+      return clampRaiseOrJam(defaultRaiseAmount(hand), hand, botPos)
     }
-    return { kind: 'fold', actor: botPos, street: hand.street }
+    return noFold({ kind: 'fold', actor: botPos, street: hand.street })
   }
   if (action === 'mixed_3b') {
     const pct = freq ?? 50
     if (Math.random() * 100 < pct) {
-      return { kind: 'raise', amount: defaultRaiseAmount(hand), actor: botPos, street: hand.street }
+      return clampRaiseOrJam(defaultRaiseAmount(hand), hand, botPos)
     }
     return { kind: 'call', actor: botPos, street: hand.street }
   }
 
   if (action === 'r' || action === '3b' || action === '4b') {
-    return { kind: 'raise', amount: defaultRaiseAmount(hand), actor: botPos, street: hand.street }
+    return clampRaiseOrJam(defaultRaiseAmount(hand), hand, botPos)
   }
   if (action === 'c') return { kind: 'call', actor: botPos, street: hand.street }
-  if (action === 'f') return { kind: 'fold', actor: botPos, street: hand.street }
+  if (action === 'f') return noFold({ kind: 'fold', actor: botPos, street: hand.street })
   if (action === 'allin') return { kind: 'allin', actor: botPos, street: hand.street }
 
   // Raw DB format fallback (should not normally reach here if using getGTOAction)

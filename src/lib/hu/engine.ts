@@ -169,17 +169,31 @@ export function applyAction(match: MatchState, action: Action): MatchState {
   }
 
   if (!hand.isComplete) {
-    if (isStreetClosed(hand)) {
+    // Check if both all-in or one all-in and other has matched
+    const bothAllIn = hand.hero.isAllIn && hand.villain.isAllIn
+    const oneAllInMatched = (hand.hero.isAllIn || hand.villain.isAllIn) &&
+      hand.hero.streetCommitBB === hand.villain.streetCommitBB
+
+    if (bothAllIn || oneAllInMatched || isStreetClosed(hand)) {
       let advanced = advanceStreet(hand)
-      // If both players are all-in, fast-forward through remaining streets
-      // to showdown (no more actions possible).
-      while (!advanced.isComplete && advanced.hero.isAllIn && advanced.villain.isAllIn) {
+      // Fast-forward through remaining streets when no more actions possible
+      while (!advanced.isComplete && (advanced.hero.isAllIn || advanced.villain.isAllIn)) {
         advanced = advanceStreet(advanced)
       }
       return { ...match, currentHand: advanced }
     }
-    // Pass turn to other player
-    hand.toAct = hand.toAct === 'btn' ? 'bb' : 'btn'
+    // Pass turn to other player (but skip if they're all-in)
+    const nextPlayer = hand.toAct === 'btn' ? 'bb' : 'btn'
+    const nextPlayerState = nextPlayer === hand.hero.position ? hand.hero : hand.villain
+    if (nextPlayerState.isAllIn) {
+      // Next player is all-in, they can't act → close street
+      let advanced = advanceStreet(hand)
+      while (!advanced.isComplete && (advanced.hero.isAllIn || advanced.villain.isAllIn)) {
+        advanced = advanceStreet(advanced)
+      }
+      return { ...match, currentHand: advanced }
+    }
+    hand.toAct = nextPlayer
   }
 
   return { ...match, currentHand: hand }
