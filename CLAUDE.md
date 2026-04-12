@@ -9,6 +9,61 @@
 - 描述 bug/feature 直接分析修復，不要反覆確認
 - 不要膨脹時間估算
 
+## 使用者手動執行的程式碼：乾淨可複製規則（最重要）
+**任何需要使用者複製貼到 Supabase SQL Editor / Edge Function Editor / Terminal 的程式碼塊，必須符合以下全部條件：**
+
+1. **程式碼塊內 100% 只有可執行的內容**。第一行就是執行環境接受的語法：
+   - SQL Editor → 第一行從 `CREATE`、`SELECT`、`ALTER`、`DROP`、`DO`、`INSERT`、`UPDATE`、`DELETE`、`GRANT`、`COMMENT`、`--`（SQL 註解）等**合法 SQL token** 開始
+   - Edge Function → 第一行從 `import`、`//`、`/**` 等合法 TypeScript/Deno 開始
+   - Bash / PowerShell → 第一行從 `cd`、`git`、`npm`、`#`、`powershell` 等合法 shell token 開始
+
+2. **禁止在程式碼塊內放這些東西**（會讓使用者貼進去就報錯）：
+   - ❌ 檔案路徑當第一行（例：`supabase/migrations/xxx.sql`）
+   - ❌ 未註解掉的說明文字（例：`Run this in SQL Editor`）
+   - ❌ Markdown 語法（例：`**注意**`）
+   - ❌ 多個檔案混在同一個程式碼塊
+
+3. **檔名 / 路徑 / 操作步驟必須寫在程式碼塊「外面」**，用純文字列出：
+   ```
+   檔案：supabase/migrations/2026-04-11-tournament-tables.sql
+   執行位置：Supabase Dashboard → SQL Editor
+
+   [然後才是程式碼塊]
+   ```
+
+4. **若檔案頭有檔名註解（例如 `-- supabase/migrations/xxx.sql`）**：
+   - 建議**移除**該註解行後再貼進對話，避免使用者複製時意外遺漏 `--` 前綴
+   - 或在程式碼塊前明確提醒：「注意：第一行是 SQL 註解，複製時連同 `--` 一起選取」
+
+5. **一塊程式碼 = 一個執行目標**。如果一個任務要執行 3 個 SQL + 1 個 JS 腳本，要分成 4 個獨立程式碼塊，每塊都標明執行位置。
+
+6. **驗證查詢要另外給一個程式碼塊**。執行完 migration 後，給一個 `SELECT ...` 讓使用者貼進去確認結果。
+
+### 正確示範
+> 執行位置：Supabase Dashboard → SQL Editor
+>
+> ```sql
+> CREATE TABLE IF NOT EXISTS my_table (
+>   id uuid PRIMARY KEY DEFAULT gen_random_uuid()
+> );
+> ```
+>
+> 驗證執行結果（也貼到 SQL Editor）：
+>
+> ```sql
+> SELECT tablename FROM pg_tables WHERE tablename = 'my_table';
+> ```
+
+### 錯誤示範（絕對不要這樣寫）
+> ```sql
+> supabase/migrations/2026-04-11-foo.sql
+> -- Run this in SQL Editor
+> CREATE TABLE ...
+> ```
+
+### 為何這條規則存在
+使用者於 2026-04-11 貼 migration 時，因為程式碼塊第一行是檔案路徑註解 `-- supabase/migrations/...`，複製過程中 `--` 被遺漏，導致 Supabase SQL Editor 收到純字串 `supabase/migrations/...` 引發 `syntax error at or near "supabase"`。這條規則防止此類誤會再次發生。
+
 ## 部署
 - 正式網址：https://poker-goal.vercel.app/
 - 正式機部署 = `git push origin main`（Vercel 自動部署）
