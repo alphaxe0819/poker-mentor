@@ -133,7 +133,9 @@ export default function HeadsUpMatchScreen({
     // After 2.5s, resolve and move to next hand (or match end)
     const timer = setTimeout(() => {
       setHandResult(null)
-      const resolved = resolveHand(match)
+      const currentMatch = matchRef.current
+      if (!currentMatch) return
+      const resolved = resolveHand(currentMatch)
       if (resolved.result !== 'in_progress') {
         const cappedViolationPoints = Math.min(violationsRef.current * 2, 10)
         const withViolations: MatchState = { ...resolved, violationPoints: cappedViolationPoints }
@@ -142,7 +144,8 @@ export default function HeadsUpMatchScreen({
         setMatch(dealNewHand(resolved))
       }
     }, 2500)
-    return () => clearTimeout(timer)
+    // Do NOT return cleanup — timer must survive re-renders (same pattern as bot turn)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [match?.currentHand?.isComplete, match?.currentHand?.handNumber])
 
   // ── Player action handler ──
@@ -379,6 +382,8 @@ export default function HeadsUpMatchScreen({
           canRaise={canRaise}
           potBB={hand.potBB}
           effectiveStackBB={hand.hero.stackBB}
+          currentBetBB={hand.currentBetBB}
+          heroStreetCommitBB={hand.hero.streetCommitBB}
           showXS={showXS}
           showXL={showXL}
           onAction={handlePlayerAction}

@@ -11,6 +11,10 @@ interface Props {
   canRaise: boolean
   potBB: number
   effectiveStackBB: number
+  /** Current bet on this street (0 if no one has bet yet) */
+  currentBetBB: number
+  /** Hero's current street commitment */
+  heroStreetCommitBB: number
   /** Whether to show XS / XL hidden buttons */
   showXS: boolean
   showXL: boolean
@@ -31,15 +35,40 @@ export type ActionChoice =
 export default memo(function PostflopActionBar({
   canFold, canCheck, canCall, callAmount,
   canBet, canRaise, potBB, effectiveStackBB,
+  currentBetBB, heroStreetCommitBB,
   showXS, showXL, onAction, disabled,
 }: Props) {
 
-  // All bet sizes must be at least 1 BB (poker minimum bet rule)
-  const xsAmount = Math.max(1, Math.round(potBB * 0.15 * 10) / 10)
-  const smallAmount = Math.max(1, Math.round(potBB * 0.33 * 10) / 10)
-  const midAmount = Math.max(1, Math.round(potBB * 0.5 * 10) / 10)
-  const largeAmount = Math.max(1, Math.round(potBB * 1.0 * 10) / 10)
-  const xlAmount = Math.max(1, Math.round(potBB * 2.0 * 10) / 10)
+  // ── Bet sizing (when no one has bet yet on this street) ──
+  // Uses pot-percentage. All bets must be at least 1 BB.
+  const betXS    = Math.max(1, Math.round(potBB * 0.15 * 10) / 10)
+  const betSmall = Math.max(1, Math.round(potBB * 0.33 * 10) / 10)
+  const betMid   = Math.max(1, Math.round(potBB * 0.5 * 10) / 10)
+  const betLarge = Math.max(1, Math.round(potBB * 1.0 * 10) / 10)
+  const betXL    = Math.max(1, Math.round(potBB * 2.0 * 10) / 10)
+
+  // ── Raise sizing (when facing a bet/raise) ──
+  // Min raise-to = currentBet + (currentBet - heroStreetCommit) = 2*currentBet - heroCommit
+  // But standard formula: min raise-to = currentBet + lastRaiseIncrement
+  // lastRaiseIncrement = currentBet - previousBet (we approximate as currentBet - heroStreetCommit for v1.0)
+  const lastIncrement = Math.max(1, currentBetBB - heroStreetCommitBB)
+  const minRaiseTo = currentBetBB + lastIncrement
+
+  // Raise-to options: min-raise, 2.5x, 3x, pot-raise
+  const potAfterCall = potBB + (currentBetBB - heroStreetCommitBB)  // pot if hero calls first
+  const potRaiseTo = currentBetBB + potAfterCall  // standard pot-raise formula
+
+  const raiseSmall = Math.max(minRaiseTo, Math.round(minRaiseTo * 10) / 10)
+  const raiseMid   = Math.max(minRaiseTo, Math.round((currentBetBB * 2.5) * 10) / 10)
+  const raiseLarge = Math.max(minRaiseTo, Math.round(potRaiseTo * 10) / 10)
+
+  // Use bet sizes when betting, raise sizes when raising
+  const isBetting = canBet
+  const xsAmount    = isBetting ? betXS    : raiseSmall
+  const smallAmount = isBetting ? betSmall : raiseSmall
+  const midAmount   = isBetting ? betMid   : raiseMid
+  const largeAmount = isBetting ? betLarge : raiseLarge
+  const xlAmount    = isBetting ? betXL    : Math.round(potRaiseTo * 1.5 * 10) / 10
 
   function handleSize(amt: number) {
     // Cap at effective stack → all-in
