@@ -23,6 +23,9 @@ const UpgradePage    = lazy(() => import('./UpgradePage'))
 const SharePage      = lazy(() => import('./SharePage'))
 const AdminDashboard = lazy(() => import('./AdminDashboard'))
 const ChangelogPage  = lazy(() => import('./ChangelogPage'))
+const HeadsUpScenarioSelect = lazy(() => import('../components/HeadsUpScenarioSelect'))
+const HeadsUpMatchScreen    = lazy(() => import('../components/HeadsUpMatchScreen'))
+const HeadsUpReviewScreen   = lazy(() => import('../components/HeadsUpReviewScreen'))
 
 const LazyFallback = () => (
   <div className="flex items-center justify-center min-h-[200px]">
@@ -32,7 +35,7 @@ const LazyFallback = () => (
 
 type Tab = 'coach' | 'train' | 'stats' | 'analysis' | 'profile'
 type TrainSubTab = 'practice' | 'course'
-type AppMode = 'loading' | 'auth' | 'guest' | 'quiz-detail' | 'onboarding' | 'app' | 'upgrade'
+type AppMode = 'loading' | 'auth' | 'guest' | 'quiz-detail' | 'onboarding' | 'app' | 'upgrade' | 'hu-select' | 'hu-match' | 'hu-review'
 
 export default function App() {
   if (window.location.pathname === '/share') {
@@ -57,6 +60,9 @@ export default function App() {
   const [points, setPoints] = useState(0)
   const [pendingQuizResult, setPendingQuizResult] = useState<import('../data/quizQuestions').QuizResult | null>(null)
   const [postQuizMode, setPostQuizMode] = useState<'onboarding' | 'app'>('app')
+  const [huConfig, setHuConfig] = useState<import('../lib/hu/types').MatchConfig | null>(null)
+  const [huFinalMatch, setHuFinalMatch] = useState<import('../lib/hu/types').MatchState | null>(null)
+  const [huSessionId, setHuSessionId] = useState<string | null>(null)
 
   const refreshPoints = useCallback(async () => {
     if (!user) return
@@ -294,6 +300,118 @@ export default function App() {
     )
   }
 
+  // ── HU simulator: scenario select ──
+  if (appMode === 'hu-select' && user) {
+    return (
+      <Suspense fallback={<LazyFallback />}>
+        <HeadsUpScenarioSelect
+          userPoints={points}
+          entryCost={30}
+          onCancel={() => setAppMode('app')}
+          onConfirm={async (config) => {
+            // Spend entry fee
+            const { spendPoints } = await import('../lib/points')
+            const result = await spendPoints(user.id, 30, 'hu_entry', 'HU 對決入場')
+            if (!result.success) {
+              alert('點數不足')
+              return
+            }
+            setPoints(result.balance)
+            // Create DB session + run retention cleanup
+            const { createSession, runRetentionCleanup } = await import('../lib/hu/sessionStorage')
+            try {
+              const session = await createSession(user.id, config, 30)
+              setHuSessionId(session.id)
+              await runRetentionCleanup(user.id)
+            } catch (e) {
+              console.error('createSession failed:', e)
+              setHuSessionId(null)
+            }
+            setHuConfig(config)
+            setAppMode('hu-match')
+          }}
+        />
+      </Suspense>
+    )
+  }
+
+  // ── HU simulator: live match ──
+  if (appMode === 'hu-match' && huConfig && user) {
+    return (
+      <Suspense fallback={<LazyFallback />}>
+        <HeadsUpMatchScreen
+          config={huConfig}
+          personality="standard"
+          onAbandon={() => {
+            setAppMode('app')
+            setHuConfig(null)
+            setHuSessionId(null)
+          }}
+          onMatchComplete={async (finalState) => {
+            // Persist hands + finalize session (non-fatal on error)
+            if (huSessionId) {
+              try {
+                const { finalizeSession, logHand } = await import('../lib/hu/sessionStorage')
+                for (const hand of finalState.handHistory) {
+                  await logHand(huSessionId, hand, 0, 0, [])
+                }
+                await finalizeSession(huSessionId, finalState)
+              } catch (e) {
+                console.error('session persist failed:', e)
+              }
+            }
+            setHuFinalMatch(finalState)
+            setAppMode('hu-review')
+          }}
+        />
+      </Suspense>
+    )
+  }
+
+  // ── HU simulator: post-game review ──
+  if (appMode === 'hu-review' && huFinalMatch && user) {
+    const userTier: 'free' | 'basic' | 'pro' =
+      profile && isUserPaid(profile) ? 'pro' : 'free'
+    return (
+      <Suspense fallback={<LazyFallback />}>
+        <HeadsUpReviewScreen
+          match={huFinalMatch}
+          userTier={userTier}
+          onAnalyzeHand={async (idx) => {
+            const { analyzeHand } = await import('../lib/hu/analyzeHand')
+            const { formatCard, formatBoard } = await import('../lib/hu/cards')
+            const hand = huFinalMatch.handHistory[idx]
+            const bothShown = !hand.hero.hasFolded && !hand.villain.hasFolded
+            const result = await analyzeHand({
+              userId: user.id,
+              sessionId: huSessionId ?? '',
+              handIndex: idx,
+              handData: {
+                hero_position: hand.hero.position,
+                hero_cards: hand.hero.holeCards.map(formatCard).join(''),
+                villain_cards: bothShown
+                  ? hand.villain.holeCards.map(formatCard).join('')
+                  : null,
+                board: hand.board.length > 0 ? formatBoard(hand.board) : null,
+                action_sequence: hand.actions,
+                pot_total_bb: Math.round(hand.potBB),
+                hero_won: false,  // v1.1 will derive from stored deltas
+              },
+            })
+            await refreshPoints()
+            return result.analysis
+          }}
+          onBack={() => {
+            setAppMode('app')
+            setHuConfig(null)
+            setHuFinalMatch(null)
+            setHuSessionId(null)
+          }}
+        />
+      </Suspense>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
       <div className="flex-1 overflow-y-auto pb-20">
@@ -328,6 +446,7 @@ export default function App() {
                 onStartRound={handleStartRound}
                 onPointsChanged={refreshPoints}
                 onNavigateToMissions={navigateToMissions}
+                onNavigateToHU={() => setAppMode('hu-select')}
                 onRoundComplete={async () => {
                   if (!user) return
                   const currentProfile = await getProfile()
