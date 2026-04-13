@@ -64,6 +64,20 @@
 ### 為何這條規則存在
 使用者於 2026-04-11 貼 migration 時，因為程式碼塊第一行是檔案路徑註解 `-- supabase/migrations/...`，複製過程中 `--` 被遺漏，導致 Supabase SQL Editor 收到純字串 `supabase/migrations/...` 引發 `syntax error at or near "supabase"`。這條規則防止此類誤會再次發生。
 
+## Git 工作流程（防止改動丟失）
+- **每完成一組修復/功能就 commit**，不要累積大量未 commit 的改動
+- Feature branch 上的 commit 不會影響正式機（只有 `git push origin main` 才觸發 Vercel 部署）
+- 建議流程：
+  1. 在 feature branch 上開發（如 `feature/hu-simulator-v1`）
+  2. 每完成一組邏輯完整的改動就 `git commit`
+  3. 可選：`git push origin <feature-branch>` 備份到遠端（不觸發部署）
+  4. 準備上線時再 merge 到 main
+- **絕對不要**在有大量未 commit 改動時切換分支（`git checkout` 會丟棄未 commit 的修改）
+- 如果用戶說「不要上正式機」，意思是不要 push 到 main，但**仍然應該在 feature branch 上 commit**
+
+### 為何這條規則存在
+2026-04-13 在 feature branch 上做了大量引擎修復（engine.ts、botAI.ts 等 33 個檔案）但未 commit。用戶切換到 main 再切回來，git checkout 丟棄了所有未 commit 的改動，導致一整天的工作丟失。
+
 ## 部署
 - 正式網址：https://poker-goal.vercel.app/
 - 正式機部署 = `git push origin main`（Vercel 自動部署）
