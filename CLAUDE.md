@@ -91,6 +91,28 @@
 4. 更新此檔案 `CLAUDE.md` — 如果有新的固定規則需要記住
 5. `git push origin main`
 
+## 推送後的必做驗證（自動執行，不需用戶提醒）
+每次 `git push origin main` 後，**必須依序自動完成以下三步驟再回報**：
+
+1. **TypeScript 編譯檢查**
+   ```
+   npx tsc -b --noEmit
+   ```
+   - exit code 0 = 通過，繼續
+   - 有錯誤 = 立即修復，重新 push，再從步驟 1 開始
+
+2. **線上內容驗證**（用 WebFetch 抓正式網址）
+   - 若本次有改動 `deck.html`：抓 `https://poker-goal.vercel.app/deck.html?v=X`，確認關鍵新增內容存在
+   - 若本次有改動 React app：抓 `https://poker-goal.vercel.app/`，確認頁面有正確的 `<script>` 引用（代表 Vite build 產出正常）
+   - 驗證失敗 = 診斷原因，修復，重新 push
+
+3. **回報結果 + 給版本連結**
+   - 格式：`✅ TypeScript 零錯誤 ｜ ✅ 線上內容已確認 ｜ 👉 https://poker-goal.vercel.app/deck.html?v=X`
+   - `?v=X` 每次部署遞增（v3 → v4 → v5…），用於繞過 CDN 快取
+
+### 為何這條規則存在
+2026-04-13 發生過：(1) 未使用的 import 導致 TS6133 build 失敗，Vercel 靜默沿用舊版本；(2) 用戶用無痕模式仍看到舊內容，CDN 快取未清除。自動驗證可在下一次對話前就發現並修復問題。
+
 ## 專案資訊
 - 路徑：`C:\Users\User\Desktop\gto-poker-trainer`
 - GitHub：`https://github.com/alphaxe0819/poker-mentor.git`
