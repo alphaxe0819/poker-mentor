@@ -3,5 +3,13 @@
     { "source": "/deck.html", "destination": "/deck.html" },
     { "source": "/whiteboard.html", "destination": "/whiteboard.html" },
     { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)\\.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+      ]
+    }
   ]
 }
