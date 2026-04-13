@@ -276,29 +276,66 @@ export default function HeadsUpMatchScreen({
   const showXS = !isPreflop && spr > 10
   const showXL = hand.street === 'river' && hand.potBB > 20
 
+  // ── Action history pills ──
+  const actionPills = hand.actions.map((a, i) => {
+    const pos = a.actor.toUpperCase()
+    let label = a.kind.charAt(0).toUpperCase() + a.kind.slice(1)
+    if (a.amount !== undefined) label += ` ${a.amount}`
+    if (a.kind === 'allin') label = 'Allin'
+    return { key: i, pos, label, isLast: i === hand.actions.length - 1 }
+  })
+
+  const showVillainCards = hand.isComplete && !hand.hero.hasFolded && !hand.villain.hasFolded
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0a0a0a' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between p-3 text-xs text-gray-400 border-b"
-           style={{ borderColor: '#1a1a1a' }}>
-        <button onClick={onAbandon} className="text-base">✕</button>
-        <span>HU {config.stackRatio} · 手 #{hand.handNumber}</span>
-        <span>💎 {heroTotalBB} BB</span>
+      {/* Top action history bar (GTO Wizard style) */}
+      <div className="flex items-center gap-1 px-2 py-1.5 overflow-x-auto"
+           style={{ background: '#111', borderBottom: '1px solid #1a1a1a', minHeight: 36 }}>
+        <button onClick={onAbandon} className="text-gray-500 text-sm px-1 shrink-0">✕</button>
+        <div className="flex items-center gap-1 text-[10px] font-mono">
+          {actionPills.length === 0 && (
+            <span className="text-gray-600 px-2">手 #{hand.handNumber}</span>
+          )}
+          {actionPills.map(p => (
+            <span key={p.key}
+                  className="shrink-0 px-1.5 py-0.5 rounded text-white"
+                  style={{
+                    background: p.isLast ? '#2a4a3a' : '#1a1a1a',
+                    border: p.isLast ? '1px solid #10b981' : '1px solid #2a2a2a',
+                  }}>
+              {p.pos} {p.label}
+            </span>
+          ))}
+        </div>
+        <span className="ml-auto text-gray-500 text-[10px] shrink-0 pl-2">
+          {heroTotalBB} BB
+        </span>
       </div>
 
-      {/* Bot info + showdown card reveal */}
-      <div className="text-center text-gray-300 text-xs pt-2">
-        🤖 Bot · {villainTotalBB} BB · {hand.villain.position.toUpperCase()}
-        {hand.isComplete && !hand.hero.hasFolded && !hand.villain.hasFolded && (
-          <span className="ml-2 text-white font-bold">
-            [{hand.villain.holeCards.map(c => c.rank + c.suit).join(' ')}]
-          </span>
-        )}
-      </div>
+      {/* Main game area */}
+      <div className="flex-1 flex flex-col">
+        {/* Villain info + cards */}
+        <div className="flex items-center gap-2 px-3 pt-2 pb-1">
+          {showVillainCards ? (
+            <HoleCards hand={handToCanonical(hand.villain.holeCards)} actualCards={hand.villain.holeCards} size="small" />
+          ) : (
+            <div className="flex gap-1">
+              <div className="w-8 h-11 rounded bg-gray-800 border border-gray-700" />
+              <div className="w-8 h-11 rounded bg-gray-800 border border-gray-700" />
+            </div>
+          )}
+          <div className="text-xs">
+            <div className="text-gray-400">{hand.villain.position.toUpperCase()}</div>
+            <div className="text-white font-bold">{villainTotalBB} BB</div>
+          </div>
+          {waitingForBot && (
+            <span className="ml-auto text-gray-500 text-xs animate-pulse">thinking...</span>
+          )}
+        </div>
 
-      {/* Table area */}
-      <div className="flex-1 flex flex-col gap-3 p-3">
-        <div className="flex-1 relative">
+        {/* Table felt area */}
+        <div className="flex-1 flex flex-col items-center justify-center px-3">
           <PokerFelt
             tableSize={2}
             heroPosition={hand.hero.position === 'btn' ? 'BTN/SB' : 'BB'}
@@ -317,27 +354,34 @@ export default function HeadsUpMatchScreen({
             }}
           />
 
-          {/* Community cards centered over felt */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-6">
-            <CommunityCards cards={hand.board} />
+          {/* Community cards */}
+          {hand.board.length > 0 && (
+            <div className="mt-2">
+              <CommunityCards cards={hand.board} />
+            </div>
+          )}
+
+          {/* Scenario description (GTO Wizard style) */}
+          <div className="text-gray-500 text-[11px] mt-2 text-center">
+            {hand.hero.position === 'btn' ? 'BTN' : 'BB'} vs {hand.villain.position === 'btn' ? 'BTN' : 'BB'}
+            {' · '}{hand.street === 'preflop' ? '翻前' : hand.street === 'flop' ? '翻牌' : hand.street === 'turn' ? '轉牌' : hand.street === 'river' ? '河牌' : 'Showdown'}
+            {' · '}{Math.round(hand.potBB)} bb
           </div>
         </div>
 
-        {/* Player info + hole cards */}
-        <div className="flex flex-col items-center gap-2">
-          <div className="text-gray-300 text-xs">
-            你 · {heroTotalBB} BB · {hand.hero.position.toUpperCase()}
+        {/* Hero info + cards */}
+        <div className="flex items-center gap-2 px-3 pb-2 pt-1">
+          <HoleCards hand={handToCanonical(hand.hero.holeCards)} actualCards={hand.hero.holeCards} size="small" />
+          <div className="text-xs">
+            <div className="text-gray-400">{hand.hero.position.toUpperCase()}</div>
+            <div className="text-white font-bold">{heroTotalBB} BB</div>
           </div>
-          <HoleCards hand={handToCanonical(hand.hero.holeCards)} actualCards={hand.hero.holeCards} />
+          {!waitingForBot && isPlayerTurn && !hand.isComplete && (
+            <span className="ml-auto text-green-400 text-xs font-bold">輪到你</span>
+          )}
         </div>
 
-        {/* Status indicator */}
-        <div className="text-center text-xs h-4">
-          {waitingForBot && <span className="text-purple-300">🤖 對手思考中...</span>}
-          {!waitingForBot && isPlayerTurn && !hand.isComplete && <span className="text-green-400">輪到你決策</span>}
-        </div>
-
-        {/* Hand result overlay — shown briefly when hand ends */}
+        {/* Hand result overlay */}
         {handResult && (() => {
           const bg = handResult.tie ? 'rgba(250,204,21,0.12)'
             : handResult.won ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'
@@ -350,7 +394,7 @@ export default function HeadsUpMatchScreen({
             : hand.villain.hasFolded ? '對手棄牌'
             : handResult.tie ? 'Chop' : 'Showdown'
           return (
-            <div className="text-center py-3 rounded-xl mx-4 mb-2 animate-pulse"
+            <div className="text-center py-3 rounded-xl mx-3 mb-2 animate-pulse"
                  style={{ background: bg, border: `1px solid ${border}` }}>
               <div className="text-2xl mb-1">{emoji}</div>
               <div className="font-bold text-lg" style={{ color }}>
@@ -363,7 +407,7 @@ export default function HeadsUpMatchScreen({
         })()}
       </div>
 
-      {/* Action bar — preflop uses fixed GTO sizes, postflop uses pot-% sizes */}
+      {/* Action bar */}
       {isPlayerTurn && isPreflop && (
         <PreflopActionBar
           canFold={canFold}
