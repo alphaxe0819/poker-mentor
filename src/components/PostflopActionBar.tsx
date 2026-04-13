@@ -1,26 +1,21 @@
 // src/components/PostflopActionBar.tsx
+// GTO Wizard style: Fold(blue) / Check(grey) / Call(green) / sizing buttons / All-in(dark red)
 import { memo } from 'react'
 
 interface Props {
-  /** Available actions */
   canFold: boolean
   canCheck: boolean
   canCall: boolean
-  callAmount?: number  // BB to call
+  callAmount?: number
   canBet: boolean
   canRaise: boolean
   potBB: number
   effectiveStackBB: number
-  /** Current bet on this street (0 if no one has bet yet) */
   currentBetBB: number
-  /** Hero's current street commitment */
   heroStreetCommitBB: number
-  /** Whether to show XS / XL hidden buttons */
   showXS: boolean
   showXL: boolean
-  /** Callbacks */
   onAction: (action: ActionChoice) => void
-  /** Disabled while bot is thinking */
   disabled?: boolean
 }
 
@@ -32,46 +27,36 @@ export type ActionChoice =
   | { kind: 'raise'; bbAmount: number }
   | { kind: 'allin' }
 
+const BTN = 'flex items-center justify-center rounded-xl font-bold text-white transition-opacity'
+
 export default memo(function PostflopActionBar({
   canFold, canCheck, canCall, callAmount,
   canBet, canRaise, potBB, effectiveStackBB,
   currentBetBB, heroStreetCommitBB,
-  showXS, showXL, onAction, disabled,
+  onAction, disabled,
 }: Props) {
 
-  // ── Bet sizing (when no one has bet yet on this street) ──
-  // Uses pot-percentage. All bets must be at least 1 BB.
-  const betXS    = Math.max(1, Math.round(potBB * 0.15 * 10) / 10)
+  // Bet sizing (pot-percentage)
   const betSmall = Math.max(1, Math.round(potBB * 0.33 * 10) / 10)
   const betMid   = Math.max(1, Math.round(potBB * 0.5 * 10) / 10)
   const betLarge = Math.max(1, Math.round(potBB * 1.0 * 10) / 10)
-  const betXL    = Math.max(1, Math.round(potBB * 2.0 * 10) / 10)
 
-  // ── Raise sizing (when facing a bet/raise) ──
-  // Min raise-to = currentBet + (currentBet - heroStreetCommit) = 2*currentBet - heroCommit
-  // But standard formula: min raise-to = currentBet + lastRaiseIncrement
-  // lastRaiseIncrement = currentBet - previousBet (we approximate as currentBet - heroStreetCommit for v1.0)
+  // Raise sizing
   const lastIncrement = Math.max(1, currentBetBB - heroStreetCommitBB)
   const minRaiseTo = currentBetBB + lastIncrement
-
-  // Raise-to options: min-raise, 2.5x, 3x, pot-raise
-  const potAfterCall = potBB + (currentBetBB - heroStreetCommitBB)  // pot if hero calls first
-  const potRaiseTo = currentBetBB + potAfterCall  // standard pot-raise formula
+  const potAfterCall = potBB + (currentBetBB - heroStreetCommitBB)
+  const potRaiseTo = currentBetBB + potAfterCall
 
   const raiseSmall = Math.max(minRaiseTo, Math.round(minRaiseTo * 10) / 10)
   const raiseMid   = Math.max(minRaiseTo, Math.round((currentBetBB * 2.5) * 10) / 10)
   const raiseLarge = Math.max(minRaiseTo, Math.round(potRaiseTo * 10) / 10)
 
-  // Use bet sizes when betting, raise sizes when raising
   const isBetting = canBet
-  const xsAmount    = isBetting ? betXS    : raiseSmall
   const smallAmount = isBetting ? betSmall : raiseSmall
   const midAmount   = isBetting ? betMid   : raiseMid
   const largeAmount = isBetting ? betLarge : raiseLarge
-  const xlAmount    = isBetting ? betXL    : Math.round(potRaiseTo * 1.5 * 10) / 10
 
   function handleSize(amt: number) {
-    // Cap at effective stack → all-in
     if (amt >= effectiveStackBB) {
       onAction({ kind: 'allin' })
       return
@@ -81,89 +66,73 @@ export default memo(function PostflopActionBar({
       : { kind: 'raise', bbAmount: amt })
   }
 
-  const btnBase = 'px-3 py-2 rounded-lg font-bold text-xs text-white transition-opacity'
   const opacity = disabled ? 0.4 : 1
 
   return (
-    <div className="flex flex-wrap gap-1.5 justify-center p-3"
-         style={{ background: '#0a0a0a', borderTop: '1px solid #1a1a1a' }}>
+    <div className="flex flex-col gap-1.5 p-3" style={{ background: '#0a0a0a', borderTop: '1px solid #1a1a1a' }}>
+      {/* Row 1: Fold/Check/Call — main action */}
+      <div className="flex gap-2">
+        {canFold && (
+          <button disabled={disabled} className={`flex-1 ${BTN}`}
+                  style={{ background: '#2563eb', opacity, minHeight: 48 }}
+                  onClick={() => onAction({ kind: 'fold' })}>
+            FOLD
+          </button>
+        )}
 
-      {canFold && (
-        <button disabled={disabled}
-                className={btnBase}
-                style={{ background: '#374151', opacity }}
-                onClick={() => onAction({ kind: 'fold' })}>
-          Fold
-        </button>
-      )}
+        {canCheck && (
+          <button disabled={disabled} className={`flex-1 ${BTN}`}
+                  style={{ background: '#374151', opacity, minHeight: 48 }}
+                  onClick={() => onAction({ kind: 'check' })}>
+            CHECK
+          </button>
+        )}
 
-      {canCheck && (
-        <button disabled={disabled}
-                className={btnBase}
-                style={{ background: '#374151', opacity }}
-                onClick={() => onAction({ kind: 'check' })}>
-          Check
-        </button>
-      )}
+        {canCall && (
+          <button disabled={disabled} className={`flex-1 ${BTN}`}
+                  style={{ background: '#059669', opacity, minHeight: 48 }}
+                  onClick={() => onAction({ kind: 'call' })}>
+            <span className="text-sm font-bold">CALL {callAmount?.toFixed(1)}</span>
+          </button>
+        )}
+      </div>
 
-      {canCall && (
-        <button disabled={disabled}
-                className={btnBase}
-                style={{ background: '#374151', opacity }}
-                onClick={() => onAction({ kind: 'call' })}>
-          Call {callAmount?.toFixed(1)}
-        </button>
-      )}
-
+      {/* Row 2: Sizing buttons — bet/raise options */}
       {(canBet || canRaise) && (
-        <>
-          {showXS && (
-            <button disabled={disabled}
-                    className={btnBase}
-                    style={{ background: '#7c3aed', opacity }}
-                    onClick={() => handleSize(xsAmount)}>
-              極小
-              <div className="text-[8px] opacity-80 font-normal">{xsAmount}</div>
-            </button>
-          )}
-          <button disabled={disabled}
-                  className={btnBase}
-                  style={{ background: '#1e40af', opacity }}
+        <div className="flex gap-1.5">
+          <button disabled={disabled} className={`flex-1 ${BTN}`}
+                  style={{ background: '#dc2626', opacity, minHeight: 44 }}
                   onClick={() => handleSize(smallAmount)}>
-            小
-            <div className="text-[8px] opacity-80 font-normal">{smallAmount}</div>
+            <div className="text-center">
+              <div className="text-xs font-bold">33%</div>
+              <div className="text-[10px] opacity-70">{smallAmount}</div>
+            </div>
           </button>
-          <button disabled={disabled}
-                  className={btnBase}
-                  style={{ background: '#1e40af', opacity }}
+          <button disabled={disabled} className={`flex-1 ${BTN}`}
+                  style={{ background: '#dc2626', opacity, minHeight: 44 }}
                   onClick={() => handleSize(midAmount)}>
-            中
-            <div className="text-[8px] opacity-80 font-normal">{midAmount}</div>
+            <div className="text-center">
+              <div className="text-xs font-bold">50%</div>
+              <div className="text-[10px] opacity-70">{midAmount}</div>
+            </div>
           </button>
-          <button disabled={disabled}
-                  className={btnBase}
-                  style={{ background: '#1e40af', opacity }}
+          <button disabled={disabled} className={`flex-1 ${BTN}`}
+                  style={{ background: '#dc2626', opacity, minHeight: 44 }}
                   onClick={() => handleSize(largeAmount)}>
-            大
-            <div className="text-[8px] opacity-80 font-normal">{largeAmount}</div>
+            <div className="text-center">
+              <div className="text-xs font-bold">100%</div>
+              <div className="text-[10px] opacity-70">{largeAmount}</div>
+            </div>
           </button>
-          {showXL && (
-            <button disabled={disabled}
-                    className={btnBase}
-                    style={{ background: '#7c3aed', opacity }}
-                    onClick={() => handleSize(xlAmount)}>
-              極大
-              <div className="text-[8px] opacity-80 font-normal">{xlAmount}</div>
-            </button>
-          )}
-          <button disabled={disabled}
-                  className={btnBase}
-                  style={{ background: '#dc2626', opacity }}
+          <button disabled={disabled} className={`flex-1 ${BTN}`}
+                  style={{ background: '#991b1b', opacity, minHeight: 44 }}
                   onClick={() => onAction({ kind: 'allin' })}>
-            All-in
-            <div className="text-[8px] opacity-80 font-normal">{effectiveStackBB.toFixed(0)}</div>
+            <div className="text-center">
+              <div className="text-xs font-bold">ALLIN</div>
+              <div className="text-[10px] opacity-70">{effectiveStackBB.toFixed(0)}</div>
+            </div>
           </button>
-        </>
+        </div>
       )}
     </div>
   )
