@@ -7,7 +7,12 @@ import PostflopActionBar, { type ActionChoice } from './PostflopActionBar'
 import PreflopActionBar, { type PreflopAction } from './PreflopActionBar'
 import type { MatchConfig, MatchState, Action } from '../lib/hu/types'
 import { createMatch, dealNewHand, applyAction, resolveHand } from '../lib/hu/engine'
-import { evaluateHand, compareHands } from '../lib/hu/handEvaluator'
+/** Safe wrapper: if resolveHand throws, return a minimal resolved state so game doesn't freeze */
+function resolveHandSafe(match: MatchState): MatchState {
+  try { return resolveHand(match) } catch {
+    return { ...match, handHistory: [...match.handHistory, match.currentHand!], currentHand: null, result: 'in_progress' }
+  }
+}
 import { decideBotAction, preloadBotData } from '../lib/hu/botAI'
 import { handToCanonical } from '../lib/hu/handToCanonical'
 import type { Personality } from '../lib/gto/huHeuristics'
@@ -35,9 +40,10 @@ export default function HeadsUpMatchScreen({
   const waitingRef = useRef(false)
   const [error, setError] = useState<string | null>(null)
   /** Brief result display between hands: '+3 BB 🏆' or '-2 BB' */
-  const [handResult, setHandResult] = useState<{ delta: number; won: boolean } | null>(null)
+  const [handResult, setHandResult] = useState<{ delta: number; won: boolean; tie?: boolean } | null>(null)
   const violationsRef = useRef(0)
   const flagsRef = useRef<FlagsByHand>({})
+  const resolvedRef = useRef<MatchState | null>(null)
 
   // ── Init match on mount ──
   // Must await preloadBotData() BEFORE setting the match,
@@ -71,7 +77,7 @@ export default function HeadsUpMatchScreen({
     waitingRef.current = true
     setWaitingForBot(true)
 
-    const timer = setTimeout(() => {
+    setTimeout(() => {
       const currentMatch = matchRef.current
       if (!currentMatch?.currentHand || currentMatch.currentHand.isComplete) {
         waitingRef.current = false
@@ -101,50 +107,32 @@ export default function HeadsUpMatchScreen({
     if (!match?.currentHand?.isComplete) return
     const hand = match.currentHand
 
-    // Compute hand result for display (including showdown)
-    let delta = 0
-    let won = false
-    if (hand.villain.hasFolded) {
-      delta = hand.villain.committedBB
-      won = true
-    } else if (hand.hero.hasFolded) {
-      delta = -hand.hero.committedBB
-      won = false
-    } else if (hand.board.length >= 5) {
-      // Showdown — evaluate hands
-      try {
-        const heroBest = evaluateHand([...hand.hero.holeCards, ...hand.board])
-        const villainBest = evaluateHand([...hand.villain.holeCards, ...hand.board])
-        const cmp = compareHands(heroBest, villainBest)
-        if (cmp > 0) {
-          delta = hand.villain.committedBB
-          won = true
-        } else if (cmp < 0) {
-          delta = -hand.hero.committedBB
-          won = false
-        }
-        // tie → delta stays 0
-      } catch {
-        // evaluation error — show 0 delta
-      }
+    try {
+      const resolved = resolveHand(match)
+      resolvedRef.current = resolved
+      const delta = resolved.playerStackBB - match.playerStackBB
+      const won = delta > 0
+      const tie = delta === 0 && !hand.hero.hasFolded && !hand.villain.hasFolded
+      setHandResult({ delta, won, tie })
+    } catch (e) {
+      console.error('[HeadsUpMatch] resolveHand failed:', e)
+      setHandResult({ delta: 0, won: false, tie: true })
+      resolvedRef.current = resolveHandSafe(match)
     }
-    setHandResult({ delta, won })
 
-    // After 2.5s, resolve and move to next hand (or match end)
-    const timer = setTimeout(() => {
-      setHandResult(null)
-      const currentMatch = matchRef.current
-      if (!currentMatch) return
-      const resolved = resolveHand(currentMatch)
-      if (resolved.result !== 'in_progress') {
+    setTimeout(() => {
+      const res = resolvedRef.current
+      if (!res) return
+      resolvedRef.current = null
+      if (res.result !== 'in_progress') {
         const cappedViolationPoints = Math.min(violationsRef.current * 2, 10)
-        const withViolations: MatchState = { ...resolved, violationPoints: cappedViolationPoints }
+        const withViolations: MatchState = { ...res, violationPoints: cappedViolationPoints }
         onMatchComplete(withViolations, flagsRef.current)
       } else {
-        setMatch(dealNewHand(resolved))
+        setHandResult(null)
+        setMatch(dealNewHand(res))
       }
     }, 2500)
-    // Do NOT return cleanup — timer must survive re-renders (same pattern as bot turn)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [match?.currentHand?.isComplete, match?.currentHand?.handNumber])
 
@@ -254,6 +242,10 @@ export default function HeadsUpMatchScreen({
   const hand = match.currentHand
   const isPlayerTurn = hand.toAct === hand.hero.position && !hand.isComplete && !hand.hero.isAllIn
 
+  // ── In-hand chip totals (stack already committed this hand) ──
+  const heroTotalBB = hand.hero.stackBB + hand.hero.committedBB
+  const villainTotalBB = hand.villain.stackBB + hand.villain.committedBB
+
   // ── Action bar derived state ──
   const toCallBB = hand.currentBetBB - hand.hero.streetCommitBB
   const canFold = !hand.isComplete && toCallBB > 0
@@ -262,10 +254,20 @@ export default function HeadsUpMatchScreen({
   const canBet = !hand.isComplete && toCallBB === 0 && hand.hero.stackBB > 0
   const canRaise = !hand.isComplete && toCallBB > 0 && hand.hero.stackBB > toCallBB
 
-  // ── Preflop raise sizing (GTO-correct fixed sizes) ──
+  // ── Preflop raise sizing (stack-aware GTO sizes) ──
   const preflopRaises = hand.actions.filter(a => a.street === 'preflop' && (a.kind === 'raise' || a.kind === 'bet')).length
-  const preflopRaiseAmount = preflopRaises === 0 ? 2.5 : preflopRaises === 1 ? 9 : 22
-  const preflopRaiseLabel = preflopRaises === 0 ? `Raise ${preflopRaiseAmount}` : preflopRaises === 1 ? `3-Bet ${preflopRaiseAmount}` : `4-Bet ${preflopRaiseAmount}`
+  const totalEffStack = Math.min(heroTotalBB, villainTotalBB)
+  const isMidStack = totalEffStack <= 25
+  const preflopRaiseAmount = preflopRaises === 0
+    ? (isMidStack ? 2 : 2.5)
+    : preflopRaises === 1
+    ? (isMidStack ? 6 : 9)
+    : (isMidStack ? heroTotalBB : 22)
+  const preflopRaiseLabel = preflopRaises === 0
+    ? `Raise ${preflopRaiseAmount}`
+    : preflopRaises === 1
+    ? `3-Bet ${preflopRaiseAmount}`
+    : (isMidStack ? `All-in ${Math.round(preflopRaiseAmount)}` : `4-Bet ${preflopRaiseAmount}`)
   const isPreflop = hand.street === 'preflop'
 
   // ── Hidden buttons reveal logic (postflop only) ──
@@ -273,10 +275,6 @@ export default function HeadsUpMatchScreen({
   const spr = hand.potBB > 0 ? effStack / hand.potBB : 10
   const showXS = !isPreflop && spr > 10
   const showXL = hand.street === 'river' && hand.potBB > 20
-
-  // ── In-hand chip totals (stack already committed this hand) ──
-  const heroTotalBB = hand.hero.stackBB + hand.hero.committedBB
-  const villainTotalBB = hand.villain.stackBB + hand.villain.committedBB
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0a0a0a' }}>
@@ -330,7 +328,7 @@ export default function HeadsUpMatchScreen({
           <div className="text-gray-300 text-xs">
             你 · {heroTotalBB} BB · {hand.hero.position.toUpperCase()}
           </div>
-          <HoleCards hand={handToCanonical(hand.hero.holeCards)} />
+          <HoleCards hand={handToCanonical(hand.hero.holeCards)} actualCards={hand.hero.holeCards} />
         </div>
 
         {/* Status indicator */}
@@ -340,22 +338,29 @@ export default function HeadsUpMatchScreen({
         </div>
 
         {/* Hand result overlay — shown briefly when hand ends */}
-        {handResult && (
-          <div className="text-center py-3 rounded-xl mx-4 mb-2 animate-pulse"
-               style={{
-                 background: handResult.won ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
-                 border: `1px solid ${handResult.won ? '#10b981' : '#ef4444'}`,
-               }}>
-            <div className="text-2xl mb-1">{handResult.won ? '🏆' : '💔'}</div>
-            <div className="font-bold text-lg"
-                 style={{ color: handResult.won ? '#10b981' : '#ef4444' }}>
-              {handResult.delta >= 0 ? '+' : ''}{handResult.delta.toFixed(1)} BB
+        {handResult && (() => {
+          const bg = handResult.tie ? 'rgba(250,204,21,0.12)'
+            : handResult.won ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'
+          const border = handResult.tie ? '#fbbf24'
+            : handResult.won ? '#10b981' : '#ef4444'
+          const color = handResult.tie ? '#fbbf24'
+            : handResult.won ? '#10b981' : '#ef4444'
+          const emoji = handResult.tie ? '🤝' : handResult.won ? '🏆' : '💔'
+          const label = hand.hero.hasFolded ? '你棄牌'
+            : hand.villain.hasFolded ? '對手棄牌'
+            : handResult.tie ? 'Chop' : 'Showdown'
+          return (
+            <div className="text-center py-3 rounded-xl mx-4 mb-2 animate-pulse"
+                 style={{ background: bg, border: `1px solid ${border}` }}>
+              <div className="text-2xl mb-1">{emoji}</div>
+              <div className="font-bold text-lg" style={{ color }}>
+                {handResult.tie ? 'CHOP'
+                  : `${handResult.delta >= 0 ? '+' : ''}${handResult.delta.toFixed(1)} BB`}
+              </div>
+              <div className="text-gray-400 text-xs mt-1">{label}</div>
             </div>
-            <div className="text-gray-400 text-xs mt-1">
-              {hand.hero.hasFolded ? '你棄牌' : hand.villain.hasFolded ? '對手棄牌' : 'Showdown'}
-            </div>
-          </div>
-        )}
+          )
+        })()}
       </div>
 
       {/* Action bar — preflop uses fixed GTO sizes, postflop uses pot-% sizes */}
