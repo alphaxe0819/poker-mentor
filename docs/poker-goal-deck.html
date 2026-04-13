@@ -15,41 +15,28 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0f0f14;width:100vw;height
 .col-left{position:absolute;left:0;top:0;width:380px;height:720px;background:#1a237e;display:flex;flex-direction:column;justify-content:flex-end;padding:44px 40px;}
 .col-right{position:absolute;left:380px;top:0;right:0;height:720px;padding:44px 48px 36px;overflow:hidden;}
 .content-area{padding:38px 56px 32px;}
-
-/* Typography */
 .slide-no{font-size:10px;font-weight:700;letter-spacing:3px;color:#9ca3af;text-transform:uppercase;margin-bottom:6px;}
-.slide-title{font-size:30px;font-weight:900;color:#1a237e;margin-bottom:4px;}
 .slide-sub{font-size:13px;color:#6b7280;margin-bottom:20px;line-height:1.5;}
 h2{font-size:26px;font-weight:900;color:#1a237e;margin-bottom:4px;}
 h3{font-size:15px;font-weight:700;color:#1a237e;margin-bottom:5px;}
 p{font-size:12px;color:#374151;line-height:1.65;}
 .muted{color:#9ca3af;font-size:11px;}
 .accent-purple{color:#5c35bf;}.accent-green{color:#00b894;}.accent-blue{color:#2563eb;}.accent-orange{color:#f97316;}.accent-red{color:#e94560;}
-
-/* KPI Card */
 .kpi-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(92,53,191,.06);}
 .kpi-bar{width:5px;border-radius:4px;align-self:stretch;flex-shrink:0;}
 .kpi-bar.purple{background:#5c35bf;}.kpi-bar.green{background:#00b894;}.kpi-bar.blue{background:#2563eb;}.kpi-bar.orange{background:#f97316;}
 .kpi-num{font-family:'Arial Black',sans-serif;font-size:26px;font-weight:900;line-height:1;}
 .kpi-label{font-size:11px;color:#6b7280;margin-top:3px;}
-
-/* Cards */
 .card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:18px 20px;box-shadow:0 2px 6px rgba(92,53,191,.04);}
 .card-accent{border-left:4px solid #5c35bf;}
 .card-accent.green{border-left-color:#00b894;}.card-accent.blue{border-left-color:#2563eb;}.card-accent.orange{border-left-color:#f97316;}.card-accent.red{border-left-color:#e94560;}
-
-/* Grid */
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
 .grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;}
-
-/* Tag */
 .tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;}
 .tag-purple{background:#f3e8ff;color:#5c35bf;}.tag-green{background:#d1fae5;color:#059669;}
 .tag-blue{background:#dbeafe;color:#1d4ed8;}.tag-orange{background:#fff7ed;color:#c2410c;}
 .tag-red{background:#ffe4e6;color:#e94560;}.tag-gray{background:#f3f4f6;color:#6b7280;}
-
-/* Feat box */
 .feat{display:flex;gap:12px;align-items:flex-start;}
 .feat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
 .feat-icon.purple{background:#f3e8ff;}.feat-icon.green{background:#d1fae5;}
@@ -57,8 +44,6 @@ p{font-size:12px;color:#374151;line-height:1.65;}
 .feat-icon.red{background:#ffe4e6;}.feat-icon.teal{background:#ccfbf1;}
 .feat h4{font-size:13px;font-weight:700;color:#1a237e;margin-bottom:2px;}
 .feat p{font-size:11px;color:#6b7280;line-height:1.55;}
-
-/* Financial table */
 .fin-table{width:100%;border-collapse:collapse;font-size:11px;}
 .fin-table th{background:#1a237e;color:#fff;padding:7px 8px;text-align:center;font-weight:600;white-space:nowrap;}
 .fin-table th:first-child{text-align:left;padding-left:12px;min-width:84px;}
@@ -69,55 +54,41 @@ p{font-size:12px;color:#374151;line-height:1.65;}
 .fin-table tr.bep td:first-child{color:#059669;}
 .fin-table tr:hover:not(.bep) td{background:#f8fafc;}
 .neg{color:#e94560;}.pos{color:#059669;}
-
-/* Comparison table */
 .cmp-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
 .cmp-table th{background:#1a237e;color:#fff;padding:8px 12px;text-align:left;font-weight:600;white-space:nowrap;}
 .cmp-table td{padding:8px 12px;border-bottom:1px solid #f3f4f6;white-space:nowrap;}
 .cmp-table tr.us td{background:#f0fdf9;font-weight:700;border-top:2px solid #00b894;border-bottom:none;}
 .cmp-table tr:hover:not(.us) td{background:#f8fafc;}
 .c-yes{color:#059669;font-weight:700;}.c-no{color:#e94560;}.c-half{color:#f97316;}
-
-/* Timeline */
 .timeline{display:flex;gap:10px;margin-top:8px;}
 .tl-item{flex:1;position:relative;padding:14px 14px 14px 18px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;}
 .tl-phase{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
 .tl-title{font-size:14px;font-weight:700;color:#1a237e;margin-bottom:6px;}
 .tl-body{font-size:11px;color:#6b7280;line-height:1.7;}
 .tl-goal{font-size:11px;font-weight:700;margin-top:8px;padding:5px 10px;border-radius:6px;display:inline-block;}
-
-/* Market flow */
 .market-flow{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:nowrap;}
 .mkt{display:flex;align-items:center;gap:7px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;}
 .mkt-flag{font-size:22px;}
 .mkt-name{font-size:12px;font-weight:700;color:#1a237e;}
 .mkt-time{font-size:10px;color:#9ca3af;}
 .mkt-arrow{color:#d1d5db;font-size:16px;}
-
-/* Budget */
 .budget-item{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:8px;}
 .budget-label{font-size:13px;font-weight:600;color:#1a237e;}
 .budget-sub{font-size:11px;color:#6b7280;margin-top:1px;}
 .budget-amt{text-align:right;}
 .budget-main{font-size:18px;font-weight:900;}
 .budget-note{font-size:10px;color:#9ca3af;}
-
-/* Infra table */
 .infra-table{width:100%;border-collapse:collapse;font-size:11px;}
 .infra-table td{padding:6px 10px;border-bottom:1px solid #f3f4f6;}
 .infra-table td:first-child{color:#1a237e;font-weight:600;}
 .infra-table td:last-child{text-align:right;font-weight:700;color:#374151;}
 .infra-table tr.total td{background:#f8fafc;font-weight:900;border-top:2px solid #e5e7eb;border-bottom:none;}
-
-/* Progress & Nav */
 .progress{position:fixed;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,.08);}
 .progress-fill{height:100%;background:linear-gradient(90deg,#5c35bf,#00b894);transition:width .3s ease;}
 .nav{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:center;z-index:100;}
 .nav button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:5px 16px;cursor:pointer;font-size:12px;font-family:inherit;transition:background .2s;}
 .nav button:hover{background:rgba(255,255,255,.22);}
 .nav .counter{color:rgba(255,255,255,.5);font-size:12px;min-width:48px;text-align:center;}
-
-/* Cover */
 .cover-logo{font-size:44px;margin-bottom:4px;opacity:.2;letter-spacing:6px;}
 .cover-poker{font-family:'Arial Black',sans-serif;font-size:68px;font-weight:900;color:#fff;line-height:.9;}
 .cover-goal{font-family:'Arial Black',sans-serif;font-size:68px;font-weight:900;color:#00b894;line-height:.9;}
@@ -125,8 +96,6 @@ p{font-size:12px;color:#374151;line-height:1.65;}
 .cover-date{font-size:11px;color:rgba(255,255,255,.25);font-style:italic;margin-top:6px;}
 .cover-right-title{font-family:'Arial Black',sans-serif;font-size:20px;font-weight:900;color:#5c35bf;margin-bottom:4px;}
 .cover-right-sub{font-size:11px;color:#9ca3af;margin-bottom:20px;}
-
-/* Closing */
 .close-right{background:#f8fafc;}
 .summary-item{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px;}
 .summary-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
@@ -146,19 +115,19 @@ p{font-size:12px;color:#374151;line-height:1.65;}
     <div class="cover-logo">♠ ♥ ♦ ♣</div>
     <div class="cover-poker">POKER</div>
     <div class="cover-goal">GOAL</div>
-    <div class="cover-tagline">繁體中文 × 英文雙語 GTO 訓練平台<br>AI 弱點分析 × 多籌碼深度 × 雙平台上架</div>
+    <div class="cover-tagline">AI 驅動的錦標賽情境模擬訓練平台<br>Claude AI 教練 × 親民定價 × 實體協會合作</div>
     <div class="cover-date">APR 2026 &nbsp;·&nbsp; 營運計劃書</div>
   </div>
   <div class="col-right" style="display:flex;flex-direction:column;justify-content:center;">
     <div class="cover-right-title">Poker Goal</div>
-    <div class="cover-right-sub">亞洲市場首選撲克訓練平台 — 中英雙語，iOS / Android / Web</div>
+    <div class="cover-right-sub">市場首個完整錦標賽情境模擬 × Claude AI 即時教練平台</div>
     <div class="kpi-card">
       <div class="kpi-bar purple"></div>
-      <div><div class="kpi-num accent-purple">唯一</div><div class="kpi-label">繁體中文 + 英文 GTO 訓練平台，Claude AI 對話教練</div></div>
+      <div><div class="kpi-num accent-purple">唯一</div><div class="kpi-label">提供完整 MTT 情境模擬 + Claude AI 對話教練的行動平台</div></div>
     </div>
     <div class="kpi-card">
       <div class="kpi-bar green"></div>
-      <div><div class="kpi-num accent-green">NT$299+</div><div class="kpi-label">月費方案（Basic / PRO NT$1,000）比龍頭低 19～76%</div></div>
+      <div><div class="kpi-num accent-green">NT$299+</div><div class="kpi-label">月費方案（Basic / PRO NT$1,000）比龍頭競品低 19～76%</div></div>
     </div>
     <div class="kpi-card">
       <div class="kpi-bar blue"></div>
@@ -166,7 +135,7 @@ p{font-size:12px;color:#374151;line-height:1.65;}
     </div>
     <div class="kpi-card">
       <div class="kpi-bar orange"></div>
-      <div><div class="kpi-num accent-orange">M9</div><div class="kpi-label">月淨利損益平衡（894 付費用戶，含平台手續費與基礎設施）</div></div>
+      <div><div class="kpi-num accent-orange">10,000</div><div class="kpi-label">Y2 目標付費訂閱用戶（美國市場主攻，M24）</div></div>
     </div>
   </div>
 </div>
@@ -178,16 +147,16 @@ p{font-size:12px;color:#374151;line-height:1.65;}
 <div class="content-area" style="padding-top:32px;">
   <div class="slide-no">01</div>
   <h2>競品分析</h2>
-  <div class="slide-sub">市場已有 AI 教練工具，但均缺乏中文介面與亞洲市場服務</div>
+  <div class="slide-sub">現有工具均為靜態分析或解算器，無任何競品提供完整 MTT 情境互動模擬</div>
   <table class="cmp-table">
     <thead>
       <tr>
         <th style="width:140px;">競品</th>
         <th style="width:130px;">月費</th>
         <th style="width:120px;">AI 對話教練</th>
-        <th style="width:100px;">繁體中文</th>
-        <th style="width:110px;">行動 App</th>
-        <th style="width:90px;">翻後 GTO</th>
+        <th style="width:100px;">中文介面</th>
+        <th style="width:120px;">行動 App</th>
+        <th style="width:110px;">MTT 模擬</th>
         <th>定位</th>
       </tr>
     </thead>
@@ -196,14 +165,14 @@ p{font-size:12px;color:#374151;line-height:1.65;}
         <td><strong>GTO Wizard</strong></td>
         <td>$39～$229/月</td>
         <td class="c-no">✗ 純解算器</td>
-        <td class="c-no">✗</td>
+        <td class="c-half">△ 簡中（部分）</td>
         <td class="c-no">✗ 僅 Web</td>
-        <td class="c-yes">✓✓ 最強</td>
+        <td class="c-no">✗</td>
         <td><span class="tag tag-purple">龍頭</span></td>
       </tr>
       <tr>
         <td><strong>PokerOS</strong></td>
-        <td>$50/月</td>
+        <td>NT$990/月</td>
         <td class="c-yes">✓ LLM 對話</td>
         <td class="c-no">✗</td>
         <td class="c-yes">✓ iOS</td>
@@ -224,17 +193,17 @@ p{font-size:12px;color:#374151;line-height:1.65;}
         <td>$49/月</td>
         <td class="c-no">✗</td>
         <td class="c-no">✗</td>
-        <td class="c-half">△ 不穩</td>
-        <td class="c-half">△ 部分</td>
+        <td class="c-yes">✓ iOS + Android</td>
+        <td class="c-no">✗</td>
         <td><span class="tag tag-blue">WPT 旗下</span></td>
       </tr>
       <tr>
         <td><strong>Poker Academy</strong></td>
         <td>€39～€55/月</td>
         <td class="c-no">✗</td>
-        <td class="c-no">✗</td>
+        <td class="c-half">△ 簡中</td>
         <td class="c-no">✗ 僅 Web</td>
-        <td class="c-yes">✓ 圖表庫</td>
+        <td class="c-no">✗</td>
         <td><span class="tag tag-orange">圖表龍頭</span></td>
       </tr>
       <tr class="us">
@@ -243,13 +212,13 @@ p{font-size:12px;color:#374151;line-height:1.65;}
         <td class="c-yes">✓ Claude AI</td>
         <td class="c-yes">✓ 中文 + 英文</td>
         <td class="c-yes">✓ iOS + Android</td>
-        <td class="c-yes">✓ GTO 資料庫</td>
+        <td class="c-yes">✓✓ 完整 MTT</td>
         <td><span class="tag tag-green">我們的定位 ★</span></td>
       </tr>
     </tbody>
   </table>
   <div class="card card-accent" style="border-left-color:#00b894;margin-top:12px;background:#f0fdf9;padding:10px 18px;">
-    <p style="font-size:12px;font-weight:700;color:#059669;">📍 市場空白 → AI 教練競品均無繁體中文介面，亞洲市場完全未被服務。我們是唯一同時具備 Claude AI 教練 × 繁中英文 × iOS/Android 的平台。</p>
+    <p style="font-size:12px;font-weight:700;color:#059669;">📍 核心空白 → 所有競品均為靜態工具（解算器 / 圖表 / 手牌分析）。沒有任何競品提供完整 MTT 情境互動模擬 + AI 即時教練的組合。</p>
   </div>
 </div>
 </div>
@@ -260,33 +229,33 @@ p{font-size:12px;color:#374151;line-height:1.65;}
 <div class="slide-inner">
 <div class="content-area">
   <div class="slide-no">02</div>
-  <h2>對標產品痛點分析</h2>
-  <div class="slide-sub">三大痛點驅動亞洲撲克玩家的未被滿足需求</div>
+  <h2>市場痛點分析</h2>
+  <div class="slide-sub">玩家真正需要的不是更多圖表，而是在真實情境中練習決策</div>
   <div class="grid-3" style="gap:16px;">
     <div class="card card-accent red" style="padding:22px 20px;">
-      <div style="font-size:32px;margin-bottom:12px;">😡</div>
-      <h3 style="font-size:16px;margin-bottom:8px;">價格門檻阻礙滲透</h3>
-      <p>GTO Wizard $39/月（NT$1,248）、PokerOS $50/月（NT$1,600）對台灣及東南亞玩家偏高。五大競品全無繁體中文介面，亞洲市場嚴重缺乏服務。</p>
+      <div style="font-size:32px;margin-bottom:12px;">🎯</div>
+      <h3 style="font-size:16px;margin-bottom:8px;">缺少完整情境模擬</h3>
+      <p>所有競品只提供靜態範圍圖表或手牌事後分析，無法模擬真實錦標賽中的動態決策過程——籌碼壓力、ICM 考量、對手行為均缺席。</p>
     </div>
     <div class="card card-accent orange" style="padding:22px 20px;">
-      <div style="font-size:32px;margin-bottom:12px;">😨</div>
-      <h3 style="font-size:16px;margin-bottom:8px;">有 AI 但不懂中文</h3>
-      <p>PokerOS、PokerSnowie 等 AI 教練工具均以英文為主。亞洲玩家使用英文 AI 教練時理解障礙高，學習效果有限，付費意願低。</p>
+      <div style="font-size:32px;margin-bottom:12px;">🤖</div>
+      <h3 style="font-size:16px;margin-bottom:8px;">AI 分析但無法對話</h3>
+      <p>PokerOS、PokerSnowie 雖有 AI，但僅限單向分析報告。玩家無法追問「為什麼這樣下注」、「這個情況怎麼調整」，學習深度有限。</p>
     </div>
     <div class="card card-accent" style="border-left-color:#5c35bf;padding:22px 20px;">
-      <div style="font-size:32px;margin-bottom:12px;">🥶</div>
-      <h3 style="font-size:16px;margin-bottom:8px;">Web 限制行動學習</h3>
-      <p>GTO Wizard、Poker Academy 均無原生 App。現代用戶習慣在手機上學習，無 App 嚴重限制使用頻率與留存率，亞洲手機用戶比例更高。</p>
+      <div style="font-size:32px;margin-bottom:12px;">💸</div>
+      <h3 style="font-size:16px;margin-bottom:8px;">高價格阻礙亞洲滲透</h3>
+      <p>GTO Wizard $39/月（NT$1,248）、PokerOS NT$990/月，對台灣及東南亞玩家偏高。亞洲市場付費意願需要更親民的入門方案。</p>
     </div>
   </div>
   <div class="card" style="margin-top:16px;padding:14px 20px;background:#f8fafc;border-style:dashed;">
     <div class="grid-3" style="gap:0;text-align:center;">
-      <div><div style="font-size:22px;font-weight:900;color:#5c35bf;">NT$1,248+</div><div class="muted">競品最低月費（GTO Wizard Starter）</div></div>
+      <div><div style="font-size:22px;font-weight:900;color:#5c35bf;">0</div><div class="muted">個競品提供完整 MTT 情境模擬</div></div>
       <div style="border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb;">
         <div style="font-size:22px;font-weight:900;color:#e94560;">0</div>
-        <div class="muted">具繁體中文介面的 AI 教練平台</div>
+        <div class="muted">個 AI 教練支援互動對話追問</div>
       </div>
-      <div><div style="font-size:22px;font-weight:900;color:#f97316;">5+</div><div class="muted">個主流工具需要英文操作</div></div>
+      <div><div style="font-size:22px;font-weight:900;color:#f97316;">NT$1,248+</div><div class="muted">競品最低月費（GTO Wizard Starter）</div></div>
     </div>
   </div>
 </div>
@@ -299,48 +268,48 @@ p{font-size:12px;color:#374151;line-height:1.65;}
 <div class="content-area">
   <div class="slide-no">03</div>
   <h2>產品差異化</h2>
-  <div class="slide-sub">六大核心優勢，打造亞洲市場第一個 AI 驅動雙語撲克訓練平台</div>
+  <div class="slide-sub">三大核心優勢，打造市場唯一的 AI 驅動錦標賽訓練生態</div>
   <div class="grid-3" style="gap:12px;">
-    <div class="feat">
-      <div class="feat-icon purple">🤖</div>
-      <div>
-        <h4>Claude AI 對話教練</h4>
-        <p>每題 GTO 邏輯解說、跨 session 學習記憶、PRO 批量手牌深度分析</p>
-      </div>
-    </div>
-    <div class="feat">
-      <div class="feat-icon green">🌏</div>
-      <div>
-        <h4>中英雙語，Day 1 上線</h4>
-        <p>繁體中文 + English 同步推出，台灣→香港→東南亞→美國一套產品打通</p>
-      </div>
-    </div>
-    <div class="feat">
-      <div class="feat-icon blue">📱</div>
-      <div>
-        <h4>iOS + Android + Web 三端</h4>
-        <p>React Native 原生 App + Web，RevenueCat 跨平台訂閱管理，進度全端同步</p>
-      </div>
-    </div>
-    <div class="feat">
-      <div class="feat-icon orange">💰</div>
-      <div>
-        <h4>分層訂閱 + 點數消耗</h4>
-        <p>Free / Basic NT$299 / PRO NT$1,000，點數制 AI 對話 + 模擬入場，靈活變現</p>
-      </div>
-    </div>
     <div class="feat">
       <div class="feat-icon red">🏆</div>
       <div>
-        <h4>MTT 情境模擬引擎</h4>
-        <p>HU → SNG → Final Table → MTT 完整路線圖，消耗點數入場，GTO 賽後報告</p>
+        <h4>完整 MTT 情境模擬引擎</h4>
+        <p>HU → SNG → Final Table → MTT 完整路線圖，動態籌碼壓力、ICM 決策、對手行為模擬，競品完全空白</p>
       </div>
     </div>
     <div class="feat">
-      <div class="feat-icon teal">⚙️</div>
+      <div class="feat-icon purple">🤖</div>
       <div>
-        <h4>生產級技術架構</h4>
-        <p>React Native + Node.js + PostgreSQL + Redis + AWS/GCP，非原型免費層</p>
+        <h4>Claude AI 即時對話教練</h4>
+        <p>每個決策點即時解說 GTO 邏輯，可追問、跨 session 記憶學習進度，PRO 批量手牌深度分析</p>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon green">💰</div>
+      <div>
+        <h4>親民分層定價</h4>
+        <p>Free / Basic NT$299 / PRO NT$1,000，點數制靈活消耗。比 GTO Wizard 低 19%，比 PokerOS 低 70%</p>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon teal">🤝</div>
+      <div>
+        <h4>實體協會合作生態</h4>
+        <p>WinWin Poker（台灣撲克協會）合作：會員免費試用 + 點數兌換賽事門票，線上訓練直通實體賽場</p>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon blue">📊</div>
+      <div>
+        <h4>多籌碼深度 GTO 資料庫</h4>
+        <p>15 / 25 / 40 / 75 / 100BB，錦標賽 + 現金 + HU，完整 Preflop + Postflop GTO 情境覆蓋</p>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon orange">📱</div>
+      <div>
+        <h4>iOS + Android + Web 三端</h4>
+        <p>React Native 原生 App，RevenueCat 跨平台訂閱，隨時隨地練習，競品多數僅有 Web</p>
       </div>
     </div>
   </div>
@@ -354,12 +323,12 @@ p{font-size:12px;color:#374151;line-height:1.65;}
 <div class="content-area">
   <div class="slide-no">04</div>
   <h2>產品時程與市場拓展</h2>
-  <div class="slide-sub">M1 台灣中英雙語上線 → 24 個月完成全球佈局（含美國市場）</div>
+  <div class="slide-sub">Y1 台灣驗證模型 → Y2 美國主攻，24 個月達成 10,000 付費訂閱</div>
   <div class="timeline">
     <div class="tl-item" style="border-top:3px solid #5c35bf;">
       <div class="tl-phase" style="color:#5c35bf;">Q1–Q2 &nbsp;M1–M6</div>
-      <div class="tl-title">🇹🇼 台灣深耕</div>
-      <div class="tl-body">• iOS + Android + Web 同步上架<br>• 中文 + 英文雙語介面<br>• 行銷 NT$30萬/月啟動<br>• HU 模擬器 + Preflop GTO</div>
+      <div class="tl-title">🇹🇼 台灣深耕 + 驗證</div>
+      <div class="tl-body">• iOS + Android + Web 同步上架<br>• WinWin 協會合作啟動（地推 + 點數換票）<br>• HU 模擬器 + Preflop GTO<br>• 驗證 CAC / 留存率 / ARPPU</div>
       <div class="tl-goal" style="background:#f3e8ff;color:#5c35bf;">目標：600 付費用戶</div>
     </div>
     <div class="tl-item" style="border-top:3px solid #2563eb;">
@@ -371,14 +340,14 @@ p{font-size:12px;color:#374151;line-height:1.65;}
     <div class="tl-item" style="border-top:3px solid #00b894;">
       <div class="tl-phase" style="color:#00b894;">Y2 H1 &nbsp;M13–M18</div>
       <div class="tl-title">📈 SEA 規模化</div>
-      <div class="tl-body">• 行銷擴大至 NT$60萬/月<br>• Postflop GTO 完整資料庫<br>• AI 教練深度記憶功能<br>• SNG / MTT 完整模擬</div>
-      <div class="tl-goal" style="background:#d1fae5;color:#059669;">目標：2,000 付費用戶</div>
+      <div class="tl-body">• 行銷擴大至 NT$72萬/月<br>• SEA 英語市場深化<br>• Postflop GTO 完整資料庫<br>• 累計損益平衡達成（M18）</div>
+      <div class="tl-goal" style="background:#d1fae5;color:#059669;">目標：3,000 付費用戶</div>
     </div>
     <div class="tl-item" style="border-top:3px solid #f97316;">
       <div class="tl-phase" style="color:#f97316;">Y2 H2 &nbsp;M19–M24</div>
-      <div class="tl-title">🌎 全球佈局</div>
-      <div class="tl-body">• 🇺🇸 美國英語市場主攻<br>• 全球 App Store 推廣<br>• 社群 + KOL 全球網路<br>• 累計損益平衡（M21）</div>
-      <div class="tl-goal" style="background:#fff7ed;color:#c2410c;">目標：3,000+ 付費用戶</div>
+      <div class="tl-title">🇺🇸 美國市場主攻</div>
+      <div class="tl-body">• 行銷衝高至 NT$168萬/月<br>• 英語 KOL + App Store 自然流量<br>• WSOP / Reddit poker 社群<br>• CAC 優化至 NT$1,200</div>
+      <div class="tl-goal" style="background:#fff7ed;color:#c2410c;">目標：10,000 付費用戶</div>
     </div>
   </div>
 </div>
@@ -395,16 +364,19 @@ p{font-size:12px;color:#374151;line-height:1.65;}
   <div class="grid-2" style="gap:18px;align-items:start;">
     <div>
       <div class="budget-item">
-        <div><div class="budget-label">📣 行銷推廣（最大單項）</div><div class="budget-sub">台灣 Q1→東南亞 Q3→全球 Y2，CAC NT$3,000</div></div>
-        <div class="budget-amt"><div class="budget-main" style="color:#e94560;">NT$30萬</div><div class="budget-note">Y1 / 月 → NT$60萬 Y2</div></div>
+        <div><div class="budget-label">📣 行銷推廣（最大單項）</div><div class="budget-sub">Y1 NT$30萬/月 → Y2 SEA NT$72萬 → Y2 美國 NT$168萬</div></div>
+        <div class="budget-amt"><div class="budget-main" style="color:#e94560;">NT$30萬</div><div class="budget-note">Y1 起步</div></div>
       </div>
       <div class="budget-item">
         <div><div class="budget-label">💳 雙平台手續費</div><div class="budget-sub">App Store 30%・Google Play 15%・Web Stripe 2.9%</div></div>
-        <div class="budget-amt"><div class="budget-main" style="color:#f97316;">~18%</div><div class="budget-note">收入混合預估（淨留存 82%）</div></div>
+        <div class="budget-amt"><div class="budget-main" style="color:#f97316;">~18%</div><div class="budget-note">收入混合（淨留存 82%）</div></div>
       </div>
       <div class="budget-item">
-        <div><div class="budget-label">🤖 Claude Haiku API</div><div class="budget-sub">~NT$0.05/則，30% 活躍率，平均 10 則/活躍用戶/天</div></div>
+        <div><div class="budget-label">🤖 Claude Haiku API</div><div class="budget-sub">~NT$0.05/則，30% 活躍率，平均使用量估算</div></div>
         <div class="budget-amt"><div class="budget-main" style="color:#5c35bf;">~NT$10</div><div class="budget-note">/付費用戶/月（均值）</div></div>
+      </div>
+      <div class="card" style="padding:10px 14px;background:#fff9f0;border-color:#fed7aa;border-left:4px solid #f97316;">
+        <p style="font-size:11px;color:#374151;">⚠️ <strong>Google Play 上架注意</strong>：撲克相關 App 需強調「訓練 / 教育」定位，避免被歸類賭博類別。競品多數僅上 iOS，Android 市場相對藍海。</p>
       </div>
     </div>
     <div>
@@ -419,7 +391,7 @@ p{font-size:12px;color:#374151;line-height:1.65;}
         <tr class="total"><td><strong>小計</strong></td><td><strong>NT$13,100</strong></td></tr>
       </table>
       <div class="card" style="margin-top:10px;padding:10px 14px;background:#f0fdf9;border-color:#a7f3d0;">
-        <p style="font-size:11px;color:#374151;">💡 基礎設施佔總費用 <strong style="color:#059669;">&lt;4%</strong>，最大成本為行銷。點數超額消耗由用戶付費，AI API 邊際成本可控。</p>
+        <p style="font-size:11px;color:#374151;">💡 基礎設施佔總費用 <strong style="color:#059669;">&lt;4%</strong>，最大成本為行銷。規模成長後基礎設施比例持續下降。</p>
       </div>
     </div>
   </div>
@@ -432,8 +404,8 @@ p{font-size:12px;color:#374151;line-height:1.65;}
 <div class="slide-inner">
 <div class="content-area" style="padding-top:32px;">
   <div class="slide-no">06</div>
-  <h2>財務預測 <span style="font-size:18px;color:#6b7280;">Year 1（NTD 台幣）</span></h2>
-  <div class="slide-sub" style="margin-bottom:10px;">ARPPU NT$440 毛收入 × 82% 淨留存（含雙平台費）+ 點數 NT$35/人 = 淨 NT$396／人・固定費 31.2萬／月・變動 NT$10／用戶（API）</div>
+  <h2>財務預測 <span style="font-size:18px;color:#6b7280;">Year 1（NTD 台幣）— 驗證期</span></h2>
+  <div class="slide-sub" style="margin-bottom:10px;">ARPPU NT$440 × 82% 淨留存 + 點數 NT$35/人 = 淨 NT$396／人・行銷 NT$30萬 + 基礎設施 NT$1.3萬／月・變動 NT$10／用戶（API）</div>
   <table class="fin-table">
     <thead>
       <tr>
@@ -448,20 +420,17 @@ p{font-size:12px;color:#374151;line-height:1.65;}
       </tr>
       <tr>
         <td>Gross MRR（萬）</td><td>2.6</td><td>8.1</td><td>12.3</td><td>17.4</td><td>22.3</td><td>26.9</td><td>31.2</td><td>35.4</td>
-        <td style="background:#f0fdf4;">39.3</td>
-        <td>43.1</td><td>46.6</td><td>50.0</td>
+        <td style="background:#f0fdf4;">39.3</td><td>43.1</td><td>46.6</td><td>50.0</td>
       </tr>
       <tr>
         <td>淨收入（萬）<span style="font-size:9px;color:#9ca3af;"> ×82%+點數</span></td>
         <td>2.4</td><td>7.3</td><td>11.1</td><td>15.7</td><td>20.0</td><td>24.2</td><td>28.1</td><td>31.8</td>
-        <td style="background:#f0fdf4;">35.4</td>
-        <td>38.8</td><td>42.0</td><td>45.0</td>
+        <td style="background:#f0fdf4;">35.4</td><td>38.8</td><td>42.0</td><td>45.0</td>
       </tr>
       <tr>
-        <td>總費用（萬）<span style="font-size:9px;color:#9ca3af;"> 行銷+基礎設施+API</span></td>
+        <td>總費用（萬）</td>
         <td>31.3</td><td>31.4</td><td>31.5</td><td>31.6</td><td>31.7</td><td>31.8</td><td>31.9</td><td>32.0</td>
-        <td style="background:#f0fdf4;">32.1</td>
-        <td>32.2</td><td>32.3</td><td>32.3</td>
+        <td style="background:#f0fdf4;">32.1</td><td>32.2</td><td>32.3</td><td>32.3</td>
       </tr>
       <tr>
         <td>月淨利（萬）</td>
@@ -479,24 +448,24 @@ p{font-size:12px;color:#374151;line-height:1.65;}
   </table>
   <div style="display:flex;gap:12px;margin-top:12px;">
     <div class="card card-accent" style="border-left-color:#00b894;flex:1;padding:10px 14px;background:#f0fdf9;">
-      <div style="font-size:10px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:1px;">月損益平衡</div>
+      <div style="font-size:10px;font-weight:700;color:#059669;letter-spacing:1px;">月損益平衡</div>
       <div style="font-size:22px;font-weight:900;color:#059669;font-family:'Arial Black',sans-serif;">M9</div>
-      <div style="font-size:10px;color:#6b7280;">894 付費用戶時轉正</div>
+      <div style="font-size:10px;color:#6b7280;">894 付費用戶</div>
     </div>
     <div class="card card-accent" style="border-left-color:#5c35bf;flex:1;padding:10px 14px;">
-      <div style="font-size:10px;font-weight:700;color:#5c35bf;text-transform:uppercase;letter-spacing:1px;">Y1 累計</div>
+      <div style="font-size:10px;font-weight:700;color:#5c35bf;letter-spacing:1px;">Y1 累計</div>
       <div style="font-size:22px;font-weight:900;color:#e94560;font-family:'Arial Black',sans-serif;">-80.3萬</div>
-      <div style="font-size:10px;color:#6b7280;">持續投資期，Y2 回收</div>
+      <div style="font-size:10px;color:#6b7280;">驗證期投資，Y2 回收</div>
     </div>
     <div class="card card-accent" style="border-left-color:#f97316;flex:1;padding:10px 14px;">
-      <div style="font-size:10px;font-weight:700;color:#f97316;text-transform:uppercase;letter-spacing:1px;">M12 Gross MRR</div>
+      <div style="font-size:10px;font-weight:700;color:#f97316;letter-spacing:1px;">M12 Gross MRR</div>
       <div style="font-size:22px;font-weight:900;color:#f97316;font-family:'Arial Black',sans-serif;">NT$50萬</div>
       <div style="font-size:10px;color:#6b7280;">1,137 付費用戶</div>
     </div>
     <div class="card card-accent" style="border-left-color:#2563eb;flex:1;padding:10px 14px;">
-      <div style="font-size:10px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:1px;">M12 月淨利</div>
+      <div style="font-size:10px;font-weight:700;color:#2563eb;letter-spacing:1px;">M12 月淨利</div>
       <div style="font-size:22px;font-weight:900;color:#2563eb;font-family:'Arial Black',sans-serif;">+12.7萬</div>
-      <div style="font-size:10px;color:#6b7280;">毛利率 ~39%（平台費後）</div>
+      <div style="font-size:10px;color:#6b7280;">模型驗證完成，準備加速</div>
     </div>
   </div>
 </div>
@@ -508,85 +477,85 @@ p{font-size:12px;color:#374151;line-height:1.65;}
 <div class="slide-inner">
 <div class="content-area" style="padding-top:32px;">
   <div class="slide-no">07</div>
-  <h2>財務預測 <span style="font-size:18px;color:#6b7280;">Year 2（NTD 台幣）</span></h2>
-  <div class="slide-sub" style="margin-bottom:10px;">行銷倍增至 NT$60萬/月（SEA+全球）・新用戶 200→300/月・固定費 62.2萬/月・Y2 月損益平衡 M16</div>
+  <h2>財務預測 <span style="font-size:18px;color:#6b7280;">Year 2（NTD 台幣）— 美國主攻期</span></h2>
+  <div class="slide-sub" style="margin-bottom:10px;">M13–M18 SEA深化（NT$72萬/月・CAC NT$1,800・400新用戶/月）→ M19–M24 美國主攻（NT$168萬/月・CAC NT$1,200・1,400新用戶/月）</div>
   <table class="fin-table">
     <thead>
       <tr>
-        <th>項目</th><th>M13</th><th>M14</th><th>M15</th><th style="background:#1e3a5f;">M16 🎯</th><th>M17</th><th>M18</th><th>M19</th><th>M20</th><th style="background:#1a3a5f;">M21 💰</th><th>M22</th><th>M23</th><th>M24</th>
+        <th>項目</th><th>M13</th><th>M14</th><th style="background:#1e3a5f;">M15 🎯</th><th>M16</th><th>M17</th><th style="background:#1a3a5f;">M18 💰</th><th>M19</th><th>M20</th><th>M21</th><th>M22</th><th>M23</th><th>M24</th>
       </tr>
     </thead>
     <tbody>
       <tr>
         <td>月末付費用戶</td>
-        <td>1,292</td><td>1,440</td><td>1,582</td>
-        <td style="background:#f0fdf4;font-weight:700;color:#059669;">1,719</td>
-        <td>1,850</td><td>1,976</td><td>2,197</td><td>2,409</td>
-        <td style="background:#fff9f0;font-weight:700;color:#f97316;">2,613</td>
-        <td>2,808</td><td>2,996</td><td>3,176</td>
+        <td>1,492</td><td>1,832</td>
+        <td style="background:#f0fdf4;font-weight:700;color:#059669;">2,159</td>
+        <td>2,473</td><td>2,774</td>
+        <td style="background:#fff9f0;font-weight:700;color:#f97316;">3,063</td>
+        <td>4,341</td><td>5,567</td><td>6,744</td><td>7,874</td><td>8,959</td><td>10,001</td>
       </tr>
       <tr>
         <td>Gross MRR（萬）</td>
-        <td>56.8</td><td>63.4</td><td>69.6</td>
-        <td style="background:#f0fdf4;">75.6</td>
-        <td>81.4</td><td>87.0</td><td>96.7</td><td>106.0</td>
-        <td style="background:#fff9f0;">115.0</td>
-        <td>123.6</td><td>131.8</td><td>139.7</td>
+        <td>65.6</td><td>80.6</td>
+        <td style="background:#f0fdf4;">95.0</td>
+        <td>108.8</td><td>122.1</td>
+        <td style="background:#fff9f0;">134.8</td>
+        <td>191.0</td><td>245.0</td><td>296.7</td><td>346.5</td><td>394.2</td><td>440.0</td>
       </tr>
       <tr>
         <td>淨收入（萬）</td>
-        <td>51.2</td><td>57.0</td><td>62.6</td>
-        <td style="background:#f0fdf4;">68.1</td>
-        <td>73.3</td><td>78.3</td><td>87.0</td><td>95.4</td>
-        <td style="background:#fff9f0;">103.5</td>
-        <td>111.2</td><td>118.6</td><td>125.8</td>
+        <td>59.1</td><td>72.5</td>
+        <td style="background:#f0fdf4;">85.5</td>
+        <td>97.9</td><td>109.8</td>
+        <td style="background:#fff9f0;">121.3</td>
+        <td>171.9</td><td>220.5</td><td>267.1</td><td>311.8</td><td>354.8</td><td>396.0</td>
       </tr>
       <tr>
         <td>總費用（萬）</td>
-        <td>63.5</td><td>63.6</td><td>63.8</td>
-        <td style="background:#f0fdf4;">63.9</td>
-        <td>64.1</td><td>64.2</td><td>64.4</td><td>64.6</td>
-        <td style="background:#fff9f0;">64.8</td>
-        <td>65.0</td><td>65.2</td><td>65.4</td>
+        <td>75.0</td><td>75.3</td>
+        <td style="background:#f0fdf4;">75.7</td>
+        <td>76.5</td><td>76.8</td>
+        <td style="background:#fff9f0;">77.1</td>
+        <td>175.3</td><td>176.6</td><td>177.7</td><td>179.9</td><td>181.0</td><td>182.0</td>
       </tr>
       <tr>
         <td>月淨利（萬）</td>
-        <td class="neg">(12.3)</td><td class="neg">(6.6)</td><td class="neg">(1.2)</td>
-        <td style="background:#f0fdf4;font-weight:700;" class="pos">+4.2</td>
-        <td class="pos">+9.2</td><td class="pos">+14.1</td><td class="pos">+22.6</td><td class="pos">+30.8</td>
-        <td style="background:#fff9f0;font-weight:700;" class="pos">+38.7</td>
-        <td class="pos">+46.2</td><td class="pos">+53.4</td><td class="pos">+60.4</td>
+        <td class="neg">(15.9)</td><td class="neg">(2.8)</td>
+        <td style="background:#f0fdf4;font-weight:700;" class="pos">+9.8</td>
+        <td class="pos">+21.4</td><td class="pos">+33.0</td>
+        <td style="background:#fff9f0;font-weight:700;" class="pos">+44.2</td>
+        <td class="neg">(3.4)</td><td class="pos">+43.9</td><td class="pos">+89.4</td><td class="pos">+131.9</td><td class="pos">+173.8</td><td class="pos">+214.0</td>
       </tr>
       <tr style="background:#fafafa;">
         <td>累計淨利（萬）</td>
-        <td class="neg">(92.6)</td><td class="neg">(99.2)</td><td class="neg">(100.4)</td>
-        <td style="background:#f0fdf4;color:#374151;" class="neg">(96.2)</td>
-        <td class="neg">(87.0)</td><td class="neg">(72.9)</td><td class="neg">(50.3)</td><td class="neg">(19.5)</td>
-        <td style="background:#fff9f0;font-weight:700;color:#f97316;">+19.2</td>
-        <td class="pos">+65.4</td><td class="pos">+118.8</td><td class="pos">+179.2</td>
+        <td class="neg">(96.2)</td><td class="neg">(99.0)</td>
+        <td style="background:#f0fdf4;" class="neg">(89.2)</td>
+        <td class="neg">(67.8)</td><td class="neg">(34.8)</td>
+        <td style="background:#fff9f0;font-weight:700;color:#f97316;">+9.4</td>
+        <td class="pos">+6.0</td><td class="pos">+49.9</td><td class="pos">+139.3</td><td class="pos">+271.2</td><td class="pos">+445.0</td><td class="pos">+659.0</td>
       </tr>
     </tbody>
   </table>
   <div style="display:flex;gap:12px;margin-top:12px;">
     <div class="card card-accent" style="border-left-color:#00b894;flex:1;padding:10px 14px;background:#f0fdf9;">
       <div style="font-size:10px;font-weight:700;color:#059669;letter-spacing:1px;">Y2 月損益平衡</div>
-      <div style="font-size:22px;font-weight:900;color:#059669;font-family:'Arial Black',sans-serif;">M16</div>
-      <div style="font-size:10px;color:#6b7280;">1,719 付費用戶時</div>
+      <div style="font-size:22px;font-weight:900;color:#059669;font-family:'Arial Black',sans-serif;">M15</div>
+      <div style="font-size:10px;color:#6b7280;">2,159 用戶（SEA 階段）</div>
     </div>
     <div class="card card-accent" style="border-left-color:#f97316;flex:1;padding:10px 14px;background:#fff9f0;">
       <div style="font-size:10px;font-weight:700;color:#f97316;letter-spacing:1px;">累計損益平衡</div>
-      <div style="font-size:22px;font-weight:900;color:#f97316;font-family:'Arial Black',sans-serif;">M21</div>
-      <div style="font-size:10px;color:#6b7280;">全回收投資成本</div>
+      <div style="font-size:22px;font-weight:900;color:#f97316;font-family:'Arial Black',sans-serif;">M18</div>
+      <div style="font-size:10px;color:#6b7280;">美國主攻前全回收</div>
     </div>
     <div class="card card-accent" style="border-left-color:#5c35bf;flex:1;padding:10px 14px;">
       <div style="font-size:10px;font-weight:700;color:#5c35bf;letter-spacing:1px;">M24 付費用戶</div>
-      <div style="font-size:22px;font-weight:900;color:#5c35bf;font-family:'Arial Black',sans-serif;">3,176</div>
-      <div style="font-size:10px;color:#6b7280;">臺灣+東南亞+全球英語</div>
+      <div style="font-size:22px;font-weight:900;color:#5c35bf;font-family:'Arial Black',sans-serif;">10,001</div>
+      <div style="font-size:10px;color:#6b7280;">台灣+SEA+美國全球</div>
     </div>
     <div class="card card-accent" style="border-left-color:#e94560;flex:1;padding:10px 14px;background:#fff5f7;">
       <div style="font-size:10px;font-weight:700;color:#e94560;letter-spacing:1px;">M24 月淨利</div>
-      <div style="font-size:22px;font-weight:900;color:#e94560;font-family:'Arial Black',sans-serif;">NT$60.4萬</div>
-      <div style="font-size:10px;color:#6b7280;">累計淨利 NT$179.2萬</div>
+      <div style="font-size:22px;font-weight:900;color:#e94560;font-family:'Arial Black',sans-serif;">NT$214萬</div>
+      <div style="font-size:10px;color:#6b7280;">累計淨利 NT$659萬</div>
     </div>
   </div>
 </div>
@@ -599,28 +568,28 @@ p{font-size:12px;color:#374151;line-height:1.65;}
 <div class="content-area">
   <div class="slide-no">08</div>
   <h2>上市行銷策略</h2>
-  <div class="slide-sub" style="margin-bottom:16px;">雙語定向投放 × KOL 合作 × 社群裂變，逐步從台灣到全球降低 CAC</div>
-  <div class="grid-3" style="gap:14px;margin-bottom:16px;">
-    <div class="card card-accent" style="padding:18px;">
-      <div class="feat-icon purple" style="margin-bottom:10px;width:38px;height:38px;font-size:18px;">🎯</div>
-      <h3 style="margin-bottom:6px;">精準數位投放</h3>
-      <p>Facebook / Instagram / YouTube 鎖定撲克受眾。中文廣告鎖定台灣、港、馬、新；英文廣告鎖定東南亞英語用戶及美國。CAC 目標 NT$3,000，Y2 優化至 NT$2,000。</p>
+  <div class="slide-sub" style="margin-bottom:14px;">實體協會合作降低台灣 CAC × 數位投放擴大 SEA × KOL 打入美國市場</div>
+  <div class="grid-3" style="gap:14px;margin-bottom:14px;">
+    <div class="card card-accent" style="border-left-color:#00b894;padding:16px;">
+      <div class="feat-icon teal" style="margin-bottom:8px;width:36px;height:36px;font-size:18px;">🤝</div>
+      <h3 style="margin-bottom:6px;">WinWin 協會合作（台灣）</h3>
+      <p>WinWin Poker 會員獲得 Poker Goal 免費試用，換取地推宣傳。用戶可用 Poker Goal 點數兌換 WinWin 賽事門票。精準觸達高意願玩家，CAC 接近零。</p>
     </div>
-    <div class="card card-accent green" style="padding:18px;">
-      <div class="feat-icon green" style="margin-bottom:10px;width:38px;height:38px;font-size:18px;">🎬</div>
-      <h3 style="margin-bottom:6px;">KOL / 內容合作</h3>
-      <p>台灣撲克 YouTuber + 東南亞英語 Poker Vlogger 合作，教學影片 + 實測體驗。Y2 目標美國 Poker Influencer，借助英語社群快速打入海外市場。</p>
+    <div class="card card-accent" style="padding:16px;">
+      <div class="feat-icon purple" style="margin-bottom:8px;width:36px;height:36px;font-size:18px;">🎯</div>
+      <h3 style="margin-bottom:6px;">精準數位投放（SEA）</h3>
+      <p>Facebook / Instagram / YouTube 鎖定撲克受眾。英語廣告覆蓋香港、新加坡、馬來西亞。CAC 目標 NT$1,800，Y2 優化至 NT$1,500。</p>
     </div>
-    <div class="card card-accent blue" style="padding:18px;">
-      <div class="feat-icon blue" style="margin-bottom:10px;width:38px;height:38px;font-size:18px;">🔗</div>
-      <h3 style="margin-bottom:6px;">社群裂變傳播</h3>
-      <p>訓練結果一鍵分享，PTT 撲克 / Dcard / Discord / Reddit poker 社群導流，中英文雙語分享卡，自然擴散持續降低 CAC，目標 Y2 有機佔比達 30%。</p>
+    <div class="card card-accent green" style="padding:16px;">
+      <div class="feat-icon green" style="margin-bottom:8px;width:36px;height:36px;font-size:18px;">🎬</div>
+      <h3 style="margin-bottom:6px;">KOL + 社群病毒（美國）</h3>
+      <p>美國英語 Poker Vlogger / YouTuber 合作，Reddit r/poker 社群導流，App Store 自然流量。目標 CAC NT$1,200（$37 USD），規模效應持續下降。</p>
     </div>
   </div>
   <div class="card" style="padding:14px 20px;background:#f8fafc;">
-    <div style="font-size:12px;font-weight:700;color:#1a237e;margin-bottom:10px;">📍 市場展開時序（中英雙語從 Day 1 同步）</div>
+    <div style="font-size:12px;font-weight:700;color:#1a237e;margin-bottom:10px;">📍 市場展開時序</div>
     <div class="market-flow">
-      <div class="mkt"><div class="mkt-flag">🇹🇼</div><div class="mkt-info"><div class="mkt-name">台灣</div><div class="mkt-time">M1 啟動</div></div></div>
+      <div class="mkt"><div class="mkt-flag">🇹🇼</div><div class="mkt-info"><div class="mkt-name">台灣</div><div class="mkt-time">M1・WinWin 合作</div></div></div>
       <div class="mkt-arrow">→</div>
       <div class="mkt"><div class="mkt-flag">🇭🇰</div><div class="mkt-info"><div class="mkt-name">香港</div><div class="mkt-time">M7</div></div></div>
       <div class="mkt-arrow">→</div>
@@ -659,19 +628,19 @@ p{font-size:12px;color:#374151;line-height:1.65;}
     </div>
     <div class="summary-item">
       <div class="summary-dot purple"></div>
-      <div><div class="summary-title">唯一繁體中文 + 英文雙語 AI 教練平台</div><div class="summary-desc">Claude AI 對話教練，五大競品均無繁中介面，iOS + Android + Web 三端</div></div>
+      <div><div class="summary-title">市場唯一：完整 MTT 情境模擬 + Claude AI 對話教練</div><div class="summary-desc">所有競品均為靜態工具，無任何競品同時具備互動情境模擬與 AI 教練</div></div>
     </div>
     <div class="summary-item">
       <div class="summary-dot green"></div>
-      <div><div class="summary-title">市場拓展：台灣 → 東南亞 → 美國全球</div><div class="summary-desc">Q1 台灣、Q3 東南亞、Y2H2 美國主攻，雙語從 Day 1 支援全市場</div></div>
+      <div><div class="summary-title">WinWin 協會合作 + 親民定價，台灣市場快速驗證</div><div class="summary-desc">實體地推降低 CAC，NT$299 起比競品低 19～70%，Y1 驗證獲利模式</div></div>
     </div>
     <div class="summary-item">
       <div class="summary-dot blue"></div>
-      <div><div class="summary-title">財務：月 BEP M9・累計 BEP M21</div><div class="summary-desc">含平台手續費（18%）+ 正式基礎設施費用，M24 月淨利 NT$60萬，累計 NT$179萬</div></div>
+      <div><div class="summary-title">財務：月 BEP M9・累計 BEP M18・M24 一萬訂閱</div><div class="summary-desc">Y2 加大投資美國市場，M24 月淨利 NT$214萬，累計 NT$659萬</div></div>
     </div>
     <div class="summary-item">
       <div class="summary-dot orange"></div>
-      <div><div class="summary-title">雙平台手續費是主要費用挑戰</div><div class="summary-desc">優化策略：提升 Web 直購比例（Stripe 2.9% vs App Store 30%），長期目標 Web 佔比 50%+</div></div>
+      <div><div class="summary-title">Y1 驗證 → Y2 美國主攻，清晰的兩階段戰略</div><div class="summary-desc">台灣+SEA 驗證模型與數據，M19 啟動美國市場，搶佔英語玩家市場</div></div>
     </div>
   </div>
 </div>
