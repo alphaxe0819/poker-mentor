@@ -468,38 +468,38 @@
 <!-- ════════════════════════════════════════════════════ -->
 <!-- ZONE C — 底層左：技術架構 (x: 40~640)                -->
 <!-- ════════════════════════════════════════════════════ -->
-<div style="position:absolute; left:50px; top:1380px; font-size:12px; color:#e94560; font-weight:600; white-space:nowrap;">※ 目前為原型，詳細技術規格將與專業技術討論後確認</div>
+<div style="position:absolute; left:50px; top:1380px; font-size:12px; color:#059669; font-weight:600; white-space:nowrap;">☁️ 生產級企業架構（AWS/GCP）— 月固定費 NT$2萬</div>
 <div class="zone-label" style="left:50px; top:1418px;">ZONE C ── 技術架構 & 路線圖</div>
 
-<div class="group-box dashed" style="left:40px; top:1450px; width:620px; height:1000px;"></div>
+<div class="group-box dashed" style="left:40px; top:1450px; width:620px; height:1150px;"></div>
 <div class="title" style="left:60px; top:1470px;">🛠️ 技術架構</div>
 
 <div id="tech-fe" class="hl hl-green" style="left:60px; top:1520px; width:270px;">
   <strong>🖥️ 前端</strong><br>
   React 19 · TypeScript 5.9<br>
   Vite 8 · Tailwind CSS<br>
-  React Router · i18n
+  React Native（iOS + Android）
 </div>
 
 <div id="tech-be" class="hl hl-green" style="left:360px; top:1520px; width:270px;">
   <strong>⚡ 後端</strong><br>
-  Supabase Auth + RLS<br>
-  PostgreSQL · pgvector<br>
-  Edge Functions (Deno)
+  AWS EC2 × 2（Node.js）<br>
+  RDS PostgreSQL（Multi-AZ）<br>
+  ElastiCache Redis · S3
 </div>
 
 <div id="tech-ai" class="hl hl-purple" style="left:60px; top:1690px; width:270px;">
   <strong>🤖 AI 層</strong><br>
-  Claude Haiku（教練對話）<br>
+  Claude Haiku（教練對話 ~NT$0.022/則）<br>
   Claude Sonnet（深度分析）<br>
   RAG 記憶檢索 · GTO Engine
 </div>
 
 <div id="tech-deploy" class="hl hl-pink" style="left:360px; top:1690px; width:270px;">
   <strong>🚀 部署 & 監控</strong><br>
-  Vercel（前端自動部署）<br>
-  Supabase Cloud（後端）<br>
-  Sentry（監控）· Lemon Squeezy
+  CloudFront CDN · ALB 負載均衡<br>
+  RevenueCat 跨平台訂閱管理<br>
+  Sentry 監控 · Mixpanel 分析
 </div>
 
 <div class="title" style="left:60px; top:1860px;">📦 新增 DB Tables</div>
@@ -530,26 +530,30 @@
 <div class="title" style="left:60px; top:2120px;">🗺️ 開發路線圖</div>
 
 <div id="road-p1" class="sticky s-blue" style="left:60px; top:2170px; width:175px;">
-  <strong>Phase 1</strong><br><br>
-  • 雙平台版本<br>
-  • 核心訓練功能<br>
-  • 基礎 GTO 範圍資料庫<br>
-  • 數據統計表<br>
-  • 基礎 AI 教練
+  <strong>Phase 1</strong><br>
+  <span style="font-size:11px; color:rgba(0,0,0,0.5);">M1–M6 台灣</span><br><br>
+  • iOS + Android 上架<br>
+  • GTO 訓練題庫<br>
+  • HU 模擬器<br>
+  • AI 教練（Claude）<br>
+  • 訂閱 + 點數系統
 </div>
 <div id="road-p2" class="sticky s-purple" style="left:255px; top:2170px; width:175px;">
-  <strong>Phase 2</strong><br><br>
-  • 課程系統<br>
-  • 訂閱功能<br>
-  • 多種 AI 教練<br>
-  • 點數系統<br>
-  • 更多情境範圍資料庫
+  <strong>Phase 2</strong><br>
+  <span style="font-size:11px; color:rgba(0,0,0,0.5);">M7–M12 東南亞</span><br><br>
+  • Web 版上線<br>
+  • MTT 完整情境模擬<br>
+  • 月榜排行 + 代幣<br>
+  • WinWin 賽事合作<br>
+  • 點數儲值上線
 </div>
 <div id="road-p3" class="sticky s-orange" style="left:450px; top:2170px; width:175px;">
-  <strong>Phase 3</strong><br><br>
-  • 賽事模擬系統<br>
-  • 積分排行榜<br>
-  • 積分獎勵兌換功能
+  <strong>Phase 3</strong><br>
+  <span style="font-size:11px; color:rgba(0,0,0,0.5);">M13–M24 美國+全球</span><br><br>
+  • Postflop GTO 資料庫<br>
+  • 國際賽事合作<br>
+  （APT/WSOP/WPTG）<br>
+  • 全球英語市場推廣
 </div>
 
 
@@ -653,7 +657,7 @@
 <!-- ════════════════════════════════════════════════════ -->
 <div class="zone-label" style="left:1780px; top:1418px;">ZONE E ── 付費邏輯</div>
 
-<div class="group-box" style="left:1770px; top:1450px; width:1060px; height:900px;"></div>
+<div class="group-box" style="left:1770px; top:1450px; width:1060px; height:1080px;"></div>
 <div class="title" style="left:1800px; top:1470px;">💰 付費邏輯（訂閱 + 點數雙軌制）</div>
 
 <div id="sub-label" class="sticky s-pink" style="left:1800px; top:1530px; width:110px; text-align:center; padding:14px;">
@@ -684,11 +688,11 @@
   </table>
 </div>
 
-<div id="pts-label" class="sticky s-green" style="left:1800px; top:2010px; width:110px; text-align:center; padding:14px;">
+<div id="pts-label" class="sticky s-green" style="left:1800px; top:1840px; width:110px; text-align:center; padding:14px;">
   <strong style="font-size:15px;">點數儲值</strong>
 </div>
 
-<div id="pts-phone" class="phone" style="left:1940px; top:1990px; width:180px;">
+<div id="pts-phone" class="phone" style="left:1940px; top:1820px; width:180px;">
   <div class="ph-in" style="min-height:220px;">
     <div style="text-align:center; padding:12px;">
       <div style="font-size:11px; font-weight:700;">芋圓</div>
@@ -711,7 +715,7 @@
   </div>
 </div>
 
-<div id="pts-table" class="dtable" style="left:2160px; top:2010px; width:520px;">
+<div id="pts-table" class="dtable" style="left:2160px; top:1840px; width:520px;">
   <table>
     <tr><th>儲值（台幣）</th><th>點數</th><th>AI 對話 / HU 模擬</th><th>折扣</th></tr>
     <tr><td style="font-weight:700;">NT$90</td><td>60 點</td><td>12 則 / 3 場</td><td>—</td></tr>
@@ -720,15 +724,40 @@
   </table>
 </div>
 
-<div id="cost-warning" class="hl hl-pink" style="left:2160px; top:2260px; width:520px; text-align:center; font-weight:700; color:#e94560;">
-  ✅ API 成本已精算：Haiku ~NT$0.022/則，10K 用戶月 API 僅 ~NT$8,000（佔總費用 &lt;1%）
+<div class="hl hl-green" style="left:2160px; top:2080px; width:520px; color:#059669;">
+  <strong>✅ 點數制天然控制 API 支出上限</strong><br>
+  <span style="font-size:11px;">免費點數 API = 唯一固定成本 ｜ 儲值 API = 收入自動覆蓋</span>
+</div>
+
+<div class="dtable" style="left:2160px; top:2160px; width:520px;">
+  <table>
+    <tr style="background:#1a237e; color:#fff;"><th>免費點數分配</th><th>月點數</th><th>API 上限/人</th></tr>
+    <tr><td>免費用戶（任務 ~30點）</td><td style="text-align:center;">30</td><td style="text-align:right; color:#6b7280;">~NT$0.1</td></tr>
+    <tr><td>Basic（50點 → Haiku）</td><td style="text-align:center;">50</td><td style="text-align:right; color:#5c35bf;">~NT$0.2</td></tr>
+    <tr><td>PRO（200點 → Haiku+Sonnet）</td><td style="text-align:center;">200</td><td style="text-align:right; color:#f97316;">~NT$4.6</td></tr>
+    <tr style="background:#ede9fe;"><td style="font-weight:700;">加權均值</td><td></td><td style="text-align:right; font-weight:700; color:#5c35bf;">~NT$1.1</td></tr>
+  </table>
+</div>
+
+<div style="position:absolute; left:2160px; top:2350px; font-size:10px; color:#6b7280; width:520px; white-space:nowrap;">
+  Haiku NT$0.022/則 ｜ Sonnet NT$2.2/次（30點）｜ PRO 典型：10則AI + 2場HU + 1場MTT + 2次Sonnet = 200點用完
+</div>
+
+<div class="dtable" style="left:2160px; top:2380px; width:520px;">
+  <table>
+    <tr style="background:#e94560; color:#fff;"><th>規模</th><th>免費點數 API<br><span style="font-size:9px; font-weight:400;">我方吸收</span></th><th>儲值 API<br><span style="font-size:9px; font-weight:400;">收入覆蓋</span></th><th>儲值淨收入</th></tr>
+    <tr><td>1K 付費 + 19K 免費</td><td style="color:#e94560;">-NT$1,700</td><td style="color:#f97316;">-NT$1,400</td><td style="color:#059669; font-weight:700;">+NT$36,900</td></tr>
+    <tr><td>3K 付費 + 57K 免費</td><td style="color:#e94560;">-NT$5,200</td><td style="color:#f97316;">-NT$4,200</td><td style="color:#059669; font-weight:700;">+NT$110,700</td></tr>
+    <tr><td>10K 付費 + 190K 免費</td><td style="color:#e94560;">-NT$17,200</td><td style="color:#f97316;">-NT$14,200</td><td style="color:#059669; font-weight:700;">+NT$369,000</td></tr>
+    <tr style="background:#d1fae5;"><td colspan="2" style="font-size:10px; font-weight:700; color:#059669;">免費 API = 唯一固定成本</td><td colspan="2" style="font-size:10px; color:#6b7280;">儲值覆蓋 API 26 倍</td></tr>
+  </table>
 </div>
 
 <!-- ════════════════════════════════════════════════════ -->
 <!-- 競品比較                                             -->
 <!-- ════════════════════════════════════════════════════ -->
 <div class="zone-label" style="left:2900px; top:1418px;">競品比較</div>
-<div class="group-box" style="left:2890px; top:1450px; width:1100px; height:720px;"></div>
+<div class="group-box" style="left:2890px; top:1450px; width:1100px; height:860px;"></div>
 <div class="title" style="left:2910px; top:1470px;">🥊 競品收費比較</div>
 
 <div id="competitor-table" class="dtable" style="left:2910px; top:1520px; width:1060px;">
@@ -799,7 +828,7 @@
   </table>
 </div>
 
-<div class="sticky s-yellow" style="left:2910px; top:1840px; width:520px;">
+<div class="sticky s-yellow" style="left:2910px; top:1950px; width:520px;">
   <h3>💡 定價優勢分析</h3>
   <ul>
     <li>PRO NT$1,000 比 GTO Wizard Starter（NT$1,300）低 <strong>23%</strong>，比最高方案低 <strong>86%</strong></li>
@@ -810,7 +839,7 @@
   </ul>
 </div>
 
-<div class="sticky s-pink" style="left:3460px; top:1840px; width:500px;">
+<div class="sticky s-pink" style="left:3460px; top:1950px; width:500px;">
   <h3>⚠️ 競品威脅點</h3>
   <ul>
     <li>GTO Wizard：<strong>市場龍頭 ARR NT$6億+</strong>，覆蓋全客層，有簡體中文</li>
@@ -891,8 +920,6 @@ const connections = [
   { from: 'memory',       to: 'chat',          fromSide: 'top',   toSide: 'bottom', color: 'green',  label: 'RAG→對話上下文' },
 
   // ── Roadmap 橫向 ──
-  { from: 'road-p1', to: 'road-p2', fromSide: 'right', toSide: 'left', color: 'blue' },
-  { from: 'road-p2', to: 'road-p3', fromSide: 'right', toSide: 'left', color: 'blue' },
 ];
 
 function getAnchor(el, side) {
