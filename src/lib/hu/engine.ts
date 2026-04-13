@@ -6,6 +6,9 @@ import type {
 import { newDeck, shuffleDeck, dealCards } from './deck'
 import { evaluateHand, compareHands } from './handEvaluator'
 
+/** Round to 1 decimal place to avoid floating-point noise (0.5 BB is smallest unit) */
+function r1(n: number): number { return Math.round(n * 10) / 10 }
+
 // ── Match init ──────────────────────────────────────
 
 export function createMatch(config: MatchConfig): MatchState {
@@ -37,7 +40,6 @@ function computeStacks(config: MatchConfig): [number, number] {
 
   if (config.playerSide === 'short') return [smallStack, bigStack]
   if (config.playerSide === 'big')   return [bigStack, smallStack]
-  // Fallback (shouldn't normally hit for non-1:1 ratios)
   return [Math.floor(total / 2), total - Math.floor(total / 2)]
 }
 
@@ -46,12 +48,10 @@ function computeStacks(config: MatchConfig): [number, number] {
 export function dealNewHand(match: MatchState): MatchState {
   const handNumber = match.handHistory.length + 1
 
-  // Player position alternates each hand. Odd hand = player BTN/SB
   const playerIsBtn = handNumber % 2 === 1
   const heroPosition: Position = playerIsBtn ? 'btn' : 'bb'
   const villainPosition: Position = playerIsBtn ? 'bb' : 'btn'
 
-  // Shuffle and deal hole cards
   const deck = shuffleDeck(newDeck())
   const heroHole = dealCards(deck, 2)
   const villainHole = dealCards(deck, 2)
@@ -59,13 +59,12 @@ export function dealNewHand(match: MatchState): MatchState {
   const sb = match.config.sbBB
   const bb = match.config.bbBB
 
-  // Hero stack: subtract blind based on position
   const heroBlind = heroPosition === 'btn' ? sb : bb
   const villainBlind = villainPosition === 'btn' ? sb : bb
 
   const hero: PlayerState = {
     position: heroPosition,
-    stackBB: match.playerStackBB - heroBlind,
+    stackBB: r1(match.playerStackBB - heroBlind),
     holeCards: [heroHole[0], heroHole[1]],
     committedBB: heroBlind,
     streetCommitBB: heroBlind,
@@ -74,7 +73,7 @@ export function dealNewHand(match: MatchState): MatchState {
   }
   const villain: PlayerState = {
     position: villainPosition,
-    stackBB: match.botStackBB - villainBlind,
+    stackBB: r1(match.botStackBB - villainBlind),
     holeCards: [villainHole[0], villainHole[1]],
     committedBB: villainBlind,
     streetCommitBB: villainBlind,
@@ -89,22 +88,18 @@ export function dealNewHand(match: MatchState): MatchState {
     potBB: sb + bb,
     hero,
     villain,
-    toAct: 'btn',  // BTN/SB acts first preflop in HU
-    currentBetBB: bb,  // BB is the bet to match
+    toAct: 'btn',
+    currentBetBB: bb,
     minRaiseBB: bb,
     actions: [],
     isComplete: false,
   }
 
-  return {
-    ...match,
-    currentHand: hand,
-  }
+  return { ...match, currentHand: hand }
 }
 
 // ── Apply action ────────────────────────────────────
 
-/** Returns updated MatchState with action applied */
 export function applyAction(match: MatchState, action: Action): MatchState {
   if (!match.currentHand) throw new Error('No current hand')
   const hand: HandState = {
@@ -118,7 +113,6 @@ export function applyAction(match: MatchState, action: Action): MatchState {
   const isHero = action.actor === hand.hero.position
   const player = isHero ? hand.hero : hand.villain
 
-  // Record action
   hand.actions.push({ ...action })
 
   switch (action.kind) {
@@ -128,40 +122,45 @@ export function applyAction(match: MatchState, action: Action): MatchState {
       break
     }
     case 'check': {
-      // No chip movement
+      // Guard: cannot check when facing a bet — convert to fold
+      const facingBet = hand.currentBetBB > player.streetCommitBB
+      if (facingBet) {
+        console.warn(`[engine] check attempted facing bet ${hand.currentBetBB} > ${player.streetCommitBB}, converting to fold`)
+        player.hasFolded = true
+        hand.isComplete = true
+      }
       break
     }
     case 'call': {
-      const toCall = hand.currentBetBB - player.streetCommitBB
-      const callAmount = Math.min(toCall, player.stackBB)
-      player.stackBB -= callAmount
-      player.committedBB += callAmount
-      player.streetCommitBB += callAmount
-      hand.potBB += callAmount
-      if (player.stackBB === 0) player.isAllIn = true
+      const toCall = r1(hand.currentBetBB - player.streetCommitBB)
+      const callAmount = r1(Math.min(toCall, player.stackBB))
+      player.stackBB = r1(player.stackBB - callAmount)
+      player.committedBB = r1(player.committedBB + callAmount)
+      player.streetCommitBB = r1(player.streetCommitBB + callAmount)
+      hand.potBB = r1(hand.potBB + callAmount)
+      if (player.stackBB <= 0) { player.stackBB = 0; player.isAllIn = true }
       break
     }
     case 'bet':
     case 'raise': {
       const target = action.amount ?? 0
-      // Guard: raise target must exceed current street commitment; if not, treat as min-raise
       const effectiveTarget = Math.max(target, hand.currentBetBB + hand.minRaiseBB)
-      const additional = effectiveTarget - player.streetCommitBB
-      const amount = Math.max(0, Math.min(additional, player.stackBB))
-      player.stackBB -= amount
-      player.committedBB += amount
-      player.streetCommitBB += amount
-      hand.potBB += amount
+      const additional = r1(effectiveTarget - player.streetCommitBB)
+      const amount = r1(Math.max(0, Math.min(additional, player.stackBB)))
+      player.stackBB = r1(player.stackBB - amount)
+      player.committedBB = r1(player.committedBB + amount)
+      player.streetCommitBB = r1(player.streetCommitBB + amount)
+      hand.potBB = r1(hand.potBB + amount)
       hand.currentBetBB = player.streetCommitBB
-      if (player.stackBB === 0) player.isAllIn = true
+      if (player.stackBB <= 0) { player.stackBB = 0; player.isAllIn = true }
       break
     }
     case 'allin': {
       const amount = player.stackBB
       player.stackBB = 0
-      player.committedBB += amount
-      player.streetCommitBB += amount
-      hand.potBB += amount
+      player.committedBB = r1(player.committedBB + amount)
+      player.streetCommitBB = r1(player.streetCommitBB + amount)
+      hand.potBB = r1(hand.potBB + amount)
       hand.currentBetBB = Math.max(hand.currentBetBB, player.streetCommitBB)
       player.isAllIn = true
       break
@@ -169,24 +168,26 @@ export function applyAction(match: MatchState, action: Action): MatchState {
   }
 
   if (!hand.isComplete) {
-    // Check if both all-in or one all-in and other has matched
     const bothAllIn = hand.hero.isAllIn && hand.villain.isAllIn
-    const oneAllInMatched = (hand.hero.isAllIn || hand.villain.isAllIn) &&
-      hand.hero.streetCommitBB === hand.villain.streetCommitBB
+    // "Covered" = one player is all-in AND the other's street commit >= theirs
+    const allInCovered = (
+      (hand.hero.isAllIn && hand.villain.streetCommitBB >= hand.hero.streetCommitBB) ||
+      (hand.villain.isAllIn && hand.hero.streetCommitBB >= hand.villain.streetCommitBB)
+    )
 
-    if (bothAllIn || oneAllInMatched || isStreetClosed(hand)) {
+    if (bothAllIn || allInCovered || isStreetClosed(hand)) {
       let advanced = advanceStreet(hand)
-      // Fast-forward through remaining streets when no more actions possible
       while (!advanced.isComplete && (advanced.hero.isAllIn || advanced.villain.isAllIn)) {
         advanced = advanceStreet(advanced)
       }
       return { ...match, currentHand: advanced }
     }
-    // Pass turn to other player (but skip if they're all-in)
+    // Pass turn to other player (but skip if they're all-in AND their bet is covered)
     const nextPlayer = hand.toAct === 'btn' ? 'bb' : 'btn'
     const nextPlayerState = nextPlayer === hand.hero.position ? hand.hero : hand.villain
-    if (nextPlayerState.isAllIn) {
-      // Next player is all-in, they can't act → close street
+    const otherPlayerState = nextPlayer === hand.hero.position ? hand.villain : hand.hero
+    const nextCovered = nextPlayerState.isAllIn && otherPlayerState.streetCommitBB >= nextPlayerState.streetCommitBB
+    if (nextCovered) {
       let advanced = advanceStreet(hand)
       while (!advanced.isComplete && (advanced.hero.isAllIn || advanced.villain.isAllIn)) {
         advanced = advanceStreet(advanced)
@@ -199,10 +200,8 @@ export function applyAction(match: MatchState, action: Action): MatchState {
   return { ...match, currentHand: hand }
 }
 
-/** A street is closed when both players have acted at least once on this street and bets are matched */
 function isStreetClosed(hand: HandState): boolean {
   if (hand.hero.streetCommitBB !== hand.villain.streetCommitBB) return false
-
   const actionsThisStreet = hand.actions.filter(a => a.street === hand.street)
   const heroActed = actionsThisStreet.some(a => a.actor === hand.hero.position)
   const villainActed = actionsThisStreet.some(a => a.actor === hand.villain.position)
@@ -212,7 +211,6 @@ function isStreetClosed(hand: HandState): boolean {
 // ── Advance street ──────────────────────────────────
 
 export function advanceStreet(hand: HandState): HandState {
-  // Reset street commitments for the new street
   const next: HandState = {
     ...hand,
     hero: { ...hand.hero, streetCommitBB: 0 },
@@ -223,7 +221,6 @@ export function advanceStreet(hand: HandState): HandState {
     board: [...hand.board],
   }
 
-  // Reveal community cards: build a new deck excluding known cards, then deal
   const knownCards = [
     ...hand.hero.holeCards,
     ...hand.villain.holeCards,
@@ -247,7 +244,6 @@ export function advanceStreet(hand: HandState): HandState {
     next.isComplete = true
   }
 
-  // OOP (BB) acts first postflop
   if (next.street !== 'preflop' && next.street !== 'showdown') {
     next.toAct = 'bb'
   }
@@ -256,17 +252,11 @@ export function advanceStreet(hand: HandState): HandState {
 
 // ── Resolve hand ────────────────────────────────────
 
-/**
- * Settle the current hand: determine winner, distribute pot, update match-level
- * stacks, detect bust, move hand to history.
- *
- * Must be called by the controller AFTER `currentHand.isComplete === true`.
- */
 export function resolveHand(match: MatchState): MatchState {
   if (!match.currentHand) throw new Error('No current hand to resolve')
   const hand = match.currentHand
 
-  let heroDelta = 0  // chips won/lost by hero this hand
+  let heroDelta = 0
   let villainDelta = 0
 
   if (hand.hero.hasFolded) {
@@ -276,25 +266,25 @@ export function resolveHand(match: MatchState): MatchState {
     heroDelta = hand.villain.committedBB
     villainDelta = -hand.villain.committedBB
   } else {
-    // Showdown: evaluate best hand from hole + board
     const heroBest = evaluateHand([...hand.hero.holeCards, ...hand.board])
     const villainBest = evaluateHand([...hand.villain.holeCards, ...hand.board])
     const cmp = compareHands(heroBest, villainBest)
+    // Winner can only win up to what the shorter stack committed (no side pots in HU)
+    const effectiveBet = Math.min(hand.hero.committedBB, hand.villain.committedBB)
     if (cmp > 0) {
-      heroDelta = hand.villain.committedBB
-      villainDelta = -hand.villain.committedBB
+      heroDelta = effectiveBet
+      villainDelta = -effectiveBet
     } else if (cmp < 0) {
-      heroDelta = -hand.hero.committedBB
-      villainDelta = hand.hero.committedBB
+      heroDelta = -effectiveBet
+      villainDelta = effectiveBet
     }
-    // tie → both deltas stay 0 (commitments returned)
+
+    console.log(`[resolveHand] hand#${hand.handNumber} showdown: heroPos=${hand.hero.position} heroCommit=${hand.hero.committedBB} villainCommit=${hand.villain.committedBB} effectiveBet=${effectiveBet} heroDelta=${heroDelta} matchStacks=${match.playerStackBB}/${match.botStackBB} pot=${hand.potBB}`)
   }
 
-  // Update match-level stacks
-  const newPlayerStack = match.playerStackBB + heroDelta
-  const newBotStack = match.botStackBB + villainDelta
+  const newPlayerStack = r1(match.playerStackBB + heroDelta)
+  const newBotStack = r1(match.botStackBB + villainDelta)
 
-  // Detect bust
   let result: MatchState['result'] = 'in_progress'
   if (newPlayerStack <= 0) result = 'player_lost'
   else if (newBotStack <= 0) result = 'player_won'

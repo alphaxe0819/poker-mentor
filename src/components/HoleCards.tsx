@@ -1,7 +1,9 @@
 import { memo } from 'react'
+import type { Card as CardType } from '../lib/hu/types'
 
 interface Props {
   hand: string
+  actualCards?: [CardType, CardType]
 }
 
 const SUITS = [
@@ -10,6 +12,13 @@ const SUITS = [
   { symbol: '♦', color: '#60a5fa', bg: '#1a2030', border: '#2a3a5a' },
   { symbol: '♣', color: '#4ade80', bg: '#1a2e1a', border: '#2a5a2a' },
 ]
+
+const SUIT_MAP: Record<string, typeof SUITS[number]> = {
+  s: SUITS[0],
+  h: SUITS[1],
+  d: SUITS[2],
+  c: SUITS[3],
+}
 
 function parseHand(hand: string) {
   if (!hand || hand.length < 2) return { rank1: '?', rank2: '?', suited: false, pair: false }
@@ -59,7 +68,16 @@ function Card({ rank, suit }: { rank: string; suit: typeof SUITS[number] }) {
   )
 }
 
-export default memo(function HoleCards({ hand }: Props) {
+export default memo(function HoleCards({ hand, actualCards }: Props) {
+  if (actualCards) {
+    return (
+      <div className="flex gap-2">
+        <Card rank={actualCards[0].rank} suit={SUIT_MAP[actualCards[0].suit]} />
+        <Card rank={actualCards[1].rank} suit={SUIT_MAP[actualCards[1].suit]} />
+      </div>
+    )
+  }
+
   const { rank1, rank2 } = parseHand(hand)
   const [suit1, suit2] = getSuits(hand)
 
