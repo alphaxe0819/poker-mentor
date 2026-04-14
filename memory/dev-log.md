@@ -5,6 +5,11 @@
 
 ---
 
+## 2026-04-14 v0.8.1-dev.5 [feature/hu-simulator-v1]
+- 刪除 .env.example（避免 Claude session 誤用）
+- setup-env 腳本升級：合併 npm install + TypeScript 檢查，一鍵完成
+- CLAUDE.md SOP 簡化為單一腳本執行
+
 ## 2026-04-14 v0.8.1-dev.4 [feature/hu-simulator-v1]
 - CLAUDE.md 新增「新電腦設定 SOP」：明確指定跑 setup-env 腳本，不要用 .env.example
 - 修正問題：新電腦 Claude session 沒跑 setup-env、不知道 staging 環境已存在
