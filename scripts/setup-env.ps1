@@ -1,11 +1,10 @@
-# Poker Goal — 新電腦一鍵設定（clone 後跑這個就好）
+# Poker Goal - setup dev environment (run once after clone)
 
-Write-Host "🚀 Poker Goal 開發環境設定中..." -ForegroundColor Cyan
+Write-Host "[1/3] Generating .env ..." -ForegroundColor Cyan
 
-# 1. 產生 .env
 $envFile = ".env"
 if (Test-Path $envFile) {
-    Write-Host "⚠️  .env 已存在，跳過產生" -ForegroundColor Yellow
+    Write-Host "  .env already exists, skipping" -ForegroundColor Yellow
 } else {
 @"
 VITE_SUPABASE_URL=https://qaiwsocjwkjrmyzawabt.supabase.co
@@ -18,21 +17,19 @@ VITE_LEMONSQUEEZY_STORE_ID=338476
 VITE_LEMONSQUEEZY_CHECKOUT_MONTHLY=https://pokergoal.lemonsqueezy.com/checkout/buy/937ad893-bdff-4f75-be23-01446937be9f
 VITE_LEMONSQUEEZY_CHECKOUT_YEARLY=https://pokergoal.lemonsqueezy.com/checkout/buy/cd19cdd8-aa8c-4f49-aaba-658e5bcfb6ca
 "@ | Out-File -Encoding utf8 $envFile
-    Write-Host "✅ .env 已產生" -ForegroundColor Green
+    Write-Host "  .env created" -ForegroundColor Green
 }
 
-# 2. npm install
-Write-Host "📦 安裝 dependencies..." -ForegroundColor Cyan
+Write-Host "[2/3] npm install ..." -ForegroundColor Cyan
 npm install
 
-# 3. TypeScript 檢查
-Write-Host "🔍 TypeScript 編譯檢查..." -ForegroundColor Cyan
+Write-Host "[3/3] TypeScript check ..." -ForegroundColor Cyan
 npx tsc -b --noEmit
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "✅ TypeScript 零錯誤" -ForegroundColor Green
+    Write-Host "  TypeScript: zero errors" -ForegroundColor Green
 } else {
-    Write-Host "❌ TypeScript 有錯誤，請修復" -ForegroundColor Red
+    Write-Host "  TypeScript: has errors, please fix" -ForegroundColor Red
 }
 
 Write-Host ""
-Write-Host "🎉 設定完成！執行 npm run dev 啟動開發伺服器" -ForegroundColor Green
+Write-Host "Done! Run 'npm run dev' to start dev server." -ForegroundColor Green
