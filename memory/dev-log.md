@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-14 v0.8.1-dev.7 [feature/hu-simulator-v1]
+- setup-env 腳本加入 git identity 自動檢查（step 0），新電腦不用手動設
+- HU 入口接上：entryCost 從 `src/lib/hu/config.ts` 常數驅動，還原 spendPoints 扣點
+- 種子用戶體驗期：所有收費點改 0（HU 入場、AI 教練、弱點分析、課程解鎖、HU 違規金、Edge Function analyze-hu-hand）
+- UI 文案動態化：cost=0 時顯示「免費體驗」
+- CLAUDE.md 新增「Edge Function / DB Migration 部署順序」規則：強制先測試環境 → 驗證 → 再正式
+- 測試環境 Edge Function analyze-hu-hand 已 deploy 到 btiqmckyjyswzrarmfxa
+
 ## 2026-04-14 v0.8.1-dev.6 [feature/hu-simulator-v1]
 - 修 setup-env.ps1/sh：移除 emoji，改用純 ASCII（PowerShell 編碼問題）
 

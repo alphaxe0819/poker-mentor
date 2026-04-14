@@ -1,6 +1,20 @@
 #!/bin/bash
 # Poker Goal - setup dev environment (run once after clone)
 
+# 0. Git identity check
+GIT_NAME=$(git config --global user.name 2>/dev/null)
+GIT_EMAIL=$(git config --global user.email 2>/dev/null)
+
+if [ -z "$GIT_NAME" ] || [ -z "$GIT_EMAIL" ]; then
+  echo "[0/3] Setting git identity ..."
+  git config --global user.name "alphaxe0819"
+  git config --global user.email "alphaxe@gmail.com"
+  echo "  git identity set (alphaxe0819)"
+else
+  echo "[0/3] git identity already set ($GIT_NAME)"
+fi
+
+# 1. Generate .env
 echo "[1/3] Generating .env ..."
 
 ENV_FILE=".env"
@@ -21,9 +35,11 @@ EOF
   echo "  .env created"
 fi
 
+# 2. npm install
 echo "[2/3] npm install ..."
 npm install
 
+# 3. TypeScript check
 echo "[3/3] TypeScript check ..."
 npx tsc -b --noEmit
 if [ $? -eq 0 ]; then

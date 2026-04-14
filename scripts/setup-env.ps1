@@ -1,5 +1,19 @@
 # Poker Goal - setup dev environment (run once after clone)
 
+# 0. Git identity check
+$gitName = git config --global user.name 2>$null
+$gitEmail = git config --global user.email 2>$null
+
+if (-not $gitName -or -not $gitEmail) {
+    Write-Host "[0/3] Setting git identity ..." -ForegroundColor Cyan
+    git config --global user.name "alphaxe0819"
+    git config --global user.email "alphaxe@gmail.com"
+    Write-Host "  git identity set (alphaxe0819)" -ForegroundColor Green
+} else {
+    Write-Host "[0/3] git identity already set ($gitName)" -ForegroundColor Green
+}
+
+# 1. Generate .env
 Write-Host "[1/3] Generating .env ..." -ForegroundColor Cyan
 
 $envFile = ".env"
@@ -20,9 +34,11 @@ VITE_LEMONSQUEEZY_CHECKOUT_YEARLY=https://pokergoal.lemonsqueezy.com/checkout/bu
     Write-Host "  .env created" -ForegroundColor Green
 }
 
+# 2. npm install
 Write-Host "[2/3] npm install ..." -ForegroundColor Cyan
 npm install
 
+# 3. TypeScript check
 Write-Host "[3/3] TypeScript check ..." -ForegroundColor Cyan
 npx tsc -b --noEmit
 if ($LASTEXITCODE -eq 0) {
