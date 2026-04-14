@@ -689,9 +689,9 @@
         <li>
           <div class="s-num">4</div>
           <div class="s-content">
-            設定環境變數
-            <code>複製 .env 到專案根目錄</code>
-            <span class="note">從任何一台已設定好的電腦複製過來</span>
+            自動產生環境變數
+            <code>powershell scripts/setup-env.ps1</code>
+            <span class="note">Windows 用 .ps1，Mac/Linux 用 bash scripts/setup-env.sh</span>
           </div>
         </li>
         <li>
@@ -781,7 +781,7 @@
           <tr>
             <td><code>.env</code></td>
             <td>❌ 不進 Git</td>
-            <td class="manual">從其他機器複製</td>
+            <td class="manual">跑 <code>scripts/setup-env.ps1</code> 自動產生</td>
           </tr>
           <tr>
             <td><code>node_modules/</code></td>
