@@ -33,19 +33,51 @@ export const BOARDS = [
 ]
 
 export const STACK_RATIOS = [
-  // v1.0 only does 1:1 = 40BB vs 40BB; other ratios in later batches
+  // 1:1 = 40BB vs 40BB (already generated)
   {
     slug: '40bb',
     label: '1:1',
     pot_bb: 5,
     effective_stack_bb: 37.5,
-    description: 'HU 40BB total, BTN open 2.5 → BB call → pot 5BB, eff 37.5BB',
+    description: 'HU 80BB total 1:1, BTN open 2.5 → BB call → pot 5BB, eff 37.5BB',
+  },
+  // 1:2 and 2:1 share the same effective stack (short side = 27BB)
+  // BTN open 2.5 → BB call → pot 5BB, eff = 27 - 2.5 = 24.5BB
+  {
+    slug: '25bb',
+    label: '1:2 / 2:1',
+    pot_bb: 5,
+    effective_stack_bb: 24.5,
+    description: 'HU 80BB total 1:2 or 2:1, short stack 27BB, eff 24.5BB',
+  },
+  // 1:5 and 5:1 share the same effective stack (short side = 13BB)
+  // BTN open 2.5 → BB call → pot 5BB, eff = 13 - 2.5 = 10.5BB
+  {
+    slug: '13bb',
+    label: '1:5 / 5:1',
+    pot_bb: 5,
+    effective_stack_bb: 10.5,
+    description: 'HU 80BB total 1:5 or 5:1, short stack 13BB, eff 10.5BB',
   },
 ]
 
-// Standard HU 40BB ranges (BTN open ~60%, BB flat defend ~45%)
-// These are reused across all boards in v1.0.
+// ── Ranges per stack depth ──
+// Deeper stacks = wider ranges; shorter stacks = tighter (more push/fold)
+
+// 40BB ranges (BTN open ~60%, BB flat defend ~45%)
 export const HU_40BB_RANGES = {
   ip: 'AA,KK,QQ,JJ,TT,99,88,77,66,55,44,33,22,AKs,AQs,AJs,ATs,A9s,A8s,A7s,A6s,A5s,A4s,A3s,A2s,KQs,KJs,KTs,K9s,K8s,K7s,K6s,K5s,K4s,K3s,K2s,QJs,QTs,Q9s,Q8s,Q7s,Q6s,Q5s,JTs,J9s,J8s,J7s,T9s,T8s,T7s,98s,97s,87s,86s,76s,75s,65s,64s,54s,53s,43s,AKo,AQo,AJo,ATo,A9o,A8o,A7o,KQo,KJo,KTo,K9o,QJo,QTo,Q9o,JTo,J9o,T9o,98o',
   oop: '22,33,44,55,66,77,88,99,TT,AKs,AQs,AJs,ATs,A9s,A8s,A7s,A6s,A5s,A4s,A3s,A2s,KQs,KJs,KTs,K9s,K8s,K7s,K6s,K5s,QJs,QTs,Q9s,Q8s,Q7s,JTs,J9s,J8s,T9s,T8s,98s,97s,87s,86s,76s,75s,65s,54s,43s,AKo,AQo,AJo,ATo,A9o,A8o,KQo,KJo,KTo,K9o,QJo,QTo,JTo,T9o,98o',
+}
+
+// 25BB ranges — tighter since shorter stack (open ~50%, defend ~40%)
+export const HU_25BB_RANGES = {
+  ip: 'AA,KK,QQ,JJ,TT,99,88,77,66,55,44,33,22,AKs,AQs,AJs,ATs,A9s,A8s,A7s,A6s,A5s,A4s,A3s,A2s,KQs,KJs,KTs,K9s,K8s,K7s,K6s,K5s,QJs,QTs,Q9s,Q8s,Q7s,JTs,J9s,J8s,T9s,T8s,T7s,98s,97s,87s,86s,76s,65s,54s,43s,AKo,AQo,AJo,ATo,A9o,A8o,KQo,KJo,KTo,K9o,QJo,QTo,JTo,T9o,98o',
+  oop: '22,33,44,55,66,77,88,99,TT,AKs,AQs,AJs,ATs,A9s,A8s,A7s,A6s,A5s,A4s,A3s,A2s,KQs,KJs,KTs,K9s,K8s,K7s,K6s,K5s,QJs,QTs,Q9s,Q8s,JTs,J9s,J8s,T9s,T8s,98s,97s,87s,86s,76s,65s,54s,43s,AKo,AQo,AJo,ATo,A9o,KQo,KJo,KTo,K9o,QJo,QTo,JTo,T9o',
+}
+
+// 13BB ranges — very tight, push/fold territory (open ~40%, defend ~35%)
+export const HU_13BB_RANGES = {
+  ip: 'AA,KK,QQ,JJ,TT,99,88,77,66,55,44,33,22,AKs,AQs,AJs,ATs,A9s,A8s,A7s,A6s,A5s,A4s,A3s,A2s,KQs,KJs,KTs,K9s,K8s,QJs,QTs,Q9s,JTs,J9s,T9s,T8s,98s,97s,87s,76s,65s,54s,AKo,AQo,AJo,ATo,A9o,KQo,KJo,KTo,QJo,QTo,JTo',
+  oop: '22,33,44,55,66,77,88,99,TT,AKs,AQs,AJs,ATs,A9s,A8s,A7s,A6s,A5s,A4s,A3s,A2s,KQs,KJs,KTs,K9s,QJs,QTs,JTs,J9s,T9s,98s,87s,76s,65s,54s,AKo,AQo,AJo,ATo,KQo,KJo,KTo,QJo,JTo',
 }

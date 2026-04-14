@@ -4,87 +4,89 @@ import type { Card as CardType } from '../lib/hu/types'
 interface Props {
   hand: string
   actualCards?: [CardType, CardType]
+  /** Smaller card size for compact displays */
+  size?: 'normal' | 'small'
 }
 
-const SUITS = [
-  { symbol: '♠', color: '#e5e5e5', bg: '#1a1f2e', border: '#2a3a5a' },
-  { symbol: '♥', color: '#ef4444', bg: '#2e1a1a', border: '#5a2a2a' },
-  { symbol: '♦', color: '#60a5fa', bg: '#1a2030', border: '#2a3a5a' },
-  { symbol: '♣', color: '#4ade80', bg: '#1a2e1a', border: '#2a5a2a' },
-]
-
-const SUIT_MAP: Record<string, typeof SUITS[number]> = {
-  s: SUITS[0],
-  h: SUITS[1],
-  d: SUITS[2],
-  c: SUITS[3],
+// GTO Wizard style: suit determines the ENTIRE card background color
+const SUIT_STYLES: Record<string, { bg: string; borderColor: string; symbol: string }> = {
+  s: { bg: '#3a3d44', borderColor: '#555860', symbol: '♠' },  // spade = grey
+  h: { bg: '#8b2232', borderColor: '#b02e42', symbol: '♥' },  // heart = red
+  d: { bg: '#1e5faa', borderColor: '#2a78d4', symbol: '♦' },  // diamond = blue
+  c: { bg: '#1a7a3a', borderColor: '#22994a', symbol: '♣' },  // club = green
 }
 
 function parseHand(hand: string) {
   if (!hand || hand.length < 2) return { rank1: '?', rank2: '?', suited: false, pair: false }
   return {
-    rank1:  hand[0],
-    rank2:  hand[1],
+    rank1: hand[0],
+    rank2: hand[1],
     suited: hand.endsWith('s'),
-    pair:   hand[0] === hand[1],
+    pair: hand[0] === hand[1],
   }
 }
 
-// 用手牌字串做確定性的花色選擇（同一手牌永遠顯示同樣花色）
-function getSuits(hand: string) {
+function getSuitKeys(hand: string): [string, string] {
   const { suited } = parseHand(hand)
-  // 用手牌的字元碼決定基礎花色，確保一致性
   const base = (hand.charCodeAt(0) + hand.charCodeAt(1)) % 4
-
-  if (suited) {
-    // 同花：兩張用同一花色
-    return [SUITS[base], SUITS[base]]
-  } else {
-    // 雜色：兩張用不同花色
-    const suit1 = SUITS[base]
-    const suit2 = SUITS[(base + 1) % 4]
-    return [suit1, suit2]
-  }
+  const keys = ['s', 'h', 'd', 'c']
+  if (suited) return [keys[base], keys[base]]
+  return [keys[base], keys[(base + 1) % 4]]
 }
 
-function Card({ rank, suit }: { rank: string; suit: typeof SUITS[number] }) {
+function PokerCard({ rank, suitKey, size = 'normal' }: { rank: string; suitKey: string; size?: 'normal' | 'small' }) {
+  const style = SUIT_STYLES[suitKey] || SUIT_STYLES.s
+  const w = size === 'small' ? 40 : 56
+  const h = size === 'small' ? 56 : 78
+  const rankSize = size === 'small' ? '1.25rem' : '1.85rem'
+  const suitSize = size === 'small' ? '0.65rem' : '0.9rem'
+
   return (
     <div
-      className="flex flex-col items-center justify-center rounded-lg gap-0.5"
+      className="relative flex items-center justify-center rounded-lg overflow-hidden"
       style={{
-        width: 54, height: 76, padding: '4px',
-        background: suit.bg,
-        border: `1px solid ${suit.border}`,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.6)',
+        width: w, height: h,
+        background: style.bg,
+        border: `1.5px solid ${style.borderColor}`,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
       }}
     >
-      <span className="text-2xl font-black leading-none" style={{ color: suit.color }}>
+      {/* Rank — large centered */}
+      <span className="font-black leading-none text-white" style={{ fontSize: rankSize }}>
         {rank}
       </span>
-      <span className="text-2xl leading-none" style={{ color: suit.color }}>
-        {suit.symbol}
+      {/* Suit — top-left */}
+      <span className="absolute font-bold text-white/80" style={{ top: 3, left: 5, fontSize: suitSize }}>
+        {style.symbol}
+      </span>
+      {/* Suit — bottom-right (real poker card style) */}
+      <span className="absolute font-bold text-white/80" style={{ bottom: 3, right: 5, fontSize: suitSize, transform: 'rotate(180deg)' }}>
+        {style.symbol}
       </span>
     </div>
   )
 }
 
-export default memo(function HoleCards({ hand, actualCards }: Props) {
+export default memo(function HoleCards({ hand, actualCards, size = 'normal' }: Props) {
   if (actualCards) {
     return (
-      <div className="flex gap-2">
-        <Card rank={actualCards[0].rank} suit={SUIT_MAP[actualCards[0].suit]} />
-        <Card rank={actualCards[1].rank} suit={SUIT_MAP[actualCards[1].suit]} />
+      <div className="flex gap-1.5">
+        <PokerCard rank={actualCards[0].rank} suitKey={actualCards[0].suit} size={size} />
+        <PokerCard rank={actualCards[1].rank} suitKey={actualCards[1].suit} size={size} />
       </div>
     )
   }
 
   const { rank1, rank2 } = parseHand(hand)
-  const [suit1, suit2] = getSuits(hand)
+  const [suit1, suit2] = getSuitKeys(hand)
 
   return (
-    <div className="flex gap-2">
-      <Card rank={rank1} suit={suit1} />
-      <Card rank={rank2} suit={suit2} />
+    <div className="flex gap-1.5">
+      <PokerCard rank={rank1} suitKey={suit1} size={size} />
+      <PokerCard rank={rank2} suitKey={suit2} size={size} />
     </div>
   )
 })
+
+// Export for reuse in CommunityCards
+export { PokerCard, SUIT_STYLES }

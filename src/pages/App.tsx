@@ -385,17 +385,18 @@ export default function App() {
       <Suspense fallback={<LazyFallback />}>
         <HeadsUpScenarioSelect
           userPoints={points}
-          entryCost={30}
+          entryCost={0}  /* TODO: restore to 30 before deploy */
           onCancel={() => setAppMode('app')}
           onConfirm={async (config) => {
-            // Spend entry fee
-            const { spendPoints } = await import('../lib/points')
-            const result = await spendPoints(user.id, 30, 'hu_entry', 'HU 對決入場')
-            if (!result.success) {
-              alert('點數不足')
-              return
-            }
-            setPoints(result.balance)
+            // Spend entry fee (skip during testing when entryCost=0)
+            // TODO: restore to 30 before deploy
+            // const { spendPoints } = await import('../lib/points')
+            // const result = await spendPoints(user.id, 30, 'hu_entry', 'HU 對決入場')
+            // if (!result.success) {
+            //   alert('點數不足')
+            //   return
+            // }
+            // setPoints(result.balance)
             // Create DB session + run retention cleanup
             const { createSession, runRetentionCleanup } = await import('../lib/hu/sessionStorage')
             try {
