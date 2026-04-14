@@ -5,6 +5,9 @@
 
 ---
 
+## 2026-04-14 v0.8.1-dev.6 [feature/hu-simulator-v1]
+- 修 setup-env.ps1/sh：移除 emoji，改用純 ASCII（PowerShell 編碼問題）
+
 ## 2026-04-14 v0.8.1-dev.5 [feature/hu-simulator-v1]
 - 刪除 .env.example（避免 Claude session 誤用）
 - setup-env 腳本升級：合併 npm install + TypeScript 檢查，一鍵完成
