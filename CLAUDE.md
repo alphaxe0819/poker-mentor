@@ -128,7 +128,7 @@
 
 ### 測試環境（Staging）
 - 測試網址：https://poker-goal-dev.vercel.app/（待建立）
-- 測試 Supabase：待建立
+- 測試 Supabase：`btiqmckyjyswzrarmfxa`
 - 測試機部署 = `git push origin dev`（Vercel 自動部署）
 - DB migration 先在測試 Supabase 跑過，確認沒問題再跑正式的
 
@@ -173,7 +173,7 @@
 - GitHub：`https://github.com/alphaxe0819/poker-mentor.git`
 - Tech Stack：React 19 + TypeScript 5.9 + Vite 8 + Supabase + Vercel
 - Supabase 正式 URL：`https://qaiwsocjwkjrmyzawabt.supabase.co`
-- Supabase 測試 URL：待建立
+- Supabase 測試 URL：`https://btiqmckyjyswzrarmfxa.supabase.co`
 - 開發流程圖：`docs/two-machine-workflow.html`
 
 ## 目前產品狀態
