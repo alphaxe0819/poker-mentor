@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import PointsBadge from '../components/PointsBadge'
+import { HU_ENTRY_COST } from '../lib/hu/config'
 
 const GAME_TYPES = [
   { key: 'random',     label: '全隨機' },
@@ -154,7 +155,9 @@ export default function TrainSetupScreen({ points = 0, isPaid = false, onNavigat
           className="w-full p-4 rounded-2xl text-left"
           style={{ background: '#1a1a2e', border: '1px solid #7c3aed' }}>
           <div className="text-white font-bold text-sm mb-1">🥊 HU 對決（新）</div>
-          <div className="text-gray-400 text-xs">和 AI 打 1v1 完整 80BB 對局 · 30 點 / 場</div>
+          <div className="text-gray-400 text-xs">
+            和 AI 打 1v1 完整 80BB 對局 · {HU_ENTRY_COST === 0 ? '免費體驗' : `${HU_ENTRY_COST} 點 / 場`}
+          </div>
         </button>
       )}
 

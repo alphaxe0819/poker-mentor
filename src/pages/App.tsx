@@ -14,6 +14,7 @@ import QuizDetailScreen from '../components/QuizDetailScreen'
 import OnboardingScreen from '../components/OnboardingScreen'
 import { loadCourseProgressFromSupabase, markOnboardingDone as syncMarkOnboardingDone, loadOnboardingFromSupabase } from '../lib/courseSync'
 import { initLemonSqueezy, getSubscription, isSubscriptionActive } from '../lib/lemonsqueezy'
+import { HU_ENTRY_COST } from '../lib/hu/config'
 
 // Lazy-loaded tabs & pages (code splitting)
 const StatsTab       = lazy(() => import('../tabs/StatsTab'))
@@ -385,22 +386,26 @@ export default function App() {
       <Suspense fallback={<LazyFallback />}>
         <HeadsUpScenarioSelect
           userPoints={points}
-          entryCost={0}  /* TODO: restore to 30 before deploy */
+          entryCost={HU_ENTRY_COST}
           onCancel={() => setAppMode('app')}
           onConfirm={async (config) => {
-            // Spend entry fee (skip during testing when entryCost=0)
-            // TODO: restore to 30 before deploy
-            // const { spendPoints } = await import('../lib/points')
-            // const result = await spendPoints(user.id, 30, 'hu_entry', 'HU 對決入場')
-            // if (!result.success) {
-            //   alert('點數不足')
-            //   return
-            // }
-            // setPoints(result.balance)
+            // Spend entry fee atomically via RPC
+            const { spendPoints } = await import('../lib/points')
+            const result = await spendPoints(
+              user.id,
+              HU_ENTRY_COST,
+              'hu_entry',
+              'HU 對決入場'
+            )
+            if (!result.success) {
+              alert('點數不足')
+              return
+            }
+            setPoints(result.balance)
             // Create DB session + run retention cleanup
             const { createSession, runRetentionCleanup } = await import('../lib/hu/sessionStorage')
             try {
-              const session = await createSession(user.id, config, 30)
+              const session = await createSession(user.id, config, HU_ENTRY_COST)
               setHuSessionId(session.id)
               await runRetentionCleanup(user.id)
             } catch (e) {

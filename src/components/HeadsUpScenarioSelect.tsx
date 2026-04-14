@@ -66,7 +66,9 @@ export default function HeadsUpScenarioSelect({
              style={{ background: '#111', border: '1px solid #1a1a1a' }}>
           <div className="flex justify-between text-sm">
             <span className="text-gray-400">入場費</span>
-            <span className="text-white font-bold">{entryCost} 點</span>
+            <span className="text-white font-bold">
+              {entryCost === 0 ? '免費體驗' : `${entryCost} 點`}
+            </span>
           </div>
           <div className="flex justify-between text-sm mt-2">
             <span className="text-gray-400">你的點數</span>
@@ -83,7 +85,7 @@ export default function HeadsUpScenarioSelect({
                   background: canAfford ? '#7c3aed' : '#444',
                   opacity: canAfford ? 1 : 0.5,
                 }}>
-          {canAfford ? `開始 (-${entryCost} 點)` : '點數不足'}
+          {canAfford ? (entryCost === 0 ? '開始（免費體驗）' : `開始 (-${entryCost} 點)`) : '點數不足'}
         </button>
       </div>
     </div>

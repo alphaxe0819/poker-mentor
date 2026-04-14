@@ -4,7 +4,8 @@ import { COURSES, type Course, type CourseCategory } from '../lib/courseData'
 import { getCourseProgress, isCourseUnlocked, markCourseUnlocked } from '../lib/courseSync'
 import CoursePlayScreen from '../components/CoursePlayScreen'
 
-const ADVANCED_COST = 10
+// 種子用戶體驗期：暫時 0 點（原值 10）
+const ADVANCED_COST = 0
 
 const DIFF_COLORS: Record<string, { bg: string; text: string; label: string }> = {
   beginner:     { bg: '#052e16', text: '#4ade80', label: '入門' },
@@ -13,9 +14,9 @@ const DIFF_COLORS: Record<string, { bg: string; text: string; label: string }> =
 }
 
 const CATEGORY_TABS: { key: CourseCategory; label: string; tag: string; tagColor: string }[] = [
-  { key: 'beginner',  label: '入門課程', tag: '免費',       tagColor: '#10b981' },
-  { key: 'advanced',  label: '高階課程', tag: '每堂 10 點', tagColor: '#f59e0b' },
-  { key: 'special',   label: '特別課程', tag: '敬請期待',  tagColor: '#6b7280' },
+  { key: 'beginner',  label: '入門課程', tag: '免費',                                                         tagColor: '#10b981' },
+  { key: 'advanced',  label: '高階課程', tag: ADVANCED_COST === 0 ? '免費體驗' : `每堂 ${ADVANCED_COST} 點`,  tagColor: '#f59e0b' },
+  { key: 'special',   label: '特別課程', tag: '敬請期待',                                                     tagColor: '#6b7280' },
 ]
 
 interface CourseTabProps {
@@ -98,7 +99,9 @@ export default function CourseTab({ points, userId, onPointsChanged, onNavigateT
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.8)' }}>
           <div className="rounded-2xl p-6 w-full max-w-xs" style={{ background: '#111', border: '1px solid #222' }}>
             <div className="text-white font-bold text-base mb-2">解鎖課程</div>
-            <div className="text-gray-400 text-sm mb-1">花費 {ADVANCED_COST} 點解鎖「{unlockTarget.title}」</div>
+            <div className="text-gray-400 text-sm mb-1">
+              {ADVANCED_COST === 0 ? `免費體驗解鎖「${unlockTarget.title}」` : `花費 ${ADVANCED_COST} 點解鎖「${unlockTarget.title}」`}
+            </div>
             <div className="text-gray-500 text-xs mb-5">目前擁有：⭐ {points} 點</div>
             {points >= ADVANCED_COST ? (
               <div className="flex gap-3">
@@ -138,7 +141,9 @@ export default function CourseTab({ points, userId, onPointsChanged, onNavigateT
         <div className="flex flex-col gap-4">
           {activeCategory === 'advanced' && (
             <div className="rounded-xl p-3 text-center" style={{ background: '#1a1a2e', border: '1px solid #2d2d4a' }}>
-              <span className="text-gray-400 text-xs">每堂課需要 ⭐ {ADVANCED_COST} 點解鎖，點擊課程即可解鎖</span>
+              <span className="text-gray-400 text-xs">
+                {ADVANCED_COST === 0 ? '所有課程免費體驗中，點擊即可解鎖' : `每堂課需要 ⭐ ${ADVANCED_COST} 點解鎖，點擊課程即可解鎖`}
+              </span>
             </div>
           )}
           {courses.map((course, idx) => {
@@ -171,7 +176,7 @@ export default function CourseTab({ points, userId, onPointsChanged, onNavigateT
                   {needsUnlock && (
                     <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
                       style={{ background: '#422006', color: '#fbbf24' }}>
-                      ⭐ {ADVANCED_COST} 點
+                      {ADVANCED_COST === 0 ? '免費' : `⭐ ${ADVANCED_COST} 點`}
                     </span>
                   )}
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"

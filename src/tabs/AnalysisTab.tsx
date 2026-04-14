@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import PointsBadge from '../components/PointsBadge'
 
-const ANALYSIS_COST = 50
+// 種子用戶體驗期：暫時 0 點（原值 50）
+const ANALYSIS_COST = 0
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? ''
 
@@ -216,9 +217,11 @@ export default function AnalysisTab({ userId, isPaid = false, points, onPointsCh
     ? '教練分析中...'
     : hasPaidFree
       ? '開始分析（今日免費）'
-      : canAnalyze
-        ? `開始分析（⭐ ${ANALYSIS_COST} 點）`
-        : `點數不足（需要 ${ANALYSIS_COST} 點）`
+      : ANALYSIS_COST === 0
+        ? '開始分析（免費體驗）'
+        : canAnalyze
+          ? `開始分析（⭐ ${ANALYSIS_COST} 點）`
+          : `點數不足（需要 ${ANALYSIS_COST} 點）`
 
   return (
     <div className="flex flex-col gap-5 p-4 pb-24" style={{ background: '#0a0a0a', minHeight: '100vh' }}>
@@ -241,7 +244,7 @@ export default function AnalysisTab({ userId, isPaid = false, points, onPointsCh
             </div>
             {paidFreeUsed && (
               <div className="text-gray-500 text-xs text-right">
-                額外分析<br/>⭐ {ANALYSIS_COST} 點/次
+                額外分析<br/>{ANALYSIS_COST === 0 ? '免費體驗' : `⭐ ${ANALYSIS_COST} 點/次`}
               </div>
             )}
           </div>
@@ -249,7 +252,9 @@ export default function AnalysisTab({ userId, isPaid = false, points, onPointsCh
           <div className="flex items-center justify-between">
             <div>
               <div className="text-gray-400 text-xs">AI 弱點分析</div>
-              <div className="text-white text-sm font-medium mt-1">每次 ⭐ {ANALYSIS_COST} 點</div>
+              <div className="text-white text-sm font-medium mt-1">
+                {ANALYSIS_COST === 0 ? '免費體驗' : `每次 ⭐ ${ANALYSIS_COST} 點`}
+              </div>
             </div>
             <div className="text-gray-500 text-xs text-right">
               練習答對<br/>可獲得點數
@@ -263,7 +268,9 @@ export default function AnalysisTab({ userId, isPaid = false, points, onPointsCh
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.8)' }}>
           <div className="rounded-2xl p-6 w-full max-w-xs" style={{ background: '#111', border: '1px solid #222' }}>
             <div className="text-white font-bold text-base mb-2">使用 AI 分析</div>
-            <div className="text-gray-400 text-sm mb-1">花費 ⭐ {ANALYSIS_COST} 點進行弱點分析</div>
+            <div className="text-gray-400 text-sm mb-1">
+              {ANALYSIS_COST === 0 ? '免費體驗進行弱點分析' : `花費 ⭐ ${ANALYSIS_COST} 點進行弱點分析`}
+            </div>
             <div className="text-gray-500 text-xs mb-5">目前擁有：⭐ {points} 點</div>
             <div className="flex gap-3">
               <button onClick={() => setShowConfirm(false)}

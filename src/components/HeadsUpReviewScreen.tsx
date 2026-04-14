@@ -146,7 +146,7 @@ export default function HeadsUpReviewScreen({
                             disabled={analyzing === idx}
                             className="mt-2 px-3 py-1.5 rounded text-[11px] font-bold text-white"
                             style={{ background: '#7c3aed', opacity: analyzing === idx ? 0.5 : 1 }}>
-                      {analyzing === idx ? '分析中...' : 'AI 分析（3 點）'}
+                      {analyzing === idx ? '分析中...' : 'AI 分析（免費體驗）'}
                     </button>
                   ) : (
                     <div className="text-gray-500 text-[10px] mt-2">

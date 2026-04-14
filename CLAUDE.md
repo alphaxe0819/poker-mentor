@@ -166,6 +166,24 @@
 - Edge Functions 透過 Supabase Dashboard → Edge Functions → Via Editor 手動部署
 - DB migration 透過 Supabase Dashboard → SQL Editor 手動執行
 
+### Edge Function / DB Migration 部署順序（強制）
+**任何貼到 Supabase Dashboard 的 Edge Function 或 SQL migration，必須照下列順序執行：**
+
+1. **先貼到測試 Supabase**（`btiqmckyjyswzrarmfxa`）→ Deploy
+2. **在 `poker-goal-dev.vercel.app` 實際驗證功能正常**（跑一遍會呼叫該 Function / 用到該 migration 的流程）
+3. **驗證全通過後，才貼到正式 Supabase**（`qaiwsocjwkjrmyzawabt`）→ Deploy
+
+**禁止事項**：
+- ❌ 禁止一次把程式碼同時給用戶貼兩邊（即使是「同一段」程式碼）
+- ❌ 禁止跳過測試環境直接上正式
+- ❌ 禁止在測試環境未驗證前就產出正式環境的貼碼步驟
+
+**給用戶程式碼時的正確格式**：
+一次只給**一個**環境的貼碼指令。貼完測試環境後，等用戶回報驗證結果（或明確說「測試通過」），再給正式環境的貼碼指令。
+
+### 為何這條規則存在
+2026-04-14 Claude session 在給 Edge Function 替換碼時，把測試環境和正式環境的貼碼步驟寫在同一則訊息，用戶一貼就會兩邊同時更新，失去「先測試再上線」的防護機制。這條規則確保部署節奏強制分兩步，讓 bug 有機會在測試環境被攔下。
+
 ## 推送到正式機前的必做事項（按順序）
 1. 確認 `dev` 環境已測試通過
 2. 更新 `src/version.ts` 版本號
