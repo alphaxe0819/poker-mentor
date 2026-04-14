@@ -64,16 +64,26 @@
 ### 為何這條規則存在
 使用者於 2026-04-11 貼 migration 時，因為程式碼塊第一行是檔案路徑註解 `-- supabase/migrations/...`，複製過程中 `--` 被遺漏，導致 Supabase SQL Editor 收到純字串 `supabase/migrations/...` 引發 `syntax error at or near "supabase"`。這條規則防止此類誤會再次發生。
 
-## Git 工作流程（防止改動丟失）
+## Git 工作流程（雲端為中心）
 - **每完成一組修復/功能就 commit**，不要累積大量未 commit 的改動
-- Feature branch 上的 commit 不會影響正式機（只有 `git push origin main` 才觸發 Vercel 部署）
-- 建議流程：
-  1. 在 feature branch 上開發（如 `feature/hu-simulator-v1`）
-  2. 每完成一組邏輯完整的改動就 `git commit`
-  3. 可選：`git push origin <feature-branch>` 備份到遠端（不觸發部署）
-  4. 準備上線時再 merge 到 main
+- **收工前一定 `git push`**，確保雲端有最新版本（多台電腦開發靠 Git 同步）
+- **開工前一定 `git pull`**，確保拿到最新版本
+
+### 分支策略（feature → dev → main）
+- `feature/*` — 功能開發，任何電腦都在這裡工作
+- `dev` — 測試環境分支，push 後 Vercel 自動部署到 `poker-goal-dev.vercel.app`
+- `main` — 正式環境分支，push 後 Vercel 自動部署到 `poker-goal.vercel.app`
+
+### 標準流程
+1. 在 `feature/*` branch 上開發
+2. 每完成一組邏輯完整的改動就 `git commit` + `git push`
+3. 功能做完 → merge 到 `dev` → push → 測試環境自動部署
+4. 測試通過 → merge `dev` 到 `main` → push → 正式環境自動部署
+
+### 禁止事項
 - **絕對不要**在有大量未 commit 改動時切換分支（`git checkout` 會丟棄未 commit 的修改）
-- 如果用戶說「不要上正式機」，意思是不要 push 到 main，但**仍然應該在 feature branch 上 commit**
+- **絕對不要**跳過 `dev` 直接 merge feature 到 `main`
+- 如果用戶說「不要上正式機」，意思是不要 push/merge 到 main，但**仍然應該在 feature branch 上 commit + push**
 
 ### 為何這條規則存在
 2026-04-13 在 feature branch 上做了大量引擎修復（engine.ts、botAI.ts 等 33 個檔案）但未 commit。用戶切換到 main 再切回來，git checkout 丟棄了所有未 commit 的改動，導致一整天的工作丟失。
@@ -114,18 +124,27 @@
 - 入場費 0 點被部署到正式機，任何人都能免費使用
 - 用戶在不知情的情況下暴露了測試中的功能給所有使用者
 
-## 部署
+## 部署（雙環境）
+
+### 測試環境（Staging）
+- 測試網址：https://poker-goal-dev.vercel.app/（待建立）
+- 測試 Supabase：待建立
+- 測試機部署 = `git push origin dev`（Vercel 自動部署）
+- DB migration 先在測試 Supabase 跑過，確認沒問題再跑正式的
+
+### 正式環境（Production）
 - 正式網址：https://poker-goal.vercel.app/
 - 正式機部署 = `git push origin main`（Vercel 自動部署）
 - Edge Functions 透過 Supabase Dashboard → Edge Functions → Via Editor 手動部署
 - DB migration 透過 Supabase Dashboard → SQL Editor 手動執行
 
 ## 推送到正式機前的必做事項（按順序）
-1. 更新 `src/version.ts` 版本號
-2. 更新 `CHANGELOG.md` — 記錄這個版本的新功能、改動、修復
-3. 更新 memory `MEMORY.md` — 如果有新的產品決策或功能狀態變更
-4. 更新此檔案 `CLAUDE.md` — 如果有新的固定規則需要記住
-5. `git push origin main`
+1. 確認 `dev` 環境已測試通過
+2. 更新 `src/version.ts` 版本號
+3. 更新 `CHANGELOG.md` — 記錄這個版本的新功能、改動、修復
+4. 更新 memory `MEMORY.md` — 如果有新的產品決策或功能狀態變更
+5. 更新此檔案 `CLAUDE.md` — 如果有新的固定規則需要記住
+6. `git checkout main && git merge dev && git push origin main`
 
 ## 推送後的必做驗證（自動執行，不需用戶提醒）
 每次 `git push origin main` 後，**必須依序自動完成以下三步驟再回報**：
@@ -153,7 +172,9 @@
 - 路徑：`C:\Users\User\Desktop\gto-poker-trainer`
 - GitHub：`https://github.com/alphaxe0819/poker-mentor.git`
 - Tech Stack：React 19 + TypeScript 5.9 + Vite 8 + Supabase + Vercel
-- Supabase URL：`https://qaiwsocjwkjrmyzawabt.supabase.co`
+- Supabase 正式 URL：`https://qaiwsocjwkjrmyzawabt.supabase.co`
+- Supabase 測試 URL：待建立
+- 開發流程圖：`docs/two-machine-workflow.html`
 
 ## 目前產品狀態
 - 免費用戶不限訓練次數
