@@ -5,6 +5,9 @@
 
 ---
 
+## 2026-04-14 v0.8.1-dev.7 [feature/hu-simulator-v1]
+- setup-env 腳本加入 git identity 自動檢查（step 0），新電腦不用手動設
+
 ## 2026-04-14 v0.8.1-dev.6 [feature/hu-simulator-v1]
 - 修 setup-env.ps1/sh：移除 emoji，改用純 ASCII（PowerShell 編碼問題）
 
