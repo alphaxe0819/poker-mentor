@@ -81,6 +81,19 @@
 - 這讓任何電腦 `git pull` 後都能知道「上次在另一台做了什麼」
 - **新 session 開始時，先讀 `memory/dev-log.md` 了解最近的開發脈絡**
 
+## 新電腦設定 SOP（clone 後必做）
+**如果用戶說「設定開發環境」或這是一台新 clone 的電腦，依序執行：**
+1. `git checkout feature/hu-simulator-v1`（或用戶指定的 branch）
+2. `npm install`
+3. `powershell scripts/setup-env.ps1`（Windows）或 `bash scripts/setup-env.sh`（Mac/Linux）
+   - **不要用 `.env.example`**，setup-env 腳本裡有完整的正確值
+4. `npx tsc -b --noEmit`（確認 TypeScript 零錯誤）
+5. `npm run dev`（啟動開發伺服器）
+6. 讀 `memory/dev-log.md` 了解最近的開發脈絡
+
+### 為何這條規則存在
+2026-04-14 新電腦 clone 後，Claude session 沒有跑 setup-env 腳本，而是用 .env.example 叫用戶手動填值，也不知道 staging 環境已存在。這條規則確保每台新電腦都用統一流程設定。
+
 ## Git 工作流程（雲端為中心）
 - **每完成一組修復/功能就 commit**，不要累積大量未 commit 的改動
 - **收工前一定 `git push`**，確保雲端有最新版本（多台電腦開發靠 Git 同步）

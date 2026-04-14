@@ -5,6 +5,10 @@
 
 ---
 
+## 2026-04-14 v0.8.1-dev.4 [feature/hu-simulator-v1]
+- CLAUDE.md 新增「新電腦設定 SOP」：明確指定跑 setup-env 腳本，不要用 .env.example
+- 修正問題：新電腦 Claude session 沒跑 setup-env、不知道 staging 環境已存在
+
 ## 2026-04-14 v0.8.1-dev.3 [feature/hu-simulator-v1]
 - 新增 memory/dev-log.md：跨機操作記錄，跟 Git 同步
 - CLAUDE.md 加入操作記錄規則：每次 commit 必須更新 dev-log
