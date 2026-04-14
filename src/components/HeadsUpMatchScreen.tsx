@@ -315,31 +315,32 @@ export default function HeadsUpMatchScreen({
 
       {/* Main game area */}
       <div className="flex-1 flex flex-col">
-        {/* Villain info + cards */}
-        <div className="flex items-center gap-2 px-3 pt-2 pb-1">
-          {showVillainCards ? (
-            <HoleCards hand={handToCanonical(hand.villain.holeCards)} actualCards={hand.villain.holeCards} size="small" />
-          ) : (
-            <div className="flex gap-1">
-              <div className="w-8 h-11 rounded bg-gray-800 border border-gray-700" />
-              <div className="w-8 h-11 rounded bg-gray-800 border border-gray-700" />
+        {/* Table felt area with villain cards at seat */}
+        <div className="flex-1 flex flex-col items-center justify-center px-3 relative">
+          {/* Villain cards — at seat position (top-left of table) */}
+          <div className="absolute flex items-center gap-1.5" style={{ top: '4%', left: '8%', zIndex: 10 }}>
+            {showVillainCards ? (
+              <HoleCards hand={handToCanonical(hand.villain.holeCards)} actualCards={hand.villain.holeCards} size="small" />
+            ) : (
+              <div className="flex gap-0.5">
+                <div className="rounded" style={{ width: 32, height: 44, background: '#2a2a2e', border: '1px solid #444' }} />
+                <div className="rounded" style={{ width: 32, height: 44, background: '#2a2a2e', border: '1px solid #444' }} />
+              </div>
+            )}
+            <div className="text-[10px]">
+              <div className="text-gray-400">{hand.villain.position.toUpperCase()}</div>
+              <div className="text-white font-bold">{villainTotalBB} BB</div>
             </div>
-          )}
-          <div className="text-xs">
-            <div className="text-gray-400">{hand.villain.position.toUpperCase()}</div>
-            <div className="text-white font-bold">{villainTotalBB} BB</div>
+            {waitingForBot && (
+              <span className="text-gray-500 text-[10px] animate-pulse ml-1">...</span>
+            )}
           </div>
-          {waitingForBot && (
-            <span className="ml-auto text-gray-500 text-xs animate-pulse">thinking...</span>
-          )}
-        </div>
 
-        {/* Table felt area */}
-        <div className="flex-1 flex flex-col items-center justify-center px-3">
           <PokerFelt
             tableSize={2}
             heroPosition={hand.hero.position === 'btn' ? 'BTN/SB' : 'BB'}
             potTotal={hand.potBB}
+            scenarioText={`${hand.hero.position === 'btn' ? 'BTN' : 'BB'} vs ${hand.villain.position === 'btn' ? 'BTN' : 'BB'} · ${hand.street === 'preflop' ? '翻前' : hand.street === 'flop' ? '翻牌' : hand.street === 'turn' ? '轉牌' : hand.street === 'river' ? '河牌' : 'Showdown'} · ${Math.round(hand.potBB)} bb`}
             seatInfo={{
               [hand.hero.position === 'btn' ? 'SB' : 'BB']: {
                 status: 'hero',
@@ -354,31 +355,27 @@ export default function HeadsUpMatchScreen({
             }}
           />
 
-          {/* Community cards */}
+          {/* Community cards — centered below table */}
           {hand.board.length > 0 && (
             <div className="mt-2">
               <CommunityCards cards={hand.board} />
             </div>
           )}
-
-          {/* Scenario description (GTO Wizard style) */}
-          <div className="text-gray-500 text-[11px] mt-2 text-center">
-            {hand.hero.position === 'btn' ? 'BTN' : 'BB'} vs {hand.villain.position === 'btn' ? 'BTN' : 'BB'}
-            {' · '}{hand.street === 'preflop' ? '翻前' : hand.street === 'flop' ? '翻牌' : hand.street === 'turn' ? '轉牌' : hand.street === 'river' ? '河牌' : 'Showdown'}
-            {' · '}{Math.round(hand.potBB)} bb
-          </div>
         </div>
 
-        {/* Hero info + cards */}
-        <div className="flex items-center gap-2 px-3 pb-2 pt-1">
-          <HoleCards hand={handToCanonical(hand.hero.holeCards)} actualCards={hand.hero.holeCards} size="small" />
-          <div className="text-xs">
-            <div className="text-gray-400">{hand.hero.position.toUpperCase()}</div>
-            <div className="text-white font-bold">{heroTotalBB} BB</div>
+        {/* Hero cards — centered, large, with label */}
+        <div className="flex flex-col items-center gap-1 pb-2 pt-1">
+          <HoleCards hand={handToCanonical(hand.hero.holeCards)} actualCards={hand.hero.holeCards} />
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-gray-500">{handToCanonical(hand.hero.holeCards)}</span>
+            <span className="text-gray-400">·</span>
+            <span className="text-gray-400">{hand.hero.position.toUpperCase()}</span>
+            <span className="text-gray-400">·</span>
+            <span className="text-white font-bold">{heroTotalBB} BB</span>
+            {!waitingForBot && isPlayerTurn && !hand.isComplete && (
+              <span className="text-green-400 font-bold ml-2">輪到你</span>
+            )}
           </div>
-          {!waitingForBot && isPlayerTurn && !hand.isComplete && (
-            <span className="ml-auto text-green-400 text-xs font-bold">輪到你</span>
-          )}
         </div>
 
         {/* Hand result overlay */}

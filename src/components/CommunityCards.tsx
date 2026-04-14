@@ -38,7 +38,10 @@ export default memo(function CommunityCards({ cards }: Props) {
             <span className="font-black text-white leading-none" style={{ fontSize: '1.1rem' }}>
               {card.rank}
             </span>
-            <span className="absolute font-bold text-white/60" style={{ top: 2, left: 3, fontSize: '0.5rem' }}>
+            <span className="absolute font-bold text-white/70" style={{ top: 2, left: 3, fontSize: '0.6rem' }}>
+              {style.symbol}
+            </span>
+            <span className="absolute font-bold text-white/70" style={{ bottom: 2, right: 3, fontSize: '0.6rem', transform: 'rotate(180deg)' }}>
               {style.symbol}
             </span>
           </div>
