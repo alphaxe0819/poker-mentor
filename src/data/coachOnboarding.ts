@@ -38,4 +38,4 @@ export const ONBOARDING_RESPONSES: Record<string, OnboardingResponse> = {
 }
 
 export const ONBOARDING_OUTRO =
-  '這就是我能幫你的方式！不只手牌分析，你也可以問我：\n\n• 特定位置的開局範圍\n• 面對不同對手類型的調整\n• 下注尺寸的選擇邏輯\n• 翻後的打法建議\n\n正式使用每則訊息消耗 **5 點**。'
+  '這就是我能幫你的方式！不只手牌分析，你也可以問我：\n\n• 特定位置的開局範圍\n• 面對不同對手類型的調整\n• 下注尺寸的選擇邏輯\n• 翻後的打法建議\n\n**體驗期免費使用。**'

@@ -125,7 +125,8 @@ export default function HeadsUpMatchScreen({
       if (!res) return
       resolvedRef.current = null
       if (res.result !== 'in_progress') {
-        const cappedViolationPoints = Math.min(violationsRef.current * 2, 10)
+        // 種子用戶體驗期：暫時 0 點（原公式 min(violations*2, 10)）
+        const cappedViolationPoints = 0
         const withViolations: MatchState = { ...res, violationPoints: cappedViolationPoints }
         onMatchComplete(withViolations, flagsRef.current)
       } else {

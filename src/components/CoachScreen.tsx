@@ -17,7 +17,8 @@ interface ChatMessage {
   content: string
 }
 
-const COST_PER_MESSAGE = 5
+// 種子用戶體驗期：暫時 0 點（原值 5）
+const COST_PER_MESSAGE = 0
 const STORAGE_KEY = 'coach_messages'
 
 function loadMessages(): ChatMessage[] {
@@ -248,7 +249,7 @@ export default function CoachScreen({ userId, points, coachOnboardingDone, onPoi
               disabled={sending || !input.trim() || insufficientPoints}
               className="px-4 py-2.5 rounded-xl text-sm font-bold text-white transition disabled:opacity-30"
               style={{ background: '#7c3aed' }}>
-              {sending ? '...' : `${COST_PER_MESSAGE}⭐`}
+              {sending ? '...' : (COST_PER_MESSAGE === 0 ? '送出' : `${COST_PER_MESSAGE}⭐`)}
             </button>
           </div>
         </div>

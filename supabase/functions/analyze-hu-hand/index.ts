@@ -3,9 +3,9 @@
 // Name: analyze-hu-hand
 // Required env: ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //
-// Charges 3 points per call via spend_points RPC, then calls Claude
-// Haiku to analyze a single HU poker hand. Saves the analysis text to
-// tournament_hands.ai_analysis for replay without re-charging.
+// Calls Claude Haiku to analyze a single HU poker hand. Saves the
+// analysis text to tournament_hands.ai_analysis for replay.
+// 種子用戶體驗期：ANALYSIS_COST = 0（原值 3）。為 0 時跳過 spend_points。
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -13,7 +13,7 @@ const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-const ANALYSIS_COST = 3  // points per hand analysis
+const ANALYSIS_COST = 0  // 種子用戶體驗期（原值 3）
 
 interface Body {
   user_id: string
@@ -42,20 +42,24 @@ Deno.serve(async (req) => {
     const body: Body = await req.json()
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-    // 1. Charge points atomically via existing spend_points RPC
-    const { data: spendResult, error: spendError } = await supabase.rpc('spend_points', {
-      p_user_id: body.user_id,
-      p_amount: ANALYSIS_COST,
-      p_type: 'hu_analysis',
-      p_description: `HU 手分析 #${body.hand_index + 1}`,
-    })
-    if (spendError) throw new Error(`spend_points failed: ${spendError.message}`)
-    const spendRow = Array.isArray(spendResult) ? spendResult[0] : spendResult
-    if (!spendRow?.success) {
-      return new Response(JSON.stringify({ error: 'Insufficient points' }), {
-        status: 402,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // 1. Charge points atomically via existing spend_points RPC (skip when cost=0)
+    let newBalance: number | null = null
+    if (ANALYSIS_COST > 0) {
+      const { data: spendResult, error: spendError } = await supabase.rpc('spend_points', {
+        p_user_id: body.user_id,
+        p_amount: ANALYSIS_COST,
+        p_type: 'hu_analysis',
+        p_description: `HU 手分析 #${body.hand_index + 1}`,
       })
+      if (spendError) throw new Error(`spend_points failed: ${spendError.message}`)
+      const spendRow = Array.isArray(spendResult) ? spendResult[0] : spendResult
+      if (!spendRow?.success) {
+        return new Response(JSON.stringify({ error: 'Insufficient points' }), {
+          status: 402,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      newBalance = spendRow.new_balance
     }
 
     // 2. Call Claude Haiku
@@ -90,7 +94,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       analysis: analysisText,
-      newBalance: spendRow.new_balance,
+      newBalance,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
