@@ -5,6 +5,10 @@
 
 ---
 
+## 2026-04-14 v0.8.1-dev.10 [feature/hu-simulator-v1]
+- CLAUDE.md「開工 SOP」措辭改強制：Claude 必須主動執行，不准問用戶
+- 加禁止行為清單：不准問「要跑嗎」、不准跳過讀記憶檔
+
 ## 2026-04-14 v0.8.1-dev.9 [feature/hu-simulator-v1]
 - 新增 SessionStart hook（.claude/settings.json）：每次開 session 自動 git fetch --all + pull 當前 branch
 - 不用手動貼指令，Claude Code 啟動時就會自動同步雲端
