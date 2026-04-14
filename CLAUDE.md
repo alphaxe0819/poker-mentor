@@ -64,6 +64,16 @@
 ### 為何這條規則存在
 使用者於 2026-04-11 貼 migration 時，因為程式碼塊第一行是檔案路徑註解 `-- supabase/migrations/...`，複製過程中 `--` 被遺漏，導致 Supabase SQL Editor 收到純字串 `supabase/migrations/...` 引發 `syntax error at or near "supabase"`。這條規則防止此類誤會再次發生。
 
+## 版號規則（每次 commit 必做）
+- 每次 `git commit` 時，**必須同時遞增 `src/version.ts` 的 dev 版號**
+- 格式：`vX.Y.Z-dev.N`，例如 `v0.8.1-dev.1` → `v0.8.1-dev.2` → `v0.8.1-dev.3`
+- 正式上線時才移除 `-dev.N` 後綴，變成 `v0.8.1`
+- **commit 完成後必須在對話中回報版號**，格式：`✅ 已 commit，版本 v0.8.1-dev.3`
+- 這讓用戶可以核對網頁上顯示的版號是否與對話記錄一致
+
+### 為何這條規則存在
+多台電腦 + 多個 Claude session 同時開發，沒有版號就無法確認哪個環境跑的是哪個版本。版號是跨對話、跨機器的唯一識別。
+
 ## Git 工作流程（雲端為中心）
 - **每完成一組修復/功能就 commit**，不要累積大量未 commit 的改動
 - **收工前一定 `git push`**，確保雲端有最新版本（多台電腦開發靠 Git 同步）
