@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poker Goal — AI 手牌分析功能提案</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans TC',sans-serif;background:#0f0f14;width:100vw;height:100vh;overflow:hidden;position:relative;}
+.stage{position:absolute;width:1280px;height:720px;transform-origin:top left;}
+.slide{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .3s ease;}
+.slide.active{opacity:1;pointer-events:all;}
+.slide-inner{width:100%;height:100%;position:relative;overflow:hidden;background:#fff;}
+.col-left{position:absolute;left:0;top:0;width:380px;height:720px;background:#1a237e;display:flex;flex-direction:column;justify-content:flex-end;padding:44px 40px;}
+.col-right{position:absolute;left:380px;top:0;right:0;height:720px;padding:44px 48px 36px;overflow:hidden;}
+.content-area{padding:38px 56px 32px;}
+.slide-no{font-size:10px;font-weight:700;letter-spacing:3px;color:#9ca3af;text-transform:uppercase;margin-bottom:6px;}
+.slide-sub{font-size:13px;color:#6b7280;margin-bottom:20px;line-height:1.5;}
+h2{font-size:26px;font-weight:900;color:#1a237e;margin-bottom:4px;}
+h3{font-size:15px;font-weight:700;color:#1a237e;margin-bottom:5px;}
+p{font-size:12px;color:#374151;line-height:1.65;}
+.muted{color:#9ca3af;font-size:11px;}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:18px 20px;box-shadow:0 2px 6px rgba(92,53,191,.04);}
+.card-accent{border-left:4px solid #5c35bf;}
+.card-accent.green{border-left-color:#00b894;}.card-accent.red{border-left-color:#e94560;}.card-accent.orange{border-left-color:#f97316;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;}
+.tag-purple{background:#f3e8ff;color:#5c35bf;}.tag-green{background:#d1fae5;color:#059669;}.tag-red{background:#ffe4e6;color:#e94560;}
+.feat{display:flex;gap:12px;align-items:flex-start;}
+.feat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.feat-icon.purple{background:#f3e8ff;}.feat-icon.green{background:#d1fae5;}.feat-icon.red{background:#ffe4e6;}.feat-icon.orange{background:#fff7ed;}.feat-icon.blue{background:#dbeafe;}
+.feat h4{font-size:13px;font-weight:700;color:#1a237e;margin-bottom:2px;}
+.feat p{font-size:11px;color:#6b7280;line-height:1.55;}
+.cover-logo{font-size:44px;margin-bottom:4px;opacity:.2;letter-spacing:6px;}
+.cover-poker{font-family:'Arial Black',sans-serif;font-size:68px;font-weight:900;color:#fff;line-height:.9;}
+.cover-goal{font-family:'Arial Black',sans-serif;font-size:68px;font-weight:900;color:#00b894;line-height:.9;}
+.cover-tagline{font-size:13px;color:rgba(255,255,255,.45);margin-top:14px;line-height:1.8;}
+.cover-date{font-size:11px;color:rgba(255,255,255,.25);font-style:italic;margin-top:6px;}
+.cover-right-title{font-family:'Arial Black',sans-serif;font-size:20px;font-weight:900;color:#5c35bf;margin-bottom:4px;}
+.cover-right-sub{font-size:11px;color:#9ca3af;margin-bottom:20px;}
+.kpi-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(92,53,191,.06);}
+.kpi-bar{width:5px;border-radius:4px;align-self:stretch;flex-shrink:0;}
+.kpi-bar.purple{background:#5c35bf;}.kpi-bar.green{background:#00b894;}.kpi-bar.orange{background:#f97316;}
+.kpi-num{font-family:'Arial Black',sans-serif;font-size:26px;font-weight:900;line-height:1;}
+.kpi-label{font-size:11px;color:#6b7280;margin-top:3px;}
+.close-right{background:#f8fafc;}
+.summary-item{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px;}
+.summary-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.summary-dot.purple{background:#5c35bf;}.summary-dot.green{background:#00b894;}.summary-dot.orange{background:#f97316;}.summary-dot.red{background:#e94560;}
+.summary-title{font-size:13px;font-weight:700;color:#1a237e;margin-bottom:2px;}
+.summary-desc{font-size:11px;color:#6b7280;line-height:1.55;}
+.progress{position:fixed;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,.08);}
+.progress-fill{height:100%;background:linear-gradient(90deg,#5c35bf,#00b894);transition:width .3s ease;}
+.nav{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:center;z-index:100;}
+.nav button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:5px 16px;cursor:pointer;font-size:12px;font-family:inherit;transition:background .2s;}
+.nav button:hover{background:rgba(255,255,255,.22);}
+.nav .counter{color:rgba(255,255,255,.5);font-size:12px;min-width:48px;text-align:center;}
+
+/* Phone mockup */
+.phone{background:#1a1a2e;border-radius:26px;padding:10px;box-shadow:4px 6px 24px rgba(0,0,0,0.25);}
+.ph-in{background:#0f172a;border-radius:18px;overflow:hidden;color:#e2e8f0;font-size:11px;}
+.ph-bar{display:flex;justify-content:space-between;padding:6px 14px;font-size:9px;color:rgba(255,255,255,0.35);}
+.ph-nav{display:flex;justify-content:space-around;padding:8px 0;border-top:1px solid rgba(255,255,255,0.08);font-size:9px;color:rgba(255,255,255,0.35);}
+.ph-nav span.active{color:#5c35bf;font-weight:700;}
+
+/* App screen elements */
+.app-header{padding:10px 14px;font-size:13px;font-weight:700;color:#fff;display:flex;justify-content:space-between;align-items:center;}
+.app-card{background:rgba(255,255,255,0.06);border-radius:10px;margin:6px 10px;padding:10px 12px;}
+.app-tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:9px;font-weight:700;margin-right:4px;}
+.street-label{font-weight:700;font-size:11px;margin-top:6px;}
+.street-preflop{color:#c4b5fd;}.street-flop{color:#6ee7b7;}.street-turn{color:#fbbf24;}.street-river{color:#f87171;}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+
+<!-- ══ SLIDE 1 — COVER ══ -->
+<div class="slide active" id="slide-1">
+<div class="slide-inner">
+  <div class="col-left">
+    <div class="cover-logo">♠ ♥ ♦ ♣</div>
+    <div class="cover-poker">POKER</div>
+    <div class="cover-goal">GOAL</div>
+    <div class="cover-tagline">AI 手牌分析<br>功能設計提案</div>
+    <div class="cover-date">APR 2026 &nbsp;·&nbsp; Internal Proposal</div>
+  </div>
+  <div class="col-right" style="display:flex;flex-direction:column;justify-content:center;">
+    <div class="cover-right-title">超越 GTO Wizard</div>
+    <div class="cover-right-sub">Solver 給答案，我們教你怎麼贏 — 認識你的對手、針對弱點剝削</div>
+    <div class="kpi-card">
+      <div class="kpi-bar purple"></div>
+      <div><div class="kpi-num" style="color:#5c35bf;">三欄對照</div><div class="kpi-label">GTO 標準 × 對手剝削 × 為什麼這樣打</div></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-bar green"></div>
+      <div><div class="kpi-num" style="color:#00b894;">對手建檔</div><div class="kpi-label">預設 / 情境選擇 / AI 對話三種模式</div></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-bar orange"></div>
+      <div><div class="kpi-num" style="color:#f97316;">專屬訓練</div><div class="kpi-label">基於對手弱點自動生成練習，越打越準</div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ SLIDE 2 — 問題 + GTO Wizard AI 對比 ══ -->
+<div class="slide" id="slide-2">
+<div class="slide-inner">
+<div class="content-area" style="padding-top:32px;">
+  <div class="slide-no">01</div>
+  <h2>GTO Wizard AI vs Poker Goal AI</h2>
+  <div class="slide-sub" style="margin-bottom:12px;">「你用 solver 分析手牌，但 solver 不認識你」— 兩個完全不同的賽道</div>
+
+  <div class="grid-2" style="gap:16px;margin-bottom:12px;">
+    <div class="card" style="padding:16px;border-top:3px solid #6b7280;">
+      <div style="font-size:14px;font-weight:900;color:#6b7280;margin-bottom:10px;">🏆 GTO Wizard AI — 求解器</div>
+      <div style="font-size:11px;line-height:1.7;margin-bottom:10px;">
+        與 Ruse AI 合作開發的即時 GTO 求解引擎。<br>任何情境幾秒內算出 Nash 均衡解。
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;font-size:11px;">
+        <div>✓ 即時求解任何情境（不用預算）</div>
+        <div>✓ 自訂範圍、籌碼、下注尺寸</div>
+        <div>✓ Multiway 3+ 人底池（Ultra 方案）</div>
+        <div>✓ 下注樹自動優化</div>
+        <div style="border-top:1px solid #e5e7eb;padding-top:6px;margin-top:4px;color:#e94560;font-weight:700;">
+          ✗ 不認識你的對手<br>
+          ✗ 不解釋為什麼<br>
+          ✗ 不針對不同對手調整<br>
+          ✗ 沒有個人化建議
+        </div>
+      </div>
+    </div>
+    <div class="card card-accent" style="padding:16px;border-top:3px solid #5c35bf;">
+      <div style="font-size:14px;font-weight:900;color:#5c35bf;margin-bottom:10px;">🎯 Poker Goal AI — 教練</div>
+      <div style="font-size:11px;line-height:1.7;margin-bottom:10px;">
+        GTO 資料庫為基準線，AI 教練根據對手類型<br>調整策略，用中文解釋每一步的邏輯。
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;font-size:11px;">
+        <div style="color:#059669;font-weight:700;">✓ 對手建檔 — 認識你打的每個人</div>
+        <div style="color:#059669;font-weight:700;">✓ 三欄對照 — GTO + 剝削 + 解釋</div>
+        <div style="color:#059669;font-weight:700;">✓ 個人化弱點分析 — 記住你的習慣</div>
+        <div style="color:#059669;font-weight:700;">✓ 專屬訓練 — 針對對手弱點出題</div>
+        <div style="border-top:1px solid #e5e7eb;padding-top:6px;margin-top:4px;">
+          繁中 + 簡中 + 英文原生<br>
+          NT$299 起，GTO Wizard NT$1,300+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:12px 20px;background:#ede9fe;border-color:#c4b5fd;">
+    <div style="font-size:12px;font-weight:700;color:#5c35bf;text-align:center;">
+      GTO Wizard AI 是更強的計算機 ｜ Poker Goal AI 是懂你的教練 — 不同賽道，不正面競爭
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ══ SLIDE 3 — 三欄分析 Mockup ══ -->
+<div class="slide" id="slide-3">
+<div class="slide-inner" style="background:#0f172a;">
+<div style="padding:20px 30px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <div>
+      <div class="slide-no" style="color:rgba(255,255,255,.4);">02 · 產品畫面</div>
+      <h2 style="color:#fff;font-size:22px;">三欄對照分析</h2>
+    </div>
+    <div style="font-size:11px;color:rgba(255,255,255,.35);">Hero: A♦T♦ ｜ 3-bet pot ｜ Board: 7♠8♥9♠</div>
+  </div>
+
+  <!-- Hand info bar -->
+  <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:10px 16px;display:flex;gap:20px;align-items:center;margin-bottom:12px;font-size:11px;color:#94a3b8;">
+    <div><span style="color:#60a5fa;font-weight:700;">Hero (UTG)</span> A♦T♦</div>
+    <div><span style="color:#f87171;font-weight:700;">Villain (CO)</span> Unknown</div>
+    <div>Pot: 24 BB</div>
+    <div style="margin-left:auto;">
+      <span class="app-tag" style="background:#5c35bf;color:#fff;">3-bet pot</span>
+      <span class="app-tag" style="background:#f97316;color:#fff;">兩同花</span>
+      <span class="app-tag" style="background:#059669;color:#fff;">卡順聽牌</span>
+    </div>
+  </div>
+
+  <!-- Three columns -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+    <!-- GTO -->
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px;">
+      <div style="text-align:center;margin-bottom:10px;">
+        <div style="font-size:24px;margin-bottom:2px;">📐</div>
+        <div style="font-size:13px;font-weight:900;color:#94a3b8;">GTO 標準</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.3);">對所有人的最優解</div>
+      </div>
+      <div style="font-size:10px;color:#e2e8f0;line-height:1.8;">
+        <div class="street-label street-flop">Flop: 7♠8♥9♠</div>
+        <div>C-bet <strong>55%</strong> 半池 ｜ Check 45%</div>
+        <div style="color:#6ee7b7;font-size:9px;">→ 有卡順 + 後門同花，可以代表強牌</div>
+        <div class="street-label street-turn" style="margin-top:8px;">Turn: 2♣（空白）</div>
+        <div>二次開火 <strong>~40%</strong></div>
+        <div style="color:#fbbf24;font-size:9px;">→ 降低頻率，部分放棄</div>
+        <div class="street-label street-river" style="margin-top:8px;">River: K♦（沒中）</div>
+        <div>放棄 <strong>~85%</strong></div>
+        <div style="color:#f87171;font-size:9px;">→ 沒有足夠 equity，不值得詐唬</div>
+      </div>
+    </div>
+    <!-- vs Nit -->
+    <div style="background:rgba(92,53,191,.12);border:1px solid rgba(92,53,191,.3);border-radius:12px;padding:14px;">
+      <div style="text-align:center;margin-bottom:10px;">
+        <div style="font-size:24px;margin-bottom:2px;">🐑</div>
+        <div style="font-size:13px;font-weight:900;color:#c4b5fd;">vs 緊弱型</div>
+        <div style="font-size:9px;color:rgba(196,181,253,.6);">棄牌率 >60% → 多詐唬</div>
+      </div>
+      <div style="font-size:10px;color:#e2e8f0;line-height:1.8;">
+        <div class="street-label street-flop">Flop: 7♠8♥9♠</div>
+        <div>C-bet <strong style="color:#c4b5fd;">70%</strong> 加大尺寸 2/3 pot</div>
+        <div style="color:#c4b5fd;font-size:9px;">→ 對手拿 TT-QQ 會跟但扛不住壓力</div>
+        <div class="street-label street-turn" style="margin-top:8px;">Turn: 2♣（空白）</div>
+        <div>繼續壓 <strong style="color:#c4b5fd;">3/4 pot</strong></div>
+        <div style="color:#c4b5fd;font-size:9px;">→ 把 overpair 逼出去</div>
+        <div class="street-label street-river" style="margin-top:8px;">River: K♦（沒中）</div>
+        <div style="color:#c4b5fd;font-weight:700;font-size:12px;">超池全下 1.5x pot 🔥</div>
+        <div style="color:#c4b5fd;font-size:9px;">→ 他棄 72%+，bluff 長期正 EV</div>
+      </div>
+    </div>
+    <!-- vs Fish -->
+    <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:12px;padding:14px;">
+      <div style="text-align:center;margin-bottom:10px;">
+        <div style="font-size:24px;margin-bottom:2px;">🐟</div>
+        <div style="font-size:13px;font-weight:900;color:#fbbf24;">vs 跟注站</div>
+        <div style="font-size:9px;color:rgba(251,191,36,.6);">棄牌率 <30% → 不詐唬</div>
+      </div>
+      <div style="font-size:10px;color:#e2e8f0;line-height:1.8;">
+        <div class="street-label street-flop">Flop: 7♠8♥9♠</div>
+        <div>沒中 → <strong style="color:#fbbf24;">Check</strong></div>
+        <div style="color:#fbbf24;font-size:9px;">→ 詐唬是送錢，AT 沒有攤牌價值就放棄</div>
+        <div class="street-label street-turn" style="margin-top:8px;">Turn: T♥（中了頂對！）</div>
+        <div>下注 <strong style="color:#fbbf24;">3/4 pot 榨取價值</strong></div>
+        <div style="color:#fbbf24;font-size:9px;">→ 他會用各種差牌付你</div>
+        <div class="street-label street-river" style="margin-top:8px;">River: 3♦</div>
+        <div style="color:#fbbf24;font-weight:700;font-size:12px;">繼續打大 pot size 💰</div>
+        <div style="color:#fbbf24;font-size:9px;">→ 跟注站不會棄牌，最大化價值</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom insight -->
+  <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:8px 16px;display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;">
+    <span>📐 GTO：數學最優解</span>
+    <span>🐑 緊弱：bluff EV +2.3 BB/hand</span>
+    <span>🐟 跟注站：value EV +4.1 BB/hand（中牌時）</span>
+    <span style="color:#5c35bf;font-weight:700;">同一手牌，三種打法，三種結果</span>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ══ SLIDE 4 — 對手建檔：情境選擇 Mockup ══ -->
+<div class="slide" id="slide-4">
+<div class="slide-inner">
+<div style="display:flex;height:100%;">
+  <!-- Left: explanation -->
+  <div style="width:420px;padding:38px 30px 30px 56px;">
+    <div class="slide-no">03 · 對手建檔</div>
+    <h2 style="font-size:22px;">情境選擇題</h2>
+    <div class="slide-sub" style="margin-bottom:16px;">像心理測驗一樣，5-8 題快速建立精準對手檔案</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="feat" style="align-items:flex-start;">
+        <div class="feat-icon purple" style="flex-shrink:0;width:32px;height:32px;font-size:16px;">📋</div>
+        <div><h4>用情境代替數字</h4><p>不問「C-bet 頻率」，問「對手會用這些牌下注嗎？」</p></div>
+      </div>
+      <div class="feat" style="align-items:flex-start;">
+        <div class="feat-icon green" style="flex-shrink:0;width:32px;height:32px;font-size:16px;">✅</div>
+        <div><h4>複選直覺操作</h4><p>勾選你觀察到的行為，系統自動推算各項數值</p></div>
+      </div>
+      <div class="feat" style="align-items:flex-start;">
+        <div class="feat-icon orange" style="flex-shrink:0;width:32px;height:32px;font-size:16px;">🏷️</div>
+        <div><h4>即時生成標籤</h4><p>答完自動產出對手類型 + 雷達圖 + 剝削建議</p></div>
+      </div>
+    </div>
+    <div style="margin-top:16px;padding:10px 14px;background:#ede9fe;border-radius:8px;">
+      <div style="font-size:11px;font-weight:700;color:#5c35bf;">Basic + PRO 用戶 ｜ 免費不耗點</div>
+    </div>
+  </div>
+  <!-- Right: phone mockup -->
+  <div style="flex:1;background:#f8fafc;display:flex;align-items:center;justify-content:center;">
+    <div class="phone" style="width:280px;">
+      <div class="ph-in" style="min-height:480px;">
+        <div class="ph-bar"><span>19:30</span><span>⚡ 92%</span></div>
+        <div class="app-header">
+          <span>← 對手建檔</span>
+          <span style="font-size:11px;color:rgba(255,255,255,.4);">3/6</span>
+        </div>
+        <!-- Progress -->
+        <div style="margin:0 14px 12px;height:3px;background:rgba(255,255,255,.1);border-radius:2px;">
+          <div style="width:50%;height:100%;background:#5c35bf;border-radius:2px;"></div>
+        </div>
+        <!-- Question -->
+        <div style="padding:0 14px;">
+          <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:4px;">翻前對手在 CO 會 3-bet 哪些牌？</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:14px;">複選你觀察到的情況</div>
+          <!-- Options -->
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="background:rgba(92,53,191,.25);border:1.5px solid #5c35bf;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:8px;">
+              <div style="width:18px;height:18px;border-radius:4px;background:#5c35bf;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;">✓</div>
+              <div><div style="font-size:11px;font-weight:700;color:#fff;">AA KK QQ</div><div style="font-size:9px;color:rgba(255,255,255,.4);">只有超強牌才 3-bet</div></div>
+            </div>
+            <div style="background:rgba(92,53,191,.25);border:1.5px solid #5c35bf;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:8px;">
+              <div style="width:18px;height:18px;border-radius:4px;background:#5c35bf;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;">✓</div>
+              <div><div style="font-size:11px;font-weight:700;color:#fff;">AK AQ JJ TT</div><div style="font-size:9px;color:rgba(255,255,255,.4);">強牌都會 3-bet</div></div>
+            </div>
+            <div style="background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.15);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:8px;">
+              <div style="width:18px;height:18px;border-radius:4px;border:1.5px solid rgba(255,255,255,.2);"></div>
+              <div><div style="font-size:11px;font-weight:700;color:#fff;">AT KJ 99 77</div><div style="font-size:9px;color:rgba(255,255,255,.4);">中等牌也會 3-bet</div></div>
+            </div>
+            <div style="background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.15);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:8px;">
+              <div style="width:18px;height:18px;border-radius:4px;border:1.5px solid rgba(255,255,255,.2);"></div>
+              <div><div style="font-size:11px;font-weight:700;color:#fff;">98s A5s 65s</div><div style="font-size:9px;color:rgba(255,255,255,.4);">連聽牌都拿來 3-bet</div></div>
+            </div>
+          </div>
+          <!-- Next button -->
+          <div style="margin-top:14px;background:#5c35bf;border-radius:10px;padding:10px;text-align:center;font-weight:700;font-size:12px;color:#fff;">
+            下一題 →
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ══ SLIDE 5 — AI 對話建檔 Mockup ══ -->
+<div class="slide" id="slide-5">
+<div class="slide-inner">
+<div style="display:flex;height:100%;">
+  <!-- Left: phone mockup -->
+  <div style="width:460px;background:#0f172a;display:flex;align-items:center;justify-content:center;">
+    <div class="phone" style="width:300px;">
+      <div class="ph-in" style="min-height:500px;">
+        <div class="ph-bar"><span>19:42</span><span>⚡ 89%</span></div>
+        <div class="app-header">
+          <span>🤖 AI 對手建檔</span>
+          <span style="font-size:10px;color:#fbbf24;">-5 點/輪</span>
+        </div>
+        <div style="padding:8px 14px;display:flex;flex-direction:column;gap:10px;">
+          <!-- AI message -->
+          <div style="display:flex;gap:8px;">
+            <div style="width:24px;height:24px;border-radius:50%;background:#5c35bf;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;">AI</div>
+            <div style="background:rgba(255,255,255,.08);border-radius:0 10px 10px 10px;padding:8px 12px;font-size:11px;line-height:1.6;max-width:220px;">
+              幫你建立對手檔案。<br>請描述一下這個對手的打法風格？
+            </div>
+          </div>
+          <!-- User message -->
+          <div style="display:flex;gap:8px;flex-direction:row-reverse;">
+            <div style="width:24px;height:24px;border-radius:50%;background:#059669;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;">我</div>
+            <div style="background:#1d4ed8;border-radius:10px 0 10px 10px;padding:8px 12px;font-size:11px;line-height:1.6;max-width:200px;">
+              這個人很魚，什麼都跟
+            </div>
+          </div>
+          <!-- AI follow-up -->
+          <div style="display:flex;gap:8px;">
+            <div style="width:24px;height:24px;border-radius:50%;background:#5c35bf;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;">AI</div>
+            <div style="background:rgba(255,255,255,.08);border-radius:0 10px 10px 10px;padding:8px 12px;font-size:11px;line-height:1.6;max-width:220px;">
+              了解。他翻前會主動加注嗎？還是大部分用跟注進場？
+            </div>
+          </div>
+          <!-- User -->
+          <div style="display:flex;gap:8px;flex-direction:row-reverse;">
+            <div style="width:24px;height:24px;border-radius:50%;background:#059669;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;">我</div>
+            <div style="background:#1d4ed8;border-radius:10px 0 10px 10px;padding:8px 12px;font-size:11px;line-height:1.6;max-width:200px;">
+              都用跟注，很少加注
+            </div>
+          </div>
+          <!-- AI result -->
+          <div style="display:flex;gap:8px;">
+            <div style="width:24px;height:24px;border-radius:50%;background:#5c35bf;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;">AI</div>
+            <div style="background:rgba(5,150,105,.15);border:1px solid rgba(5,150,105,.3);border-radius:0 10px 10px 10px;padding:10px 12px;font-size:11px;line-height:1.6;max-width:240px;">
+              ✅ <strong>對手檔案建立完成</strong><br><br>
+              <span style="font-size:16px;">🐟</span> <strong>典型跟注站</strong><br>
+              VPIP ~55% ｜ Fold to bet ~20%<br><br>
+              <span style="color:#6ee7b7;font-weight:700;">剝削策略：絕對不詐唬，中牌打大，他會用各種差牌付你。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Right: explanation -->
+  <div style="flex:1;padding:38px 56px 30px 40px;">
+    <div class="slide-no">04 · 對手建檔</div>
+    <h2 style="font-size:22px;">AI 對話深度建檔</h2>
+    <div class="slide-sub">用自然語言描述對手，AI 追問細節，自動建立精確檔案</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card card-accent" style="padding:14px;">
+        <h3 style="font-size:13px;">比滑桿更直覺</h3>
+        <p>不用懂「VPIP 55%」是什麼意思，只要說「這個人很魚什麼都跟」，AI 自動轉換為精確數值。</p>
+      </div>
+      <div class="card card-accent green" style="padding:14px;">
+        <h3 style="font-size:13px;">越問越精確</h3>
+        <p>AI 會追問關鍵維度：翻前、翻後、面對加注、河牌行為。3-5 輪對話就能建立完整 profile。</p>
+      </div>
+      <div class="card card-accent orange" style="padding:14px;">
+        <h3 style="font-size:13px;">驅動點數消耗</h3>
+        <p>每輪對話 5 點。Basic 可建 1 組，PRO 無限。精確建檔 = 精確剝削 = 用戶願意付費。</p>
+      </div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;">
+      <div style="flex:1;padding:8px 12px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;text-align:center;">
+        <div style="font-size:18px;font-weight:900;color:#5c35bf;">1 組</div>
+        <div style="font-size:10px;color:#6b7280;">Basic 限制</div>
+      </div>
+      <div style="flex:1;padding:8px 12px;background:#fff7ed;border:1px solid #f97316;border-radius:8px;text-align:center;">
+        <div style="font-size:18px;font-weight:900;color:#f97316;">無限</div>
+        <div style="font-size:10px;color:#6b7280;">PRO 專屬</div>
+      </div>
+      <div style="flex:1;padding:8px 12px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;text-align:center;">
+        <div style="font-size:18px;font-weight:900;color:#e94560;">15-25 點</div>
+        <div style="font-size:10px;color:#6b7280;">每組建檔成本</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ══ SLIDE 6 — 視覺化報告 Mockup ══ -->
+<div class="slide" id="slide-6">
+<div class="slide-inner" style="background:#0f172a;">
+<div style="padding:20px 30px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div>
+      <div class="slide-no" style="color:rgba(255,255,255,.4);">05 · 視覺化報告</div>
+      <h2 style="color:#fff;font-size:22px;">對手偏移分析</h2>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:20px;">🐑</span>
+      <div><div style="font-size:13px;font-weight:700;color:#fff;">老張</div><div style="font-size:10px;color:rgba(255,255,255,.4);">偏緊被動型 ・ 32 手記錄</div></div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:16px;">
+    <!-- Radar chart -->
+    <div style="width:340px;background:rgba(255,255,255,.04);border-radius:12px;padding:20px;text-align:center;">
+      <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:10px;">對手 Profile vs GTO 基準線</div>
+      <!-- SVG Radar -->
+      <svg viewBox="0 0 240 220" style="width:240px;height:220px;">
+        <!-- Outer pentagon (GTO baseline) -->
+        <polygon points="120,20 220,85 190,190 50,190 20,85" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1" stroke-dasharray="4,4"/>
+        <!-- Inner polygon (opponent) - tight passive shape -->
+        <polygon points="120,60 160,90 145,170 95,170 80,90" fill="rgba(92,53,191,.2)" stroke="#5c35bf" stroke-width="2"/>
+        <!-- Labels -->
+        <text x="120" y="12" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="700">翻前鬆緊</text>
+        <text x="232" y="88" text-anchor="start" fill="#94a3b8" font-size="9" font-weight="700">攻擊性</text>
+        <text x="200" y="205" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="700">翻後下注</text>
+        <text x="40" y="205" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="700">詐唬傾向</text>
+        <text x="4" y="88" text-anchor="start" fill="#94a3b8" font-size="9" font-weight="700">抗壓性</text>
+      </svg>
+      <div style="display:flex;justify-content:center;gap:16px;margin-top:6px;font-size:10px;">
+        <span style="color:#5c35bf;">● 對手</span>
+        <span style="color:rgba(255,255,255,.25);">-- GTO 基準</span>
+      </div>
+    </div>
+
+    <!-- Deviation details -->
+    <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
+      <!-- Critical weakness -->
+      <div style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:12px 16px;">
+        <div style="font-size:11px;font-weight:700;color:#f87171;margin-bottom:8px;">🔴 關鍵弱點</div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#e2e8f0;margin-bottom:4px;">
+          <span>面對加注棄牌率</span>
+          <div><strong style="color:#f87171;">72%</strong> <span style="color:#6b7280;font-size:10px;">GTO 45%</span> <span style="color:#f87171;font-size:10px;">↑27%</span></div>
+        </div>
+        <div style="height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;">
+          <div style="width:72%;height:100%;background:linear-gradient(90deg,#f87171,#ef4444);border-radius:3px;"></div>
+        </div>
+      </div>
+      <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:10px;padding:12px 16px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#e2e8f0;margin-bottom:4px;">
+          <span>River 詐唬頻率</span>
+          <div><strong style="color:#fbbf24;">8%</strong> <span style="color:#6b7280;font-size:10px;">GTO 20%</span> <span style="color:#fbbf24;font-size:10px;">↓12%</span></div>
+        </div>
+        <div style="height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;">
+          <div style="width:8%;height:100%;background:#fbbf24;border-radius:3px;"></div>
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 16px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#e2e8f0;margin-bottom:4px;">
+          <span>翻後 C-bet 頻率</span>
+          <div><strong>62%</strong> <span style="color:#6b7280;font-size:10px;">GTO 55%</span> <span style="color:#f97316;font-size:10px;">↑7%</span></div>
+        </div>
+        <div style="height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;">
+          <div style="width:62%;height:100%;background:#f97316;border-radius:3px;"></div>
+        </div>
+      </div>
+      <!-- AI Exploit suggestion -->
+      <div style="background:rgba(5,150,105,.1);border:1px solid rgba(5,150,105,.3);border-radius:10px;padding:14px 16px;">
+        <div style="font-size:11px;font-weight:700;color:#6ee7b7;margin-bottom:6px;">🎯 AI 剝削建議</div>
+        <div style="font-size:11px;color:#e2e8f0;line-height:1.7;">
+          • 面對加注 → <strong>提高 raise 頻率到 15%</strong><br>
+          • River → <strong>增加 bluff 頻率</strong>（他幾乎不 bluff-catch）<br>
+          • C-bet 偏高 → <strong>更多 check-raise</strong> 剝削
+        </div>
+      </div>
+      <div style="background:rgba(92,53,191,.1);border-radius:8px;padding:8px 14px;text-align:center;">
+        <div style="font-size:11px;color:#c4b5fd;font-weight:700;">🏋️ 生成「剝削老張」專屬訓練 → <span style="color:#fff;">開始訓練</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ══ SLIDE 7 — 專屬訓練 Mockup ══ -->
+<div class="slide" id="slide-7">
+<div class="slide-inner">
+<div style="display:flex;height:100%;">
+  <!-- Left: phone mockup - training -->
+  <div style="width:460px;background:#0f172a;display:flex;align-items:center;justify-content:center;">
+    <div class="phone" style="width:300px;">
+      <div class="ph-in" style="min-height:500px;">
+        <div class="ph-bar"><span>20:15</span><span>⚡ 85%</span></div>
+        <div class="app-header">
+          <span>🏋️ 剝削訓練：老張</span>
+          <span style="font-size:10px;color:rgba(255,255,255,.4);">3/10</span>
+        </div>
+        <!-- Training scenario -->
+        <div style="padding:0 14px;">
+          <div style="background:rgba(239,68,68,.1);border-radius:8px;padding:6px 10px;font-size:9px;color:#f87171;font-weight:700;margin-bottom:8px;">
+            🔴 對手弱點：面對加注棄牌率 72%
+          </div>
+          <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:12px;margin-bottom:10px;">
+            <div style="font-size:11px;color:#e2e8f0;line-height:1.7;">
+              你在 <span style="color:#60a5fa;font-weight:700;">BTN</span>，手持 K♠7♠<br>
+              對手 <span style="color:#f87171;font-weight:700;">🐑 老張</span> 在 BB
+            </div>
+            <div style="font-size:11px;color:#6ee7b7;font-weight:700;margin-top:6px;">Flop: Q♥ 8♣ 3♦</div>
+            <div style="font-size:10px;color:#94a3b8;margin-top:2px;">Pot: 6 BB ｜ 老張 check</div>
+          </div>
+          <div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:8px;">你的行動？</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 14px;font-size:11px;color:#e2e8f0;">Check</div>
+            <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 14px;font-size:11px;color:#e2e8f0;">Bet 1/3 pot（2 BB）</div>
+            <div style="background:rgba(92,53,191,.3);border:1.5px solid #5c35bf;border-radius:8px;padding:8px 14px;font-size:11px;color:#fff;font-weight:700;">Bet 2/3 pot（4 BB）✓</div>
+            <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 14px;font-size:11px;color:#e2e8f0;">Bet pot（6 BB）</div>
+          </div>
+          <!-- Answer -->
+          <div style="margin-top:10px;background:rgba(5,150,105,.12);border:1px solid rgba(5,150,105,.3);border-radius:10px;padding:10px 12px;">
+            <div style="font-size:11px;color:#6ee7b7;font-weight:700;margin-bottom:4px;">✅ 正確！</div>
+            <div style="font-size:10px;color:#94a3b8;line-height:1.6;">K-high 沒有攤牌價值，但老張棄牌率 72%。2/3 pot 施壓長期正 EV，比 1/3 更有說服力。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Right: explanation -->
+  <div style="flex:1;padding:38px 56px 30px 40px;">
+    <div class="slide-no">06 · 專屬訓練</div>
+    <h2 style="font-size:22px;">針對對手弱點出題</h2>
+    <div class="slide-sub">不是通用 GTO 訓練，是「教你怎麼打贏這個人」的專屬練習</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;">
+      <div class="feat" style="align-items:flex-start;">
+        <div class="feat-icon red" style="flex-shrink:0;width:36px;height:36px;font-size:18px;">🎯</div>
+        <div><h4>弱點聚焦</h4><p>每組訓練鎖定對手一個弱點（如「面對加注棄牌率 72%」），反覆練到會</p></div>
+      </div>
+      <div class="feat" style="align-items:flex-start;">
+        <div class="feat-icon green" style="flex-shrink:0;width:36px;height:36px;font-size:18px;">📈</div>
+        <div><h4>動態難度</h4><p>答對加難（對手從 72% 降到 60%），答錯重練，在舒適區邊緣學習</p></div>
+      </div>
+      <div class="feat" style="align-items:flex-start;">
+        <div class="feat-icon purple" style="flex-shrink:0;width:36px;height:36px;font-size:18px;">🔄</div>
+        <div><h4>連結真實對手</h4><p>訓練完直接帶入下次實戰。HU 模擬器可載入對手 profile 模擬對戰</p></div>
+      </div>
+      <div class="feat" style="align-items:flex-start;">
+        <div class="feat-icon orange" style="flex-shrink:0;width:36px;height:36px;font-size:18px;">🏆</div>
+        <div><h4>月榜積分</h4><p>對手剝削訓練完成給額外積分，驅動持續練習</p></div>
+      </div>
+    </div>
+    <div style="padding:10px 14px;background:#fff7ed;border:1px solid #f97316;border-radius:8px;">
+      <div style="font-size:11px;font-weight:700;color:#f97316;">PRO 專屬功能 — 無限對手 × 無限訓練生成</div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ══ SLIDE 8 — 技術架構 ══ -->
+<div class="slide" id="slide-8">
+<div class="slide-inner">
+<div class="content-area" style="padding-top:32px;">
+  <div class="slide-no">07</div>
+  <h2>技術架構</h2>
+  <div class="slide-sub" style="margin-bottom:14px;">GTO 資料庫基準線 × 對手偏移規則引擎 × Claude AI 解說</div>
+
+  <div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;font-size:11px;">
+    <div style="text-align:center;min-width:110px;background:#dbeafe;border-radius:8px;padding:10px 8px;">
+      <div style="font-size:18px;margin-bottom:3px;">📝</div>
+      <div style="font-weight:700;color:#1d4ed8;">用戶輸入</div>
+      <div style="font-size:9px;color:#6b7280;">手牌 + 牌面<br>+ 對手類型</div>
+    </div>
+    <div style="font-size:16px;color:#9ca3af;">→</div>
+    <div style="text-align:center;min-width:110px;background:#ede9fe;border-radius:8px;padding:10px 8px;">
+      <div style="font-size:18px;margin-bottom:3px;">📊</div>
+      <div style="font-weight:700;color:#5c35bf;">GTO 資料庫</div>
+      <div style="font-size:9px;color:#6b7280;">查表標準策略<br>頻率 + 尺寸</div>
+    </div>
+    <div style="font-size:16px;color:#9ca3af;">→</div>
+    <div style="text-align:center;min-width:110px;background:#fff7ed;border-radius:8px;padding:10px 8px;">
+      <div style="font-size:18px;margin-bottom:3px;">⚙️</div>
+      <div style="font-weight:700;color:#f97316;">偏移引擎</div>
+      <div style="font-size:9px;color:#6b7280;">對手 profile →<br>調整頻率/尺寸</div>
+    </div>
+    <div style="font-size:16px;color:#9ca3af;">→</div>
+    <div style="text-align:center;min-width:110px;background:#d1fae5;border-radius:8px;padding:10px 8px;">
+      <div style="font-size:18px;margin-bottom:3px;">🤖</div>
+      <div style="font-weight:700;color:#059669;">Claude AI</div>
+      <div style="font-size:9px;color:#6b7280;">GTO + 調整 →<br>中文解說</div>
+    </div>
+    <div style="font-size:16px;color:#9ca3af;">→</div>
+    <div style="text-align:center;min-width:110px;background:#f0fdf9;border:1.5px solid #059669;border-radius:8px;padding:10px 8px;">
+      <div style="font-size:18px;margin-bottom:3px;">📱</div>
+      <div style="font-weight:700;color:#059669;">三欄輸出</div>
+      <div style="font-size:9px;color:#6b7280;">GTO + 剝削<br>+ 解釋為什麼</div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="gap:12px;margin-bottom:12px;">
+    <div class="card" style="padding:14px;">
+      <div style="font-size:12px;font-weight:700;color:#1a237e;margin-bottom:8px;">🔍 GTO 基準線</div>
+      <div style="font-size:11px;line-height:1.7;">
+        用 Solver 預算各情境標準策略（方案 B），查表注入 prompt。Claude 基於<strong>比對結果</strong>做解說，準確度 90%+。已有翻前資料，翻後需擴充主要 texture。
+      </div>
+    </div>
+    <div class="card" style="padding:14px;">
+      <div style="font-size:12px;font-weight:700;color:#f97316;margin-bottom:8px;">⚙️ 對手偏移規則引擎</div>
+      <table style="width:100%;font-size:10px;border-collapse:collapse;">
+        <tr style="background:#f8fafc;"><td style="padding:3px 6px;font-weight:700;">偵測</td><td style="padding:3px 6px;">條件</td><td style="padding:3px 6px;">剝削</td></tr>
+        <tr><td style="padding:3px 6px;">C-bet 過高</td><td style="padding:3px 6px;">>75%</td><td style="padding:3px 6px;">更多 check-raise</td></tr>
+        <tr style="background:#f8fafc;"><td style="padding:3px 6px;">面對 raise 棄太多</td><td style="padding:3px 6px;">>60%</td><td style="padding:3px 6px;">更多 raise bluff</td></tr>
+        <tr><td style="padding:3px 6px;">River 不詐唬</td><td style="padding:3px 6px;"><10%</td><td style="padding:3px 6px;">放心棄牌 or 精準抓詐</td></tr>
+        <tr style="background:#f8fafc;"><td style="padding:3px 6px;">翻前太鬆</td><td style="padding:3px 6px;">VPIP>40%</td><td style="padding:3px 6px;">收緊範圍打價值</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" style="padding:10px 16px;background:#f8fafc;border-style:dashed;">
+    <div style="font-size:11px;display:flex;gap:16px;">
+      <span>🤖 Haiku NT$0.028/則（含記憶 RAG）</span>
+      <span>📊 Sonnet NT$2.2/次（弱點分析）</span>
+      <span>💾 教練記憶：累積對手數據越用越準</span>
+      <span>🌏 繁中 + 簡中 + 英文</span>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ══ SLIDE 9 — 時程 + 整合 ══ -->
+<div class="slide" id="slide-9">
+<div class="slide-inner">
+<div class="content-area" style="padding-top:32px;">
+  <div class="slide-no">08</div>
+  <h2>開發時程與產品整合</h2>
+  <div class="slide-sub" style="margin-bottom:12px;">Phase 0 最快 2-4 週出 MVP，回應董事長三大問題</div>
+
+  <div style="display:flex;gap:10px;margin-bottom:14px;">
+    <div style="flex:1;border-top:3px solid #5c35bf;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;">
+      <div style="font-size:10px;font-weight:700;color:#5c35bf;letter-spacing:1px;margin-bottom:5px;">PHASE 0 · 2-4 週</div>
+      <div style="font-size:14px;font-weight:700;color:#1a237e;margin-bottom:6px;">牌譜分析 MVP</div>
+      <div style="font-size:11px;color:#6b7280;line-height:1.7;">• 牌譜解析器<br>• GTO 對比 + 逐街分析<br>• 4 預設對手類型<br>• 三欄對照輸出</div>
+    </div>
+    <div style="flex:1;border-top:3px solid #00b894;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;">
+      <div style="font-size:10px;font-weight:700;color:#00b894;letter-spacing:1px;margin-bottom:5px;">PHASE 1 · 1-2 月</div>
+      <div style="font-size:14px;font-weight:700;color:#1a237e;margin-bottom:6px;">對手建檔 + 視覺化</div>
+      <div style="font-size:11px;color:#6b7280;line-height:1.7;">• 情境選擇題建檔<br>• AI 對話深度建檔<br>• 雷達圖 + 偏移報告<br>• 對手檔案庫</div>
+    </div>
+    <div style="flex:1;border-top:3px solid #f97316;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;">
+      <div style="font-size:10px;font-weight:700;color:#f97316;letter-spacing:1px;margin-bottom:5px;">PHASE 2 · 2-3 月</div>
+      <div style="font-size:14px;font-weight:700;color:#1a237e;margin-bottom:6px;">專屬訓練 + 整合</div>
+      <div style="font-size:11px;color:#6b7280;line-height:1.7;">• 自動訓練生成<br>• HU 模擬載入對手<br>• 累積數據越用越準<br>• 點數系統整合</div>
+    </div>
+  </div>
+
+  <!-- Chairman's 3 concerns -->
+  <div class="card" style="padding:14px 18px;margin-bottom:10px;border-left:4px solid #5c35bf;">
+    <div style="font-size:12px;font-weight:700;color:#1a237e;margin-bottom:10px;">✅ 回應董事長三大關注</div>
+    <div class="grid-3" style="gap:12px;font-size:11px;">
+      <div>
+        <div style="font-weight:700;color:#5c35bf;margin-bottom:3px;">1. 破圈</div>
+        <div style="color:#6b7280;line-height:1.5;">貼牌譜就能用，新手也能理解「這手牌哪裡打錯」。從 0→1 的門檻大幅降低。</div>
+      </div>
+      <div>
+        <div style="font-weight:700;color:#00b894;margin-bottom:3px;">2. 大華人市場</div>
+        <div style="color:#6b7280;line-height:1.5;">牌譜分析不限地區，繁中 + 簡中 + 英文 Day 1。對手建檔 + AI 對話驅動點數消耗。</div>
+      </div>
+      <div>
+        <div style="font-weight:700;color:#f97316;margin-bottom:3px;">3. 超越 GTO Wizard</div>
+        <div style="color:#6b7280;line-height:1.5;">Wizard 是求解器，我們是教練。認識對手、針對弱點、教你為什麼 — 完全不同賽道。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:10px 16px;background:#f0fdf9;border-color:#a7f3d0;">
+    <div style="font-size:11px;display:flex;gap:16px;">
+      <span>🔗 <strong>與現有功能整合</strong>：GTO 題庫 / HU 模擬器 / AI 教練 / 月榜 / 點數系統</span>
+      <span style="margin-left:auto;color:#059669;font-weight:700;">同一個 repo・新 feature branch</span>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+</div><!-- end stage -->
+
+<div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+<div class="nav">
+  <button onclick="prev()">← 上一頁</button>
+  <span class="counter" id="counter">1 / 9</span>
+  <button onclick="next()">下一頁 →</button>
+</div>
+
+<script>
+const TOTAL = 9;
+let cur = 1;
+function go(n) {
+  document.getElementById('slide-' + cur).classList.remove('active');
+  cur = Math.max(1, Math.min(TOTAL, n));
+  document.getElementById('slide-' + cur).classList.add('active');
+  document.getElementById('counter').textContent = cur + ' / ' + TOTAL;
+  document.getElementById('progressFill').style.width = (cur / TOTAL * 100) + '%';
+}
+function next() { go(cur + 1); }
+function prev() { go(cur - 1); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+});
+function resize() {
+  const stage = document.getElementById('stage');
+  const sw = window.innerWidth, sh = window.innerHeight;
+  const scale = Math.min(sw / 1280, sh / 720) * 0.95;
+  const tx = (sw - 1280 * scale) / 2;
+  const ty = (sh - 720 * scale) / 2;
+  stage.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
+}
+window.addEventListener('resize', resize);
+resize();
+document.getElementById('progressFill').style.width = (1 / TOTAL * 100) + '%';
+</script>
+</body>
+</html>
