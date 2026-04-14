@@ -92,6 +92,13 @@
 ### 為何這條規則存在
 2026-04-14 新電腦 clone 後，Claude session 兩次都沒有跑 setup-env 腳本，而是自己建 .env.example 叫用戶手動填值。刪除 .env.example 並簡化 SOP 為單一腳本，消除歧義。
 
+## 開工 SOP（每次新 session 必做）
+**如果用戶說「繼續開發」或這是已 clone 過的電腦開新 session：**
+1. `git pull --all`（同時更新所有分支）
+2. 讀 `memory/dev-log.md` 了解最近的操作記錄
+3. 讀 `MEMORY.md`（`.claude/projects/.../memory/MEMORY.md`）了解跨 session 記憶
+4. 回報目前分支、版本、未完成事項，問用戶要做什麼
+
 ## Git 工作流程（雲端為中心）
 - **每完成一組修復/功能就 commit**，不要累積大量未 commit 的改動
 - **收工前一定 `git push`**，確保雲端有最新版本（多台電腦開發靠 Git 同步）

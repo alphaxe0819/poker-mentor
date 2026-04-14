@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-04-14 v0.8.1-dev.9 [feature/hu-simulator-v1]
+- 新增 SessionStart hook（.claude/settings.json）：每次開 session 自動 git fetch --all + pull 當前 branch
+- 不用手動貼指令，Claude Code 啟動時就會自動同步雲端
+
+## 2026-04-14 v0.8.1-dev.8 [feature/hu-simulator-v1]
+- CLAUDE.md 新增「開工 SOP」：git pull --all + 讀 dev-log + 讀 MEMORY.md + 回報狀態
+
 ## 2026-04-14 v0.8.1-dev.7 [feature/hu-simulator-v1]
 - setup-env 腳本加入 git identity 自動檢查（step 0），新電腦不用手動設
 - HU 入口接上：entryCost 從 `src/lib/hu/config.ts` 常數驅動，還原 spendPoints 扣點
