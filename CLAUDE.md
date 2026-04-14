@@ -92,12 +92,18 @@
 ### 為何這條規則存在
 2026-04-14 新電腦 clone 後，Claude session 兩次都沒有跑 setup-env 腳本，而是自己建 .env.example 叫用戶手動填值。刪除 .env.example 並簡化 SOP 為單一腳本，消除歧義。
 
-## 開工 SOP（每次新 session 必做）
-**如果用戶說「繼續開發」或這是已 clone 過的電腦開新 session：**
-1. `git pull --all`（同時更新所有分支）
-2. 讀 `memory/dev-log.md` 了解最近的操作記錄
-3. 讀 `MEMORY.md`（`.claude/projects/.../memory/MEMORY.md`）了解跨 session 記憶
-4. 回報目前分支、版本、未完成事項，問用戶要做什麼
+## 開工 SOP（每次新 session 開始時 Claude 必須主動執行）
+**不要等用戶指示，也不要問「要跑嗎？」。Session 開始的第一件事就是依序執行：**
+1. 確認 SessionStart hook 已自動 `git fetch` + pull（看 system-reminder）
+2. **主動讀** `memory/dev-log.md` 了解最近的操作記錄
+3. **主動讀** `MEMORY.md`（在 `.claude/projects/.../memory/MEMORY.md`）了解跨 session 記憶
+4. 主動回報：目前分支、版本、最近做了什麼、未完成事項
+5. 然後問用戶「要做什麼」
+
+**禁止行為：**
+- ❌ 問用戶「要我跑開工 SOP 嗎？」（直接跑，不要問）
+- ❌ 跳過讀 dev-log.md 或 MEMORY.md
+- ❌ 等用戶說「繼續開發」才執行 SOP
 
 ## Git 工作流程（雲端為中心）
 - **每完成一組修復/功能就 commit**，不要累積大量未 commit 的改動
