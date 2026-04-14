@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poker Goal - Mind Map</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: #0f172a;
+    overflow: hidden;
+    width: 100vw; height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(15,23,42,0.9); backdrop-filter: blur(12px);
+    padding: 12px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .header h1 {
+    font-size: 20px; font-weight: 900;
+    background: linear-gradient(135deg, #e94560, #ff6b6b);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .header .sub { color: rgba(255,255,255,0.4); font-size: 12px; margin-left: 12px; }
+  .controls { display: flex; gap: 8px; }
+  .controls button {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+    color: #fff; padding: 6px 14px; border-radius: 8px; cursor: pointer;
+    font-size: 12px; font-family: inherit; transition: all 0.15s;
+  }
+  .controls button:hover { background: rgba(233,69,96,0.3); border-color: #e94560; }
+
+  /* SVG Canvas */
+  svg {
+    width: 100vw; height: 100vh;
+    cursor: grab;
+  }
+  svg:active { cursor: grabbing; }
+
+  /* Node styles */
+  .node-group { cursor: pointer; }
+  .node-group:hover .node-bg { filter: brightness(1.2); }
+
+  .node-bg { transition: filter 0.15s; }
+
+  .node-text {
+    font-family: 'Noto Sans TC', sans-serif;
+    fill: #fff;
+    pointer-events: none;
+  }
+
+  .link {
+    fill: none;
+    stroke-linecap: round;
+    transition: stroke-width 0.15s;
+  }
+
+  /* Tooltip */
+  .tooltip {
+    position: fixed; z-index: 200;
+    background: rgba(30,41,59,0.95); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px; padding: 14px 18px;
+    color: #fff; font-size: 13px; line-height: 1.6;
+    max-width: 320px; pointer-events: none;
+    opacity: 0; transition: opacity 0.2s;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .tooltip.show { opacity: 1; }
+  .tooltip h4 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .tooltip .tag {
+    display: inline-block; font-size: 10px; padding: 2px 8px;
+    border-radius: 6px; margin-bottom: 8px;
+  }
+
+  /* Legend */
+  .legend {
+    position: fixed; bottom: 20px; left: 20px; z-index: 100;
+    background: rgba(30,41,59,0.9); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 14px 18px;
+  }
+  .legend-title { color: rgba(255,255,255,0.5); font-size: 11px; margin-bottom: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .legend-label { color: rgba(255,255,255,0.7); font-size: 11px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex; align-items:baseline;">
+    <h1>POKER GOAL</h1>
+    <span class="sub">v2.0 Architecture Mind Map</span>
+  </div>
+  <div class="controls">
+    <button onclick="resetView()">Reset View</button>
+    <button onclick="expandAll()">Expand All</button>
+    <button onclick="collapseAll()">Collapse L3</button>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<div class="legend">
+  <div class="legend-title">CATEGORIES</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#e94560"></div><span class="legend-label">Core / Root</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div><span class="legend-label">AI / Coach</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#2563eb"></div><span class="legend-label">UX / Interface</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#059669"></div><span class="legend-label">Revenue</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#d97706"></div><span class="legend-label">Content</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#dc2626"></div><span class="legend-label">Tech</span></div>
+</div>
+
+<svg id="mindmap"></svg>
+
+<script>
+// ═══════ DATA ═══════
+const data = {
+  name: "Poker Goal v2.0",
+  color: "#e94560",
+  icon: "♠️",
+  desc: "AI 撲克教練訓練平台",
+  children: [
+    {
+      name: "AI 教練系統",
+      color: "#7c3aed",
+      icon: "🤖",
+      desc: "AI 驅動的個性化撲克教練",
+      children: [
+        {
+          name: "教練建設架構",
+          color: "#7c3aed",
+          icon: "🏗️",
+          desc: "每位教練的完整角色定義",
+          children: [
+            { name: "名稱 + 代號", color: "#7c3aed", desc: "如「鯊魚教練 Shark」" },
+            { name: "頭像/形象", color: "#7c3aed", desc: "風格化角色圖" },
+            { name: "性格標籤", color: "#7c3aed", desc: "嚴厲/溫和/幽默/毒舌" },
+            { name: "專長領域", color: "#7c3aed", desc: "MTT/Cash/SNG/Heads-Up" },
+            { name: "教學風格", color: "#7c3aed", desc: "GTO 純正派 / Exploit 實戰派" },
+            { name: "擅長位置", color: "#7c3aed", desc: "EP/MP/CO/BTN/SB/BB" },
+          ]
+        },
+        {
+          name: "行為準則（雙層）",
+          color: "#7c3aed",
+          icon: "⚙️",
+          desc: "教練設定 + 系統干預雙層控制",
+          children: [
+            { name: "教練設定（個性層）", color: "#a78bfa", desc: "System Prompt / 語氣 / 教法 / 招牌用語" },
+            { name: "系統干預（安全層）", color: "#ef4444", desc: "GTO 護欄 / 禁止話題 / 點數控制 / 內容審核" },
+          ]
+        },
+        {
+          name: "推薦回覆",
+          color: "#7c3aed",
+          icon: "💬",
+          desc: "聊天中提供快捷選項降低門檻",
+          children: [
+            { name: "動作按鈕", color: "#7c3aed", desc: "Raise / Call / Fold 快捷鍵" },
+            { name: "追問按鈕", color: "#7c3aed", desc: "「為什麼？」「換個例子」" },
+            { name: "自由輸入", color: "#7c3aed", desc: "可打任何撲克問題" },
+          ]
+        },
+        {
+          name: "永久記憶 (RAG)",
+          color: "#7c3aed",
+          icon: "🧠",
+          desc: "Pro 專屬 — 跨對話記住學生弱點",
+          children: [
+            { name: "pgvector 嵌入", color: "#7c3aed", desc: "Supabase pgvector 儲存記憶" },
+            { name: "對話摘要", color: "#7c3aed", desc: "每次對話結束自動生成" },
+            { name: "記憶衰減", color: "#7c3aed", desc: "舊記憶權重自動降低" },
+          ]
+        }
+      ]
+    },
+    {
+      name: "訓練系統",
+      color: "#e94560",
+      icon: "🎯",
+      desc: "核心 GTO 訓練功能",
+      children: [
+        {
+          name: "GTO 資料庫",
+          color: "#e94560",
+          icon: "📊",
+          desc: "8+ 個 preflop 決策資料庫",
+          children: [
+            { name: "錦標賽 9-max", color: "#e94560", desc: "15/25/40/75/100BB 五種深度" },
+            { name: "現金 6-max", color: "#e94560", desc: "標準 6 人桌" },
+            { name: "現金 4-max", color: "#e94560", desc: "短桌" },
+            { name: "Heads-Up", color: "#e94560", desc: "單挑" },
+            { name: "Postflop（未來）", color: "#94a3b8", desc: "Flop/Turn/River 決策" },
+          ]
+        },
+        {
+          name: "教練專屬課題",
+          color: "#e94560",
+          icon: "📚",
+          desc: "每位教練 3-5 個特色課程",
+          children: [
+            { name: "鯊魚：MTT 泡沫期", color: "#e94560", desc: "錦標賽泡沫期生存策略" },
+            { name: "狐狸：Exploit 弱手", color: "#e94560", desc: "對付弱手的利用策略" },
+            { name: "冰山：ICM 決策", color: "#e94560", desc: "ICM 模型與 FT 籌碼壓力" },
+            { name: "UGC 課題（Phase 3）", color: "#94a3b8", desc: "開放真人教練上傳自訂課程" },
+          ]
+        },
+        {
+          name: "撲克 MBTI 測驗",
+          color: "#e94560",
+          icon: "🧪",
+          desc: "10 題測出玩家類型",
+          children: [
+            { name: "🦈 鯊魚型 (TAG)", color: "#e94560" },
+            { name: "🦊 狐狸型 (LAG)", color: "#e94560" },
+            { name: "🪨 石頭型 (TP)", color: "#e94560" },
+            { name: "🐙 章魚型 (LP)", color: "#e94560" },
+          ]
+        }
+      ]
+    },
+    {
+      name: "模擬比賽",
+      color: "#d97706",
+      icon: "🏆",
+      desc: "模擬錦標賽練習體驗",
+      children: [
+        { name: "快速 SNG", color: "#d97706", icon: "⚡", desc: "9人 · 50點 · 15分鐘速戰" },
+        { name: "MTT 模擬", color: "#d97706", icon: "🎪", desc: "27人 · 100點 · 盲注遞增 + 泡沫期" },
+        { name: "Heads-Up 對決", color: "#d97706", icon: "🤺", desc: "1v1 · 30點 · 短桌策略" },
+        { name: "ICM 特訓", color: "#d97706", icon: "🧊", desc: "6人 · 70點 · 泡沫/FT 場景" },
+        { name: "每週錦標賽", color: "#d97706", icon: "🏅", desc: "免費 · 排行榜 + 獎池" },
+        {
+          name: "核心機制",
+          color: "#d97706",
+          icon: "⚙️",
+          desc: "比賽引擎的運作方式",
+          children: [
+            { name: "AI 對手（GTO + 隨機化）", color: "#d97706" },
+            { name: "盲注結構遞增", color: "#d97706" },
+            { name: "ICM 計算模組", color: "#d97706" },
+            { name: "即時排名", color: "#d97706" },
+            { name: "賽後教練分析", color: "#d97706" },
+          ]
+        }
+      ]
+    },
+    {
+      name: "知名牌手",
+      color: "#d97706",
+      icon: "🃏",
+      desc: "頂級牌手風格相關內容",
+      children: [
+        { name: "「像 X 一樣打」模式", color: "#d97706", desc: "模擬頂級牌手策略偏好" },
+        { name: "風格檔案", color: "#d97706", desc: "3-bet/open 範圍特點展示" },
+        { name: "名局重現", color: "#d97706", desc: "重現經典 WSOP/WPT 決策點" },
+        { name: "風格對比", color: "#d97706", desc: "你的打法 vs 職業牌手差異" },
+      ]
+    },
+    {
+      name: "付費邏輯",
+      color: "#059669",
+      icon: "💰",
+      desc: "訂閱制 + 點數雙軌商業模式",
+      children: [
+        {
+          name: "訂閱制",
+          color: "#059669",
+          icon: "📋",
+          desc: "三檔方案 · 1/3/6/12 個月",
+          children: [
+            { name: "免費：3則/日 + 基礎訓練", color: "#6b7280" },
+            { name: "基礎 $270/月：30則 + 全教練", color: "#059669" },
+            { name: "Pro $799/月：無限 + 記憶 + 比賽", color: "#7c3aed" },
+          ]
+        },
+        {
+          name: "點數儲值",
+          color: "#059669",
+          icon: "🪙",
+          desc: "NT$30~5,900 八種方案",
+          children: [
+            { name: "30→160 / 95→500 / 190→1K", color: "#059669" },
+            { name: "570→3K / 950→5K", color: "#059669" },
+            { name: "1,850→10K / 3,700→30K / 5,900→50K", color: "#059669" },
+          ]
+        },
+        {
+          name: "消費項目",
+          color: "#059669",
+          icon: "🛒",
+          desc: "點數花費方式",
+          children: [
+            { name: "教練訊息：4 點/則", color: "#059669" },
+            { name: "進階分析：8 點/次", color: "#059669" },
+            { name: "模擬比賽：30~100 點/場", color: "#059669" },
+            { name: "牌局動畫回顧：70 點", color: "#059669" },
+            { name: "漫畫風生成：150 點", color: "#059669" },
+          ]
+        }
+      ]
+    },
+    {
+      name: "操作介面",
+      color: "#2563eb",
+      icon: "📱",
+      desc: "用戶界面設計",
+      children: [
+        {
+          name: "首頁",
+          color: "#2563eb",
+          icon: "🏠",
+          desc: "教練列表 + 快速訓練 + 任務",
+          children: [
+            { name: "推薦教練卡片", color: "#2563eb" },
+            { name: "快速訓練入口", color: "#2563eb" },
+            { name: "今日任務", color: "#2563eb" },
+            { name: "模擬賽事預告", color: "#2563eb" },
+          ]
+        },
+        {
+          name: "教練主頁",
+          color: "#2563eb",
+          icon: "👨‍🏫",
+          desc: "教練檔案 + 課題 + 評價",
+          children: [
+            { name: "頭像 + 風格標籤", color: "#2563eb" },
+            { name: "學生數 / 評分 / 對話數", color: "#2563eb" },
+            { name: "簡介 / 課題 / 訓練 / 評價 Tab", color: "#2563eb" },
+            { name: "開始對話 CTA", color: "#2563eb" },
+          ]
+        },
+        {
+          name: "BottomNav 5 Tabs",
+          color: "#2563eb",
+          icon: "🔽",
+          children: [
+            { name: "🏠 首頁", color: "#2563eb" },
+            { name: "🎯 訓練", color: "#2563eb" },
+            { name: "🏆 比賽", color: "#2563eb" },
+            { name: "📊 統計", color: "#2563eb" },
+            { name: "👤 帳號", color: "#2563eb" },
+          ]
+        },
+        { name: "註冊流程", color: "#2563eb", icon: "🔐", desc: "Google/Apple/Email + 訪客MBTI引導" },
+        { name: "語言支援", color: "#2563eb", icon: "🌐", desc: "Phase1 繁中 → Phase2 英文 → Phase3 日/簡" },
+      ]
+    },
+    {
+      name: "技術架構",
+      color: "#dc2626",
+      icon: "🏗️",
+      desc: "系統技術堆疊",
+      children: [
+        {
+          name: "前端",
+          color: "#dc2626",
+          icon: "🖥️",
+          children: [
+            { name: "React 19", color: "#dc2626" },
+            { name: "TypeScript 5.9", color: "#dc2626" },
+            { name: "Vite 8", color: "#dc2626" },
+            { name: "Tailwind CSS", color: "#dc2626" },
+          ]
+        },
+        {
+          name: "後端",
+          color: "#dc2626",
+          icon: "⚡",
+          children: [
+            { name: "Supabase Auth + RLS", color: "#dc2626" },
+            { name: "PostgreSQL", color: "#dc2626" },
+            { name: "Edge Functions (Deno)", color: "#dc2626" },
+            { name: "pgvector", color: "#dc2626" },
+          ]
+        },
+        {
+          name: "AI 層",
+          color: "#dc2626",
+          icon: "🤖",
+          children: [
+            { name: "Claude Haiku（教練）", color: "#dc2626" },
+            { name: "Claude Sonnet（分析）", color: "#dc2626" },
+            { name: "RAG 記憶檢索", color: "#dc2626" },
+          ]
+        },
+        {
+          name: "部署",
+          color: "#dc2626",
+          icon: "🚀",
+          children: [
+            { name: "Vercel（前端）", color: "#dc2626" },
+            { name: "Supabase Cloud", color: "#dc2626" },
+            { name: "Sentry（監控）", color: "#dc2626" },
+            { name: "Lemon Squeezy（支付）", color: "#dc2626" },
+          ]
+        },
+        {
+          name: "新增 DB Tables",
+          color: "#dc2626",
+          icon: "🗄️",
+          children: [
+            { name: "coaches", color: "#dc2626", desc: "教練角色定義表" },
+            { name: "coach_courses", color: "#dc2626", desc: "教練專屬課題" },
+            { name: "tournaments", color: "#dc2626", desc: "比賽定義" },
+            { name: "tournament_entries", color: "#dc2626", desc: "比賽參與紀錄" },
+            { name: "memories", color: "#dc2626", desc: "RAG 記憶向量" },
+          ]
+        }
+      ]
+    },
+  ]
+};
+
+// ═══════ MIND MAP RENDERER ═══════
+const svg = document.getElementById('mindmap');
+const ns = 'http://www.w3.org/2000/svg';
+const tooltip = document.getElementById('tooltip');
+
+let viewX = 0, viewY = 0, viewScale = 1;
+let dragging = false, dragStartX, dragStartY;
+let rootGroup;
+
+// Flatten tree with positions
+function layoutTree(node, depth = 0, index = 0, siblingCount = 1, angleStart = 0, angleEnd = 2 * Math.PI) {
+  const items = [];
+
+  if (depth === 0) {
+    node.x = 0;
+    node.y = 0;
+    node.depth = 0;
+    node._collapsed = false;
+    items.push(node);
+  }
+
+  if (node.children && !node._collapsed) {
+    const count = node.children.length;
+    const aStep = (angleEnd - angleStart) / count;
+
+    node.children.forEach((child, i) => {
+      const angle = angleStart + aStep * i + aStep / 2;
+      const radius = depth === 0 ? 280 : (180 + Math.max(0, 2 - depth) * 40);
+
+      child.x = node.x + Math.cos(angle) * radius;
+      child.y = node.y + Math.sin(angle) * radius;
+      child.depth = depth + 1;
+      child.parent = node;
+      child._angle = angle;
+      if (child._collapsed === undefined) child._collapsed = depth >= 2;
+
+      items.push(child);
+
+      const spreadAngle = Math.min(aStep, Math.PI * 0.6);
+      items.push(...layoutTree(child, depth + 1, i, count, angle - spreadAngle / 2, angle + spreadAngle / 2));
+    });
+  }
+
+  return items;
+}
+
+function getNodeRadius(node) {
+  if (node.depth === 0) return 60;
+  if (node.depth === 1) return 44;
+  if (node.depth === 2) return 36;
+  return 28;
+}
+
+function truncateText(text, maxLen) {
+  return text.length > maxLen ? text.substring(0, maxLen) + '...' : text;
+}
+
+function render() {
+  // Clear
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+  // Create root group for pan/zoom
+  rootGroup = document.createElementNS(ns, 'g');
+  rootGroup.setAttribute('id', 'rootGroup');
+  svg.appendChild(rootGroup);
+
+  const items = layoutTree(data);
+
+  // Draw links first
+  items.forEach(node => {
+    if (node.parent) {
+      const link = document.createElementNS(ns, 'path');
+      const px = node.parent.x, py = node.parent.y;
+      const nx = node.x, ny = node.y;
+      const mx = (px + nx) / 2, my = (py + ny) / 2;
+
+      // Curved path
+      link.setAttribute('d', `M ${px} ${py} Q ${mx + (ny-py)*0.15} ${my - (nx-px)*0.15} ${nx} ${ny}`);
+      link.setAttribute('class', 'link');
+      link.setAttribute('stroke', node.color || '#475569');
+      link.setAttribute('stroke-width', Math.max(1.5, 4 - node.depth));
+      link.setAttribute('stroke-opacity', Math.max(0.2, 0.6 - node.depth * 0.12));
+      rootGroup.appendChild(link);
+    }
+  });
+
+  // Draw nodes
+  items.forEach(node => {
+    const g = document.createElementNS(ns, 'g');
+    g.setAttribute('class', 'node-group');
+    g.setAttribute('transform', `translate(${node.x}, ${node.y})`);
+
+    const r = getNodeRadius(node);
+    const hasChildren = node.children && node.children.length > 0;
+
+    // Glow effect for depth 0-1
+    if (node.depth <= 1) {
+      const glow = document.createElementNS(ns, 'circle');
+      glow.setAttribute('r', r + 8);
+      glow.setAttribute('fill', node.color || '#e94560');
+      glow.setAttribute('opacity', '0.15');
+      glow.setAttribute('filter', 'blur(8px)');
+      g.appendChild(glow);
+    }
+
+    // Background circle
+    const circle = document.createElementNS(ns, 'circle');
+    circle.setAttribute('class', 'node-bg');
+    circle.setAttribute('r', r);
+
+    if (node.depth === 0) {
+      circle.setAttribute('fill', '#e94560');
+    } else {
+      circle.setAttribute('fill', '#1e293b');
+      circle.setAttribute('stroke', node.color || '#475569');
+      circle.setAttribute('stroke-width', node.depth <= 1 ? 2.5 : 1.5);
+    }
+    g.appendChild(circle);
+
+    // Collapse indicator
+    if (hasChildren && node.depth > 0) {
+      const badge = document.createElementNS(ns, 'circle');
+      badge.setAttribute('cx', r * 0.7);
+      badge.setAttribute('cy', -r * 0.7);
+      badge.setAttribute('r', 8);
+      badge.setAttribute('fill', node._collapsed ? '#e94560' : '#059669');
+      g.appendChild(badge);
+
+      const badgeText = document.createElementNS(ns, 'text');
+      badgeText.setAttribute('x', r * 0.7);
+      badgeText.setAttribute('y', -r * 0.7 + 4);
+      badgeText.setAttribute('text-anchor', 'middle');
+      badgeText.setAttribute('fill', '#fff');
+      badgeText.setAttribute('font-size', '10');
+      badgeText.setAttribute('font-weight', '700');
+      badgeText.setAttribute('pointer-events', 'none');
+      badgeText.textContent = node._collapsed ? `+${node.children.length}` : '−';
+      g.appendChild(badgeText);
+    }
+
+    // Icon
+    if (node.icon) {
+      const icon = document.createElementNS(ns, 'text');
+      icon.setAttribute('text-anchor', 'middle');
+      icon.setAttribute('dominant-baseline', 'middle');
+      icon.setAttribute('y', node.depth === 0 ? -8 : (node.depth <= 2 ? -6 : 0));
+      icon.setAttribute('font-size', node.depth === 0 ? 24 : (node.depth === 1 ? 18 : 14));
+      icon.setAttribute('pointer-events', 'none');
+      icon.textContent = node.icon;
+      g.appendChild(icon);
+    }
+
+    // Text
+    const text = document.createElementNS(ns, 'text');
+    text.setAttribute('class', 'node-text');
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('dominant-baseline', 'middle');
+    const maxLen = node.depth === 0 ? 16 : (node.depth === 1 ? 10 : (node.depth === 2 ? 8 : 7));
+    text.textContent = truncateText(node.name, maxLen);
+
+    if (node.depth === 0) {
+      text.setAttribute('y', 16);
+      text.setAttribute('font-size', '13');
+      text.setAttribute('font-weight', '900');
+    } else if (node.depth === 1) {
+      text.setAttribute('y', node.icon ? 14 : 0);
+      text.setAttribute('font-size', '11');
+      text.setAttribute('font-weight', '700');
+    } else if (node.depth === 2) {
+      text.setAttribute('y', node.icon ? 12 : 0);
+      text.setAttribute('font-size', '10');
+      text.setAttribute('font-weight', '500');
+    } else {
+      text.setAttribute('y', node.icon ? 0 : 0);
+      text.setAttribute('font-size', '9');
+      text.setAttribute('font-weight', '400');
+      text.setAttribute('fill', 'rgba(255,255,255,0.8)');
+    }
+    g.appendChild(text);
+
+    // Outer label for small nodes without icon
+    if (node.depth >= 3 && !node.icon) {
+      text.setAttribute('y', 1);
+    }
+
+    // Events
+    g.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (hasChildren) {
+        node._collapsed = !node._collapsed;
+        render();
+        applyTransform();
+      }
+    });
+
+    g.addEventListener('mouseenter', (e) => {
+      if (node.desc || node.name.length > maxLen) {
+        const tt = document.getElementById('tooltip');
+        tt.innerHTML = `
+          <h4>${node.icon || ''} ${node.name}</h4>
+          ${node.desc ? `<div style="color:rgba(255,255,255,0.6)">${node.desc}</div>` : ''}
+          ${hasChildren ? `<div style="margin-top:6px;color:rgba(255,255,255,0.4);font-size:11px">${node._collapsed ? 'Click to expand' : 'Click to collapse'} · ${node.children.length} items</div>` : ''}
+        `;
+        tt.style.left = (e.clientX + 16) + 'px';
+        tt.style.top = (e.clientY + 16) + 'px';
+        tt.classList.add('show');
+      }
+    });
+
+    g.addEventListener('mouseleave', () => {
+      tooltip.classList.remove('show');
+    });
+
+    rootGroup.appendChild(g);
+  });
+
+  applyTransform();
+}
+
+function applyTransform() {
+  if (rootGroup) {
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2;
+    rootGroup.setAttribute('transform',
+      `translate(${cx + viewX}, ${cy + viewY}) scale(${viewScale})`
+    );
+  }
+}
+
+// ═══════ PAN & ZOOM ═══════
+svg.addEventListener('mousedown', (e) => {
+  if (e.target === svg || e.target.tagName === 'path') {
+    dragging = true;
+    dragStartX = e.clientX - viewX;
+    dragStartY = e.clientY - viewY;
+  }
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (dragging) {
+    viewX = e.clientX - dragStartX;
+    viewY = e.clientY - dragStartY;
+    applyTransform();
+  }
+  // Update tooltip position
+  if (tooltip.classList.contains('show')) {
+    tooltip.style.left = (e.clientX + 16) + 'px';
+    tooltip.style.top = (e.clientY + 16) + 'px';
+  }
+});
+
+window.addEventListener('mouseup', () => { dragging = false; });
+
+svg.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? 0.9 : 1.1;
+  viewScale = Math.max(0.2, Math.min(3, viewScale * delta));
+  applyTransform();
+}, { passive: false });
+
+// ═══════ CONTROLS ═══════
+function resetView() {
+  viewX = 0; viewY = 0; viewScale = 1;
+  applyTransform();
+}
+
+function setCollapse(node, collapsed, minDepth) {
+  if (node.children) {
+    if (node.depth >= minDepth) node._collapsed = collapsed;
+    node.children.forEach(c => setCollapse(c, collapsed, minDepth));
+  }
+}
+
+function expandAll() {
+  setCollapse(data, false, 0);
+  render();
+}
+
+function collapseAll() {
+  setCollapse(data, true, 2);
+  render();
+}
+
+// ═══════ INIT ═══════
+window.addEventListener('resize', applyTransform);
+render();
+</script>
+</body>
+</html>
