@@ -38,6 +38,7 @@ export default function HeadsUpReviewScreenV2({
   const [analyzeError, setAnalyzeError] = useState<string | null>(null)
 
   async function handleAnalyze(handNum: number) {
+    if (analyzing !== null) return
     const idx = match.handHistory.findIndex(h => h.handNumber === handNum)
     if (idx === -1) return
     setAnalyzing(handNum)
@@ -59,12 +60,14 @@ export default function HeadsUpReviewScreenV2({
   const [expandedHand, setExpandedHand] = useState<number | null>(null)
 
   useEffect(() => {
+    let cancelled = false
     const hands = match.handHistory
     const initial = hands.map(quickHeroWon)
     setHeroWonArr(initial)
 
     async function resolveShowdowns() {
       const { evaluateHand, compareHands } = await import('../../lib/hu/handEvaluator')
+      if (cancelled) return
       const updated = hands.map((hand, i) => {
         if (initial[i] !== null) return initial[i]
         const board = hand.board
@@ -72,7 +75,8 @@ export default function HeadsUpReviewScreenV2({
         try {
           const heroBest = evaluateHand([...hand.hero.holeCards, ...board])
           const villainBest = evaluateHand([...hand.villain.holeCards, ...board])
-          return compareHands(heroBest, villainBest) > 0
+          const cmp = compareHands(heroBest, villainBest)
+          return cmp > 0 ? true : cmp < 0 ? false : null
         } catch {
           return null
         }
@@ -80,6 +84,7 @@ export default function HeadsUpReviewScreenV2({
       setHeroWonArr(updated)
     }
     resolveShowdowns()
+    return () => { cancelled = true }
   }, [match.handHistory])
 
   return (
