@@ -17,7 +17,7 @@ interface Props {
 }
 
 const POSITION_MAP: Record<number, string[]> = {
-  2:  ['BTN', 'BB'],
+  2:  ['BTN/SB', 'BB'],
   3:  ['BTN', 'SB', 'BB'],
   4:  ['UTG', 'BTN', 'SB', 'BB'],
   5:  ['HJ', 'CO', 'BTN', 'SB', 'BB'],
@@ -110,7 +110,9 @@ export default memo(function PokerFeltV2({
   const slots = SLOT_MAP[size]
   const count = positions.length
 
-  const heroIdx = heroPosition ? positions.indexOf(heroPosition) : positions.indexOf('BTN')
+  // Engine uses 'SB' for HU button seat; PokerFeltV2 displays it as 'BTN/SB'
+  const heroLookupPos = (size === 2 && heroPosition === 'SB') ? 'BTN/SB' : heroPosition
+  const heroIdx = heroLookupPos ? positions.indexOf(heroLookupPos) : positions.indexOf('BTN')
   const safeHeroIdx = heroIdx >= 0 ? heroIdx : 0
   const orderedPositions = [
     ...positions.slice(safeHeroIdx),
@@ -158,7 +160,9 @@ export default memo(function PokerFeltV2({
       {/* Seats */}
       {orderedPositions.map((pos, i) => {
         const slot = slots[i % count]
-        const info = seatInfo[pos]
+        // HU 'BTN/SB' is displayed as a combined label, but engine writes seatInfo with key 'SB'
+        const infoKey = pos === 'BTN/SB' ? 'SB' : pos
+        const info = seatInfo[infoKey] ?? seatInfo[pos]
         const status = info?.status ?? (i === 0 ? 'hero' : 'waiting')
         const stack = info?.stack ?? 0
         const bet = info?.bet ?? 0
@@ -223,8 +227,9 @@ export default memo(function PokerFeltV2({
                 className="absolute flex items-center gap-[3px] rounded-full"
                 style={{
                   zIndex: 3,
-                  left: `calc(${slot.left} + ${(50 - parseFloat(slot.left)) * 0.22}%)`,
-                  top: `calc(${slot.top} + ${(50 - parseFloat(slot.top)) * 0.22}%)`,
+                  // Asymmetric: horizontal can be tighter (px-per-% smaller); vertical must clear cards above seat
+                  left: `calc(${slot.left} + ${(50 - parseFloat(slot.left)) * 0.30}%)`,
+                  top: `calc(${slot.top} + ${(50 - parseFloat(slot.top)) * 0.18}%)`,
                   transform: 'translate(-50%, -50%)',
                   padding: '2px 6px',
                   background: 'rgba(0,0,0,.7)',

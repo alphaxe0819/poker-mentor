@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-04-15 v0.8.1-dev.20 [dev]
+- HU 修：POSITION_MAP[2] 從 ['BTN', 'BB'] 改回 ['BTN/SB', 'BB']
+  - 加 infoKey lookup `BTN/SB → SB`，讓 engine 寫的 SB seatInfo 找得到
+  - heroPosition='SB' 時自動 map 到 'BTN/SB' 找 slot
+  - 修好 HU BTN 不顯示 0.5 SB 盲注 + 加注 chip 的 bug
+- 籌碼位置雙係數：水平 0.30（左右側座位拉近）/ 垂直 0.18（上下座位仍跳過蓋牌）
+
 ## 2026-04-15 v0.8.1-dev.19 [dev]
 - 接上「查看範圍」按鈕：feedback sheet 點擊後彈出 RangeGrid overlay（覆蓋 felt，點背景關閉）
 - 下注 chip offset 0.3 → 0.22，再往座位拉回（top/bottom 座位 chip 距離明顯縮小）
