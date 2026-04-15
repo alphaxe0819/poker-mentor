@@ -73,7 +73,11 @@ export function computeHandFeedback(hand: HandState): HUHandFeedback {
 interface Props {
   config: MatchConfig
   personality: Personality
-  onMatchComplete: (finalState: MatchState, flagsByHand: FlagsByHand) => void
+  onMatchComplete: (
+    finalState: MatchState,
+    flagsByHand: FlagsByHand,
+    aiBookmarks: number[]
+  ) => void
   onAbandon: () => void
 }
 
@@ -89,6 +93,40 @@ export default function HeadsUpMatchScreenV2({
   const violationsRef = useRef(0)
   const flagsRef = useRef<FlagsByHand>({})
   const resolvedRef = useRef<MatchState | null>(null)
+  const [feedbackReady, setFeedbackReady] = useState<HUHandFeedback | null>(null)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [feedbackCountdown, setFeedbackCountdown] = useState(0)
+  const [aiBookmarkedHands, setAIBookmarkedHands] = useState<number[]>([])
+  void setAIBookmarkedHands  // referenced by future bookmark UI (Task 3); keeps noUnusedLocals happy
+  const [_bookmarkToast, _setBookmarkToast] = useState(false)
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const aiBookmarkedHandsRef = useRef<number[]>([])
+  aiBookmarkedHandsRef.current = aiBookmarkedHands
+
+  function clearCountdown() {
+    if (countdownIntervalRef.current !== null) {
+      clearInterval(countdownIntervalRef.current)
+      countdownIntervalRef.current = null
+    }
+  }
+
+  function dealNextHand() {
+    clearCountdown()
+    setFeedbackReady(null)
+    setFeedbackOpen(false)
+    setFeedbackCountdown(0)
+    const res = resolvedRef.current
+    if (!res) return
+    resolvedRef.current = null
+    if (res.result !== 'in_progress') {
+      const cappedViolationPoints = 0
+      const withViolations: MatchState = { ...res, violationPoints: cappedViolationPoints }
+      onMatchComplete(withViolations, flagsRef.current, aiBookmarkedHandsRef.current)
+    } else {
+      setHandResult(null)
+      setMatch(dealNewHand(res))
+    }
+  }
 
   // ── Init match on mount ──
   // Must await preloadBotData() BEFORE setting the match,
@@ -165,20 +203,22 @@ export default function HeadsUpMatchScreenV2({
       resolvedRef.current = resolveHandSafe(match)
     }
 
-    setTimeout(() => {
-      const res = resolvedRef.current
-      if (!res) return
-      resolvedRef.current = null
-      if (res.result !== 'in_progress') {
-        // 種子用戶體驗期：暫時 0 點（原公式 min(violations*2, 10)）
-        const cappedViolationPoints = 0
-        const withViolations: MatchState = { ...res, violationPoints: cappedViolationPoints }
-        onMatchComplete(withViolations, flagsRef.current)
-      } else {
-        setHandResult(null)
-        setMatch(dealNewHand(res))
+    // Compute feedback data (v1: all streets pending)
+    setFeedbackReady(computeHandFeedback(hand))
+    setFeedbackOpen(false)
+
+    // Start 10-second countdown
+    clearCountdown()
+    let remaining = 10
+    setFeedbackCountdown(remaining)
+    countdownIntervalRef.current = setInterval(() => {
+      remaining -= 1
+      setFeedbackCountdown(remaining)
+      if (remaining <= 0) {
+        dealNextHand()
       }
-    }, 2500)
+    }, 1000)
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [match?.currentHand?.isComplete, match?.currentHand?.handNumber])
 
@@ -480,6 +520,25 @@ export default function HeadsUpMatchScreenV2({
           showXL={showXL}
           onAction={handlePlayerAction}
         />
+      )}
+
+      {/* Feedback floating button */}
+      {feedbackReady && !feedbackOpen && (
+        <div className="fixed bottom-24 right-4 z-40">
+          <button
+            onClick={() => {
+              clearCountdown()
+              setFeedbackOpen(true)
+              setFeedbackCountdown(0)
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-bold text-white shadow-lg"
+            style={{ background: '#7c3aed', border: '1px solid #9d5bff' }}>
+            👁 回饋
+            {feedbackCountdown > 0 && (
+              <span className="text-xs font-mono opacity-70">·{feedbackCountdown}</span>
+            )}
+          </button>
+        </div>
       )}
     </div>
   )

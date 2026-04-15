@@ -120,7 +120,7 @@ export default function App() {
     setPoints(p)
   }, [user])
 
-  const handleHuMatchComplete = useCallback(async (finalState: MatchState, flagsByHand: FlagsByHand) => {
+  const handleHuMatchComplete = useCallback(async (finalState: MatchState, flagsByHand: FlagsByHand, _aiBookmarks?: number[]) => {
     // Charge violation points if any
     if (finalState.violationPoints > 0 && user) {
       try {

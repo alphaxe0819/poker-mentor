@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-04-15 v0.8.1-dev.22 [feature/hu-simulator-v1]
+- HeadsUpMatchScreenV2：以 10 秒倒數 + setInterval 取代舊的 setTimeout 2500ms 換牌邏輯
+- 新增 `feedbackReady` / `feedbackOpen` / `feedbackCountdown` / `aiBookmarkedHands` state
+- 新增 `clearCountdown()` / `dealNextHand()` helper function
+- 新增浮動「👁 回饋」按鈕（fixed bottom-24 right-4），顯示剩餘秒數
+- Props `onMatchComplete` 加入第三參數 `aiBookmarks: number[]`；App.tsx handler 同步更新
+
 ## 2026-04-15 v0.8.1-dev.21 [feature/hu-simulator-v1]
 - 新增 `computeHandFeedback` 純函式到 HeadsUpMatchScreenV2.tsx（exported）
 - 新增 `HUHandFeedback` interface（tip / actions / streets / isCorrect / explanation）
