@@ -136,20 +136,18 @@ export default memo(function PokerFeltV2({
             </div>
           )}
           {boardCards && boardCards.length > 0 && (
-            <div className="flex gap-[3px]">
+            <div className="flex gap-[4px]">
               {boardCards.map((c, i) => (
                 <div key={i}
-                  className="relative flex items-center justify-center rounded"
+                  className="flex flex-col items-center justify-between rounded"
                   style={{
-                    width: 30, height: 42, color: '#fff',
+                    width: 34, height: 48, paddingTop: 4, paddingBottom: 4,
                     background: SUIT_BG[c.suit],
                     border: `1.5px solid ${SUIT_BORDER[c.suit]}`,
-                    boxShadow: '0 1px 3px rgba(0,0,0,.5)',
+                    boxShadow: '0 1px 4px rgba(0,0,0,.6)',
                   }}>
-                  <span className="absolute top-0.5 left-1 text-[13px] font-bold" style={{ color: 'rgba(255,255,255,.95)' }}>
-                    {SUIT_SYMBOL[c.suit]}
-                  </span>
-                  <span className="text-[17px] font-black leading-none">{c.rank}</span>
+                  <span className="font-black leading-none text-white" style={{ fontSize: 19 }}>{c.rank}</span>
+                  <span className="font-bold leading-none" style={{ fontSize: 11, color: 'rgba(255,255,255,.85)' }}>{SUIT_SYMBOL[c.suit]}</span>
                 </div>
               ))}
             </div>

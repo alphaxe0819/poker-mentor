@@ -5,6 +5,15 @@
 
 ---
 
+## 2026-04-15 v0.8.1-dev.28 [dev]
+- HU V2：修復 6+1 個介面問題
+- 動作 BAR 換成 BetSizingBarV2（單排），移除 PreflopActionBar / PostflopActionBar
+- 固定 action bar 高度（68px spacer）防止畫面忽上忽下
+- 手牌結算改為 felt 下方橫幅，不再疊在 PokerFeltV2 上
+- isCorrect 改用 isPreflopViolation flags 判斷（非固定 true）
+- feedbackExpanded 可折疊；onViewRange 串接 RangeGrid overlay
+- PokerFeltV2 中央牌面：rank 19px 上方 + suit 11px 下方，改善可讀性
+
 ## 2026-04-15 v0.8.1-dev.27 [feature/hu-simulator-v1]
 - HeadsUpMatchScreenV2：以 TrainTabV2 V2 版面為基礎完整重建 JSX
 - 修正：`position: fixed; inset: 0` 全屏容器，解決 action bar 在 iOS 被蓋住問題
