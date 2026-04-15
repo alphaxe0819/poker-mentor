@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-04-15 v0.8.1-dev.21 [feature/hu-simulator-v1]
+- 新增 `computeHandFeedback` 純函式到 HeadsUpMatchScreenV2.tsx（exported）
+- 新增 `HUHandFeedback` interface（tip / actions / streets / isCorrect / explanation）
+- 新增 `import type { ActionFreq, StreetScore }` from FeedbackSheetV2
+- 新增 `import type { HandState }` from types
+- 建立 `src/__tests__/hu/computeHandFeedback.test.ts`，6 項測試全通過
+
 ## 2026-04-15 v0.8.1-dev.20 [dev]
 - HU 修：POSITION_MAP[2] 從 ['BTN', 'BB'] 改回 ['BTN/SB', 'BB']
   - 加 infoKey lookup `BTN/SB → SB`，讓 engine 寫的 SB seatInfo 找得到

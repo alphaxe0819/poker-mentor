@@ -5,7 +5,8 @@ import HoleCards from '../HoleCards'
 import CommunityCards from '../CommunityCards'
 import PostflopActionBar, { type ActionChoice } from '../PostflopActionBar'
 import PreflopActionBar, { type PreflopAction } from '../PreflopActionBar'
-import type { MatchConfig, MatchState, Action } from '../../lib/hu/types'
+import type { MatchConfig, MatchState, Action, HandState } from '../../lib/hu/types'
+import type { ActionFreq, StreetScore } from './FeedbackSheetV2'
 import { createMatch, dealNewHand, applyAction, resolveHand } from '../../lib/hu/engine'
 /** Safe wrapper: if resolveHand throws, return a minimal resolved state so game doesn't freeze */
 function resolveHandSafe(match: MatchState): MatchState {
@@ -24,6 +25,50 @@ export interface GtoFlag {
   pass: boolean
 }
 export type FlagsByHand = Record<number, GtoFlag[]>
+
+// ── Hand feedback data ────────────────────────────────────────────
+
+export interface HUHandFeedback {
+  tip: string
+  actions: ActionFreq[]
+  streets: StreetScore[]
+  isCorrect: boolean
+  explanation: string
+}
+
+/** 把已結束的 HandState 轉成 FeedbackSheetV2 所需資料（v1：全街 pending）*/
+export function computeHandFeedback(hand: HandState): HUHandFeedback {
+  const canonical = handToCanonical(hand.hero.holeCards)
+  const pos = hand.hero.position.toUpperCase()
+
+  const preflopAction = hand.actions.find(
+    a => a.street === 'preflop' && a.actor === hand.hero.position
+  )
+  let actionLabel = '未行動'
+  if (preflopAction) {
+    switch (preflopAction.kind) {
+      case 'fold':  actionLabel = 'Fold'; break
+      case 'check': actionLabel = 'Check'; break
+      case 'call':  actionLabel = `Call ${preflopAction.amount ?? ''}`; break
+      case 'bet':   actionLabel = `Bet ${preflopAction.amount ?? ''}`; break
+      case 'raise': actionLabel = `Raise ${preflopAction.amount ?? ''}`; break
+      case 'allin': actionLabel = 'All-in'; break
+    }
+  }
+
+  return {
+    tip: `${canonical} · ${pos}`,
+    actions: [{ label: actionLabel, freq: 100, color: '#7c3aed', isYours: true }],
+    streets: [
+      { street: 'preflop', state: 'pending' },
+      { street: 'flop',    state: 'pending' },
+      { street: 'turn',    state: 'pending' },
+      { street: 'river',   state: 'pending' },
+    ],
+    isCorrect: true,
+    explanation: '街別 GTO 評分建構中，未來版本將顯示詳細頻率資料。',
+  }
+}
 
 interface Props {
   config: MatchConfig
