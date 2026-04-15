@@ -10,8 +10,8 @@ function resolveUIV2(): boolean {
     const stored = localStorage.getItem('feature.ui_v2')
     if (stored === 'true') return true
     if (stored === 'false') return false
-    // domain default
-    return location.hostname.includes('poker-goal-dev')
+    // V2 is now default on all environments
+    return true
   } catch {
     return false
   }
