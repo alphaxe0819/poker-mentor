@@ -98,7 +98,9 @@
 2. **主動讀** `memory/dev-log.md` 了解最近的操作記錄
 3. **主動讀** `MEMORY.md`（在 `.claude/projects/.../memory/MEMORY.md`）了解跨 session 記憶
 4. 主動回報：目前分支、版本、最近做了什麼、未完成事項
-5. 然後問用戶「要做什麼」
+5. **主動詢問角色**：「這個 Tab 負責哪個角色？(UI / Frontend / Backend / 自由)」（詳見「多 Tab 平行開發角色分工」）
+   - 若工作目錄是 worktree 子目錄（POKERNEW-ui-v2、POKERNEW-hu-sim 等），跳過此步驟
+6. 然後問用戶「要做什麼」
 
 **禁止行為：**
 - ❌ 問用戶「要我跑開工 SOP 嗎？」（直接跑，不要問）
@@ -305,8 +307,9 @@ BTN → SB → BB → UTG → UTG+1 → UTG+2 → LJ → HJ → CO → (回 BTN)
 
 ## 多 Tab 平行開發角色分工（同一 branch 多 session 時必須遵守）
 
-當使用者同時開多個 Claude Code Tab 在**同一個資料夾/branch** 工作時，每個 session 啟動時必須先問使用者：「我這個 Tab 負責哪個角色？(UI / Frontend / Backend / 自由)」
+每個 session 啟動時（開工 SOP 第 5 步）必須**主動**問使用者：「這個 Tab 負責哪個角色？(UI / Frontend / Backend / 自由)」
 得到回答後，**只能修改該角色範圍內的檔案**。要動範圍外的檔案，必須先告知使用者並取得同意。
+若使用者尚未回答角色，先依「自由」處理但每次動檔案前提醒一次。
 
 ### 角色 1：UI 工程師
 **可改**
