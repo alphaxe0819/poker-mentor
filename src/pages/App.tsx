@@ -86,6 +86,7 @@ export default function App() {
   const [huFinalMatch, setHuFinalMatch] = useState<import('../lib/hu/types').MatchState | null>(null)
   const [huSessionId, setHuSessionId] = useState<string | null>(null)
   const [huFlagsByHand, setHuFlagsByHand] = useState<FlagsByHand>({})
+  const [_huAIBookmarks, setHuAIBookmarks] = useState<number[]>([])
 
   const handleHuAbandon = useCallback(() => {
     // Fire-and-forget abandon finalization (non-blocking, non-fatal)
@@ -111,6 +112,7 @@ export default function App() {
     setAppMode('app')
     setHuConfig(null)
     setHuSessionId(null)
+    setHuAIBookmarks([])
   }, [huSessionId, huConfig])
 
   const refreshPoints = useCallback(async () => {
@@ -120,7 +122,7 @@ export default function App() {
     setPoints(p)
   }, [user])
 
-  const handleHuMatchComplete = useCallback(async (finalState: MatchState, flagsByHand: FlagsByHand, _aiBookmarks?: number[]) => {
+  const handleHuMatchComplete = useCallback(async (finalState: MatchState, flagsByHand: FlagsByHand, aiBookmarks: number[] = []) => {
     // Charge violation points if any
     if (finalState.violationPoints > 0 && user) {
       try {
@@ -156,6 +158,7 @@ export default function App() {
     // Store flags alongside match for the review screen
     setHuFlagsByHand(flagsByHand)
     setHuFinalMatch(finalState)
+    setHuAIBookmarks(aiBookmarks)
     setAppMode('hu-review')
   }, [huSessionId, user, refreshPoints])
 
@@ -483,6 +486,7 @@ export default function App() {
             setHuFinalMatch(null)
             setHuSessionId(null)
             setHuFlagsByHand({})
+            setHuAIBookmarks([])
           }}
         />
       </Suspense>
