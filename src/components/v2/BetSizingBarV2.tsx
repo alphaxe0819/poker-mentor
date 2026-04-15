@@ -35,56 +35,48 @@ export default memo(function BetSizingBarV2({
 }: Props) {
   const opacity = disabled ? 0.5 : 1
 
+  // Single row: all buttons crammed into one flex line for max felt space
   return (
-    <div className="flex flex-col gap-[5px] px-2.5 pb-3 pt-2 flex-shrink-0"
+    <div className="flex gap-[4px] px-2 pb-3 pt-2 flex-shrink-0"
       style={{ background: 'linear-gradient(180deg, transparent, #08090b 20%)' }}>
-      {/* Row 1: Fold / Check / Call */}
-      <div className="flex gap-[5px]">
-        {canFold && (
-          <button disabled={disabled} onClick={() => onAction({ kind: 'fold' })}
-            className={BTN}
-            style={{ minHeight: 44, background: '#2563eb', opacity, fontSize: 13, letterSpacing: .2 }}>
-            FOLD
-          </button>
-        )}
-        {canCheck && (
-          <button disabled={disabled} onClick={() => onAction({ kind: 'check' })}
-            className={BTN}
-            style={{ minHeight: 44, background: '#374151', opacity, fontSize: 13, letterSpacing: .2 }}>
-            CHECK
-          </button>
-        )}
-        {canCall && callAmount !== undefined && (
-          <button disabled={disabled} onClick={() => onAction({ kind: 'call', amount: callAmount })}
-            className={BTN}
-            style={{ minHeight: 44, background: '#059669', opacity, fontSize: 13, letterSpacing: .2 }}>
-            <span>CALL</span>
-            <small className="text-[9px] opacity-75 font-semibold">{callAmount}</small>
-          </button>
-        )}
-      </div>
-
-      {/* Row 2: sizing buttons (+ all-in) */}
-      {(sizingOptions.length > 0 || canAllIn) && (
-        <div className="flex gap-[5px]">
-          {sizingOptions.map((opt, i) => (
-            <button key={i} disabled={disabled}
-              onClick={() => onAction({ kind: opt.kind, amount: opt.amount, label: opt.label })}
-              className={BTN}
-              style={{ minHeight: 42, background: '#dc2626', opacity, fontSize: 12, letterSpacing: .2 }}>
-              <span>{opt.label}</span>
-              <small className="text-[9px] opacity-75 font-semibold">{opt.amount}</small>
-            </button>
-          ))}
-          {canAllIn && allInAmount !== undefined && (
-            <button disabled={disabled} onClick={() => onAction({ kind: 'allin', amount: allInAmount })}
-              className={BTN}
-              style={{ minHeight: 42, background: '#7f1d1d', opacity, fontSize: 12, letterSpacing: .2 }}>
-              <span>ALL-IN</span>
-              <small className="text-[9px] opacity-75 font-semibold">{allInAmount}</small>
-            </button>
-          )}
-        </div>
+      {canFold && (
+        <button disabled={disabled} onClick={() => onAction({ kind: 'fold' })}
+          className={BTN}
+          style={{ minHeight: 48, background: '#2563eb', opacity, fontSize: 12, letterSpacing: .2 }}>
+          <span>FOLD</span>
+        </button>
+      )}
+      {canCheck && (
+        <button disabled={disabled} onClick={() => onAction({ kind: 'check' })}
+          className={BTN}
+          style={{ minHeight: 48, background: '#374151', opacity, fontSize: 12, letterSpacing: .2 }}>
+          <span>CHECK</span>
+        </button>
+      )}
+      {canCall && callAmount !== undefined && (
+        <button disabled={disabled} onClick={() => onAction({ kind: 'call', amount: callAmount })}
+          className={BTN}
+          style={{ minHeight: 48, background: '#059669', opacity, fontSize: 12, letterSpacing: .2 }}>
+          <span>CALL</span>
+          <small className="text-[9px] opacity-75 font-semibold leading-none">{callAmount}</small>
+        </button>
+      )}
+      {sizingOptions.map((opt, i) => (
+        <button key={i} disabled={disabled}
+          onClick={() => onAction({ kind: opt.kind, amount: opt.amount, label: opt.label })}
+          className={BTN}
+          style={{ minHeight: 48, background: '#dc2626', opacity, fontSize: 11, letterSpacing: .1 }}>
+          <span>{opt.label}</span>
+          <small className="text-[9px] opacity-75 font-semibold leading-none">{opt.amount}</small>
+        </button>
+      ))}
+      {canAllIn && allInAmount !== undefined && (
+        <button disabled={disabled} onClick={() => onAction({ kind: 'allin', amount: allInAmount })}
+          className={BTN}
+          style={{ minHeight: 48, background: '#7f1d1d', opacity, fontSize: 11, letterSpacing: .1 }}>
+          <span>ALL-IN</span>
+          <small className="text-[9px] opacity-75 font-semibold leading-none">{allInAmount}</small>
+        </button>
       )}
     </div>
   )

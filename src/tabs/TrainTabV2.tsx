@@ -726,9 +726,13 @@ export default function TrainTabV2({ guestMode: _guestMode = false, userId = nul
     )
   }
 
-  // ── 練習畫面 ──
+  // ── 練習畫面（fullscreen overlay：蓋住 App 的 sub-tab + BottomNav）──
   return (
-    <div className="flex flex-col relative" style={{ height: '100dvh', background: '#0a0a0a', overflow: 'hidden' }}>
+    <div className="flex flex-col"
+      style={{
+        position: 'fixed', inset: 0, zIndex: 50,
+        background: '#0a0a0a', overflow: 'hidden',
+      }}>
 
       {/* 退出確認彈窗 */}
       {showExitConfirm && (

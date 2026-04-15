@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-04-15 v0.8.1-dev.15 [dev] — UI v2 第一輪用戶回饋修正
+- TrainTabV2 改 `position: fixed; inset: 0; z: 50` 全螢幕，蓋住父層的「練習/課程」sub-tab + BottomNav
+- PokerFeltV2 z-index 重排：輪廓線(0) → 座位圓(2) → 蓋牌(4)；座位圓改實心深色底（不透明），輪廓線不再穿透
+- 下注 chip offset 0.2 → 0.4，往桌心多偏，跳過蓋牌區避免重疊
+- BetSizingBarV2 雙排合併單排，所有按鈕同一 flex line，節省垂直空間
+- 預期：訓練時整片牌桌全螢幕、座位/蓋牌/籌碼層級正確、按鈕一排到底
+
 ## 2026-04-15 v0.8.1-dev.14 [dev]
 - UI_V2 flag resolution 改為自動判斷：staging（poker-goal-dev）預設 V2、正式機預設 V1
 - 新增 `?ui=v1` / `?ui=v2` query param 強制覆蓋（方便 staging 退回舊版對照）

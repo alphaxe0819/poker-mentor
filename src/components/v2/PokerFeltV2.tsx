@@ -77,13 +77,14 @@ const SLOT_MAP = Object.fromEntries(
   [2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => [n, pillSeatSlots(n)])
 ) as Record<number, Array<{ left: string; top: string }>>
 
+// Seat circles are OPAQUE (not transparent) so the pill outline line doesn't bleed through.
 const STATUS_STYLE: Record<string, { border: string; bg: string; shadow: string; posColor: string; stackColor: string }> = {
-  hero:    { border: '2px solid #a78bfa', bg: 'transparent', shadow: '0 0 10px rgba(167,139,250,.4)', posColor: '#d6c8ff', stackColor: '#c8b6ff' },
-  raised:  { border: '2px solid #dc2626', bg: 'transparent', shadow: '0 0 8px rgba(220,38,38,.35)', posColor: '#fecaca', stackColor: '#8a92a0' },
-  active:  { border: '2px solid #10b981', bg: 'transparent', shadow: '0 0 8px rgba(16,185,129,.35)', posColor: '#a7f3d0', stackColor: '#8a92a0' },
-  posted:  { border: '1.5px solid #4a5060', bg: 'transparent', shadow: 'none', posColor: '#aab0bb', stackColor: '#8a92a0' },
-  waiting: { border: '1.5px solid #4a5060', bg: 'transparent', shadow: 'none', posColor: '#aab0bb', stackColor: '#8a92a0' },
-  folded:  { border: '1.5px dashed #4a5060', bg: 'transparent', shadow: 'none', posColor: '#8a92a0', stackColor: '#6a7080' },
+  hero:    { border: '2px solid #a78bfa', bg: '#16181d', shadow: '0 0 10px rgba(167,139,250,.4)', posColor: '#d6c8ff', stackColor: '#c8b6ff' },
+  raised:  { border: '2px solid #dc2626', bg: '#16181d', shadow: '0 0 8px rgba(220,38,38,.35)', posColor: '#fecaca', stackColor: '#8a92a0' },
+  active:  { border: '2px solid #10b981', bg: '#16181d', shadow: '0 0 8px rgba(16,185,129,.35)', posColor: '#a7f3d0', stackColor: '#8a92a0' },
+  posted:  { border: '1.5px solid #4a5060', bg: '#14161b', shadow: 'none', posColor: '#aab0bb', stackColor: '#8a92a0' },
+  waiting: { border: '1.5px solid #4a5060', bg: '#14161b', shadow: 'none', posColor: '#aab0bb', stackColor: '#8a92a0' },
+  folded:  { border: '1.5px dashed #4a5060', bg: '#0d0f13', shadow: 'none', posColor: '#8a92a0', stackColor: '#6a7080' },
 }
 
 const SUIT_BG: Record<string, string> = {
@@ -168,12 +169,12 @@ export default memo(function PokerFeltV2({
 
         return (
           <div key={pos}>
-            {/* Hole cards (face-down G G) for non-hero active seats */}
+            {/* Hole cards (face-down G G) for non-hero active seats — TOP layer */}
             {hasCards && !isHero && (
               <div
                 className="absolute flex gap-[2px]"
                 style={{
-                  zIndex: 3,
+                  zIndex: 4,
                   left: slot.left,
                   top: `calc(${slot.top} - 5%)`,
                   transform: 'translate(-50%, -50%)',
@@ -183,11 +184,11 @@ export default memo(function PokerFeltV2({
               </div>
             )}
 
-            {/* Seat circle */}
+            {/* Seat circle — MIDDLE layer (opaque so outline doesn't bleed through) */}
             <div
               className="absolute flex flex-col items-center justify-center rounded-full"
               style={{
-                zIndex: 4,
+                zIndex: 2,
                 left: slot.left, top: slot.top,
                 width: 46, height: 46,
                 background: style.bg,
@@ -215,16 +216,17 @@ export default memo(function PokerFeltV2({
               )}
             </div>
 
-            {/* Bet chip toward table center */}
+            {/* Bet chip toward table center — past the cards */}
             {bet > 0 && (
               <div
-                className="absolute flex items-center gap-[3px] z-[2] rounded-full"
+                className="absolute flex items-center gap-[3px] rounded-full"
                 style={{
-                  left: `calc(${slot.left} + ${(50 - parseFloat(slot.left)) * 0.2}%)`,
-                  top: `calc(${slot.top} + ${(50 - parseFloat(slot.top)) * 0.2}%)`,
+                  zIndex: 3,
+                  left: `calc(${slot.left} + ${(50 - parseFloat(slot.left)) * 0.4}%)`,
+                  top: `calc(${slot.top} + ${(50 - parseFloat(slot.top)) * 0.4}%)`,
                   transform: 'translate(-50%, -50%)',
                   padding: '2px 6px',
-                  background: 'rgba(0,0,0,.55)',
+                  background: 'rgba(0,0,0,.7)',
                   border: '1px solid #2a2a2a',
                   fontSize: 9,
                   color: '#e5e7eb',
