@@ -9,6 +9,8 @@ import AuthPage from './AuthPage'
 import BottomNav from '../components/BottomNav'
 import DailyLimitScreen from '../components/DailyLimitScreen'
 import TrainTab from '../tabs/TrainTab'
+import TrainTabV2 from '../tabs/TrainTabV2'
+import { FEATURE_FLAGS } from '../lib/featureFlags'
 import QuizScreen from '../components/QuizScreen'
 import QuizDetailScreen from '../components/QuizDetailScreen'
 import OnboardingScreen from '../components/OnboardingScreen'
@@ -26,9 +28,12 @@ const UpgradePage    = lazy(() => import('./UpgradePage'))
 const SharePage      = lazy(() => import('./SharePage'))
 const AdminDashboard = lazy(() => import('./AdminDashboard'))
 const ChangelogPage  = lazy(() => import('./ChangelogPage'))
+const V2DemoPage     = lazy(() => import('./V2DemoPage'))
 const HeadsUpScenarioSelect = lazy(() => import('../components/HeadsUpScenarioSelect'))
 const HeadsUpMatchScreen    = lazy(() => import('../components/HeadsUpMatchScreen'))
+const HeadsUpMatchScreenV2  = lazy(() => import('../components/v2/HeadsUpMatchScreenV2'))
 const HeadsUpReviewScreen   = lazy(() => import('../components/HeadsUpReviewScreen'))
+const HeadsUpReviewScreenV2 = lazy(() => import('../components/v2/HeadsUpReviewScreenV2'))
 
 const LazyFallback = () => (
   <div className="flex items-center justify-center min-h-[200px]">
@@ -64,6 +69,10 @@ export default function App() {
     return <Suspense fallback={<LazyFallback />}><ChangelogPage /></Suspense>
   }
 
+  if (window.location.pathname === '/v2-demo') {
+    return <Suspense fallback={<LazyFallback />}><V2DemoPage /></Suspense>
+  }
+
   const [appMode,   setAppMode]   = useState<AppMode>('loading')
   const [user,      setUser]      = useState<User | null>(null)
   const [profile,   setProfile]   = useState<UserProfile | null>(null)
@@ -78,6 +87,7 @@ export default function App() {
   const [huFinalMatch, setHuFinalMatch] = useState<import('../lib/hu/types').MatchState | null>(null)
   const [huSessionId, setHuSessionId] = useState<string | null>(null)
   const [huFlagsByHand, setHuFlagsByHand] = useState<FlagsByHand>({})
+  const [huAIBookmarks, setHuAIBookmarks] = useState<number[]>([])
 
   const handleHuAbandon = useCallback(() => {
     // Fire-and-forget abandon finalization (non-blocking, non-fatal)
@@ -103,6 +113,7 @@ export default function App() {
     setAppMode('app')
     setHuConfig(null)
     setHuSessionId(null)
+    setHuAIBookmarks([])
   }, [huSessionId, huConfig])
 
   const refreshPoints = useCallback(async () => {
@@ -112,7 +123,7 @@ export default function App() {
     setPoints(p)
   }, [user])
 
-  const handleHuMatchComplete = useCallback(async (finalState: MatchState, flagsByHand: FlagsByHand) => {
+  const handleHuMatchComplete = useCallback(async (finalState: MatchState, flagsByHand: FlagsByHand, aiBookmarks: number[] = []) => {
     // Charge violation points if any
     if (finalState.violationPoints > 0 && user) {
       try {
@@ -148,6 +159,7 @@ export default function App() {
     // Store flags alongside match for the review screen
     setHuFlagsByHand(flagsByHand)
     setHuFinalMatch(finalState)
+    setHuAIBookmarks(aiBookmarks)
     setAppMode('hu-review')
   }, [huSessionId, user, refreshPoints])
 
@@ -389,19 +401,21 @@ export default function App() {
           entryCost={HU_ENTRY_COST}
           onCancel={() => setAppMode('app')}
           onConfirm={async (config) => {
-            // Spend entry fee atomically via RPC
-            const { spendPoints } = await import('../lib/points')
-            const result = await spendPoints(
-              user.id,
-              HU_ENTRY_COST,
-              'hu_entry',
-              'HU 對決入場'
-            )
-            if (!result.success) {
-              alert('點數不足')
-              return
+            // Spend entry fee atomically via RPC (skip when cost is 0)
+            if (HU_ENTRY_COST > 0) {
+              const { spendPoints } = await import('../lib/points')
+              const result = await spendPoints(
+                user.id,
+                HU_ENTRY_COST,
+                'hu_entry',
+                'HU 對決入場'
+              )
+              if (!result.success) {
+                alert('點數不足')
+                return
+              }
+              setPoints(result.balance)
             }
-            setPoints(result.balance)
             // Create DB session + run retention cleanup
             const { createSession, runRetentionCleanup } = await import('../lib/hu/sessionStorage')
             try {
@@ -422,9 +436,10 @@ export default function App() {
 
   // ── HU simulator: live match ──
   if (appMode === 'hu-match' && huConfig && user) {
+    const HuScreen = FEATURE_FLAGS.UI_V2 ? HeadsUpMatchScreenV2 : HeadsUpMatchScreen
     return (
       <Suspense fallback={<LazyFallback />}>
-        <HeadsUpMatchScreen
+        <HuScreen
           config={huConfig}
           personality="standard"
           onAbandon={handleHuAbandon}
@@ -438,44 +453,61 @@ export default function App() {
   if (appMode === 'hu-review' && huFinalMatch && user) {
     const userTier: 'free' | 'basic' | 'pro' =
       profile && isUserPaid(profile) ? 'pro' : 'free'
+
+    const handleAnalyzeHand = async (idx: number) => {
+      const { analyzeHand } = await import('../lib/hu/analyzeHand')
+      const { formatCard, formatBoard } = await import('../lib/hu/cards')
+      const hand = huFinalMatch.handHistory[idx]
+      const bothShown = !hand.hero.hasFolded && !hand.villain.hasFolded
+      const result = await analyzeHand({
+        userId: user.id,
+        sessionId: huSessionId ?? '',
+        handIndex: idx,
+        handData: {
+          hero_position: hand.hero.position,
+          hero_cards: hand.hero.holeCards.map(formatCard).join(''),
+          villain_cards: bothShown
+            ? hand.villain.holeCards.map(formatCard).join('')
+            : null,
+          board: hand.board.length > 0 ? formatBoard(hand.board) : null,
+          action_sequence: hand.actions,
+          pot_total_bb: Math.round(hand.potBB),
+          hero_won: await computeHeroWonForHand(hand),
+        },
+      })
+      await refreshPoints()
+      return result.analysis
+    }
+
+    const sharedOnBack = () => {
+      setAppMode('app')
+      setHuConfig(null)
+      setHuFinalMatch(null)
+      setHuSessionId(null)
+      setHuFlagsByHand({})
+      setHuAIBookmarks([])
+    }
+
     return (
       <Suspense fallback={<LazyFallback />}>
-        <HeadsUpReviewScreen
-          match={huFinalMatch}
-          userTier={userTier}
-          gtoFlagsByHand={huFlagsByHand}
-          onAnalyzeHand={async (idx) => {
-            const { analyzeHand } = await import('../lib/hu/analyzeHand')
-            const { formatCard, formatBoard } = await import('../lib/hu/cards')
-            const hand = huFinalMatch.handHistory[idx]
-            const bothShown = !hand.hero.hasFolded && !hand.villain.hasFolded
-            const result = await analyzeHand({
-              userId: user.id,
-              sessionId: huSessionId ?? '',
-              handIndex: idx,
-              handData: {
-                hero_position: hand.hero.position,
-                hero_cards: hand.hero.holeCards.map(formatCard).join(''),
-                villain_cards: bothShown
-                  ? hand.villain.holeCards.map(formatCard).join('')
-                  : null,
-                board: hand.board.length > 0 ? formatBoard(hand.board) : null,
-                action_sequence: hand.actions,
-                pot_total_bb: Math.round(hand.potBB),
-                hero_won: await computeHeroWonForHand(hand),
-              },
-            })
-            await refreshPoints()
-            return result.analysis
-          }}
-          onBack={() => {
-            setAppMode('app')
-            setHuConfig(null)
-            setHuFinalMatch(null)
-            setHuSessionId(null)
-            setHuFlagsByHand({})
-          }}
-        />
+        {FEATURE_FLAGS.UI_V2 ? (
+          <HeadsUpReviewScreenV2
+            match={huFinalMatch}
+            userTier={userTier}
+            gtoFlagsByHand={huFlagsByHand}
+            aiBookmarks={huAIBookmarks}
+            onAnalyzeHand={handleAnalyzeHand}
+            onBack={sharedOnBack}
+          />
+        ) : (
+          <HeadsUpReviewScreen
+            match={huFinalMatch}
+            userTier={userTier}
+            gtoFlagsByHand={huFlagsByHand}
+            onAnalyzeHand={handleAnalyzeHand}
+            onBack={sharedOnBack}
+          />
+        )}
       </Suspense>
     )
   }
@@ -502,6 +534,28 @@ export default function App() {
             showLimit ? (
               <DailyLimitScreen
                 onUpgrade={() => { setShowLimit(false); setAppMode('upgrade') }}
+              />
+            ) : FEATURE_FLAGS.UI_V2 ? (
+              <TrainTabV2
+                isTabActive={tab === 'train' && trainSubTab === 'practice'}
+                guestMode={false}
+                userId={user?.id ?? null}
+                userName={profile?.name ?? '玩家'}
+                isPaid={profile ? isUserPaid(profile) : false}
+                points={points}
+                onStartRound={handleStartRound}
+                onPointsChanged={refreshPoints}
+                onNavigateToMissions={navigateToMissions}
+                onNavigateToHU={() => setAppMode('hu-select')}
+                onRoundComplete={async () => {
+                  if (!user) return
+                  const currentProfile = await getProfile()
+                  if (currentProfile && !isUserPaid(currentProfile)) {
+                    await incrementDailyPlays(user.id, currentProfile)
+                  }
+                  const latestProfile = await getProfile()
+                  if (latestProfile) setProfile(latestProfile)
+                }}
               />
             ) : (
               <TrainTab

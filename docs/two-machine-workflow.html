@@ -854,6 +854,77 @@
     </div>
   </div>
 
+  <!-- ═══ Section 8: 多 Tab 並行開發 ═══ -->
+  <div class="flow-section">
+    <h2>⑧ 多 Tab 並行開發（同機器多 Claude session）</h2>
+
+    <p style="color: #8b949e; font-size: 14px; margin-bottom: 20px;">
+      Claude Code 支援同時開多個 Tab，分別處理不同任務。為避免多個 session 改到同一檔案造成衝突，採用兩種策略：
+    </p>
+
+    <h3 style="color: #58a6ff; font-size: 15px; margin-bottom: 12px;">策略 A：Worktree（不同 branch 並行）</h3>
+    <div class="daily-flow" style="margin-bottom: 24px;">
+      <div class="flow-node orange">
+        <div class="flow-title">主目錄</div>
+        <div class="flow-desc">dev branch</div>
+        <div class="flow-cmd">poker-mentor/</div>
+      </div>
+      <div class="flow-arrow">+</div>
+      <div class="flow-node blue">
+        <div class="flow-title">UI v2 worktree</div>
+        <div class="flow-desc">feature/ui-v2</div>
+        <div class="flow-cmd">POKERNEW-ui-v2/</div>
+      </div>
+      <div class="flow-arrow">+</div>
+      <div class="flow-node purple">
+        <div class="flow-title">HU sim worktree</div>
+        <div class="flow-desc">feature/hu-simulator-v1</div>
+        <div class="flow-cmd">POKERNEW-hu-sim/</div>
+      </div>
+    </div>
+    <p style="color: #8b949e; font-size: 13px; margin-bottom: 24px;">
+      共用同一個 .git，每個 worktree 鎖一個 branch、一個資料夾。三個 Tab 各開不同目錄即完全隔離，commit 互通（git fetch 即可看到）。建立指令：
+      <code style="background:#0d1117; padding:2px 8px; border-radius:6px; color:#ff7b72;">git worktree add ../POKERNEW-xxx feature/xxx</code>
+    </p>
+
+    <h3 style="color: #d29922; font-size: 15px; margin-bottom: 12px;">策略 B：角色分工（同 branch 多 Tab）</h3>
+    <p style="color: #8b949e; font-size: 13px; margin-bottom: 16px;">
+      在同一個資料夾、同一 branch 開三個 Tab 時，每個 Claude session 啟動時會主動問「這個 Tab 負責哪個角色？」依角色限制可改檔案範圍：
+    </p>
+    <div class="daily-flow" style="margin-bottom: 16px;">
+      <div class="flow-node cyan">
+        <div class="flow-title">UI 工程師</div>
+        <div class="flow-desc">純元件、樣式</div>
+        <div class="flow-cmd">src/components/</div>
+      </div>
+      <div class="flow-arrow">|</div>
+      <div class="flow-node blue">
+        <div class="flow-title">Frontend 整合</div>
+        <div class="flow-desc">頁面、串 API、state</div>
+        <div class="flow-cmd">src/pages/ src/lib/</div>
+      </div>
+      <div class="flow-arrow">|</div>
+      <div class="flow-node green">
+        <div class="flow-title">Backend</div>
+        <div class="flow-desc">DB、RLS、Edge Func</div>
+        <div class="flow-cmd">supabase/ scripts/</div>
+      </div>
+    </div>
+    <p style="color: #8b949e; font-size: 13px; margin-bottom: 8px;">
+      共用區（<code style="background:#0d1117; padding:1px 6px; border-radius:4px; color:#ff7b72;">package.json</code>、<code style="background:#0d1117; padding:1px 6px; border-radius:4px; color:#ff7b72;">vite.config.ts</code>、<code style="background:#0d1117; padding:1px 6px; border-radius:4px; color:#ff7b72;">CLAUDE.md</code>、<code style="background:#0d1117; padding:1px 6px; border-radius:4px; color:#ff7b72;">.env</code>）任何角色動之前都要先講。
+    </p>
+    <p style="color: #8b949e; font-size: 13px; margin-bottom: 24px;">
+      Worktree 子目錄的 session 自動跳過角色詢問（branch 隔離已避免衝突）。
+    </p>
+
+    <h3 style="color: #f85149; font-size: 15px; margin-bottom: 12px;">何時用哪個</h3>
+    <ul style="color: #c9d1d9; font-size: 14px; line-height: 1.8; padding-left: 20px;">
+      <li><strong style="color:#58a6ff;">不同 feature 同時推進</strong> → 用策略 A（Worktree）</li>
+      <li><strong style="color:#d29922;">同一 feature 拆前端/後端/UI</strong> → 用策略 B（角色分工）</li>
+      <li><strong style="color:#f85149;">Dev server 一定要錯開 port</strong>（3000 / 3001 / 3002）避免衝突</li>
+    </ul>
+  </div>
+
 </div>
 
 </body>

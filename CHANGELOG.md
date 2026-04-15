@@ -1,5 +1,30 @@
 # Changelog
 
+## v0.8.1 — 2026-04-15
+
+### 新功能
+- **HU 對決 V2 介面**：全面重建 HeadsUpMatchScreenV2，以第二代 UI 為基礎
+  - 單排 BetSizingBarV2 動作列（取代雙排舊版）
+  - 手牌結束後直接顯示「▶▶ 下一手」按鈕，不需先開回饋
+  - 每手 GTO 回饋 sheet（10 秒倒數，可點進查看）+ AI 書籤（賽後分析）
+  - RangeGrid overlay 查看完整範圍
+  - 手牌結算改為 felt 內浮動 chip，不影響版面高度
+- **HeadsUpReviewScreenV2**：賽後結算畫面
+  - 結果 banner（+BB / -BB、手數、違規數、AI 書籤數）
+  - 全部手牌列表（展開顯示動作序列 + 4 街 GTO 評分 pending chip）
+  - AI 書籤橫向捲動區，可對書籤手牌進行 AI 分析
+
+### UI 改善
+- 撲克牌樣式統一為 V2：數字上方大字 + 花色符號下方小字（移除角落雙花色）
+- PokerFeltV2 中央社群牌：rank 19px 置上 + suit 11px 置下，提升可讀性
+- HU 對決 layout 改用 `position: fixed; inset: 0`，修復 iOS 動作列被截斷問題
+- Felt 容器改用 `flex-1 min-h-0`，解決 PokerFeltV2 高度塌陷問題
+
+### 修復
+- heroPosition 統一使用 `BTN/SB`（修復 HU 英雄座位顯示錯誤）
+- isCorrect 改由 preflop violation flags 判斷（修復永遠顯示「正確」的問題）
+- spendPoints RPC guard：入場費 0 時跳過扣點（修復無法進入 HU 的問題）
+
 ## v0.8.0 — 2026-04-11
 
 ### 新功能

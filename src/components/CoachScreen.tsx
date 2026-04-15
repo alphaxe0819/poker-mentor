@@ -231,7 +231,9 @@ export default function CoachScreen({ userId, points, coachOnboardingDone, onPoi
         <div className="flex-shrink-0 px-4 pb-4 pt-2" style={{ borderTop: '1px solid #1a1a1a' }}>
           {insufficientPoints && (
             <div className="text-center text-xs text-gray-500 mb-2">
-              點數不足（需要 {COST_PER_MESSAGE} 點），完成任務獲取更多點數
+              {COST_PER_MESSAGE === 0
+                ? '目前免費體驗中'
+                : `點數不足（需要 ${COST_PER_MESSAGE} 點），完成任務獲取更多點數`}
             </div>
           )}
           <div className="flex gap-2">
