@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-04-15 v0.8.1-dev.11 [feature/hu-simulator-v1]
+- CLAUDE.md 新增「自動部署授權（測試環境）」：Claude 可主動 merge→dev+push、主動產出測試 Supabase 貼碼，不需每次問
+- 原「Feature Branch 保護規則」改名為「正式環境保護規則」，範圍收緊到 main + 正式 Supabase
+- 「標準流程」4 步都標註授權層級（自動 / 需授權）
+- CoachScreen 死碼清理：insufficientPoints 提示在 COST=0 時改顯示「目前免費體驗中」
+- dev_workflow_hu_simulator.md 同步：上線步驟 8 標【自動】、步驟 10 標【需授權】
+
 ## 2026-04-14 v0.8.1-dev.10 [feature/hu-simulator-v1]
 - CLAUDE.md「開工 SOP」措辭改強制：Claude 必須主動執行，不准問用戶
 - 加禁止行為清單：不准問「要跑嗎」、不准跳過讀記憶檔

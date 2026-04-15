@@ -117,45 +117,68 @@
 
 ### 標準流程
 1. 在 `feature/*` branch 上開發
-2. 每完成一組邏輯完整的改動就 `git commit` + `git push`
-3. 功能做完 → merge 到 `dev` → push → 測試環境自動部署
-4. 測試通過 → merge `dev` 到 `main` → push → 正式環境自動部署
+2. 每完成一組邏輯完整的改動就 `git commit` + `git push`（feature branch）——【自動，不需確認】
+3. 功能告一段落 → Claude 主動 merge 到 `dev` → push → 測試環境 Vercel 自動部署——【自動，不需確認】
+4. 測試通過 → merge `dev` 到 `main` → push → 正式環境 Vercel 自動部署——【⚠️ 需用戶在聊天中明確授權】
 
 ### 禁止事項
 - **絕對不要**在有大量未 commit 改動時切換分支（`git checkout` 會丟棄未 commit 的修改）
 - **絕對不要**跳過 `dev` 直接 merge feature 到 `main`
-- 如果用戶說「不要上正式機」，意思是不要 push/merge 到 main，但**仍然應該在 feature branch 上 commit + push**
+- 如果用戶說「不要上正式機」，意思是不要 push/merge 到 main，但**仍然應該在 feature branch 和 dev 上 commit + push**
 
 ### 為何這條規則存在
 2026-04-13 在 feature branch 上做了大量引擎修復（engine.ts、botAI.ts 等 33 個檔案）但未 commit。用戶切換到 main 再切回來，git checkout 丟棄了所有未 commit 的改動，導致一整天的工作丟失。
 
-## Feature Branch 保護規則（防止未完成功能上線）
-**這是跨對話安全規則。每個 Claude session 在執行任何 git merge / git push 前，必須遵守以下全部條件：**
+## 自動部署授權（測試環境）
+**Claude 可在**不需要每次詢問用戶**的情況下自動執行以下動作：**
 
-1. **絕對禁止在沒有用戶明確指示的情況下執行以下操作**：
-   - ❌ `git merge <feature-branch>` 到 main
+1. **Feature branch 操作**
+   - `git commit` 到 `feature/*`
+   - `git push` `feature/*` 到 remote 同名 branch
+
+2. **Dev branch 操作（測試環境部署）**
+   - `git checkout dev && git merge <feature> && git push origin dev`
+   - 觸發時機：Claude 自行判斷改動**告一段落**（功能完整 + tsc 通過 + 相關測試通過）即可主動執行，不需詢問
+   - 執行前必做：`npx tsc -b --noEmit` 零錯誤、commit message 清楚
+   - 執行後必做：在對話中回報「已推到測試環境 → https://poker-goal-dev.vercel.app/」
+
+3. **測試環境的 Edge Function / SQL migration 貼碼指令**
+   - 直接產出給用戶手貼到**測試** Supabase Dashboard（`btiqmckyjyswzrarmfxa`），不需事先詢問
+   - 用戶貼完並回報驗證通過後，才產出正式環境的貼碼指令（受下方「正式環境保護規則」管控）
+
+### 為何這條規則存在
+多機開發需要測試環境快速同步，每次都問「要 push dev 嗎？」徒增摩擦。測試環境爛掉不影響使用者，允許 Claude 主動迭代；正式環境才是需要把關的地方。
+
+---
+
+## 正式環境保護規則（push 到 main 需明確授權）
+**這是跨對話安全規則。每個 Claude session 在碰正式環境前，必須遵守以下全部條件：**
+
+1. **絕對禁止在沒有用戶明確指示的情況下執行以下操作**（**dev branch 不在此限，見上方「自動部署授權」**）：
+   - ❌ `git merge <任何 branch>` 到 main
    - ❌ `git checkout main && git merge ...`
-   - ❌ `git push origin main`（當 main 包含來自 feature branch 的改動時）
-   - ❌ `git push origin <feature-branch>:main`
+   - ❌ `git push origin main`
+   - ❌ `git push origin <branch>:main`
+   - ❌ 產出正式 Supabase（`qaiwsocjwkjrmyzawabt`）的 Edge Function / SQL migration 貼碼指令
 
 2. **每次要 push 到 main 之前，必須先問用戶**：
-   - 「我準備把 `<branch-name>` merge 到 main 並 push 到正式機，確認要執行嗎？」
+   - 「我準備把 `dev` merge 到 main 並 push 到正式機，確認要執行嗎？」
    - **等待用戶在聊天中明確回覆「是」/「確認」/「push」後才執行**
    - 用戶說「commit」不等於允許 push — commit 和 push 是兩個不同的動作
+   - 用戶說「推到測試機」/「上 dev」等，**不等於允許推正式機**
 
 3. **新 session 開始時，如果發現當前在 feature branch 上**：
    - 讀 `memory/dev_workflow_hu_simulator.md`（或對應的 workflow 記憶）了解該 branch 的開發狀態
-   - **不要假設** feature branch 已經完成可以 merge
    - **不要假設** 用戶想部署到正式機
-   - 先問用戶要做什麼
+   - 先問用戶要做什麼（但可以依「自動部署授權」規則主動推到 dev）
 
-4. **「完成任務」不等於「部署上線」**：
-   - 程式碼寫完 ≠ 可以 merge
-   - 測試通過 ≠ 可以 merge
-   - 只有用戶明確說「merge 到 main」或「push 到正式機」才能 merge/push
+4. **「完成任務」不等於「部署上線到 main」**：
+   - 程式碼寫完 ≠ 可以 merge 到 main
+   - 測試通過 ≠ 可以 merge 到 main
+   - 只有用戶明確說「merge 到 main」或「push 到正式機」才能 merge/push 到 main
    - CLAUDE.md 的「推送到正式機前的必做事項」是在**用戶授權 push 之後**才執行的清單，不是觸發 push 的條件
 
-5. **如果其他 session 的上下文提到「準備上線」「可以 ship」「merge」等字眼**：
+5. **如果其他 session 的上下文提到「準備上線」「可以 ship」「merge 到 main」等字眼**：
    - 這些是該 session 的建議，不是跨 session 的授權
    - 新 session **必須重新取得用戶授權**
 
@@ -182,17 +205,18 @@
 ### Edge Function / DB Migration 部署順序（強制）
 **任何貼到 Supabase Dashboard 的 Edge Function 或 SQL migration，必須照下列順序執行：**
 
-1. **先貼到測試 Supabase**（`btiqmckyjyswzrarmfxa`）→ Deploy
+1. **先貼到測試 Supabase**（`btiqmckyjyswzrarmfxa`）→ Deploy ——【Claude 可主動產出貼碼指令，不需詢問】
 2. **在 `poker-goal-dev.vercel.app` 實際驗證功能正常**（跑一遍會呼叫該 Function / 用到該 migration 的流程）
-3. **驗證全通過後，才貼到正式 Supabase**（`qaiwsocjwkjrmyzawabt`）→ Deploy
+3. **驗證全通過後，才貼到正式 Supabase**（`qaiwsocjwkjrmyzawabt`）→ Deploy ——【⚠️ 必須等用戶明確授權才產出貼碼指令】
 
 **禁止事項**：
 - ❌ 禁止一次把程式碼同時給用戶貼兩邊（即使是「同一段」程式碼）
 - ❌ 禁止跳過測試環境直接上正式
 - ❌ 禁止在測試環境未驗證前就產出正式環境的貼碼步驟
+- ❌ 禁止在未取得用戶授權前產出正式 Supabase 的貼碼指令
 
 **給用戶程式碼時的正確格式**：
-一次只給**一個**環境的貼碼指令。貼完測試環境後，等用戶回報驗證結果（或明確說「測試通過」），再給正式環境的貼碼指令。
+一次只給**一個**環境的貼碼指令。貼完測試環境後，等用戶回報驗證結果（或明確說「測試通過」），並明確授權上正式機，才給正式環境的貼碼指令。
 
 ### 為何這條規則存在
 2026-04-14 Claude session 在給 Edge Function 替換碼時，把測試環境和正式環境的貼碼步驟寫在同一則訊息，用戶一貼就會兩邊同時更新，失去「先測試再上線」的防護機制。這條規則確保部署節奏強制分兩步，讓 bug 有機會在測試環境被攔下。
