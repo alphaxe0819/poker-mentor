@@ -302,3 +302,51 @@ BTN → SB → BB → UTG → UTG+1 → UTG+2 → LJ → HJ → CO → (回 BTN)
 - 答題不加點數，點數只從任務和未來儲值取得
 - AI 教練使用 Claude Haiku，5 點/則訊息
 - 點數系統用 Supabase RPC 原子操作（add_points / spend_points）
+
+## 多 Tab 平行開發角色分工（同一 branch 多 session 時必須遵守）
+
+當使用者同時開多個 Claude Code Tab 在**同一個資料夾/branch** 工作時，每個 session 啟動時必須先問使用者：「我這個 Tab 負責哪個角色？(UI / Frontend / Backend / 自由)」
+得到回答後，**只能修改該角色範圍內的檔案**。要動範圍外的檔案，必須先告知使用者並取得同意。
+
+### 角色 1：UI 工程師
+**可改**
+- `src/components/`
+- `src/index.css`
+- `tailwind.config.js`
+- `public/`
+
+**任務**：純 UI 元件、樣式、RWD、視覺
+**禁碰**：頁面邏輯、API、Supabase
+
+### 角色 2：Frontend 整合工程師
+**可改**
+- `src/pages/`
+- `src/tabs/`
+- `src/lib/`（除 supabase client 設定外）
+- `src/data/`
+- `src/types/`、`src/types.ts`
+
+**任務**：頁面組裝、串 API、state、路由、hooks
+**禁碰**：`src/components/` 內部實作、`supabase/`
+
+### 角色 3：Backend / Supabase 工程師
+**可改**
+- `supabase/`（migrations、RLS、edge functions）
+- `scripts/`
+- `src/lib/supabase*`（client 設定）
+
+**任務**：DB schema、migration、RLS、auth、edge functions
+**禁碰**：UI、頁面、components
+
+### 共用區（任何角色動之前都要先告知使用者）
+- `package.json` / `package-lock.json`
+- `vite.config.ts` / `tsconfig*.json`
+- `CLAUDE.md` / `docs/`
+- `src/main.tsx`
+- `.env`
+
+### 角色：自由（單 Tab 模式）
+若使用者回答「自由」或「沒有其他 Tab」，則無範圍限制，依正常規則工作。
+
+### Worktree 模式
+若工作目錄是 `POKERNEW-ui-v2`、`POKERNEW-hu-sim` 等 worktree 子目錄，視為**獨立 branch**，無需角色限制（branch 隔離已自動避免衝突）。
