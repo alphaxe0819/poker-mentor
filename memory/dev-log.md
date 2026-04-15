@@ -5,6 +5,11 @@
 
 ---
 
+## 2026-04-15 v0.8.1-dev.14 [dev]
+- UI_V2 flag resolution 改為自動判斷：staging（poker-goal-dev）預設 V2、正式機預設 V1
+- 新增 `?ui=v1` / `?ui=v2` query param 強制覆蓋（方便 staging 退回舊版對照）
+- 不用再貼 localStorage 指令，打開 staging 網址就直接看到新 UI
+
 ## 2026-04-15 v0.8.1-dev.13 [feature/ui-v2 → dev]
 - UI v2：膠囊牌桌 + 四色卡 + 頂部 action bar + 底部 drag sheet + 街別評分 chips + AI 教練 CTA
 - 新增元件：`src/components/v2/{PokerFeltV2, ActionHistoryBarTop, BetSizingBarV2, FeedbackSheetV2, HeadsUpMatchScreenV2}.tsx`
