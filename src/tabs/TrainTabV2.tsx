@@ -788,14 +788,9 @@ export default function TrainTabV2({ guestMode: _guestMode = false, userId = nul
             />
           </div>
 
-          {/* Hero 手牌：貼近 BTN 座位，間距 3px */}
-          <div className="flex justify-center relative z-[5]" style={{ marginTop: -24, marginBottom: 4 }}>
-            <div className="flex flex-col items-center gap-1">
-              <HoleCards hand={handSetup.hand} />
-              <span className="text-xs text-gray-400">
-                {handSetup.hand} {handSetup.hand.endsWith('s') ? '同花' : handSetup.hand.endsWith('o') ? '雜色' : '對子'}
-              </span>
-            </div>
+          {/* Hero 手牌：略低於 BTN 座位（無下方文字），不影響 action bar 位置 */}
+          <div className="flex justify-center relative z-[5]" style={{ marginTop: -8, marginBottom: 4 }}>
+            <HoleCards hand={handSetup.hand} />
           </div>
 
           {/* villain_response / hand_over 的狀態文字 */}

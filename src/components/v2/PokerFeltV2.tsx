@@ -186,7 +186,7 @@ export default memo(function PokerFeltV2({
 
             {/* Seat circle — MIDDLE layer (opaque so outline doesn't bleed through) */}
             <div
-              className="absolute flex flex-col items-center justify-center rounded-full"
+              className="absolute flex flex-col items-center rounded-full"
               style={{
                 zIndex: 2,
                 left: slot.left, top: slot.top,
@@ -195,6 +195,7 @@ export default memo(function PokerFeltV2({
                 border: style.border,
                 boxShadow: style.shadow,
                 transform: 'translate(-50%, -50%)',
+                paddingTop: 14,   // shift inner text down so cards don't cover position name
               }}>
               {showPositions && (
                 <span className="text-[10px] font-bold leading-none" style={{ color: style.posColor }}>
