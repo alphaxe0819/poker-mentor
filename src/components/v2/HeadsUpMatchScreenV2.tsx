@@ -96,9 +96,7 @@ export default function HeadsUpMatchScreenV2({
   const [feedbackReady, setFeedbackReady] = useState<HUHandFeedback | null>(null)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [feedbackCountdown, setFeedbackCountdown] = useState(0)
-  const [aiBookmarkedHands, setAIBookmarkedHands] = useState<number[]>([])
-  void setAIBookmarkedHands  // referenced by future bookmark UI (Task 3); keeps noUnusedLocals happy
-  const [_bookmarkToast, _setBookmarkToast] = useState(false)
+  const [aiBookmarkedHands, _setAIBookmarkedHands] = useState<number[]>([])
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const aiBookmarkedHandsRef = useRef<number[]>([])
   aiBookmarkedHandsRef.current = aiBookmarkedHands
@@ -218,6 +216,8 @@ export default function HeadsUpMatchScreenV2({
         dealNextHand()
       }
     }, 1000)
+
+    return () => { clearCountdown() }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [match?.currentHand?.isComplete, match?.currentHand?.handNumber])
