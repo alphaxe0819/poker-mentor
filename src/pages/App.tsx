@@ -33,6 +33,7 @@ const HeadsUpScenarioSelect = lazy(() => import('../components/HeadsUpScenarioSe
 const HeadsUpMatchScreen    = lazy(() => import('../components/HeadsUpMatchScreen'))
 const HeadsUpMatchScreenV2  = lazy(() => import('../components/v2/HeadsUpMatchScreenV2'))
 const HeadsUpReviewScreen   = lazy(() => import('../components/HeadsUpReviewScreen'))
+const HeadsUpReviewScreenV2 = lazy(() => import('../components/v2/HeadsUpReviewScreenV2'))
 
 const LazyFallback = () => (
   <div className="flex items-center justify-center min-h-[200px]">
@@ -86,7 +87,6 @@ export default function App() {
   const [huFinalMatch, setHuFinalMatch] = useState<import('../lib/hu/types').MatchState | null>(null)
   const [huSessionId, setHuSessionId] = useState<string | null>(null)
   const [huFlagsByHand, setHuFlagsByHand] = useState<FlagsByHand>({})
-  // @ts-expect-error TS6133 — read in Task 8 (HeadsUpReviewScreenV2)
   const [huAIBookmarks, setHuAIBookmarks] = useState<number[]>([])
 
   const handleHuAbandon = useCallback(() => {
@@ -451,45 +451,61 @@ export default function App() {
   if (appMode === 'hu-review' && huFinalMatch && user) {
     const userTier: 'free' | 'basic' | 'pro' =
       profile && isUserPaid(profile) ? 'pro' : 'free'
+
+    const handleAnalyzeHand = async (idx: number) => {
+      const { analyzeHand } = await import('../lib/hu/analyzeHand')
+      const { formatCard, formatBoard } = await import('../lib/hu/cards')
+      const hand = huFinalMatch.handHistory[idx]
+      const bothShown = !hand.hero.hasFolded && !hand.villain.hasFolded
+      const result = await analyzeHand({
+        userId: user.id,
+        sessionId: huSessionId ?? '',
+        handIndex: idx,
+        handData: {
+          hero_position: hand.hero.position,
+          hero_cards: hand.hero.holeCards.map(formatCard).join(''),
+          villain_cards: bothShown
+            ? hand.villain.holeCards.map(formatCard).join('')
+            : null,
+          board: hand.board.length > 0 ? formatBoard(hand.board) : null,
+          action_sequence: hand.actions,
+          pot_total_bb: Math.round(hand.potBB),
+          hero_won: await computeHeroWonForHand(hand),
+        },
+      })
+      await refreshPoints()
+      return result.analysis
+    }
+
+    const sharedOnBack = () => {
+      setAppMode('app')
+      setHuConfig(null)
+      setHuFinalMatch(null)
+      setHuSessionId(null)
+      setHuFlagsByHand({})
+      setHuAIBookmarks([])
+    }
+
     return (
       <Suspense fallback={<LazyFallback />}>
-        <HeadsUpReviewScreen
-          match={huFinalMatch}
-          userTier={userTier}
-          gtoFlagsByHand={huFlagsByHand}
-          onAnalyzeHand={async (idx) => {
-            const { analyzeHand } = await import('../lib/hu/analyzeHand')
-            const { formatCard, formatBoard } = await import('../lib/hu/cards')
-            const hand = huFinalMatch.handHistory[idx]
-            const bothShown = !hand.hero.hasFolded && !hand.villain.hasFolded
-            const result = await analyzeHand({
-              userId: user.id,
-              sessionId: huSessionId ?? '',
-              handIndex: idx,
-              handData: {
-                hero_position: hand.hero.position,
-                hero_cards: hand.hero.holeCards.map(formatCard).join(''),
-                villain_cards: bothShown
-                  ? hand.villain.holeCards.map(formatCard).join('')
-                  : null,
-                board: hand.board.length > 0 ? formatBoard(hand.board) : null,
-                action_sequence: hand.actions,
-                pot_total_bb: Math.round(hand.potBB),
-                hero_won: await computeHeroWonForHand(hand),
-              },
-            })
-            await refreshPoints()
-            return result.analysis
-          }}
-          onBack={() => {
-            setAppMode('app')
-            setHuConfig(null)
-            setHuFinalMatch(null)
-            setHuSessionId(null)
-            setHuFlagsByHand({})
-            setHuAIBookmarks([])
-          }}
-        />
+        {FEATURE_FLAGS.UI_V2 ? (
+          <HeadsUpReviewScreenV2
+            match={huFinalMatch}
+            userTier={userTier}
+            gtoFlagsByHand={huFlagsByHand}
+            aiBookmarks={huAIBookmarks}
+            onAnalyzeHand={handleAnalyzeHand}
+            onBack={sharedOnBack}
+          />
+        ) : (
+          <HeadsUpReviewScreen
+            match={huFinalMatch}
+            userTier={userTier}
+            gtoFlagsByHand={huFlagsByHand}
+            onAnalyzeHand={handleAnalyzeHand}
+            onBack={sharedOnBack}
+          />
+        )}
       </Suspense>
     )
   }

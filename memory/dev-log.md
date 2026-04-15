@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-04-15 v0.8.1-dev.26 [dev]
+- HU V2 UI 收尾完成：FeedbackSheetV2 overlay（10s 倒數）+ AI 書籤系統
+- 新建 HeadsUpReviewScreenV2：結果 banner + AI 書籤橫向捲動 + 手牌列表（展開動作序列）
+- App.tsx 接線 FEATURE_FLAGS.UI_V2 → HeadsUpReviewScreenV2
+- 所有街別 GTO 評分顯示 pending（資料建構中）
+
 ## 2026-04-15 v0.8.1-dev.22 [feature/hu-simulator-v1]
 - HeadsUpMatchScreenV2：以 10 秒倒數 + setInterval 取代舊的 setTimeout 2500ms 換牌邏輯
 - 新增 `feedbackReady` / `feedbackOpen` / `feedbackCountdown` / `aiBookmarkedHands` state
