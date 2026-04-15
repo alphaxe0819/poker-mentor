@@ -401,19 +401,21 @@ export default function App() {
           entryCost={HU_ENTRY_COST}
           onCancel={() => setAppMode('app')}
           onConfirm={async (config) => {
-            // Spend entry fee atomically via RPC
-            const { spendPoints } = await import('../lib/points')
-            const result = await spendPoints(
-              user.id,
-              HU_ENTRY_COST,
-              'hu_entry',
-              'HU 對決入場'
-            )
-            if (!result.success) {
-              alert('點數不足')
-              return
+            // Spend entry fee atomically via RPC (skip when cost is 0)
+            if (HU_ENTRY_COST > 0) {
+              const { spendPoints } = await import('../lib/points')
+              const result = await spendPoints(
+                user.id,
+                HU_ENTRY_COST,
+                'hu_entry',
+                'HU 對決入場'
+              )
+              if (!result.success) {
+                alert('點數不足')
+                return
+              }
+              setPoints(result.balance)
             }
-            setPoints(result.balance)
             // Create DB session + run retention cleanup
             const { createSession, runRetentionCleanup } = await import('../lib/hu/sessionStorage')
             try {

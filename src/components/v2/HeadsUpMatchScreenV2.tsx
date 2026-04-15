@@ -1,9 +1,9 @@
 // src/components/v2/HeadsUpMatchScreenV2.tsx — v2 UI (capsule felt)
 import { useState, useEffect, useCallback, useRef } from 'react'
 import PokerFeltV2 from './PokerFeltV2'
+import ActionHistoryBarTop, { type HistoryItem } from './ActionHistoryBarTop'
 import FeedbackSheetV2 from './FeedbackSheetV2'
 import HoleCards from '../HoleCards'
-import CommunityCards from '../CommunityCards'
 import PostflopActionBar, { type ActionChoice } from '../PostflopActionBar'
 import PreflopActionBar, { type PreflopAction } from '../PreflopActionBar'
 import type { MatchConfig, MatchState, Action, HandState } from '../../lib/hu/types'
@@ -26,6 +26,21 @@ export interface GtoFlag {
   pass: boolean
 }
 export type FlagsByHand = Record<number, GtoFlag[]>
+
+// ── HU action → ActionHistoryBarTop item ─────────────────────────
+function huActionToHistoryItem(a: Action, heroPos: string): HistoryItem {
+  let detail = ''
+  switch (a.kind) {
+    case 'fold':  detail = 'Fold'; break
+    case 'check': detail = 'Check'; break
+    case 'call':  detail = 'Call'; break
+    case 'bet':   detail = `Bet ${a.amount}`; break
+    case 'raise': detail = `Raise ${a.amount}`; break
+    case 'allin': detail = 'All-in'; break
+    default:      detail = a.kind
+  }
+  return { label: a.actor.toUpperCase(), detail, kind: a.actor === heroPos ? 'hero' : 'villain' }
+}
 
 // ── Hand feedback data ────────────────────────────────────────────
 
@@ -99,6 +114,7 @@ export default function HeadsUpMatchScreenV2({
   const [feedbackCountdown, setFeedbackCountdown] = useState(0)
   const [aiBookmarkedHands, setAIBookmarkedHands] = useState<number[]>([])
   const [bookmarkToast, setBookmarkToast] = useState<false | 'new' | 'existing'>(false)
+  const [showExitConfirm, setShowExitConfirm] = useState(false)
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const aiBookmarkedHandsRef = useRef<number[]>([])
   aiBookmarkedHandsRef.current = aiBookmarkedHands
@@ -330,7 +346,7 @@ export default function HeadsUpMatchScreenV2({
   const hand = match.currentHand
   const isPlayerTurn = hand.toAct === hand.hero.position && !hand.isComplete && !hand.hero.isAllIn
 
-  // ── In-hand chip totals (stack already committed this hand) ──
+  // ── In-hand chip totals ──
   const heroTotalBB = hand.hero.stackBB + hand.hero.committedBB
   const villainTotalBB = hand.villain.stackBB + hand.villain.committedBB
 
@@ -342,7 +358,7 @@ export default function HeadsUpMatchScreenV2({
   const canBet = !hand.isComplete && toCallBB === 0 && hand.hero.stackBB > 0
   const canRaise = !hand.isComplete && toCallBB > 0 && hand.hero.stackBB > toCallBB
 
-  // ── Preflop raise sizing (stack-aware GTO sizes) ──
+  // ── Preflop raise sizing ──
   const preflopRaises = hand.actions.filter(a => a.street === 'preflop' && (a.kind === 'raise' || a.kind === 'bet')).length
   const totalEffStack = Math.min(heroTotalBB, villainTotalBB)
   const isMidStack = totalEffStack <= 25
@@ -364,132 +380,122 @@ export default function HeadsUpMatchScreenV2({
   const showXS = !isPreflop && spr > 10
   const showXL = hand.street === 'river' && hand.potBB > 20
 
-  // ── Action history pills ──
-  const actionPills = hand.actions.map((a, i) => {
-    const pos = a.actor.toUpperCase()
-    let label = a.kind.charAt(0).toUpperCase() + a.kind.slice(1)
-    if (a.amount !== undefined) label += ` ${a.amount}`
-    if (a.kind === 'allin') label = 'Allin'
-    return { key: i, pos, label, isLast: i === hand.actions.length - 1 }
-  })
+  // ── ActionHistoryBarTop items ──
+  const historyItems: HistoryItem[] = hand.actions.map(a => huActionToHistoryItem(a, hand.hero.position))
+
+  // ── PokerFeltV2 seat keys (HU 2-player: 'BTN/SB' or 'BB') ──
+  const heroSeatKey  = hand.hero.position    === 'btn' ? 'BTN/SB' : 'BB'
+  const villainSeatKey = hand.villain.position === 'btn' ? 'BTN/SB' : 'BB'
 
   const showVillainCards = hand.isComplete && !hand.hero.hasFolded && !hand.villain.hasFolded
 
   return (
-    <div className="min-h-screen flex flex-col relative" style={{ background: '#0a0a0a' }}>
-      {/* Top action history bar (GTO Wizard style) */}
-      <div className="flex items-center gap-1 px-2 py-1.5 overflow-x-auto"
-           style={{ background: '#111', borderBottom: '1px solid #1a1a1a', minHeight: 36 }}>
-        <button onClick={onAbandon} className="text-gray-500 text-sm px-1 shrink-0">✕</button>
-        <div className="flex items-center gap-1 text-[10px] font-mono">
-          {actionPills.length === 0 && (
-            <span className="text-gray-600 px-2">手 #{hand.handNumber}</span>
-          )}
-          {actionPills.map(p => (
-            <span key={p.key}
-                  className="shrink-0 px-1.5 py-0.5 rounded text-white"
-                  style={{
-                    background: p.isLast ? '#2a4a3a' : '#1a1a1a',
-                    border: p.isLast ? '1px solid #10b981' : '1px solid #2a2a2a',
-                  }}>
-              {p.pos} {p.label}
-            </span>
-          ))}
-        </div>
-        <span className="ml-auto text-gray-500 text-[10px] shrink-0 pl-2">
-          {heroTotalBB} BB
-        </span>
-      </div>
+    <div style={{ position: 'fixed', inset: 0, background: '#0a0a0a', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-      {/* Main game area */}
-      <div className="flex-1 flex flex-col">
-        {/* Table felt area with villain cards at seat */}
-        <div className="flex-1 flex flex-col items-center justify-center px-3 relative">
-          {/* Villain cards — at seat position (top-left of table) */}
-          <div className="absolute flex items-center gap-1.5" style={{ top: '4%', left: '8%', zIndex: 10 }}>
-            {showVillainCards ? (
-              <HoleCards hand={handToCanonical(hand.villain.holeCards)} actualCards={hand.villain.holeCards} size="small" />
-            ) : (
-              <div className="flex gap-0.5">
-                <div className="rounded" style={{ width: 32, height: 44, background: '#2a2a2e', border: '1px solid #444' }} />
-                <div className="rounded" style={{ width: 32, height: 44, background: '#2a2a2e', border: '1px solid #444' }} />
-              </div>
-            )}
-            <div className="text-[10px]">
-              <div className="text-gray-400">{hand.villain.position.toUpperCase()}</div>
-              <div className="text-white font-bold">{villainTotalBB} BB</div>
+      {/* Exit confirm modal */}
+      {showExitConfirm && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div className="rounded-2xl p-6 w-full max-w-xs" style={{ background: '#111', border: '1px solid #222' }}>
+            <div className="text-white font-bold text-base mb-2">放棄比賽？</div>
+            <div className="text-gray-400 text-sm mb-5">比賽進行中，確定要放棄？</div>
+            <div className="flex gap-3">
+              <button onClick={() => setShowExitConfirm(false)}
+                className="flex-1 py-2.5 rounded-full text-sm font-medium"
+                style={{ background: '#1a1a1a', border: '1px solid #333', color: '#aaa' }}>
+                繼續比賽
+              </button>
+              <button onClick={onAbandon}
+                className="flex-1 py-2.5 rounded-full text-sm font-medium text-white"
+                style={{ background: '#7c3aed' }}>
+                放棄
+              </button>
             </div>
-            {waitingForBot && (
-              <span className="text-gray-500 text-[10px] animate-pulse ml-1">...</span>
-            )}
-          </div>
-
-          <PokerFeltV2
-            tableSize={2}
-            heroPosition={hand.hero.position === 'btn' ? 'BTN' : 'BB'}
-            potTotal={hand.potBB}
-            seatInfo={{
-              [hand.hero.position === 'btn' ? 'BTN' : 'BB']: {
-                status: 'hero',
-                bet: hand.hero.streetCommitBB,
-                stack: hand.hero.stackBB,
-              },
-              [hand.villain.position === 'btn' ? 'BTN' : 'BB']: {
-                status: hand.villain.hasFolded ? 'folded' : 'active',
-                bet: hand.villain.streetCommitBB,
-                stack: hand.villain.stackBB,
-                hasCards: !hand.villain.hasFolded,
-              },
-            }}
-          />
-
-          {/* Community cards — centered below table */}
-          {hand.board.length > 0 && (
-            <div className="mt-2">
-              <CommunityCards cards={hand.board} />
-            </div>
-          )}
-        </div>
-
-        {/* Hero cards — centered, large, with label */}
-        <div className="flex flex-col items-center gap-1 pb-2 pt-1">
-          <HoleCards hand={handToCanonical(hand.hero.holeCards)} actualCards={hand.hero.holeCards} />
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-gray-500">{handToCanonical(hand.hero.holeCards)}</span>
-            <span className="text-gray-400">·</span>
-            <span className="text-gray-400">{hand.hero.position.toUpperCase()}</span>
-            <span className="text-gray-400">·</span>
-            <span className="text-white font-bold">{heroTotalBB} BB</span>
-            {!waitingForBot && isPlayerTurn && !hand.isComplete && (
-              <span className="text-green-400 font-bold ml-2">輪到你</span>
-            )}
           </div>
         </div>
+      )}
 
-        {/* Hand result overlay */}
+      {/* Top: ActionHistoryBarTop */}
+      <ActionHistoryBarTop
+        items={historyItems}
+        onBack={() => setShowExitConfirm(true)}
+        rightSlot={
+          <div className="flex items-center gap-2 text-[10px]" style={{ color: '#8a92a0' }}>
+            {waitingForBot && <span className="animate-pulse" style={{ color: '#6b7280' }}>思考中...</span>}
+            <span>手 #{hand.handNumber}</span>
+            <span className="font-bold" style={{ color: '#e6e8ec' }}>{heroTotalBB} BB</span>
+          </div>
+        }
+      />
+
+      {/* Felt — fills all remaining space (min-h-0 lets flex shrink correctly) */}
+      <div className="flex-1 relative min-h-0">
+        <PokerFeltV2
+          tableSize={2}
+          heroPosition={hand.hero.position === 'btn' ? 'BTN/SB' : 'BB'}
+          potTotal={hand.potBB}
+          boardCards={hand.board}
+          seatInfo={{
+            [heroSeatKey]: {
+              status: 'hero',
+              bet: hand.hero.streetCommitBB,
+              stack: hand.hero.stackBB,
+            },
+            [villainSeatKey]: {
+              status: hand.villain.hasFolded ? 'folded' : 'active',
+              bet: hand.villain.streetCommitBB,
+              stack: hand.villain.stackBB,
+              hasCards: !hand.villain.hasFolded,
+            },
+          }}
+        />
+
+        {/* Villain showdown cards — overlay on felt */}
+        {showVillainCards && (
+          <div className="absolute" style={{ top: '10%', left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}>
+            <HoleCards
+              hand={handToCanonical(hand.villain.holeCards)}
+              actualCards={hand.villain.holeCards}
+              size="small"
+            />
+          </div>
+        )}
+
+        {/* Hand result — overlay at felt bottom */}
         {handResult && (() => {
           const bg = handResult.tie ? 'rgba(250,204,21,0.12)'
             : handResult.won ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'
-          const border = handResult.tie ? '#fbbf24'
-            : handResult.won ? '#10b981' : '#ef4444'
-          const color = handResult.tie ? '#fbbf24'
-            : handResult.won ? '#10b981' : '#ef4444'
-          const emoji = handResult.tie ? '🤝' : handResult.won ? '🏆' : '💔'
-          const label = hand.hero.hasFolded ? '你棄牌'
+          const border = handResult.tie ? '#fbbf24' : handResult.won ? '#10b981' : '#ef4444'
+          const color  = handResult.tie ? '#fbbf24' : handResult.won ? '#10b981' : '#ef4444'
+          const emoji  = handResult.tie ? '🤝' : handResult.won ? '🏆' : '💔'
+          const label  = hand.hero.hasFolded ? '你棄牌'
             : hand.villain.hasFolded ? '對手棄牌'
             : handResult.tie ? 'Chop' : 'Showdown'
           return (
-            <div className="text-center py-3 rounded-xl mx-3 mb-2 animate-pulse"
+            <div className="absolute inset-x-4 bottom-2 text-center py-2 rounded-xl animate-pulse"
                  style={{ background: bg, border: `1px solid ${border}` }}>
-              <div className="text-2xl mb-1">{emoji}</div>
-              <div className="font-bold text-lg" style={{ color }}>
-                {handResult.tie ? 'CHOP'
-                  : `${handResult.delta >= 0 ? '+' : ''}${handResult.delta.toFixed(1)} BB`}
+              <div className="text-xl mb-0.5">{emoji}</div>
+              <div className="font-bold text-base" style={{ color }}>
+                {handResult.tie ? 'CHOP' : `${handResult.delta >= 0 ? '+' : ''}${handResult.delta.toFixed(1)} BB`}
               </div>
-              <div className="text-gray-400 text-xs mt-1">{label}</div>
+              <div className="text-gray-400 text-[11px] mt-0.5">{label}</div>
             </div>
           )
         })()}
+      </div>
+
+      {/* Hero hole cards */}
+      <div className="flex flex-col items-center relative z-[5]" style={{ marginTop: -8, paddingBottom: 4 }}>
+        <HoleCards hand={handToCanonical(hand.hero.holeCards)} actualCards={hand.hero.holeCards} />
+        <div className="flex items-center gap-2 text-xs mt-1">
+          <span className="text-gray-500">{handToCanonical(hand.hero.holeCards)}</span>
+          <span className="text-gray-600">·</span>
+          <span className="text-gray-400">{hand.hero.position.toUpperCase()}</span>
+          <span className="text-gray-600">·</span>
+          <span className="text-white font-bold">{heroTotalBB} BB</span>
+          {!waitingForBot && isPlayerTurn && !hand.isComplete && (
+            <span className="font-bold ml-1" style={{ color: '#10b981' }}>輪到你</span>
+          )}
+        </div>
       </div>
 
       {/* Action bar */}
@@ -526,13 +532,9 @@ export default function HeadsUpMatchScreenV2({
 
       {/* Feedback floating button */}
       {feedbackReady && !feedbackOpen && (
-        <div className="fixed bottom-24 right-4 z-40">
+        <div style={{ position: 'fixed', bottom: 96, right: 16, zIndex: 40 }}>
           <button
-            onClick={() => {
-              clearCountdown()
-              setFeedbackOpen(true)
-              setFeedbackCountdown(0)
-            }}
+            onClick={() => { clearCountdown(); setFeedbackOpen(true); setFeedbackCountdown(0) }}
             className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-bold text-white shadow-lg"
             style={{ background: '#7c3aed', border: '1px solid #9d5bff' }}>
             👁 回饋
@@ -545,12 +547,10 @@ export default function HeadsUpMatchScreenV2({
 
       {/* FeedbackSheetV2 overlay */}
       {feedbackOpen && feedbackReady && (() => {
-        // Use currentHand if available, else last completed hand
         const overlayHand = match?.currentHand ?? match?.handHistory[match.handHistory.length - 1]
         if (!overlayHand) return null
-
         return (
-          <div className="fixed inset-0 z-50">
+          <div style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
             <FeedbackSheetV2
               isCorrect={feedbackReady.isCorrect}
               tip={feedbackReady.tip}
@@ -559,9 +559,7 @@ export default function HeadsUpMatchScreenV2({
               explanation={feedbackReady.explanation}
               expanded={false}
               onToggleExpand={() => {}}
-              onViewRange={() => {
-                // HU 範圍資料建構中 — noop for now
-              }}
+              onViewRange={() => {}}
               onNext={() => dealNextHand()}
               onAskAI={() => {
                 const wasAlreadyBookmarked = aiBookmarkedHandsRef.current.includes(overlayHand.handNumber)
@@ -580,8 +578,8 @@ export default function HeadsUpMatchScreenV2({
 
       {/* AI bookmark toast */}
       {bookmarkToast && (
-        <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[60] px-4 py-2 rounded-full text-sm font-bold text-white pointer-events-none"
-             style={{ background: '#1a103a', border: '1px solid #7c3aed' }}>
+        <div className="px-4 py-2 rounded-full text-sm font-bold text-white pointer-events-none"
+             style={{ position: 'fixed', bottom: 128, left: '50%', transform: 'translateX(-50%)', zIndex: 60, background: '#1a103a', border: '1px solid #7c3aed' }}>
           {bookmarkToast === 'new' ? '✓ 已加入賽後分析' : '已在書籤中'}
         </div>
       )}

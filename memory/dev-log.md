@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-15 v0.8.1-dev.27 [feature/hu-simulator-v1]
+- HeadsUpMatchScreenV2：以 TrainTabV2 V2 版面為基礎完整重建 JSX
+- 修正：`position: fixed; inset: 0` 全屏容器，解決 action bar 在 iOS 被蓋住問題
+- 修正：felt 容器改為 `flex-1 relative min-h-0`，解決 PokerFeltV2 無高度（GG blob）問題
+- 修正：heroPosition 統一使用 `'BTN/SB'` 而非 `'BTN'`，seatInfo key 對應正確
+- 修正：community cards 改由 PokerFeltV2 `boardCards` prop 渲染（取代獨立 CommunityCards）
+- 新增：ActionHistoryBarTop 顯示 HU 動作序列、showExitConfirm modal
+
 ## 2026-04-15 v0.8.1-dev.26 [dev]
 - HU V2 UI 收尾完成：FeedbackSheetV2 overlay（10s 倒數）+ AI 書籤系統
 - 新建 HeadsUpReviewScreenV2：結果 banner + AI 書籤橫向捲動 + 手牌列表（展開動作序列）
