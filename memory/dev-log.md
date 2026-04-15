@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-04-15 v0.8.1-dev.13 [feature/ui-v2 → dev]
+- UI v2：膠囊牌桌 + 四色卡 + 頂部 action bar + 底部 drag sheet + 街別評分 chips + AI 教練 CTA
+- 新增元件：`src/components/v2/{PokerFeltV2, ActionHistoryBarTop, BetSizingBarV2, FeedbackSheetV2, HeadsUpMatchScreenV2}.tsx`
+- 新增 `src/tabs/TrainTabV2.tsx`（engine 不變，只改 UI layer）
+- 新增 `src/lib/featureFlags.ts` + `UI_V2` flag（localStorage 驅動）
+- App.tsx 依 flag 切換 V1 / V2；HU 同樣支援
+- 新增 `/v2-demo` 路由與 V2DemoPage（A/B/C 靜態場景 + D 實機 TrainTabV2）
+- 更新 `docs/ui-v2-mockup.html`（完整設計定稿：9-max、6-max、HU 三場景）
+- 更新 memory：`project_ui_v2_rules.md` 規則檔、`project_seat_order.md` 座位順序
+- 修 .env BOM（之前 Vite 認不得 VITE_SUPABASE_URL）
+- Merged 上游 HU branch 的 CLAUDE.md 規則升級（SessionStart hook、自動部署授權、測試機驗證流程）
+
 ## 2026-04-15 v0.8.1-dev.12 [feature/hu-simulator-v1]
 - CLAUDE.md 新增「推送到測試機後的必做驗證」：dev push 後 Claude 自動 curl 驗證 Vite build 產出正常
 - 驗證用 curl 而非 WebFetch（WebFetch 會把 HTML 總結掉，抓不到 script tags）

@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Poker Goal UI v2 — Wireframe + Bottom Sheet</title>
+<style>
+  :root {
+    --bg: #0a0b0e;
+    --panel: #12141a;
+    --panel-2: #0d0f14;
+    --line: #1f232b;
+    --line-2: #2a2f3a;
+    --text: #e6e8ec;
+    --muted: #8a92a0;
+    --dim: #565d6a;
+    --accent: #a78bfa;
+    --accent-2: #7c3aed;
+    --blue: #2563eb;
+    --green: #10b981;
+    --green-2: #059669;
+    --red: #dc2626;
+    --red-dark: #7f1d1d;
+    --amber: #f59e0b;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #0b0c0f; color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
+    -webkit-font-smoothing: antialiased; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .page { max-width: 1400px; margin: 0 auto; padding: 28px 20px 80px; }
+  .intro { color: var(--muted); font-size: 13px; line-height: 1.7; max-width: 820px; }
+  .intro b { color: var(--text); }
+  .intro .diff { color: #c8b6ff; }
+  .intro .keep { color: #8be58b; }
+
+  .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 28px; }
+  @media (max-width: 1180px) { .gallery { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 800px)  { .gallery { grid-template-columns: 1fr; } }
+
+  .scene { display: flex; flex-direction: column; gap: 10px; }
+  .scene-label { display: flex; align-items: center; gap: 10px; padding: 0 6px; }
+  .scene-label .tag { font-size: 10px; font-weight: 700; letter-spacing: 1.4px;
+    text-transform: uppercase; padding: 3px 8px; border-radius: 6px;
+    background: #1a1f2a; color: var(--accent); border: 1px solid #262c3a; }
+  .scene-label .title { font-size: 14px; font-weight: 700; }
+  .scene-label .note { font-size: 11px; color: var(--muted); margin-left: auto; }
+
+  .phone { width: 390px; max-width: 100%; aspect-ratio: 390/844;
+    background: var(--bg); border-radius: 36px; overflow: hidden;
+    border: 8px solid #1a1d22; box-shadow: 0 20px 60px rgba(0,0,0,.55);
+    margin: 0 auto; position: relative; display: flex; flex-direction: column;
+  }
+  .sb { height: 28px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 22px; font-size: 11px; color: var(--muted); background: #08090b; flex-shrink: 0; }
+  .sb b { color: var(--text); font-weight: 600; }
+
+  /* Top action history bar (back button on left, compact horizontal scroll) */
+  .history-bar { display: flex; align-items: center; gap: 4px; padding: 6px 8px;
+    background: #0d0d0d; border-bottom: 1px solid #1a1a1a; overflow-x: auto;
+    flex-shrink: 0; scrollbar-width: none; }
+  .history-bar .back { width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0;
+    background: #1a1a1a; color: #888; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; }
+  .history-bar::-webkit-scrollbar { display: none; }
+  .history-bar .h-item { display: inline-flex; align-items: center; gap: 3px; padding: 4px 8px;
+    border-radius: 6px; font-size: 10px; color: var(--muted); white-space: nowrap;
+    background: #151820; border: 1px solid var(--line); flex-shrink: 0; }
+  .history-bar .h-item b { color: var(--text); font-weight: 700; font-size: 10px; }
+  .history-bar .h-item.r { background: #1f0f0f; border-color: #3a1818; color: #fca5a5; }
+  .history-bar .h-item.r b { color: #fca5a5; }
+  .history-bar .h-item.you { background: #14102a; border-color: #3a2a6a; color: #c8b6ff; }
+  .history-bar .h-item.you b { color: #fff; }
+  .history-bar .h-item.f { opacity: .4; }
+  .history-bar .gg { margin-left: auto; padding: 4px 10px; border-radius: 6px;
+    font-size: 10px; font-weight: 800; color: var(--accent); border: 1px solid #342056;
+    background: transparent; flex-shrink: 0; }
+
+  .content { flex: 1; overflow: hidden; display: flex; flex-direction: column; position: relative; }
+
+  /* HUD */
+  .hud { display: flex; align-items: center; gap: 8px; padding: 6px 12px; flex-shrink: 0;
+    background: transparent; font-size: 10px; }
+  .street { display: flex; gap: 3px; }
+  .street span { font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 5px;
+    background: #11151c; color: var(--dim); border: 1px solid var(--line); letter-spacing: .7px; }
+  .street span.on { background: #1a1430; color: var(--accent); border-color: #342056; }
+  .hud .pot { margin-left: auto; color: var(--muted); }
+  .hud .pot b { color: var(--text); margin-left: 3px; font-weight: 700; }
+
+  /* WIREFRAME FELT — portrait capsule (pill) outline: straight sides + rounded ends, like real poker tables */
+  .felt { position: relative; flex: 1; min-height: 0; padding: 0; }
+  .felt-outline { position: absolute; inset: 8%;
+    border: 1.5px solid #2a2f3a; border-radius: 9999px; pointer-events: none; }
+
+  /* Center info row (pot + board) */
+  .center-info { position: absolute; left: 50%; top: 48%; transform: translate(-50%,-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 4px; z-index: 2; }
+  .pot-line { font-size: 11px; color: var(--muted); }
+  .pot-line b { color: var(--text); font-size: 14px; font-weight: 700; margin: 0 2px; }
+  /* GTO Wizard card style: suit = full background color, white rank centered, suit top-left + bottom-right */
+  .pcard { position: relative; border-radius: 5px; display: flex; align-items: center; justify-content: center;
+    color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.5); overflow: hidden; flex-shrink: 0; }
+  .pcard .rk { font-weight: 900; line-height: 1; letter-spacing: -.5px; }
+  .pcard .tl { position: absolute; top: 2px; left: 3px; font-weight: 800; color: rgba(255,255,255,.95); line-height: 1; }
+  .pcard .br { display: none; }
+  .pcard.s { background: #3a3d44; border: 1.5px solid #555860; }
+  .pcard.h { background: #8b2232; border: 1.5px solid #b02e42; }
+  .pcard.d { background: #1e5faa; border: 1.5px solid #2a78d4; }
+  .pcard.c { background: #1a7a3a; border: 1.5px solid #22994a; }
+
+  .board { display: flex; gap: 3px; }
+  .board .pcard { width: 30px; height: 42px; }
+  .board .pcard .rk { font-size: 17px; }
+  .board .pcard .tl { font-size: 13px; }
+  .pot-chips-icon { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .pot-chips-icon .stack { width: 14px; height: 10px; border-radius: 3px;
+    background: radial-gradient(circle at 30% 30%, #6ea8ff, #1f4bb8);
+    border: 1px solid rgba(0,0,0,.4); box-shadow: 0 1px 2px rgba(0,0,0,.4) inset; }
+
+  /* Seats (wireframe style) */
+  .seat { position: absolute; width: 46px; height: 46px; border-radius: 50%;
+    background: transparent; border: 1.5px solid var(--line-2);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transform: translate(-50%,-50%); z-index: 3; }
+  .seat .pos { font-size: 10px; font-weight: 700; color: #aab0bb; letter-spacing: .3px; line-height: 1; }
+  .seat .stack { font-size: 9px; color: var(--muted); margin-top: 2px; line-height: 1; }
+  .seat.hero { border-color: var(--accent); border-width: 2px;
+    box-shadow: 0 0 10px rgba(167,139,250,.4); }
+  .seat.hero .pos { color: #d6c8ff; font-weight: 800; }
+  .seat.hero .stack { color: #c8b6ff; }
+  .seat.raiser { border-color: var(--red); border-width: 2px;
+    box-shadow: 0 0 8px rgba(220,38,38,.35); }
+  .seat.raiser .pos { color: #fecaca; font-weight: 800; }
+  .seat.waiting { border-color: #4a5060; }
+  .seat.active { border-color: var(--green); border-width: 2px;
+    box-shadow: 0 0 8px rgba(16,185,129,.35); }
+  .seat.folded { opacity: .55; border-style: dashed; border-color: #4a5060; }
+  .seat.folded .pos { color: #8a92a0; }
+  .seat.folded .stack { color: #6a7080; }
+  .seat .d-btn { position: absolute; bottom: -6px; right: -4px; width: 14px; height: 14px;
+    border-radius: 50%; background: #fff; color: #000; font-size: 8px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; border: 1px solid #000; }
+
+  /* Face-down opp cards — match seat width, connected to seat circle (slight overlap) */
+  .hole-backs { position: absolute; display: flex; gap: 2px; z-index: 4;
+    transform: translate(-50%, -50%); transition: opacity .3s ease; }
+  .hole-backs .bk { width: 22px; height: 30px; border-radius: 4px;
+    background: #4a5162; border: 1px solid #6a7184;
+    box-shadow: 0 1px 3px rgba(0,0,0,.55);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800; color: rgba(255,255,255,.6);
+    font-family: serif; letter-spacing: -1px; }
+  .hole-backs .bk::before { content: 'G'; }
+
+  /* Bet chips (small) */
+  .chips-s { position: absolute; display: flex; align-items: center; gap: 3px;
+    font-size: 9px; color: #e5e7eb; background: rgba(0,0,0,.55);
+    padding: 2px 6px; border-radius: 999px; border: 1px solid #2a2a2a;
+    transform: translate(-50%,-50%); z-index: 2; }
+  .chips-s .dot { width: 6px; height: 6px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #6ea8ff, #1f4bb8); }
+  .chips-s.villain .dot { background: radial-gradient(circle at 30% 30%, #ff9a9a, #9c1919); }
+  .chips-s.hero .dot { background: radial-gradient(circle at 30% 30%, #c8b6ff, #5b2fd6); }
+
+  /* Bottom: hero-row + action bar (sticky bottom area) */
+  .bottom-area { flex-shrink: 0; padding: 8px 10px 12px; background: linear-gradient(180deg, transparent, #08090b 20%); }
+  .hero-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .hero-row .side { min-height: 56px; }
+  .hero-row .side.btn { background: #111; border: 1px solid #2a2a2a; border-radius: 10px;
+    color: #777; font-size: 11px; display: flex; align-items: center; justify-content: center;
+    padding: 0 8px; text-align: center; line-height: 1.3; }
+  .hero-row .side.btn.primary { background: #2a1654; border: 1px solid #7c3aed; color: #fff; font-weight: 700; }
+  .hero-row .center { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .hero-row .hand { display: flex; gap: 4px; }
+  .hero-row .hand .pcard { width: 38px; height: 54px; }
+  .hero-row .hand .pcard .rk { font-size: 22px; }
+  .hero-row .hand .pcard .tl { font-size: 16px; }
+  .hero-row .lbl { font-size: 10px; color: var(--muted); }
+
+  .bar { display: flex; flex-direction: column; gap: 5px; }
+  .bar .row { display: flex; gap: 5px; }
+  .bar button { flex: 1; min-height: 42px; border: 0; border-radius: 9px;
+    font-weight: 800; color: white; font-size: 12px; letter-spacing: .2px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 3px; }
+  .bar button small { font-size: 9px; font-weight: 600; opacity: .75; }
+  .bar .btn-fold { background: var(--blue); }
+  .bar .btn-check { background: #374151; }
+  .bar .btn-call { background: var(--green-2); }
+  .bar .btn-size { background: var(--red); }
+  .bar .btn-size.amber { background: var(--amber); color: #1a1a1a; }
+  .bar .btn-allin { background: var(--red-dark); }
+
+  .slider-row { display: flex; align-items: center; gap: 8px;
+    padding: 5px 10px; background: #0a0c10; border-radius: 8px; border: 1px solid var(--line); }
+  .slider { flex: 1; -webkit-appearance: none; appearance: none;
+    height: 4px; border-radius: 3px; background: #1b1f27; outline: none; }
+  .slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none;
+    width: 14px; height: 14px; border-radius: 50%; background: #fff;
+    border: 2px solid var(--accent-2); }
+  .slider-row .val { font-size: 10px; color: var(--text); font-weight: 700; min-width: 38px; text-align: right; }
+  .slider-row .label { font-size: 9px; color: var(--muted); }
+
+  /* BOTTOM SHEET (feedback) — overlays bottom half, draggable to expand */
+  .sheet-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.45); z-index: 9; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 10;
+    background: #0f1116; border-top: 1px solid var(--line);
+    border-radius: 16px 16px 0 0; padding: 8px 12px 14px;
+    display: flex; flex-direction: column; gap: 10px; box-shadow: 0 -10px 30px rgba(0,0,0,.5);
+    max-height: 92%; overflow-y: auto; }
+  .sheet-handle { align-self: center; width: 36px; height: 3px; border-radius: 2px;
+    background: #3a3f4a; margin-bottom: 2px; cursor: grab; flex-shrink: 0; }
+
+  /* Detailed explanation block (only in expanded) */
+  .explain { background: #0c0e12; border: 1px solid var(--line); border-radius: 8px;
+    padding: 10px 12px; font-size: 11px; color: #c8ccd4; line-height: 1.7; }
+  .explain h4 { font-size: 11px; margin: 0 0 6px; color: var(--text); font-weight: 700; }
+  .explain p { margin: 0 0 6px; }
+  .explain p:last-child { margin-bottom: 0; }
+  .explain b { color: #c8b6ff; }
+
+  /* AI coach CTA card */
+  .ai-cta { background: linear-gradient(135deg, #1a1040, #0c0e12);
+    border: 1px solid #342056; border-radius: 10px; padding: 10px 12px;
+    display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .ai-cta .av { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    background: radial-gradient(circle at 30% 30%, #c8b6ff, #5b2fd6);
+    display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .ai-cta .tx { flex: 1; }
+  .ai-cta .tx .tt { font-size: 12px; font-weight: 700; color: var(--text); }
+  .ai-cta .tx .st { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .ai-cta .arr { color: var(--accent); font-size: 14px; }
+  .sheet .head { display: flex; align-items: center; gap: 8px; }
+  .sheet .head .verdict { font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+  .sheet .head .verdict.ok { color: var(--green); }
+  .sheet .head .verdict.warn { color: var(--amber); }
+  .sheet .head .verdict.bad { color: var(--red); }
+  .sheet .head .tip { color: var(--muted); font-size: 11px; margin-left: auto; }
+
+  .freq-bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: #1b1f27; }
+  .freq-bar .seg { height: 100%; }
+  .freq-legend { display: flex; gap: 10px; font-size: 10px; color: var(--muted); margin-top: 3px; align-items: center; }
+  .freq-legend span { display: inline-flex; align-items: center; gap: 3px; }
+  .freq-legend .sw { width: 8px; height: 8px; border-radius: 2px; }
+
+  .freq-rows { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
+  .fr { display: flex; align-items: center; gap: 8px; font-size: 11px; padding: 4px 2px; }
+  .fr .sw { width: 10px; height: 10px; border-radius: 2px; }
+  .fr .nm { flex: 1; color: var(--text); font-weight: 600; }
+  .fr .pct { color: var(--text); font-weight: 700; min-width: 34px; text-align: right; }
+  .fr .ev { color: var(--muted); font-size: 10px; }
+  .fr.you { background: #0d111a; border: 1px solid #2a3550; border-radius: 6px; padding: 4px 8px; }
+
+  /* Street scoring chips */
+  .streets { display: flex; gap: 6px; margin-top: 6px; }
+  .streets .chip { flex: 1; padding: 5px 4px; border-radius: 7px;
+    background: #0c0e12; border: 1px solid var(--line); display: flex; flex-direction: column;
+    align-items: center; gap: 1px; font-size: 9px; color: var(--muted); }
+  .streets .chip .nm { font-weight: 700; color: var(--text); font-size: 10px; }
+  .streets .chip .state { font-size: 9px; font-weight: 700; }
+  .streets .chip.best { border-color: #1e5a3d; background: #0a1d14; }
+  .streets .chip.best .state { color: #34d399; }
+  .streets .chip.ok { border-color: #1a4770; background: #0a1523; }
+  .streets .chip.ok .state { color: #60a5fa; }
+  .streets .chip.doubt { border-color: #6b4a1a; background: #1a1208; }
+  .streets .chip.doubt .state { color: #fbbf24; }
+  .streets .chip.err { border-color: #5a1a1a; background: #1a0a0a; }
+  .streets .chip.err .state { color: #f87171; }
+  .streets .chip.huge { border-color: #7a1818; background: #250808; }
+  .streets .chip.huge .state { color: #ef4444; }
+  .streets .chip.pending { opacity: .4; }
+  .streets .chip.pending .state { color: var(--dim); }
+
+  .sheet-actions { display: flex; gap: 8px; margin-top: 4px; }
+  .sheet-actions button { flex: 1; min-height: 40px; border: 0; border-radius: 9px;
+    font-size: 13px; font-weight: 700; cursor: pointer; }
+  .sheet-actions .repeat { background: #1a1a1a; border: 1px solid #2a2a2a; color: #aaa;
+    display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .sheet-actions .next { background: var(--accent-2); color: #fff;
+    display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+  .hu-banner { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+    padding: 5px 10px; margin: 0 10px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 8px; font-size: 10px; color: var(--muted); }
+  .hu-banner .vs { color: var(--accent); font-weight: 700; }
+  .hu-banner b { color: var(--text); }
+
+  .notes { margin-top: 6px; padding: 10px 12px;
+    background: #0d0f13; border: 1px dashed var(--line); border-radius: 10px;
+    font-size: 11px; color: var(--muted); line-height: 1.7; }
+  .notes b { color: var(--text); }
+  .notes .diff { color: #c8b6ff; }
+  .notes .keep { color: #8be58b; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Poker Goal UI v2 — Wireframe Felt + Bottom Sheet</h1>
+  <p class="intro">
+    <b>牌桌改 wireframe outline</b>（座位空心圓 + 位置/籌碼文字 + 輪廓線），中心是公共牌 + 底池。
+    <br/><b>Action history 移到頂部</b> compact bar，訓練輪整手動作一眼看完。
+    <b>回饋改底部 sheet</b>（∨ 可下拉），包含對/錯、頻率、<b>街別評分 chips</b>（翻前/翻牌/轉牌/河牌）。
+    <br/>對手座位旁的蓋牌背面保留（棄牌消失）。Hero 手牌保留在 Felt 下方 hero-row 三欄。
+    <br/>
+    <span class="diff">● 紫 = v2 新做法</span>
+    <span class="keep">● 綠 = 沿用訓練模式</span>
+  </p>
+
+  <div class="gallery">
+
+    <!-- ===== Scene A: 9-max Training Preflop (question) ===== -->
+    <div class="scene">
+      <div class="scene-label">
+        <span class="tag">A</span>
+        <span class="title">訓練 · 9-max 翻前決策</span>
+        <span class="note">UTG R2.5 · Hero=BTN</span>
+      </div>
+      <div class="phone">
+        <div class="sb"><b>9:41</b><span>●●● 100%</span></div>
+
+        <div class="history-bar">
+          <div class="back">←</div>
+          <div class="h-item r"><b>UTG</b>R 2.5</div>
+          <div class="h-item f"><b>UTG+1</b>F</div>
+          <div class="h-item f"><b>UTG+2</b>F</div>
+          <div class="h-item f"><b>LJ</b>F</div>
+          <div class="h-item f"><b>HJ</b>F</div>
+          <div class="h-item f"><b>CO</b>F</div>
+          <div class="h-item you"><b>BTN</b>?</div>
+        </div>
+
+        <div class="content">
+          <div class="felt">
+            <div class="felt-outline"></div>
+
+            <!-- Center info: pot only (preflop, no board) -->
+            <div class="center-info">
+              <div class="pot-line">底池<b>4</b>BB</div>
+            </div>
+
+            <!-- 9-max seats on pill (capsule) perimeter, clockwise from BTN @ bottom -->
+            <!-- BTN slot0 (50, 92) hero -->
+            <div class="seat hero" style="left:50%; top:92%">
+              <div class="pos">BTN</div><div class="stack">100</div>
+              <div class="d-btn">D</div>
+            </div>
+
+            <!-- SB slot1 (16.3, 80.9) waiting + cards -->
+            <div class="seat waiting" style="left:16.3%; top:80.9%">
+              <div class="pos">SB</div><div class="stack">99.5</div>
+            </div>
+            <div class="hole-backs" style="left:16.3%; top:75.9%">
+              <div class="bk"></div><div class="bk"></div>
+            </div>
+            <div class="chips-s" style="left:28%; top:73%"><span class="dot"></span>0.5</div>
+
+            <!-- BB slot2 (8, 56.4) waiting + cards (on left straight) -->
+            <div class="seat waiting" style="left:8%; top:56.4%">
+              <div class="pos">BB</div><div class="stack">99</div>
+            </div>
+            <div class="hole-backs" style="left:8%; top:51.4%">
+              <div class="bk"></div><div class="bk"></div>
+            </div>
+            <div class="chips-s" style="left:19%; top:56%"><span class="dot"></span>1</div>
+
+            <!-- UTG slot3 (8.7, 30.8) RAISER + cards -->
+            <div class="seat raiser" style="left:8.7%; top:30.8%">
+              <div class="pos">UTG</div><div class="stack">97.5</div>
+            </div>
+            <div class="hole-backs" style="left:8.7%; top:25.8%">
+              <div class="bk"></div><div class="bk"></div>
+            </div>
+            <div class="chips-s villain" style="left:20%; top:36%"><span class="dot"></span>2.5</div>
+
+            <!-- UTG+1 slot4 (31.2, 10.9) folded -->
+            <div class="seat folded" style="left:31.2%; top:10.9%">
+              <div class="pos">UTG+1</div><div class="stack">100</div>
+            </div>
+
+            <!-- UTG+2 slot5 (68.8, 10.9) folded -->
+            <div class="seat folded" style="left:68.8%; top:10.9%">
+              <div class="pos">UTG+2</div><div class="stack">100</div>
+            </div>
+
+            <!-- LJ slot6 (91.3, 30.8) folded -->
+            <div class="seat folded" style="left:91.3%; top:30.8%">
+              <div class="pos">LJ</div><div class="stack">100</div>
+            </div>
+
+            <!-- HJ slot7 (92, 56.4) folded -->
+            <div class="seat folded" style="left:92%; top:56.4%">
+              <div class="pos">HJ</div><div class="stack">100</div>
+            </div>
+
+            <!-- CO slot8 (83.7, 80.9) folded -->
+            <div class="seat folded" style="left:83.7%; top:80.9%">
+              <div class="pos">CO</div><div class="stack">100</div>
+            </div>
+          </div>
+
+          <div class="bottom-area">
+            <div class="hero-row">
+              <div class="side"></div>
+              <div class="center">
+                <div class="hand">
+                  <div class="pcard s"><span class="tl">♠</span><span class="rk">A</span><span class="br">♠</span></div>
+                  <div class="pcard h"><span class="tl">♥</span><span class="rk">K</span><span class="br">♥</span></div>
+                </div>
+                <div class="lbl">AKo · 面對 UTG 2.5BB</div>
+              </div>
+              <div class="side"></div>
+            </div>
+
+            <div class="bar">
+              <div class="row">
+                <button class="btn-fold">FOLD</button>
+                <button class="btn-call">CALL<small>2.5</small></button>
+              </div>
+              <div class="row">
+                <button class="btn-size">3B 2.5x<small>6.25</small></button>
+                <button class="btn-size">3B 3x<small>7.5</small></button>
+                <button class="btn-size">3B 4x<small>10</small></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="notes">
+        <b class="diff">Wireframe 牌桌：</b> 座位空心圓 + 位置/籌碼文字 + 淡 outline 連接。
+        Hero=BTN 帶 D 標記，紫色環 + 發光；UTG 紅色環（raiser）；SB/BB 灰色環（waiting，有蓋牌）；
+        其他虛線灰（folded，透明 32%）。
+        <br/><b class="diff">頂部 action history：</b> 整手 7 個動作一眼看完，無需下方 pill 列。
+        <br/><b>順序（已鎖）：</b> BTN → SB → BB → UTG → UTG+1 → UTG+2 → LJ → HJ → CO ✓
+      </div>
+    </div>
+
+    <!-- ===== Scene B: 6-max Feedback (bottom sheet up) ===== -->
+    <div class="scene">
+      <div class="scene-label">
+        <span class="tag">B</span>
+        <span class="title">訓練 · 回饋 Bottom Sheet</span>
+        <span class="note">答錯 · 街別評分</span>
+      </div>
+      <div class="phone">
+        <div class="sb"><b>9:41</b><span>●●● 100%</span></div>
+
+        <div class="history-bar">
+          <div class="back">←</div>
+          <div class="h-item r"><b>UTG</b>R 2.5</div>
+          <div class="h-item f"><b>HJ</b>F</div>
+          <div class="h-item f"><b>CO</b>F</div>
+          <div class="h-item you"><b>BTN</b>Call</div>
+          <div class="h-item"><b>BB</b>Call</div>
+          <div class="h-item"><b>Flop</b>K♣7♠2♠</div>
+        </div>
+
+        <div class="content">
+          <!-- Felt (visible behind sheet) -->
+          <div class="felt">
+            <div class="felt-outline"></div>
+
+            <div class="center-info">
+              <div class="pot-line">底池<b>8</b>BB</div>
+              <div class="board">
+                <div class="pcard c"><span class="tl">♣</span><span class="rk">K</span><span class="br">♣</span></div>
+                <div class="pcard s"><span class="tl">♠</span><span class="rk">7</span><span class="br">♠</span></div>
+                <div class="pcard s"><span class="tl">♠</span><span class="rk">2</span><span class="br">♠</span></div>
+              </div>
+            </div>
+
+            <!-- 6-max seats on pill (capsule) perimeter, clockwise from BTN @ bottom -->
+            <!-- BTN slot0 (50,92) hero -->
+            <div class="seat hero" style="left:50%; top:92%">
+              <div class="pos">BTN</div><div class="stack">97.5</div>
+              <div class="d-btn">D</div>
+            </div>
+            <!-- SB slot1 (8.7, 69.2) folded -->
+            <div class="seat folded" style="left:8.7%; top:69.2%">
+              <div class="pos">SB</div><div class="stack">99.5</div>
+            </div>
+            <!-- BB slot2 (8.6, 30.8) active + cards -->
+            <div class="seat active" style="left:8.6%; top:30.8%">
+              <div class="pos">BB</div><div class="stack">97.5</div>
+            </div>
+            <div class="hole-backs" style="left:8.6%; top:25.8%">
+              <div class="bk"></div><div class="bk"></div>
+            </div>
+            <!-- UTG slot3 (50, 8) folded -->
+            <div class="seat folded" style="left:50%; top:8%">
+              <div class="pos">UTG</div><div class="stack">97.5</div>
+            </div>
+            <!-- HJ slot4 (91.4, 30.8) folded -->
+            <div class="seat folded" style="left:91.4%; top:30.8%">
+              <div class="pos">HJ</div><div class="stack">100</div>
+            </div>
+            <!-- CO slot5 (91.3, 69.2) folded -->
+            <div class="seat folded" style="left:91.3%; top:69.2%">
+              <div class="pos">CO</div><div class="stack">100</div>
+            </div>
+          </div>
+
+          <!-- Backdrop + bottom sheet overlay (EXPANDED state) -->
+          <div class="sheet-backdrop"></div>
+          <div class="sheet expanded">
+            <div class="sheet-handle"></div>
+            <div class="head">
+              <div class="verdict bad">✗ 不對</div>
+              <div class="tip">BTN vs UTG 應高頻 3-Bet</div>
+            </div>
+
+            <div>
+              <div class="freq-bar">
+                <div class="seg" style="background:#ef4444; width:68%"></div>
+                <div class="seg" style="background:#10b981; width:32%"></div>
+              </div>
+              <div class="freq-legend">
+                <span><span class="sw" style="background:#ef4444"></span>3-Bet 68%</span>
+                <span><span class="sw" style="background:#10b981"></span>Call 32%</span>
+                <span style="margin-left:auto;color:#c8b6ff">你：Call</span>
+              </div>
+            </div>
+
+            <div class="freq-rows">
+              <div class="fr">
+                <span class="sw" style="background:#ef4444"></span>
+                <span class="nm">3-Bet to 7.5</span>
+                <span class="pct">68%</span>
+                <span class="ev">EV +3.2</span>
+              </div>
+              <div class="fr you">
+                <span class="sw" style="background:#10b981"></span>
+                <span class="nm">Call（你的選擇）</span>
+                <span class="pct">32%</span>
+                <span class="ev">EV +1.4</span>
+              </div>
+            </div>
+
+            <div class="streets">
+              <div class="chip err">
+                <div class="nm">翻前</div>
+                <div class="state">⊘ 錯誤</div>
+              </div>
+              <div class="chip pending">
+                <div class="nm">翻牌</div>
+                <div class="state">—</div>
+              </div>
+              <div class="chip pending">
+                <div class="nm">轉牌</div>
+                <div class="state">—</div>
+              </div>
+              <div class="chip pending">
+                <div class="nm">河牌</div>
+                <div class="state">—</div>
+              </div>
+            </div>
+
+            <!-- Expanded only: detailed explanation -->
+            <div class="explain">
+              <h4>為什麼應該 3-Bet？</h4>
+              <p><b>AKo</b> 在 BTN vs UTG 加注的情境是<b>高價值牌</b>，在 SRP（single raised pot）即便被 call 也能頻繁靠強 top pair + 好 kicker 贏下底池。</p>
+              <p>Call 會錯過<b>壓縮範圍</b>的價值：3-Bet 後 UTG 需面對更窄的 continue range，你拿到主動權 + 更好的翻牌圈底池幾何。</p>
+              <p>僅建議在特別深籌（150BB+）或 UTG 是極 tight 玩家時降頻 call。</p>
+            </div>
+
+            <!-- Expanded only: AI coach CTA -->
+            <div class="ai-cta">
+              <div class="av">🤖</div>
+              <div class="tx">
+                <div class="tt">和 AI 教練深入討論</div>
+                <div class="st">詢問這手為什麼該 3-bet、替代路線等 · 5 點/則</div>
+              </div>
+              <div class="arr">›</div>
+            </div>
+
+            <div class="sheet-actions">
+              <button class="repeat">⊞ 查看範圍</button>
+              <button class="next">▶▶ 下一手</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div class="notes">
+        <b class="diff">Bottom sheet（展開狀態）：</b> handle 可拖動；展開後放詳細說明段落 + AI 教練 CTA。
+        收合時（預設）只顯示 verdict + 頻率 + 街別 + 按鈕；展開時向上延伸至近滿版。
+        <br/><b class="diff">街別評分：</b> 翻前（錯誤）/ 翻牌、轉牌、河牌（本手尚未到該街，pending）。
+        狀態分 5 級：最佳 ✓✓ 綠 / 正確 ✓ 藍 / 存疑 ! 黃 / 錯誤 ⊘ 紅 / 巨大錯誤 ⚠ 深紅
+        <br/><b class="diff">AI 教練入口：</b> 展開後才顯示，點擊進入聊天繼續討論（5 點/則）
+      </div>
+    </div>
+
+    <!-- ===== Scene C: HU Flop ===== -->
+    <div class="scene">
+      <div class="scene-label">
+        <span class="tag">C</span>
+        <span class="title">HU · 翻牌圈</span>
+        <span class="note">Bot bet 5 · 決策中</span>
+      </div>
+      <div class="phone">
+        <div class="sb"><b>9:41</b><span>●●● 100%</span></div>
+
+        <div class="history-bar">
+          <div class="back">←</div>
+          <div class="h-item r"><b>BTN</b>R 2.5</div>
+          <div class="h-item you"><b>BB</b>Call</div>
+          <div class="h-item"><b>Flop</b>Q♥9♦4♣</div>
+          <div class="h-item r"><b>BTN</b>Bet 5</div>
+          <div class="h-item you"><b>BB</b>?</div>
+        </div>
+
+        <div class="content">
+          <div class="felt">
+            <div class="felt-outline"></div>
+
+            <div class="center-info">
+              <div class="pot-line">底池<b>10</b>BB</div>
+              <div class="board">
+                <div class="pcard h"><span class="tl">♥</span><span class="rk">Q</span><span class="br">♥</span></div>
+                <div class="pcard d"><span class="tl">♦</span><span class="rk">9</span><span class="br">♦</span></div>
+                <div class="pcard c"><span class="tl">♣</span><span class="rk">4</span><span class="br">♣</span></div>
+              </div>
+            </div>
+
+            <!-- HU: radius=42, BTN top (50,8) villain, BB bottom (50,92) hero -->
+            <div class="seat raiser" style="left:50%; top:8%">
+              <div class="pos">BTN</div><div class="stack">35</div>
+              <div class="d-btn">D</div>
+            </div>
+            <div class="hole-backs" style="left:50%; top:3%">
+              <div class="bk"></div><div class="bk"></div>
+            </div>
+            <div class="chips-s villain" style="left:50%; top:23%"><span class="dot"></span>5</div>
+
+            <div class="seat hero" style="left:50%; top:92%">
+              <div class="pos">BB</div><div class="stack">35</div>
+            </div>
+            <div class="chips-s hero" style="left:50%; top:77%"><span class="dot"></span>5</div>
+          </div>
+
+          <div class="bottom-area">
+            <div class="hero-row">
+              <div class="side"></div>
+              <div class="center">
+                <div class="hand">
+                  <div class="pcard c"><span class="tl">♣</span><span class="rk">J</span><span class="br">♣</span></div>
+                  <div class="pcard h"><span class="tl">♥</span><span class="rk">T</span><span class="br">♥</span></div>
+                </div>
+                <div class="lbl">開放 + 內順 · 8 outs</div>
+              </div>
+              <div class="side"></div>
+            </div>
+
+            <div class="bar">
+              <div class="row">
+                <button class="btn-fold">FOLD</button>
+                <button class="btn-call">CALL<small>5</small></button>
+              </div>
+              <div class="row">
+                <button class="btn-size">RAISE 2x<small>10</small></button>
+                <button class="btn-size">RAISE 2.5x<small>12.5</small></button>
+                <button class="btn-allin">ALL-IN<small>35</small></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="notes">
+        <b class="diff">HU：</b> 兩位玩家按實際位置顯示（BTN / BB），此手 bot = BTN（帶 D）、hero = BB。
+        Action history 用位置名（BTN R 2.5 / BB Call / BTN Bet 5 / BB ?）。
+        <br/><b class="diff">常態畫面不顯示 Equity / Pot odds</b>（實際撲克不會顯示，訓練要靠自己估算；僅在 all-in 結算時才顯示勝率）。
+      </div>
+    </div>
+
+  </div>
+
+  <div style="margin-top: 32px; padding: 14px 18px; background: #0d0f13; border: 1px solid var(--line); border-radius: 12px; font-size: 12px; color: var(--muted); line-height: 1.8;">
+    <b style="color:var(--text)">v2 元件清單（待實作）</b>
+    <ol style="margin: 6px 0 0; padding-left: 22px;">
+      <li><b style="color:#c8b6ff">PokerFeltV2</b> — 直立 wireframe outline（SVG 輪廓線）、空心座位圈、對手蓋牌、 chip 小圖示、中心 pot + board</li>
+      <li><b style="color:#c8b6ff">ActionHistoryBarTop</b> — 頂部水平 scroll bar，整手動作 compact chip 列，GG 按鈕可結束</li>
+      <li><b style="color:#c8b6ff">StreetHUD</b> — Preflop/Flop/Turn/River + Pot</li>
+      <li><b style="color:#c8b6ff">BetSizingBar</b> — Fold/Call/Check + 指定尺寸快捷（依盲注/底池固定選項，無自訂 slider）</li>
+      <li><b style="color:#c8b6ff">FeedbackSheet</b> — 底部 sheet，含頻率條、每動作 EV、街別評分 chips（5 級：最佳/正確/存疑/錯誤/巨大錯誤）、重複/下一手</li>
+      <li><b style="color:#c8b6ff">AllInShowdownOverlay</b>（HU/訓練皆可） — 僅雙方 all-in 結算時顯示勝率 / equity，常態畫面不出現</li>
+    </ol>
+  </div>
+</div>
+</body>
+</html>
