@@ -1,6 +1,7 @@
 // src/components/v2/HeadsUpMatchScreenV2.tsx — v2 UI (capsule felt)
 import { useState, useEffect, useCallback, useRef } from 'react'
 import PokerFeltV2 from './PokerFeltV2'
+import FeedbackSheetV2 from './FeedbackSheetV2'
 import HoleCards from '../HoleCards'
 import CommunityCards from '../CommunityCards'
 import PostflopActionBar, { type ActionChoice } from '../PostflopActionBar'
@@ -96,7 +97,8 @@ export default function HeadsUpMatchScreenV2({
   const [feedbackReady, setFeedbackReady] = useState<HUHandFeedback | null>(null)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [feedbackCountdown, setFeedbackCountdown] = useState(0)
-  const [aiBookmarkedHands, _setAIBookmarkedHands] = useState<number[]>([])
+  const [aiBookmarkedHands, setAIBookmarkedHands] = useState<number[]>([])
+  const [bookmarkToast, setBookmarkToast] = useState(false)
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const aiBookmarkedHandsRef = useRef<number[]>([])
   aiBookmarkedHandsRef.current = aiBookmarkedHands
@@ -374,7 +376,7 @@ export default function HeadsUpMatchScreenV2({
   const showVillainCards = hand.isComplete && !hand.hero.hasFolded && !hand.villain.hasFolded
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#0a0a0a' }}>
+    <div className="min-h-screen flex flex-col relative" style={{ background: '#0a0a0a' }}>
       {/* Top action history bar (GTO Wizard style) */}
       <div className="flex items-center gap-1 px-2 py-1.5 overflow-x-auto"
            style={{ background: '#111', borderBottom: '1px solid #1a1a1a', minHeight: 36 }}>
@@ -540,6 +542,56 @@ export default function HeadsUpMatchScreenV2({
           </button>
         </div>
       )}
+
+      {/* FeedbackSheetV2 overlay */}
+      {feedbackOpen && feedbackReady && (() => {
+        // Use currentHand if available, else last completed hand
+        const overlayHand = match?.currentHand ?? match?.handHistory[match.handHistory.length - 1]
+        if (!overlayHand) return null
+
+        const isAlreadyBookmarked = aiBookmarkedHandsRef.current.includes(overlayHand.handNumber)
+
+        return (
+          <div className="fixed inset-0 z-50">
+            <FeedbackSheetV2
+              isCorrect={feedbackReady.isCorrect}
+              tip={feedbackReady.tip}
+              actions={feedbackReady.actions}
+              streets={feedbackReady.streets}
+              explanation={feedbackReady.explanation}
+              expanded={false}
+              onToggleExpand={() => {}}
+              onViewRange={() => {
+                // HU 範圍資料建構中 — noop for now
+              }}
+              onNext={() => dealNextHand()}
+              onAskAI={() => {
+                if (!isAlreadyBookmarked) {
+                  const updated = [...aiBookmarkedHandsRef.current, overlayHand.handNumber]
+                  setAIBookmarkedHands(updated)
+                  aiBookmarkedHandsRef.current = updated
+                }
+                setBookmarkToast(true)
+                setTimeout(() => setBookmarkToast(false), 1500)
+              }}
+            />
+          </div>
+        )
+      })()}
+
+      {/* AI bookmark toast */}
+      {bookmarkToast && (() => {
+        const toastHand = match?.currentHand ?? match?.handHistory[match.handHistory.length - 1]
+        const isAlreadyBookmarked = toastHand
+          ? aiBookmarkedHandsRef.current.includes(toastHand.handNumber)
+          : false
+        return (
+          <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[60] px-4 py-2 rounded-full text-sm font-bold text-white pointer-events-none"
+               style={{ background: '#1a103a', border: '1px solid #7c3aed' }}>
+            {isAlreadyBookmarked ? '✓ 已加入賽後分析' : '已在書籤中'}
+          </div>
+        )
+      })()}
     </div>
   )
 }
