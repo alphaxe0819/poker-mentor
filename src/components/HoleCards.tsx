@@ -34,33 +34,30 @@ function getSuitKeys(hand: string): [string, string] {
   return [keys[base], keys[(base + 1) % 4]]
 }
 
+// V2 card style: rank top-center (large) + single suit bottom-center
 function PokerCard({ rank, suitKey, size = 'normal' }: { rank: string; suitKey: string; size?: 'normal' | 'small' }) {
   const style = SUIT_STYLES[suitKey] || SUIT_STYLES.s
   const w = size === 'small' ? 40 : 56
   const h = size === 'small' ? 56 : 78
-  const rankSize = size === 'small' ? '1.25rem' : '1.85rem'
-  const suitSize = size === 'small' ? '0.65rem' : '0.9rem'
+  const rankSize = size === 'small' ? '1.5rem' : '2.1rem'
+  const suitSize = size === 'small' ? '0.8rem' : '1.05rem'
+  const py = size === 'small' ? 5 : 7
 
   return (
     <div
-      className="relative flex items-center justify-center rounded-lg overflow-hidden"
+      className="flex flex-col items-center justify-between rounded-lg overflow-hidden"
       style={{
         width: w, height: h,
+        paddingTop: py, paddingBottom: py,
         background: style.bg,
         border: `1.5px solid ${style.borderColor}`,
         boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
       }}
     >
-      {/* Rank — large centered */}
       <span className="font-black leading-none text-white" style={{ fontSize: rankSize }}>
         {rank}
       </span>
-      {/* Suit — top-left */}
-      <span className="absolute font-bold text-white/80" style={{ top: 3, left: 5, fontSize: suitSize }}>
-        {style.symbol}
-      </span>
-      {/* Suit — bottom-right (real poker card style) */}
-      <span className="absolute font-bold text-white/80" style={{ bottom: 3, right: 5, fontSize: suitSize, transform: 'rotate(180deg)' }}>
+      <span className="font-bold leading-none" style={{ fontSize: suitSize, color: 'rgba(255,255,255,0.85)' }}>
         {style.symbol}
       </span>
     </div>

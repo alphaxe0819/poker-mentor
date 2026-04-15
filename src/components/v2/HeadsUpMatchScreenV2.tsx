@@ -425,27 +425,25 @@ export default function HeadsUpMatchScreenV2({
             />
           </div>
         )}
-      </div>
 
-      {/* ── Hand result banner (between felt and hero cards) ── */}
-      {handResult && (
-        <div className="flex items-center justify-center gap-2 py-1.5 flex-shrink-0"
-             style={{
-               background: handResult.tie ? '#1a150a' : handResult.won ? '#071510' : '#150707',
-               borderTop: `1px solid ${handResult.tie ? '#fbbf24' : handResult.won ? '#10b981' : '#ef4444'}`,
-             }}>
-          <span className="text-base">{handResult.tie ? '🤝' : handResult.won ? '🏆' : '💔'}</span>
-          <span className="font-bold text-sm" style={{ color: handResult.tie ? '#fbbf24' : handResult.won ? '#10b981' : '#ef4444' }}>
-            {handResult.tie ? 'CHOP'
-              : `${handResult.delta >= 0 ? '+' : ''}${handResult.delta.toFixed(1)} BB`}
-          </span>
-          <span className="text-[11px]" style={{ color: '#6b7280' }}>
-            {hand.hero.hasFolded ? '你棄牌'
-              : hand.villain.hasFolded ? '對手棄牌'
-              : handResult.tie ? 'Chop' : 'Showdown'}
-          </span>
-        </div>
-      )}
+        {/* ── Hand result chip — inside felt, below community cards, no layout shift ── */}
+        {handResult && (() => {
+          const col = handResult.tie ? '#fbbf24' : handResult.won ? '#10b981' : '#ef4444'
+          const bg  = handResult.tie ? 'rgba(251,191,36,0.12)' : handResult.won ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)'
+          const label = hand.hero.hasFolded ? '你棄牌'
+            : hand.villain.hasFolded ? '對手棄牌'
+            : handResult.tie ? 'Chop' : 'Showdown'
+          return (
+            <div className="absolute flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
+                 style={{ top: '62%', left: '50%', transform: 'translateX(-50%)', zIndex: 6,
+                          background: bg, border: `1px solid ${col}`, color: col, whiteSpace: 'nowrap' }}>
+              <span>{handResult.tie ? '🤝' : handResult.won ? '🏆' : '💔'}</span>
+              <span>{handResult.tie ? 'CHOP' : `${handResult.delta >= 0 ? '+' : ''}${handResult.delta.toFixed(1)} BB`}</span>
+              <span className="font-normal opacity-70">{label}</span>
+            </div>
+          )
+        })()}
+      </div>
 
       {/* ── Hero hole cards ── */}
       <div className="flex flex-col items-center flex-shrink-0" style={{ paddingTop: 6, paddingBottom: 4 }}>
@@ -462,7 +460,7 @@ export default function HeadsUpMatchScreenV2({
         </div>
       </div>
 
-      {/* ── Action bar — fixed-height container prevents layout jump ── */}
+      {/* ── Action bar — fixed-height, shows next-hand buttons when complete ── */}
       <div className="flex-shrink-0">
         {isPlayerTurn ? (
           <BetSizingBarV2
@@ -475,25 +473,30 @@ export default function HeadsUpMatchScreenV2({
             allInAmount={allInAmount}
             onAction={handleBetAction}
           />
+        ) : hand.isComplete ? (
+          /* Hand complete — show feedback + next-hand buttons */
+          <div className="flex gap-[4px] px-2 pb-3 pt-2"
+               style={{ background: 'linear-gradient(180deg, transparent, #08090b 20%)' }}>
+            <button
+              onClick={() => { clearCountdown(); setFeedbackOpen(true); setFeedbackCountdown(0) }}
+              className="flex-1 flex flex-col items-center justify-center rounded-[10px] font-extrabold text-white"
+              style={{ minHeight: 48, background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#aaa', fontSize: 12 }}>
+              <span>👁 回饋</span>
+              {feedbackCountdown > 0 && (
+                <small className="text-[9px] opacity-60 font-semibold leading-none">{feedbackCountdown}s</small>
+              )}
+            </button>
+            <button
+              onClick={() => dealNextHand()}
+              className="flex-1 flex items-center justify-center rounded-[10px] font-extrabold text-white"
+              style={{ minHeight: 48, background: '#7c3aed', fontSize: 13 }}>
+              ▶▶ 下一手
+            </button>
+          </div>
         ) : (
           <div style={{ height: 68 }} />
         )}
       </div>
-
-      {/* ── Feedback floating button ── */}
-      {feedbackReady && !feedbackOpen && (
-        <div style={{ position: 'fixed', bottom: 80, right: 16, zIndex: 40 }}>
-          <button
-            onClick={() => { clearCountdown(); setFeedbackOpen(true); setFeedbackCountdown(0) }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-bold text-white shadow-lg"
-            style={{ background: '#7c3aed', border: '1px solid #9d5bff' }}>
-            👁 回饋
-            {feedbackCountdown > 0 && (
-              <span className="text-xs font-mono opacity-70">·{feedbackCountdown}</span>
-            )}
-          </button>
-        </div>
-      )}
 
       {/* ── FeedbackSheetV2 overlay ── */}
       {feedbackOpen && feedbackReady && (() => {

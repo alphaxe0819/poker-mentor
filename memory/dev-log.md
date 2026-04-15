@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-04-15 v0.8.1-dev.29 [dev]
+- HoleCards 改為 V2 牌面格式：數字上方大字 + 花色下方小字，移除兩個角落花色符號
+- 手牌結束結算改為 felt 內部浮動小 chip（absolute top:62%），不再整條橫幅占版面高度
+- action bar 手牌結束時顯示「👁 回饋 Ns」+「▶▶ 下一手」兩個按鈕，不須開回饋就能換手
+- 寫入 V2 UI 設計規則 memory (project_ui_v2_rules.md)
+
 ## 2026-04-15 v0.8.1-dev.28 [dev]
 - HU V2：修復 6+1 個介面問題
 - 動作 BAR 換成 BetSizingBarV2（單排），移除 PreflopActionBar / PostflopActionBar
