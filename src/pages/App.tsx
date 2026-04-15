@@ -86,8 +86,7 @@ export default function App() {
   const [huFinalMatch, setHuFinalMatch] = useState<import('../lib/hu/types').MatchState | null>(null)
   const [huSessionId, setHuSessionId] = useState<string | null>(null)
   const [huFlagsByHand, setHuFlagsByHand] = useState<FlagsByHand>({})
-  // huAIBookmarks passed to HeadsUpReviewScreenV2 in Task 8
-  // @ts-expect-error TS6133 - used in Task 8
+  // @ts-expect-error TS6133 — read in Task 8 (HeadsUpReviewScreenV2)
   const [huAIBookmarks, setHuAIBookmarks] = useState<number[]>([])
 
   const handleHuAbandon = useCallback(() => {
