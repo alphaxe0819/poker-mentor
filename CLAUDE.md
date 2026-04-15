@@ -116,41 +116,49 @@
 ### 為何這條規則存在
 2026-04-13 在 feature branch 上做了大量引擎修復（engine.ts、botAI.ts 等 33 個檔案）但未 commit。用戶切換到 main 再切回來，git checkout 丟棄了所有未 commit 的改動，導致一整天的工作丟失。
 
-## Feature Branch 保護規則（防止未完成功能上線）
-**這是跨對話安全規則。每個 Claude session 在執行任何 git merge / git push 前，必須遵守以下全部條件：**
+## Branch 授權規則（測試機 vs 正式機）
+**這是跨對話安全規則。每個 Claude session 必須遵守以下條件：**
 
+### 測試機（dev → poker-goal-dev.vercel.app）— **不需逐次授權**
+- ✅ `git merge <feature-branch>` 到 dev 可以自主執行
+- ✅ `git push origin dev` 可以自主執行
+- ✅ `git push origin feature/*` 可以自主執行
+- 用途：feature 開發完成、測試通過後，自動推到 staging 讓用戶驗收
+
+### 正式機（main → poker-goal.vercel.app）— **必須明確授權**
 1. **絕對禁止在沒有用戶明確指示的情況下執行以下操作**：
-   - ❌ `git merge <feature-branch>` 到 main
+   - ❌ `git merge` 到 main
    - ❌ `git checkout main && git merge ...`
-   - ❌ `git push origin main`（當 main 包含來自 feature branch 的改動時）
-   - ❌ `git push origin <feature-branch>:main`
+   - ❌ `git push origin main`
+   - ❌ `git push origin <branch>:main`
 
 2. **每次要 push 到 main 之前，必須先問用戶**：
    - 「我準備把 `<branch-name>` merge 到 main 並 push 到正式機，確認要執行嗎？」
    - **等待用戶在聊天中明確回覆「是」/「確認」/「push」後才執行**
-   - 用戶說「commit」不等於允許 push — commit 和 push 是兩個不同的動作
+   - 用戶說「commit」或「推到測試機」不等於允許 push main
 
 3. **新 session 開始時，如果發現當前在 feature branch 上**：
-   - 讀 `memory/dev_workflow_hu_simulator.md`（或對應的 workflow 記憶）了解該 branch 的開發狀態
-   - **不要假設** feature branch 已經完成可以 merge
-   - **不要假設** 用戶想部署到正式機
-   - 先問用戶要做什麼
+   - 讀 `memory/dev-log.md` 了解該 branch 的開發狀態
+   - **不要假設** feature branch 已經完成可以上正式機
+   - 要推正式機前先問用戶
 
-4. **「完成任務」不等於「部署上線」**：
-   - 程式碼寫完 ≠ 可以 merge
-   - 測試通過 ≠ 可以 merge
-   - 只有用戶明確說「merge 到 main」或「push 到正式機」才能 merge/push
-   - CLAUDE.md 的「推送到正式機前的必做事項」是在**用戶授權 push 之後**才執行的清單，不是觸發 push 的條件
+4. **「完成任務」不等於「部署到正式機」**：
+   - 程式碼寫完 ≠ 可以上 main
+   - 測試通過 ≠ 可以上 main
+   - 只有用戶明確說「merge 到 main」或「push 到正式機」才能操作 main
 
-5. **如果其他 session 的上下文提到「準備上線」「可以 ship」「merge」等字眼**：
-   - 這些是該 session 的建議，不是跨 session 的授權
-   - 新 session **必須重新取得用戶授權**
+5. **如果其他 session 的上下文提到「準備上線」「可以 ship」等字眼**：
+   - 這些是該 session 的建議，不是跨 session 的 main 授權
+   - 新 session **必須重新取得用戶授權**才能推 main
 
 ### 為何這條規則存在
-2026-04-14 HU 模擬器在 `feature/hu-simulator-v1` branch 上開發，尚未完成 smoke test，入場費被臨時改為 0 點（測試用）。某個 Claude session 在未經用戶授權的情況下將 feature branch merge 到 main 並 push，導致：
+2026-04-14 HU 模擬器在 `feature/hu-simulator-v1` branch 上開發，尚未完成 smoke test，入場費被臨時改為 0 點（測試用）。某個 Claude session 在未經用戶授權的情況下將 feature branch merge 到 **main** 並 push，導致：
 - 未完成的 HU 功能（含已知 bug）直接上線到 poker-goal.vercel.app
 - 入場費 0 點被部署到正式機，任何人都能免費使用
 - 用戶在不知情的情況下暴露了測試中的功能給所有使用者
+
+### 為何測試機放寬
+2026-04-15 用戶要求調整：測試機就是用來驗收的，每次都要授權 push dev 太慢。正式機才是真正需要保護的邊界。規則重新劃分為「測試機自主 / 正式機授權」。
 
 ## 部署（雙環境）
 
