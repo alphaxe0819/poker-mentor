@@ -223,8 +223,8 @@ export default memo(function PokerFeltV2({
                 className="absolute flex items-center gap-[3px] rounded-full"
                 style={{
                   zIndex: 3,
-                  left: `calc(${slot.left} + ${(50 - parseFloat(slot.left)) * 0.3}%)`,
-                  top: `calc(${slot.top} + ${(50 - parseFloat(slot.top)) * 0.3}%)`,
+                  left: `calc(${slot.left} + ${(50 - parseFloat(slot.left)) * 0.22}%)`,
+                  top: `calc(${slot.top} + ${(50 - parseFloat(slot.top)) * 0.22}%)`,
                   transform: 'translate(-50%, -50%)',
                   padding: '2px 6px',
                   background: 'rgba(0,0,0,.7)',

@@ -5,6 +5,10 @@
 
 ---
 
+## 2026-04-15 v0.8.1-dev.19 [dev]
+- 接上「查看範圍」按鈕：feedback sheet 點擊後彈出 RangeGrid overlay（覆蓋 felt，點背景關閉）
+- 下注 chip offset 0.3 → 0.22，再往座位拉回（top/bottom 座位 chip 距離明顯縮小）
+
 ## 2026-04-15 v0.8.1-dev.18 [dev]
 - 下注 chip offset 0.4 → 0.3，往座位拉回一些（仍跳過蓋牌區不被擋）
 

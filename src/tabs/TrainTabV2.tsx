@@ -10,6 +10,7 @@ export interface SeatDisplayInfo {
   stack?: number
 }
 import HoleCards from '../components/HoleCards'
+import RangeGrid from '../components/RangeGrid'
 import TrainSetupScreen from './TrainSetupScreen'
 import RoundResultScreen from '../components/RoundResultScreen'
 import { saveAnswerRecord } from '../lib/auth'
@@ -281,6 +282,7 @@ export default function TrainTabV2({ guestMode: _guestMode = false, userId = nul
   const [currentSeatInfo, setCurrentSeatInfo] = useState<Record<string, SeatDisplayInfo>>({})
   const [, setScenarioText]    = useState<string>('')
   const [sheetExpanded,   setSheetExpanded]   = useState(false)
+  const [showRange,       setShowRange]       = useState(false)
 
   const [total,   setTotal]   = useState(0)
   const [correct, setCorrect] = useState(0)
@@ -827,6 +829,21 @@ export default function TrainTabV2({ guestMode: _guestMode = false, userId = nul
             />
           )}
 
+          {/* GTO 範圍 overlay（從 sheet 「查看範圍」按鈕觸發） */}
+          {showRange && handSetup && (
+            <div className="absolute inset-0 z-[60] flex items-center justify-center p-3"
+              style={{ background: 'rgba(0,0,0,0.85)' }}
+              onClick={() => setShowRange(false)}>
+              <div className="w-full max-w-md" onClick={e => e.stopPropagation()}>
+                <RangeGrid
+                  highlightHand={handSetup.hand}
+                  gtoRange={handSetup.gtoRange}
+                  onClose={() => setShowRange(false)}
+                />
+              </div>
+            </div>
+          )}
+
           {/* 回饋 sheet（feedback phase） */}
           {activeResult && handSetup && (
             <FeedbackSheetV2
@@ -848,7 +865,7 @@ export default function TrainTabV2({ guestMode: _guestMode = false, userId = nul
               explanationTitle="說明"
               expanded={sheetExpanded}
               onToggleExpand={() => setSheetExpanded(v => !v)}
-              onViewRange={() => {/* TODO: open range overlay */}}
+              onViewRange={() => setShowRange(true)}
               onNext={startHand}
               onAskAI={undefined}
             />
