@@ -215,12 +215,32 @@
 2026-04-13 發生過：(1) 未使用的 import 導致 TS6133 build 失敗，Vercel 靜默沿用舊版本；(2) 用戶用無痕模式仍看到舊內容，CDN 快取未清除。自動驗證可在下一次對話前就發現並修復問題。
 
 ## 專案資訊
-- 路徑：`C:\Users\User\Desktop\gto-poker-trainer`
 - GitHub：`https://github.com/alphaxe0819/poker-mentor.git`
+- 本機路徑：依各機器而定（用 `pwd` 確認）
 - Tech Stack：React 19 + TypeScript 5.9 + Vite 8 + Supabase + Vercel
 - Supabase 正式 URL：`https://qaiwsocjwkjrmyzawabt.supabase.co`
 - Supabase 測試 URL：`https://btiqmckyjyswzrarmfxa.supabase.co`
 - 開發流程圖：`docs/two-machine-workflow.html`
+
+## 產品核心規則（動任何牌桌/UI 前必看）
+
+### 座位順序（標準德州，順時針）
+BTN → SB → BB → UTG → UTG+1 → UTG+2 → LJ → HJ → CO → (回 BTN)
+
+- Hero 固定螢幕底部，依順時針往螢幕左側繞
+- 權威來源：`src/components/PokerFelt.tsx` 的 `POSITION_MAP`
+- **禁止**憑直覺放座位（「raiser 在哪看起來比較對」），先看 POSITION_MAP
+- 完整規則見 auto-memory `project_seat_order.md`
+
+### UI v2 設計規則
+- 牌桌：**直立 capsule wireframe**（非寫實綠 felt）、座位空心圓、2/6/9 桌型統一
+- Action bar：**不做自訂 bet slider**，只提供指定尺寸按鈕
+- 回饋：**底部 sheet**（非全螢幕 modal），正確→collapsed、錯誤→expanded
+- 街別評分：永遠顯示 4 chips（翻前/翻牌/轉牌/河牌），4 級（最佳/正確/存疑/錯誤）
+- 決策期**不顯示**查看範圍按鈕（等於作弊）
+- HU：比賽中不顯示入場費 banner、用實際位置名（BTN/BB 不是 BOT/YOU）
+- Mockup：`docs/ui-v2-mockup.html`
+- 完整規則見 auto-memory `project_ui_v2_rules.md`
 
 ## 目前產品狀態
 - 免費用戶不限訓練次數

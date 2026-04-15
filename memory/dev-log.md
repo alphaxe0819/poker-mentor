@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-04-15 v0.8.1-dev.8 [feature/ui-v2]
+- UI v2：膠囊牌桌 + 四色卡 + 頂部 action bar + 底部 drag sheet + 街別評分 chips + AI 教練 CTA
+- 新增元件：`src/components/v2/{PokerFeltV2, ActionHistoryBarTop, BetSizingBarV2, FeedbackSheetV2, HeadsUpMatchScreenV2}.tsx`
+- 新增 `src/tabs/TrainTabV2.tsx`（engine 不變，只改 UI layer）
+- 新增 `src/lib/featureFlags.ts` + `UI_V2` flag（localStorage 驅動）
+- App.tsx 依 flag 切換 V1 / V2；HU 同樣支援
+- 新增 `/v2-demo` 路由與 V2DemoPage（A/B/C 靜態場景 + D 實機 TrainTabV2）
+- 更新 `docs/ui-v2-mockup.html`（完整設計定稿：9-max、6-max、HU 三場景）
+- 更新 memory：`project_ui_v2_rules.md` 規則檔、`project_seat_order.md` 座位順序
+- 修 .env BOM（之前 Vite 認不得 VITE_SUPABASE_URL）
+
 ## 2026-04-14 v0.8.1-dev.7 [feature/hu-simulator-v1]
 - HU 入口接上：entryCost 從 `src/lib/hu/config.ts` 常數驅動，還原 spendPoints 扣點
 - 種子用戶體驗期：所有收費點改 0（HU 入場、AI 教練、弱點分析、課程解鎖、HU 違規金、Edge Function analyze-hu-hand）
