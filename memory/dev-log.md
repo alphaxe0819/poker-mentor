@@ -5,6 +5,10 @@
 
 ---
 
+## 2026-04-15 v0.8.1-dev.12 [feature/hu-simulator-v1]
+- CLAUDE.md 新增「推送到測試機後的必做驗證」：dev push 後 Claude 自動 curl 驗證 Vite build 產出正常
+- 驗證用 curl 而非 WebFetch（WebFetch 會把 HTML 總結掉，抓不到 script tags）
+
 ## 2026-04-15 v0.8.1-dev.11 [feature/hu-simulator-v1]
 - CLAUDE.md 新增「自動部署授權（測試環境）」：Claude 可主動 merge→dev+push、主動產出測試 Supabase 貼碼，不需每次問
 - 原「Feature Branch 保護規則」改名為「正式環境保護規則」，範圍收緊到 main + 正式 Supabase

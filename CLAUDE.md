@@ -140,7 +140,7 @@
    - `git checkout dev && git merge <feature> && git push origin dev`
    - 觸發時機：Claude 自行判斷改動**告一段落**（功能完整 + tsc 通過 + 相關測試通過）即可主動執行，不需詢問
    - 執行前必做：`npx tsc -b --noEmit` 零錯誤、commit message 清楚
-   - 執行後必做：在對話中回報「已推到測試環境 → https://poker-goal-dev.vercel.app/」
+   - 執行後必做：切回原 feature branch + 跑「推送到測試機後的必做驗證」流程（見下方）
 
 3. **測試環境的 Edge Function / SQL migration 貼碼指令**
    - 直接產出給用戶手貼到**測試** Supabase Dashboard（`btiqmckyjyswzrarmfxa`），不需事先詢問
@@ -220,6 +220,24 @@
 
 ### 為何這條規則存在
 2026-04-14 Claude session 在給 Edge Function 替換碼時，把測試環境和正式環境的貼碼步驟寫在同一則訊息，用戶一貼就會兩邊同時更新，失去「先測試再上線」的防護機制。這條規則確保部署節奏強制分兩步，讓 bug 有機會在測試環境被攔下。
+
+## 推送到測試機後的必做驗證（自動執行，不需用戶提醒）
+每次 `git push origin dev` 後，**必須依序自動完成以下步驟再回報**：
+
+1. **等待 Vercel 部署**（30-60 秒）
+   - 若首次 curl 拿到的仍是舊版本，等 30 秒再重試一次
+2. **線上內容驗證**（用 curl 抓原始 HTML，WebFetch 會總結掉 script tags）
+   ```
+   curl -s -o /tmp/dev-index.html -w "HTTP=%{http_code} SIZE=%{size_download}\n" https://poker-goal-dev.vercel.app/
+   ```
+   - 確認 `HTTP=200`
+   - 檢查 HTML 頭部有 `<script type="module" crossorigin src="/assets/...js">`（代表 Vite build 產出正常）
+   - 若本次有改動 `deck.html` 或其他靜態檔案：另外抓該 URL 確認關鍵內容
+3. **回報結果 + 給測試環境連結**
+   - 格式：`✅ 測試環境 Vite build OK（HTTP 200 + script hash） ｜ 👉 https://poker-goal-dev.vercel.app/`
+   - 驗證失敗 = 診斷原因、修復、重新 push，再從步驟 1 開始
+
+**註**：dev 環境不需要加 `?v=X` 快取破壞參數（Vercel 每次部署會自動產生新的 script hash，例如 `index.BLXbuhEb.js`，瀏覽器看到新 hash 會自動重抓）。
 
 ## 推送到正式機前的必做事項（按順序）
 1. 確認 `dev` 環境已測試通過
