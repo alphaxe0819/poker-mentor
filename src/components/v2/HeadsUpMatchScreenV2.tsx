@@ -98,7 +98,7 @@ export default function HeadsUpMatchScreenV2({
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [feedbackCountdown, setFeedbackCountdown] = useState(0)
   const [aiBookmarkedHands, setAIBookmarkedHands] = useState<number[]>([])
-  const [bookmarkToast, setBookmarkToast] = useState(false)
+  const [bookmarkToast, setBookmarkToast] = useState<false | 'new' | 'existing'>(false)
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const aiBookmarkedHandsRef = useRef<number[]>([])
   aiBookmarkedHandsRef.current = aiBookmarkedHands
@@ -549,8 +549,6 @@ export default function HeadsUpMatchScreenV2({
         const overlayHand = match?.currentHand ?? match?.handHistory[match.handHistory.length - 1]
         if (!overlayHand) return null
 
-        const isAlreadyBookmarked = aiBookmarkedHandsRef.current.includes(overlayHand.handNumber)
-
         return (
           <div className="fixed inset-0 z-50">
             <FeedbackSheetV2
@@ -566,12 +564,13 @@ export default function HeadsUpMatchScreenV2({
               }}
               onNext={() => dealNextHand()}
               onAskAI={() => {
-                if (!isAlreadyBookmarked) {
+                const wasAlreadyBookmarked = aiBookmarkedHandsRef.current.includes(overlayHand.handNumber)
+                if (!wasAlreadyBookmarked) {
                   const updated = [...aiBookmarkedHandsRef.current, overlayHand.handNumber]
                   setAIBookmarkedHands(updated)
                   aiBookmarkedHandsRef.current = updated
                 }
-                setBookmarkToast(true)
+                setBookmarkToast(wasAlreadyBookmarked ? 'existing' : 'new')
                 setTimeout(() => setBookmarkToast(false), 1500)
               }}
             />
@@ -580,18 +579,12 @@ export default function HeadsUpMatchScreenV2({
       })()}
 
       {/* AI bookmark toast */}
-      {bookmarkToast && (() => {
-        const toastHand = match?.currentHand ?? match?.handHistory[match.handHistory.length - 1]
-        const isAlreadyBookmarked = toastHand
-          ? aiBookmarkedHandsRef.current.includes(toastHand.handNumber)
-          : false
-        return (
-          <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[60] px-4 py-2 rounded-full text-sm font-bold text-white pointer-events-none"
-               style={{ background: '#1a103a', border: '1px solid #7c3aed' }}>
-            {isAlreadyBookmarked ? '✓ 已加入賽後分析' : '已在書籤中'}
-          </div>
-        )
-      })()}
+      {bookmarkToast && (
+        <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[60] px-4 py-2 rounded-full text-sm font-bold text-white pointer-events-none"
+             style={{ background: '#1a103a', border: '1px solid #7c3aed' }}>
+          {bookmarkToast === 'new' ? '✓ 已加入賽後分析' : '已在書籤中'}
+        </div>
+      )}
     </div>
   )
 }
