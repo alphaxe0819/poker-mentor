@@ -21,7 +21,7 @@ autoTrigger: session_start
 - 讀 auto-memory 的 `MEMORY.md`（了解用戶偏好、專案決策、回饋）
 
 ### 4. 讀架構總覽
-- 讀 auto-memory 的 `reference_architecture.md`
+- 讀 `memory/reference_architecture.md`（在 git repo 裡，兩台電腦皆同步）
 - 理解專案目錄結構、技術棧、資料流、關鍵檔案位置
 - **這一步確保你在動手前知道整個系統怎麼運作**
 
