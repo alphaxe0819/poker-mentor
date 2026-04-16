@@ -9,6 +9,12 @@
             "command": "git fetch --all 2>&1 && git pull --ff-only origin $(git branch --show-current) 2>&1 || true",
             "timeout": 30,
             "statusMessage": "Pulling latest from remote"
+          },
+          {
+            "type": "command",
+            "command": "bash scripts/session-start-reminder.sh",
+            "timeout": 5,
+            "statusMessage": "開工 SOP 提醒注入中"
           }
         ]
       }

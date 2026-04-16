@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-04-16 v0.8.1-dev.2 [dev]
+- 新增 SessionStart 第二個 hook：啟動時自動印出「開工 SOP 提醒」注入 Claude context
+- 新增 `scripts/session-start-reminder.sh`：印出 SOP 5 步（讀 dev-log / 讀 MEMORY / 回報狀態 / 問角色 / 等指示）
+- worktree 子目錄（POKERNEW-*）自動跳過第 4 步角色問題
+- 整合 memory：刪除 project_roadmap.md + project_mtt_hu_simulator.md，更新 dev_workflow_hu_simulator.md 分支狀態，精簡 MEMORY.md 索引 10→8 項
+
 ## 2026-04-15 v0.8.1-dev.29 [dev]
 - HoleCards 改為 V2 牌面格式：數字上方大字 + 花色下方小字，移除兩個角落花色符號
 - 手牌結束結算改為 felt 內部浮動小 chip（absolute top:62%），不再整條橫幅占版面高度
