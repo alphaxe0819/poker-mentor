@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-16 v0.8.1-dev.4 [feature/exploit-lab]
+- 新增 `docs/exploit-coach-mockup.html`：剝削教練完整流程 mockup（12 畫面）
+- 流程一：選對手（預設 4 種 + 已儲存 + 新建問卷 6 題 + 雷達圖摘要）
+- 流程二：AI 教練對話介面（4 選項：手牌問答/特殊牌面/隨機訓練/弱點報告）
+- 流程三：牌桌卡片嵌入對話中，動作按鈕 + GTO vs 剝削對照
+- 定義 10 種對手個性模型（standard/nit/weak_tight/fit_or_fold/CS/sticky/trapper/lag/maniac/tag）
+- 問卷分類決策樹：5 題選擇 + 1 題自由描述 → 自動歸類為 10 種之一
+
 ## 2026-04-16 v0.8.1-dev.3 [feature/exploit-lab]
 - 新增「剝削實驗室」獨立頁面（/exploit）— 董事長會議需求 Phase 0
 - 新增 `src/lib/exploit/villainProfiles.ts`：4 種對手 profile（標準/緊弱/跟注站/激進）
