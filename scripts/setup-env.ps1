@@ -5,16 +5,16 @@ $gitName = git config --global user.name 2>$null
 $gitEmail = git config --global user.email 2>$null
 
 if (-not $gitName -or -not $gitEmail) {
-    Write-Host "[0/3] Setting git identity ..." -ForegroundColor Cyan
+    Write-Host "[0/4] Setting git identity ..." -ForegroundColor Cyan
     git config --global user.name "alphaxe0819"
     git config --global user.email "alphaxe@gmail.com"
     Write-Host "  git identity set (alphaxe0819)" -ForegroundColor Green
 } else {
-    Write-Host "[0/3] git identity already set ($gitName)" -ForegroundColor Green
+    Write-Host "[0/4] git identity already set ($gitName)" -ForegroundColor Green
 }
 
 # 1. Generate .env
-Write-Host "[1/3] Generating .env ..." -ForegroundColor Cyan
+Write-Host "[1/4] Generating .env ..." -ForegroundColor Cyan
 
 $envFile = ".env"
 if (Test-Path $envFile) {
@@ -34,12 +34,40 @@ VITE_LEMONSQUEEZY_CHECKOUT_YEARLY=https://pokergoal.lemonsqueezy.com/checkout/bu
     Write-Host "  .env created" -ForegroundColor Green
 }
 
-# 2. npm install
-Write-Host "[2/3] npm install ..." -ForegroundColor Cyan
+# 2. Link memory/ folder to Claude Code memory location (sync across machines via git)
+Write-Host "[2/4] Linking memory/ folder ..." -ForegroundColor Cyan
+
+$claudeMemoryPath = "$env:USERPROFILE\.claude\projects\C--Users-User-Desktop-gto-poker-trainer\memory"
+$repoMemoryPath = (Resolve-Path ".\memory").Path
+
+if (Test-Path $claudeMemoryPath) {
+    $item = Get-Item $claudeMemoryPath -Force
+    if ($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+        Write-Host "  Junction already exists, skipping" -ForegroundColor Yellow
+    } else {
+        # Backup existing files then remove folder
+        $backupPath = "$claudeMemoryPath.backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+        Move-Item $claudeMemoryPath $backupPath
+        Write-Host "  Backed up existing memory to: $backupPath" -ForegroundColor Yellow
+        New-Item -ItemType Junction -Path $claudeMemoryPath -Target $repoMemoryPath | Out-Null
+        Write-Host "  Junction created: $claudeMemoryPath -> $repoMemoryPath" -ForegroundColor Green
+    }
+} else {
+    # Parent folder might not exist yet (fresh Claude Code install)
+    $parentPath = Split-Path $claudeMemoryPath -Parent
+    if (-not (Test-Path $parentPath)) {
+        New-Item -ItemType Directory -Path $parentPath -Force | Out-Null
+    }
+    New-Item -ItemType Junction -Path $claudeMemoryPath -Target $repoMemoryPath | Out-Null
+    Write-Host "  Junction created: $claudeMemoryPath -> $repoMemoryPath" -ForegroundColor Green
+}
+
+# 3. npm install
+Write-Host "[3/4] npm install ..." -ForegroundColor Cyan
 npm install
 
-# 3. TypeScript check
-Write-Host "[3/3] TypeScript check ..." -ForegroundColor Cyan
+# 4. TypeScript check
+Write-Host "[4/4] TypeScript check ..." -ForegroundColor Cyan
 npx tsc -b --noEmit
 if ($LASTEXITCODE -eq 0) {
     Write-Host "  TypeScript: zero errors" -ForegroundColor Green

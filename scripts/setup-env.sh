@@ -6,16 +6,16 @@ GIT_NAME=$(git config --global user.name 2>/dev/null)
 GIT_EMAIL=$(git config --global user.email 2>/dev/null)
 
 if [ -z "$GIT_NAME" ] || [ -z "$GIT_EMAIL" ]; then
-  echo "[0/3] Setting git identity ..."
+  echo "[0/4] Setting git identity ..."
   git config --global user.name "alphaxe0819"
   git config --global user.email "alphaxe@gmail.com"
   echo "  git identity set (alphaxe0819)"
 else
-  echo "[0/3] git identity already set ($GIT_NAME)"
+  echo "[0/4] git identity already set ($GIT_NAME)"
 fi
 
 # 1. Generate .env
-echo "[1/3] Generating .env ..."
+echo "[1/4] Generating .env ..."
 
 ENV_FILE=".env"
 if [ -f "$ENV_FILE" ]; then
@@ -35,12 +35,33 @@ EOF
   echo "  .env created"
 fi
 
-# 2. npm install
-echo "[2/3] npm install ..."
+# 2. Link memory/ folder to Claude Code memory location (sync across machines via git)
+echo "[2/4] Linking memory/ folder ..."
+
+CLAUDE_MEMORY="$HOME/.claude/projects/C--Users-User-Desktop-gto-poker-trainer/memory"
+REPO_MEMORY="$(pwd)/memory"
+
+if [ -L "$CLAUDE_MEMORY" ]; then
+  echo "  Symlink already exists, skipping"
+elif [ -d "$CLAUDE_MEMORY" ]; then
+  BACKUP="${CLAUDE_MEMORY}.backup-$(date +%Y%m%d-%H%M%S)"
+  mv "$CLAUDE_MEMORY" "$BACKUP"
+  echo "  Backed up existing memory to: $BACKUP"
+  mkdir -p "$(dirname "$CLAUDE_MEMORY")"
+  ln -s "$REPO_MEMORY" "$CLAUDE_MEMORY"
+  echo "  Symlink created: $CLAUDE_MEMORY -> $REPO_MEMORY"
+else
+  mkdir -p "$(dirname "$CLAUDE_MEMORY")"
+  ln -s "$REPO_MEMORY" "$CLAUDE_MEMORY"
+  echo "  Symlink created: $CLAUDE_MEMORY -> $REPO_MEMORY"
+fi
+
+# 3. npm install
+echo "[3/4] npm install ..."
 npm install
 
-# 3. TypeScript check
-echo "[3/3] TypeScript check ..."
+# 4. TypeScript check
+echo "[4/4] TypeScript check ..."
 npx tsc -b --noEmit
 if [ $? -eq 0 ]; then
   echo "  TypeScript: zero errors"
