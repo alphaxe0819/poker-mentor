@@ -5,7 +5,7 @@ function rankValue(r: string): number { return RANK_ORDER.indexOf(r) }
 
 // ── 手牌分類 ─────────────────────────────────────────────────────────────────
 
-type HandCategory =
+export type HandCategory =
   | 'premium_pair'    // AA, KK, QQ
   | 'high_pair'       // JJ, TT
   | 'mid_pair'        // 99-77
@@ -27,7 +27,7 @@ function parseHand(hand: string): { r1: string; r2: string; suited: boolean; pai
   return { r1, r2, suited, pair }
 }
 
-function categorize(hand: string): HandCategory {
+export function categorize(hand: string): HandCategory {
   const { r1, r2, suited, pair } = parseHand(hand)
   const v1 = rankValue(r1)
   const v2 = rankValue(r2)

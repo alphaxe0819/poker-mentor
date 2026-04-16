@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-16 v0.8.1-dev.3 [feature/exploit-lab]
+- 新增「剝削實驗室」獨立頁面（/exploit）— 董事長會議需求 Phase 0
+- 新增 `src/lib/exploit/villainProfiles.ts`：4 種對手 profile（標準/緊弱/跟注站/激進）
+- 新增 `src/lib/exploit/exploitEngine.ts`：剝削調整引擎，基於 GTO baseline + 對手弱點產出調整建議
+- 新增 `src/pages/ExploitLabPage.tsx`：場景設定 + 手牌選擇 + 四欄對照面板
+- 修改 `src/lib/explanations.ts`：export categorize() + HandCategory 供 exploit engine 使用
+- 修改 `src/main.tsx`：加入 /exploit 路由
+
 ## 2026-04-16 v0.8.1-dev.2 [dev]
 - 新增 SessionStart 第二個 hook：啟動時自動印出「開工 SOP 提醒」注入 Claude context
 - 新增 `scripts/session-start-reminder.sh`：印出 SOP 5 步（讀 dev-log / 讀 MEMORY / 回報狀態 / 問角色 / 等指示）

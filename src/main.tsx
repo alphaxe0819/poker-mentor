@@ -5,8 +5,9 @@ import * as Sentry from '@sentry/react'
 import './index.css'
 import ErrorBoundary from './components/ErrorBoundary'
 
-// Demo route bypasses App.tsx to avoid Supabase-init coupling in dev without .env
+// Demo/exploit routes bypass App.tsx to avoid Supabase-init coupling in dev without .env
 const V2DemoPage = lazy(() => import('./pages/V2DemoPage'))
+const ExploitLabPage = lazy(() => import('./pages/ExploitLabPage'))
 const App = lazy(() => import('./pages/App'))
 
 // Sentry 初始化 — 設定 DSN 後即可啟用
@@ -22,11 +23,12 @@ if (SENTRY_DSN) {
 }
 
 const isDemo = window.location.pathname === '/v2-demo'
+const isExploit = window.location.pathname === '/exploit'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <ErrorBoundary>
     <Suspense fallback={<div />}>
-      {isDemo ? <V2DemoPage /> : <App />}
+      {isExploit ? <ExploitLabPage /> : isDemo ? <V2DemoPage /> : <App />}
     </Suspense>
   </ErrorBoundary>
 )
