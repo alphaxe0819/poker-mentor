@@ -19,3 +19,4 @@
 - [[no-unauthorized-push]] — 絕對禁止未授權 merge/push 到 main（2026-04-14 事件教訓）
 - [[whiteboard-standard]] — 產品架構圖 HTML 白板規格：Zone 分層、動態連線
 - [[auto-open-html]] — 更新 docs/*.html 後直接用瀏覽器打開
+- [[deploy-scope]] — 產品改動需測試機驗證；開發流程改動只需 push 同步
