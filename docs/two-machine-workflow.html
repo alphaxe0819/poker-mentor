@@ -397,7 +397,7 @@
     <h1>Poker Goal — 雲端開發流程</h1>
     <div class="subtitle">雲端為中心，本地機器為接入點 ｜ 任何電腦都用同一套流程</div>
   </div>
-  <div class="badge">Dev Workflow v3</div>
+  <div class="badge">Dev Workflow v4 — Wiki Edition</div>
 </div>
 
 <div class="canvas">
@@ -562,9 +562,15 @@
 
     <div class="daily-flow">
       <div class="flow-node orange">
-        <div class="flow-title">開工先 Pull</div>
+        <div class="flow-title">開工 Pull</div>
         <div class="flow-desc">不管哪一台</div>
         <div class="flow-cmd">git pull</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node cyan">
+        <div class="flow-title">SOP 讀 Wiki</div>
+        <div class="flow-desc">分級查詢</div>
+        <div class="flow-cmd">index.md → wiki/</div>
       </div>
       <div class="flow-arrow">→</div>
       <div class="flow-node blue">
@@ -572,24 +578,21 @@
         <div class="flow-cmd">Claude Code</div>
       </div>
       <div class="flow-arrow">→</div>
-      <div class="flow-node blue">
-        <div class="flow-title">Commit</div>
-        <div class="flow-cmd">git commit</div>
+      <div class="flow-node purple">
+        <div class="flow-title">收工 /compound</div>
+        <div class="flow-desc">提取副產品</div>
+        <div class="flow-cmd">決策+教訓→wiki</div>
       </div>
       <div class="flow-arrow">→</div>
-      <div class="flow-node purple">
-        <div class="flow-title">收工 Push</div>
+      <div class="flow-node blue">
+        <div class="flow-title">Commit + Push</div>
         <div class="flow-cmd">git push</div>
       </div>
       <div class="flow-arrow">→</div>
       <div class="flow-node green">
-        <div class="flow-title">換台先 Pull</div>
-        <div class="flow-cmd">git pull</div>
-      </div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-node green">
-        <div class="flow-title">無縫接續</div>
-        <div class="flow-cmd">繼續開發</div>
+        <div class="flow-title">換台 Pull</div>
+        <div class="flow-desc">wiki 同步跟著走</div>
+        <div class="flow-cmd">無縫接續</div>
       </div>
     </div>
   </div>
@@ -702,6 +705,22 @@
             <span class="note">登入後即可開始開發</span>
           </div>
         </li>
+        <li>
+          <div class="s-num">6</div>
+          <div class="s-content">
+            複製 Wiki Skills 到新電腦
+            <code>複製 ~/.claude/commands/*.md（4 個 skill 檔）</code>
+            <span class="note">wiki-ingest / wiki-healthcheck / compound / rescue-bookmarks（不在 Git 裡，需手動複製）</span>
+          </div>
+        </li>
+        <li>
+          <div class="s-num">7</div>
+          <div class="s-content">
+            複製 User-level CLAUDE.md
+            <code>複製 ~/.claude/CLAUDE.md（個人知識庫路徑設定）</code>
+            <span class="note">讓 Claude 知道個人 wiki 在哪裡</span>
+          </div>
+        </li>
       </ul>
     </div>
   </div>
@@ -798,6 +817,26 @@
             <td>❌ 不進 Git</td>
             <td class="manual">寫在 <code>.env.staging</code> + Vercel 測試專案 env vars</td>
           </tr>
+          <tr>
+            <td>專案 Wiki <code>memory/wiki/</code></td>
+            <td class="check">✅ 自動</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Wiki Skills <code>~/.claude/commands/</code></td>
+            <td>❌ 不進 Git</td>
+            <td class="manual">手動複製 4 個 .md 檔</td>
+          </tr>
+          <tr>
+            <td>User CLAUDE.md <code>~/.claude/CLAUDE.md</code></td>
+            <td>❌ 不進 Git</td>
+            <td class="manual">手動複製（含個人 wiki 路徑）</td>
+          </tr>
+          <tr>
+            <td>個人 Wiki <code>~/Desktop/second-brain/</code></td>
+            <td>❌ 獨立 repo</td>
+            <td class="manual"><code>git clone</code> 個人 wiki repo</td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -854,9 +893,116 @@
     </div>
   </div>
 
-  <!-- ═══ Section 8: 多 Tab 並行開發 ═══ -->
+  <!-- ═══ Section 8: Wiki 知識系統 ═══ -->
   <div class="flow-section">
-    <h2>⑧ 多 Tab 並行開發（同機器多 Claude session）</h2>
+    <h2>⑧ Wiki 知識系統（雙 Vault）</h2>
+    <p class="section-desc">
+      基於 Karpathy 的 LLM Wiki Pattern。所有知識存在 Obsidian Vault 裡，用 Claude Code 的 4 個 skill 維護。知識隨 Git 同步到所有電腦。
+    </p>
+
+    <div class="env-map">
+      <div class="env-card" style="border-color: #8b5cf6;">
+        <h3 style="color: #a78bfa;">🧠 個人知識庫</h3>
+        <div class="env-row">
+          <span class="env-label">路徑</span>
+          <span class="env-value">~/Desktop/second-brain/</span>
+        </div>
+        <div class="env-row">
+          <span class="env-label">索引</span>
+          <span class="env-value">index.md</span>
+        </div>
+        <div class="env-row">
+          <span class="env-label">內容</span>
+          <span>文章、想法、覆盤、撲克理論、商業觀察</span>
+        </div>
+        <div class="env-row">
+          <span class="env-label">結構</span>
+          <span>raw/ → wiki/{concepts,people,tools,methods,insights,poker}/</span>
+        </div>
+        <div class="env-row">
+          <span class="env-label">同步</span>
+          <span>獨立 Git repo</span>
+        </div>
+      </div>
+
+      <div class="env-card" style="border-color: #388bfd;">
+        <h3 style="color: #58a6ff;">📁 專案知識庫</h3>
+        <div class="env-row">
+          <span class="env-label">路徑</span>
+          <span class="env-value">memory/</span>
+        </div>
+        <div class="env-row">
+          <span class="env-label">索引</span>
+          <span class="env-value">memory/index.md</span>
+        </div>
+        <div class="env-row">
+          <span class="env-label">內容</span>
+          <span>產品決策、開發流程、部署狀態、踩坑記錄</span>
+        </div>
+        <div class="env-row">
+          <span class="env-label">結構</span>
+          <span>wiki/*.md + dev-log.md + reference_architecture.md</span>
+        </div>
+        <div class="env-row">
+          <span class="env-label">同步</span>
+          <span>跟專案 Git repo 一起 push/pull</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wiki Skills -->
+    <div class="rules-box" style="margin-top: 20px;">
+      <h3 style="color: #a78bfa;">Wiki Skills（4 個 slash command）</h3>
+      <div class="rules-grid">
+        <div class="rule-item do">
+          <div class="r-icon">📥</div>
+          <div><strong>/wiki-ingest</strong> — 錄入素材，自動拆解概念、建頁面、加雙向連結</div>
+        </div>
+        <div class="rule-item do">
+          <div class="r-icon">🔖</div>
+          <div><strong>/rescue-bookmarks</strong> — 快速收藏 URL/截圖，多維度分析後存入 raw/</div>
+        </div>
+        <div class="rule-item do">
+          <div class="r-icon">🔄</div>
+          <div><strong>/compound</strong> — 收工整理，提取對話副產品（決策/教訓/新知）寫回 wiki</div>
+        </div>
+        <div class="rule-item do">
+          <div class="r-icon">🏥</div>
+          <div><strong>/wiki-healthcheck</strong> — 掃描孤兒頁、缺頁、矛盾、過時內容，自動修復</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tiered Query -->
+    <div class="rules-box" style="margin-top: 20px;">
+      <h3 style="color: #39d2c0;">分級查詢（省 Token）</h3>
+      <div class="daily-flow">
+        <div class="flow-node cyan">
+          <div class="flow-title">讀 index.md</div>
+          <div class="flow-desc">一行一頁+摘要</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node blue">
+          <div class="flow-title">找相關頁</div>
+          <div class="flow-desc">通常 1-5 頁</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node green">
+          <div class="flow-title">讀具體內容</div>
+          <div class="flow-desc">只讀需要的</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node purple">
+          <div class="flow-title">跨 Vault 查詢</div>
+          <div class="flow-desc">專案找不到→個人</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Section 9: 多 Tab 並行開發 ═══ -->
+  <div class="flow-section">
+    <h2>⑨ 多 Tab 並行開發（同機器多 Claude session）</h2>
 
     <p style="color: #8b949e; font-size: 14px; margin-bottom: 20px;">
       Claude Code 支援同時開多個 Tab，分別處理不同任務。為避免多個 session 改到同一檔案造成衝突，採用兩種策略：
