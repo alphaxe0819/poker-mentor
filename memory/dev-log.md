@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-17 v0.8.1-dev.6 [dev]
+- 整合 wiki 系統到現有 workflow：CLAUDE.md 全面更新
+- 新增「收工 SOP」區段：收工前跑 `/compound` 提取對話副產品
+- 修正所有 auto-memory 引用 → `memory/wiki/*.md` 路徑
+- 更新 session-start-reminder.sh：讀 index.md + 顯示 wiki skills
+- 更新 reference_architecture.md：memory/ 目錄結構反映 wiki 子目錄
+- 修正 CLAUDE.md 開工 SOP 步驟編號（去除重複步驟 5）
+
 ## 2026-04-17 v0.8.1-dev.5 [dev]
 - 建立雙 Vault 知識管理系統（Karpathy Second Brain 概念）
 - 個人 Vault：`~/Desktop/second-brain/`（Obsidian，已 git init + 首次錄入 Karpathy 文章）

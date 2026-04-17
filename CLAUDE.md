@@ -106,17 +106,27 @@
 2. **主動讀** `memory/dev-log.md` 了解最近的操作記錄
 3. **主動讀** `memory/index.md`（專案知識庫索引，分級查詢入口）
 4. **主動讀** `memory/reference_architecture.md` — 了解專案目錄結構、技術棧、資料流、關鍵檔案位置。**這一步確保你在動手前知道整個系統怎麼運作**
-5. 若任務需要個人背景知識 → 讀個人 wiki 的 `C:\Users\User\Desktop\second-brain\index.md`
 5. 主動回報：目前分支、版本、最近做了什麼、未完成事項
 6. **主動詢問角色**：「這個 Tab 負責哪個角色？(UI / Frontend / Backend / 自由)」（詳見「多 Tab 平行開發角色分工」）
    - 若工作目錄是 worktree 子目錄（POKERNEW-ui-v2、POKERNEW-hu-sim 等），跳過此步驟
 7. 然後問用戶「要做什麼」
+- 若任務需要個人背景知識 → 讀個人 wiki 的 `C:\Users\User\Desktop\second-brain\index.md`
 
 **禁止行為：**
 - ❌ 問用戶「要我跑開工 SOP 嗎？」（直接跑，不要問）
 - ❌ 跳過讀 dev-log.md 或 index.md 或 reference_architecture.md
 - ❌ 等用戶說「繼續開發」才執行 SOP
 - ❌ 沒讀架構總覽就開始動手寫程式碼
+
+## 收工 SOP（每次 session 結束前執行）
+**用戶說「收工」「今天到這」「push 一下」時，依序執行：**
+1. 跑 `/compound` — 掃描對話，提取決策/教訓/新知寫回 wiki（專案或個人）
+2. 確認所有改動已 commit（含版號遞增 + dev-log 更新）
+3. `git push` 到 remote（feature branch 或 dev）
+4. 若有推到 dev → 跑「推送到測試機後的必做驗證」流程
+
+### 為何這條規則存在
+每次對話產出的副產品（踩坑記錄、設定決策、新知識）如果不在收工時提取，下個 session 就找不回來。`/compound` 把隱性知識變成顯性記錄，實現知識複利。
 
 ## Git 工作流程（雲端為中心）
 - **每完成一組修復/功能就 commit**，不要累積大量未 commit 的改動
@@ -181,7 +191,7 @@
    - 用戶說「推到測試機」/「上 dev」等，**不等於允許推正式機**
 
 3. **新 session 開始時，如果發現當前在 feature branch 上**：
-   - 讀 `memory/dev_workflow_hu_simulator.md`（或對應的 workflow 記憶）了解該 branch 的開發狀態
+   - 讀 `memory/wiki/hu-simulator.md`（或對應的 wiki 知識頁）了解該 branch 的開發狀態
    - **不要假設** 用戶想部署到正式機
    - 先問用戶要做什麼（但可以依「自動部署授權」規則主動推到 dev）
 
@@ -256,7 +266,7 @@
 1. 確認 `dev` 環境已測試通過
 2. 更新 `src/version.ts` 版本號
 3. 更新 `CHANGELOG.md` — 記錄這個版本的新功能、改動、修復
-4. 更新 memory `MEMORY.md` — 如果有新的產品決策或功能狀態變更
+4. 更新 `memory/index.md` + 對應的 `memory/wiki/*.md` — 如果有新的產品決策或功能狀態變更
 5. 更新此檔案 `CLAUDE.md` — 如果有新的固定規則需要記住
 6. `git checkout main && git merge dev && git push origin main`
 
@@ -298,7 +308,7 @@ BTN → SB → BB → UTG → UTG+1 → UTG+2 → LJ → HJ → CO → (回 BTN)
 - Hero 固定螢幕底部，依順時針往螢幕左側繞
 - 權威來源：`src/components/PokerFelt.tsx` 的 `POSITION_MAP`
 - **禁止**憑直覺放座位（「raiser 在哪看起來比較對」），先看 POSITION_MAP
-- 完整規則見 auto-memory `project_seat_order.md`
+- 完整規則定義在此段落，以 `POSITION_MAP` 為權威來源
 
 ### UI v2 設計規則
 - 牌桌：**直立 capsule wireframe**（非寫實綠 felt）、座位空心圓、2/6/9 桌型統一
@@ -308,7 +318,7 @@ BTN → SB → BB → UTG → UTG+1 → UTG+2 → LJ → HJ → CO → (回 BTN)
 - 決策期**不顯示**查看範圍按鈕（等於作弊）
 - HU：比賽中不顯示入場費 banner、用實際位置名（BTN/BB 不是 BOT/YOU）
 - Mockup：`docs/ui-v2-mockup.html`
-- 完整規則見 auto-memory `project_ui_v2_rules.md`
+- 完整規則見 `memory/wiki/ui-v2-rules.md`
 
 ## 目前產品狀態
 - 免費用戶不限訓練次數

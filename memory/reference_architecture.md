@@ -114,7 +114,13 @@ poker-mentor/
 │   │   └── redeem-promo/     # 兌換促銷碼
 │   └── migrations/           # DB migration（手動貼到 SQL Editor）
 ├── docs/                     # 文件 / mockup
-├── memory/                   # dev-log 等開發記錄
+├── memory/                   # 專案知識庫（Obsidian Vault）
+│   ├── wiki/                 # 知識頁面（Obsidian [[wikilink]] 互連）
+│   ├── raw/                  # 開發決策原始記錄
+│   ├── index.md              # 分級查詢入口（取代舊 MEMORY.md）
+│   ├── log.md                # wiki 操作記錄
+│   ├── dev-log.md            # commit 操作記錄
+│   └── reference_architecture.md  # 本檔案
 ├── scripts/                  # setup-env 等工具腳本
 └── public/                   # 靜態資源
 ```
@@ -148,7 +154,7 @@ poker-mentor/
 ## UI 版本切換
 - `featureFlags.ts` 的 `UI_V2` 控制（目前預設 V2）
 - 可用 URL param `?ui=v1` / `?ui=v2` 或 localStorage 覆蓋
-- V2 元件在 `src/components/v2/`，設計規則見 memory `project_ui_v2_rules.md`
+- V2 元件在 `src/components/v2/`，設計規則見 `memory/wiki/ui-v2-rules.md`
 
 ## 雙環境
 - **測試**: `poker-goal-dev.vercel.app` + Supabase `btiqmckyjyswzrarmfxa`

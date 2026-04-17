@@ -47,5 +47,7 @@ autoTrigger: session_start
 
 - 步驟 2-4 可以**平行讀取**（三個 Read 同時發出），加快速度
 - 回報要**簡潔**，不要把整個 dev-log 貼出來
-- 如果 dev-log 或 MEMORY 有提到未完成的工作，主動提醒
+- 如果 dev-log 或 index.md 有提到未完成的工作，主動提醒
 - **禁止跳過步驟 4（讀架構）**— 這是這個 skill 存在的核心原因
+- 查詢知識時用**分級查詢**：先讀 index.md 找相關頁，再讀 `memory/wiki/` 的具體頁面
+- 收工時提醒用戶跑 `/compound`（提取對話副產品到 wiki）
