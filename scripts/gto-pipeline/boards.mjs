@@ -64,20 +64,25 @@ export const STACK_RATIOS = [
 // ── Ranges per stack depth ──
 // Deeper stacks = wider ranges; shorter stacks = tighter (more push/fold)
 
-// 40BB ranges (BTN open ~60%, BB flat defend ~45%)
+// 40BB ranges — corrected from RYE Rangeviewer data (HU-25BBMais 35-50BB)
+// BTN open ~87% (148/169), BB flat defend ~70% (119/169, excludes 3bet hands)
 export const HU_40BB_RANGES = {
-  ip: 'AA,KK,QQ,JJ,TT,99,88,77,66,55,44,33,22,AKs,AQs,AJs,ATs,A9s,A8s,A7s,A6s,A5s,A4s,A3s,A2s,KQs,KJs,KTs,K9s,K8s,K7s,K6s,K5s,K4s,K3s,K2s,QJs,QTs,Q9s,Q8s,Q7s,Q6s,Q5s,JTs,J9s,J8s,J7s,T9s,T8s,T7s,98s,97s,87s,86s,76s,75s,65s,64s,54s,53s,43s,AKo,AQo,AJo,ATo,A9o,A8o,A7o,KQo,KJo,KTo,K9o,QJo,QTo,Q9o,JTo,J9o,T9o,98o',
-  oop: '22,33,44,55,66,77,88,99,TT,AKs,AQs,AJs,ATs,A9s,A8s,A7s,A6s,A5s,A4s,A3s,A2s,KQs,KJs,KTs,K9s,K8s,K7s,K6s,K5s,QJs,QTs,Q9s,Q8s,Q7s,JTs,J9s,J8s,T9s,T8s,98s,97s,87s,86s,76s,75s,65s,54s,43s,AKo,AQo,AJo,ATo,A9o,A8o,KQo,KJo,KTo,K9o,QJo,QTo,JTo,T9o,98o',
+  ip: 'AA,KK,QQ,JJ,TT,99,88,77,66,55,44,33,22,AKs,AQs,AJs,ATs,A9s,A8s,A7s,A6s,A5s,A4s,A3s,A2s,KQs,KJs,KTs,K9s,K8s,K7s,K6s,K5s,K4s,K3s,K2s,QJs,QTs,Q9s,Q8s,Q7s,Q6s,Q5s,Q4s,Q3s,Q2s,JTs,J9s,J8s,J7s,J6s,J5s,J4s,J3s,J2s,T9s,T8s,T7s,T6s,T5s,T4s,T3s,T2s,98s,97s,96s,95s,94s,93s,92s,87s,86s,85s,84s,83s,82s,76s,75s,74s,73s,72s,65s,64s,63s,62s,54s,53s,52s,43s,42s,32s,AKo,AQo,AJo,ATo,A9o,A8o,A7o,A6o,A5o,KQo,KJo,KTo,K9o,K8o,K7o,K6o,K5o,K4o,K3o,K2o,QJo,QTo,Q9o,Q8o,Q7o,Q6o,Q5o,Q4o,Q3o,Q2o,JTo,J9o,J8o,J7o,J6o,J5o,J4o,J3o,J2o,T9o,T8o,T7o,T6o,T5o,98o,97o,96o,95o,87o,86o,85o,76o,75o,74o,65o,64o,54o',
+  oop: '88,77,66,55,44,33,22,A9s,A8s,A7s,A6s,A5s,A4s,A3s,A2s,K9s,K8s,K7s,K6s,K5s,K4s,K3s,K2s,QTs,Q9s,Q8s,Q7s,Q6s,Q5s,Q4s,Q3s,Q2s,JTs,J9s,J8s,J7s,J6s,J5s,J4s,J3s,J2s,T9s,T8s,T7s,T6s,T5s,T4s,T3s,T2s,98s,97s,95s,94s,93s,92s,87s,84s,83s,82s,76s,73s,72s,62s,52s,42s,32s,ATo,A9o,A8o,A7o,A6o,A5o,A4o,A3o,A2o,KTo,K9o,K8o,K7o,K6o,K5o,K4o,K3o,K2o,QJo,QTo,Q9o,Q8o,Q7o,Q6o,Q5o,Q4o,Q3o,Q2o,JTo,J9o,J8o,J7o,J6o,J5o,T9o,T8o,T7o,T6o,T5o,98o,97o,96o,95o,87o,86o,85o,84o,76o,75o,74o,63o,53o,43o',
 }
 
-// 25BB ranges — tighter since shorter stack (open ~50%, defend ~40%)
+// 25BB ranges — corrected from RYE (HU-25BB 20-25BB)
+// At 25BB, SB mixes open-raise + limp. SRP IP = open-raise hands only (96/169)
+// AA/AKs/AQs limp-trap at this depth (not in SRP range)
 export const HU_25BB_RANGES = {
-  ip: 'AA,KK,QQ,JJ,TT,99,88,77,66,55,44,33,22,AKs,AQs,AJs,ATs,A9s,A8s,A7s,A6s,A5s,A4s,A3s,A2s,KQs,KJs,KTs,K9s,K8s,K7s,K6s,K5s,QJs,QTs,Q9s,Q8s,Q7s,JTs,J9s,J8s,T9s,T8s,T7s,98s,97s,87s,86s,76s,65s,54s,43s,AKo,AQo,AJo,ATo,A9o,A8o,KQo,KJo,KTo,K9o,QJo,QTo,JTo,T9o,98o',
-  oop: '22,33,44,55,66,77,88,99,TT,AKs,AQs,AJs,ATs,A9s,A8s,A7s,A6s,A5s,A4s,A3s,A2s,KQs,KJs,KTs,K9s,K8s,K7s,K6s,K5s,QJs,QTs,Q9s,Q8s,JTs,J9s,J8s,T9s,T8s,98s,97s,87s,86s,76s,65s,54s,43s,AKo,AQo,AJo,ATo,A9o,KQo,KJo,KTo,K9o,QJo,QTo,JTo,T9o',
+  ip: 'KK,QQ,JJ,TT,99,88,77,66,55,A9s,KQs,KJs,KTs,K9s,K8s,K7s,K6s,QJs,QTs,Q9s,Q8s,Q6s,Q5s,Q4s,Q3s,Q2s,JTs,J9s,J8s,J6s,J5s,J4s,J3s,J2s,T9s,T8s,T6s,T5s,T4s,T3s,T2s,98s,97s,96s,95s,94s,93s,87s,86s,85s,84s,83s,76s,75s,74s,73s,65s,63s,AKo,AQo,AJo,ATo,A9o,A8o,KQo,KJo,KTo,K8o,K7o,K6o,K5o,K4o,K3o,K2o,QJo,QTo,Q8o,Q7o,Q6o,Q5o,Q4o,Q3o,Q2o,JTo,J8o,J7o,J6o,T8o,T7o,T6o,98o,97o,96o,87o,86o,76o',
+  oop: 'A5s,A4s,A3s,A2s,K9s,K8s,K7s,K6s,K5s,K4s,K3s,K2s,QJs,QTs,Q9s,Q8s,Q7s,Q6s,Q5s,Q4s,Q3s,Q2s,JTs,J9s,J8s,J7s,J6s,J5s,J4s,J3s,J2s,T9s,T8s,T7s,T6s,T5s,T4s,T3s,T2s,98s,97s,96s,95s,94s,93s,92s,87s,86s,85s,84s,83s,82s,76s,75s,73s,65s,64s,62s,54s,52s,32s,A5o,A4o,A3o,A2o,KJo,KTo,K9o,K8o,K7o,K6o,K5o,K4o,K3o,K2o,QJo,QTo,Q9o,Q8o,Q7o,Q6o,Q5o,Q4o,Q3o,Q2o,JTo,J9o,J8o,J7o,J6o,J5o,T9o,T8o,T7o,T6o,98o,97o,96o,87o,86o,85o,76o',
 }
 
-// 13BB ranges — very tight, push/fold territory (open ~40%, defend ~35%)
+// 13BB ranges — corrected from RYE (HU-25BB 10-15BB)
+// At 13BB, most hands limp or shove. Only 41 hands open-raise (create SRP)
+// BB defends very wide (77/169) because pot odds are huge
 export const HU_13BB_RANGES = {
-  ip: 'AA,KK,QQ,JJ,TT,99,88,77,66,55,44,33,22,AKs,AQs,AJs,ATs,A9s,A8s,A7s,A6s,A5s,A4s,A3s,A2s,KQs,KJs,KTs,K9s,K8s,QJs,QTs,Q9s,JTs,J9s,T9s,T8s,98s,97s,87s,76s,65s,54s,AKo,AQo,AJo,ATo,A9o,KQo,KJo,KTo,QJo,QTo,JTo',
-  oop: '22,33,44,55,66,77,88,99,TT,AKs,AQs,AJs,ATs,A9s,A8s,A7s,A6s,A5s,A4s,A3s,A2s,KQs,KJs,KTs,K9s,QJs,QTs,JTs,J9s,T9s,98s,87s,76s,65s,54s,AKo,AQo,AJo,ATo,KQo,KJo,KTo,QJo,JTo',
+  ip: '66,55,44,33,22,A7s,A6s,A4s,A3s,A2s,K7s,K6s,K5s,K4s,K3s,K2s,Q8s,Q7s,J8s,J7s,T8s,T7s,98s,97s,87s,ATo,A9o,A8o,A7o,A6o,A5o,A4o,A3o,A2o,K9o,K8o,QTo,Q9o,JTo,J9o,T9o',
+  oop: 'AA,Q8s,Q7s,Q6s,Q5s,Q4s,Q3s,Q2s,J9s,J8s,J7s,J6s,J5s,J4s,J3s,J2s,T9s,T8s,T7s,T6s,T5s,T4s,T3s,T2s,98s,97s,96s,95s,94s,93s,92s,87s,86s,85s,84s,83s,76s,75s,74s,73s,65s,64s,63s,54s,53s,43s,K8o,K7o,K6o,K5o,K4o,K3o,K2o,QTo,Q9o,Q8o,Q7o,Q6o,Q5o,JTo,J9o,J8o,J7o,T9o,T8o,T7o,98o,97o,96o,87o,86o,85o,76o,75o,65o,64o,54o',
 }

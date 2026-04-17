@@ -1,0 +1,33 @@
+set_pot 16
+set_effective_stack 17
+set_board 9d,5c,2h
+set_range_ip KK,QQ,JJ,TT,99,88,77,66,55,A9s,KQs,KJs,KTs,K9s,K8s,K7s,K6s,QJs,QTs,Q9s,Q8s,JTs,J9s,J8s,T9s,T8s,98s,97s,87s,86s,76s,75s,65s,AKo,AQo,AJo,ATo,A9o,A8o,KQo,KJo,KTo,QJo,QTo,JTo
+set_range_oop AA,KK,QQ,JJ,TT,99,88,77,66,55,44,33,22,AKs,AQs,AJs,ATs,A9s,A8s,A7s,A6s,KQs,KJs,KTs,74s,63s,53s,43s,42s,AKo,AQo,AJo,ATo,A9o,A8o,A7o,A6o,KQo,75o,65o,64o,54o
+set_bet_sizes oop,flop,bet,33,75
+set_bet_sizes oop,flop,raise,60
+set_bet_sizes oop,flop,allin
+set_bet_sizes oop,turn,bet,75
+set_bet_sizes oop,turn,raise,60
+set_bet_sizes oop,turn,allin
+set_bet_sizes oop,river,bet,100
+set_bet_sizes oop,river,raise,100
+set_bet_sizes oop,river,allin
+set_bet_sizes ip,flop,bet,33,75
+set_bet_sizes ip,flop,raise,60
+set_bet_sizes ip,flop,allin
+set_bet_sizes ip,turn,bet,75
+set_bet_sizes ip,turn,raise,60
+set_bet_sizes ip,turn,allin
+set_bet_sizes ip,river,bet,100
+set_bet_sizes ip,river,raise,100
+set_bet_sizes ip,river,allin
+set_allin_threshold 0.67
+build_tree
+set_thread_num 8
+set_accuracy 0.5
+set_max_iteration 200
+set_print_interval 50
+set_use_isomorphism 1
+start_solve
+set_dump_rounds 2
+dump_result output/hu_25bb_3bp_9d5c2h.json

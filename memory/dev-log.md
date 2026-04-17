@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-04-17 v0.8.1-dev.7 [dev]
+- 重構 GTO pipeline 架構：scenarios.mjs 支援 HU / 6-max Cash / 9-max Tournament 三種格式
+- 校正 HU ranges（RYE 資料比對）：40BB SRP IP 79→148, OOP 63→119；3BP/4BP 同步修正
+- 標準化 bet sizing profiles（GTO Wizard 標準：SRP deep/medium, 3BP, 4BP）
+- 新增 extract-hu-ranges.mjs 範圍提取腳本 + batch-solve.sh 批次解算腳本
+- 重新生成 180 input 檔（6 場景 × 30 boards），Phase 1a 解算中
+
 ## 2026-04-17 v0.8.1-dev.6 [dev]
 - 整合 wiki 系統到現有 workflow：CLAUDE.md 全面更新
 - 新增「收工 SOP」區段：收工前跑 `/compound` 提取對話副產品

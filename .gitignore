@@ -31,6 +31,8 @@ dist-ssr
 scripts/gto-pipeline/TexasSolver-v0.2.0-Windows/
 scripts/gto-pipeline/TexasSolver-v0.2.0-Linux/
 scripts/gto-pipeline/TexasSolver-v0.2.0-MacOs/
+scripts/gto-pipeline/solver/
 scripts/gto-pipeline/output/
+scripts/gto-pipeline/test_solver.txt
 # Brainstorm visual companion cache
 .superpowers/
