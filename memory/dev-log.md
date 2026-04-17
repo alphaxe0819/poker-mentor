@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-04-17 v0.8.1-dev.5 [dev]
+- 建立雙 Vault 知識管理系統（Karpathy Second Brain 概念）
+- 個人 Vault：`~/Desktop/second-brain/`（Obsidian，已 git init + 首次錄入 Karpathy 文章）
+- 專案 Vault：`memory/` 重構為 Obsidian 相容格式（8 檔遷移到 wiki/ + index.md + log.md）
+- 新增 4 個 user-level skills：`/wiki-ingest`、`/wiki-healthcheck`、`/compound`、`/rescue-bookmarks`
+- 更新 CLAUDE.md 開工 SOP + 分級查詢規則、建立 user-level CLAUDE.md
+
 ## 2026-04-16 v0.8.1-dev.4 [feature/exploit-lab]
 - 新增 `docs/exploit-coach-mockup.html`：剝削教練完整流程 mockup（12 畫面）
 - 流程一：選對手（預設 4 種 + 已儲存 + 新建問卷 6 題 + 雷達圖摘要）
