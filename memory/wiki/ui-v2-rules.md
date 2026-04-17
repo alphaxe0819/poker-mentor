@@ -3,7 +3,10 @@ name: V2 UI 設計規則
 description: 第二代 UI 的撲克牌樣式、版面結構、互動規則，所有 V2 元件必須遵守
 type: project
 originSessionId: 0b281e46-7482-495b-8477-d6210a9c7892
+aliases: [ui-v2-rules, V2 UI, ui v2]
+tags: [ui, design, v2, frontend]
 ---
+
 ## V2 撲克牌樣式（HoleCards + PokerFeltV2 社群牌）
 
 **統一格式：數字在上方，花色符號只留一個在下方**
@@ -43,3 +46,10 @@ originSessionId: 0b281e46-7482-495b-8477-d6210a9c7892
 - Rank：19px font-black，置上
 - Suit symbol：11px，置下，opacity 0.85
 - gap: 4px between cards
+
+---
+
+## 相關連結
+
+- HU 模擬器架構：[[hu-simulator]]
+- 白板規格（產品架構圖）：[[whiteboard-standard]]

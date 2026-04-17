@@ -3,7 +3,10 @@ name: HU 模擬器開發測試流程
 description: MTT HU 模擬器 v1.0 的背景、完整 smoke test 清單、架構、GTO 資料狀態、上線步驟 — 新 session 接手時必讀
 type: project
 originSessionId: 5065028d-7552-432a-8412-69df58de6ce6
+aliases: [hu-simulator, HU模擬器, heads-up simulator]
+tags: [development, hu, simulator, gto]
 ---
+
 # MTT HU 模擬器 v1.0 — 開發測試流程
 
 ## 背景與狀態
@@ -106,6 +109,8 @@ npm run build                 # 生產建置（Vercel 會跑這個）
 
 ## 資料庫部署狀態
 
+詳見 [[deployment-state]]。
+
 | 項目 | 狀態 |
 |---|---|
 | `tournament_sessions` table | ✅ 已建（2026-04-11） |
@@ -132,7 +137,7 @@ npm run build                 # 生產建置（Vercel 會跑這個）
 
 ## 結束種子體驗期 / 恢復收費
 
-> ⚠️ 強制遵守 CLAUDE.md「正式環境保護規則」— 任何 push 到 main **必須**先取得用戶在聊天中明確授權。
+> ⚠️ 強制遵守 CLAUDE.md「正式環境保護規則」— 任何 push 到 main **必須**先取得用戶在聊天中明確授權。詳見 [[no-unauthorized-push]]。
 
 把各檔案的 `*_COST` 常數改回正式定價：
 
@@ -180,14 +185,13 @@ src/components/                ← V1（舊版，仍保留）
 ├── PokerFelt.tsx             ← 牌桌（復用現有）
 └── HoleCards.tsx             ← 手牌（復用現有）
 
-src/components/v2/             ← V2（當前使用，UI_V2 flag=on）
+src/components/v2/             ← V2（當前使用，UI_V2 flag=on），設計規則見 [[ui-v2-rules]]
 ├── PokerFeltV2.tsx           ← 膠囊牌桌 + 中央 boardCards
 ├── HeadsUpMatchScreenV2.tsx  ← V2 主遊戲畫面
 ├── HeadsUpReviewScreenV2.tsx ← V2 賽後報告頁
 ├── BetSizingBarV2.tsx        ← 單排 action bar（取代 Preflop/PostflopActionBar）
 ├── FeedbackSheetV2.tsx       ← 底部 sheet 式回饋
 └── ActionHistoryBarTop.tsx   ← 頂部動作序列
-# V2 設計規則見 memory: project_ui_v2_rules.md
 
 src/pages/App.tsx             ← 路由 hu-select / hu-match / hu-review
 src/tabs/TrainTab.tsx         ← HU 入口按鈕

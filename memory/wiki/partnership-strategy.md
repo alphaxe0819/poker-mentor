@@ -2,6 +2,8 @@
 name: 賽事合作策略
 description: 月榜代幣兌換賽事資格：台灣 WinWin、海外賽事平台（實體或線上）；作為市場切入手段
 type: project
+aliases: [partnership-strategy, 賽事合作, winwin]
+tags: [strategy, partnership, market]
 ---
 
 # 賽事合作策略
@@ -33,3 +35,8 @@ type: project
 | Poker Goal | 驅動用戶持續參賽，提升黏性與留存 |
 | WinWin / 賽事平台 | 免費獲得 Poker Goal 用戶流量，報名人數增加 |
 | 用戶 | 練習有回報（月榜代幣 = 真實賽事資格），學習動機更強 |
+
+## 相關脈絡
+
+- 產品整體路線圖：[[product-pivot-2026-04]]（Phase 2 包含月榜 + 點數系統）
+- 部署基礎設施（點數 RPC）：[[deployment-state]]

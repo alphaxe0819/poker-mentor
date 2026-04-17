@@ -2,6 +2,8 @@
 name: 產品方向調整（2026-04-14 董事長會議後）
 description: WinWin 董事長會議反饋 → 產品方向從純 MTT 模擬擴展為「牌譜分析 + 對手剝削 + AI 教練」，目標大華人市場
 type: project
+aliases: [product-pivot, 董事長會議, product direction]
+tags: [product, strategy, pivot]
 ---
 
 # 產品方向調整（2026-04-14 董事長會議後）
@@ -61,8 +63,8 @@ type: project
 | 階段 | 功能 | 時間 |
 |---|---|---|
 | Phase 0 | 牌譜分析 + AI 逐街建議 + 對手類型選擇 | 2-4 週 |
-| Phase 1 | HU 模擬器 + 基礎 GTO 訓練 | 1-2 月 |
-| Phase 2 | SNG 模擬 + 月榜 + 點數系統 | 2-3 月 |
+| Phase 1 | [[hu-simulator]] HU 模擬器 + 基礎 GTO 訓練 | 1-2 月 |
+| Phase 2 | SNG 模擬 + 月榜 + 點數系統（見 [[partnership-strategy]]） | 2-3 月 |
 | Phase 3 | 完整 MTT + 賽事合作 | 6+ 月 |
 
 ## 語言策略（對應大華人市場）
@@ -73,4 +75,4 @@ type: project
 - CAC 曲線（已討論未套入財務模型）
 - 中國市場合規策略
 - 牌譜輸入方式（手動 vs OCR vs 平台匯入）
-- 需要的 GTO 翻後資料庫範圍
+- 需要的 GTO 翻後資料庫範圍（詳見 [[deployment-state]]）

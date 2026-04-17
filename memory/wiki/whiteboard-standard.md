@@ -2,13 +2,15 @@
 name: 產品架構白板規格標準
 description: 產品開發時需產出的 HTML 互動式白板規格 — 包含 Zone 分層、動態連線、手機 mockup、資料表等元素
 type: feedback
+aliases: [whiteboard-standard, 白板規格, html whiteboard]
+tags: [feedback, documentation, whiteboard, html]
 ---
 
 產品架構圖一律使用 HTML 互動式白板格式（參考檔案：`docs/poker-goal-whiteboard.html`）。
 
 **Why:** 用戶明確要求所有未來產品開發都要產出這個標準的架構圖，方便視覺化理解產品全貌與模塊關聯。
 
-**How to apply:** 每次有新的產品功能規劃或架構變更時，產出或更新白板 HTML。
+**How to apply:** 每次有新的產品功能規劃或架構變更時，產出或更新白板 HTML。更新完後依 [[auto-open-html]] 規則自動打開。
 
 ## 必備元素
 
