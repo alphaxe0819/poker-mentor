@@ -81,6 +81,14 @@
 - 這讓任何電腦 `git pull` 後都能知道「上次在另一台做了什麼」
 - **新 session 開始時，先讀 `memory/dev-log.md` 了解最近的開發脈絡**
 
+## 知識庫查詢規則（分級查詢，省 token）
+1. 先讀 `memory/index.md`（一行一頁 + 摘要）
+2. 從 index 找到與當前任務相關的頁面（通常 1-5 頁）
+3. 只 Read `memory/wiki/` 裡那幾頁的具體內容
+4. 不要一次讀完所有 wiki 頁面
+5. 跨 vault 查詢：專案 wiki 找不到 → 讀個人 wiki `index.md`
+6. 寫新的知識記憶時，寫到 `memory/wiki/`（不要寫到 auto-memory 目錄）
+
 ## 新電腦設定 SOP（clone 後必做）
 **如果用戶說「設定開發環境」或這是一台新 clone 的電腦，只需兩步：**
 1. `powershell scripts/setup-env.ps1`（Windows）或 `bash scripts/setup-env.sh`（Mac/Linux）
@@ -96,8 +104,9 @@
 **不要等用戶指示，也不要問「要跑嗎？」。Session 開始的第一件事就是依序執行：**
 1. 確認 SessionStart hook 已自動 `git fetch` + pull（看 system-reminder）
 2. **主動讀** `memory/dev-log.md` 了解最近的操作記錄
-3. **主動讀** `MEMORY.md`（在 `.claude/projects/.../memory/MEMORY.md`）了解跨 session 記憶
+3. **主動讀** `memory/index.md`（專案知識庫索引，分級查詢入口）
 4. **主動讀** `memory/reference_architecture.md` — 了解專案目錄結構、技術棧、資料流、關鍵檔案位置。**這一步確保你在動手前知道整個系統怎麼運作**
+5. 若任務需要個人背景知識 → 讀個人 wiki 的 `C:\Users\User\Desktop\second-brain\index.md`
 5. 主動回報：目前分支、版本、最近做了什麼、未完成事項
 6. **主動詢問角色**：「這個 Tab 負責哪個角色？(UI / Frontend / Backend / 自由)」（詳見「多 Tab 平行開發角色分工」）
    - 若工作目錄是 worktree 子目錄（POKERNEW-ui-v2、POKERNEW-hu-sim 等），跳過此步驟
@@ -105,7 +114,7 @@
 
 **禁止行為：**
 - ❌ 問用戶「要我跑開工 SOP 嗎？」（直接跑，不要問）
-- ❌ 跳過讀 dev-log.md 或 MEMORY.md 或 reference_architecture.md
+- ❌ 跳過讀 dev-log.md 或 index.md 或 reference_architecture.md
 - ❌ 等用戶說「繼續開發」才執行 SOP
 - ❌ 沒讀架構總覽就開始動手寫程式碼
 

@@ -17,8 +17,9 @@ autoTrigger: session_start
 ### 2. 讀開發記錄
 - 讀 `memory/dev-log.md`（了解最近做了什麼、在哪台電腦、未完成事項）
 
-### 3. 讀跨 session 記憶
-- 讀 auto-memory 的 `MEMORY.md`（了解用戶偏好、專案決策、回饋）
+### 3. 讀專案知識庫索引
+- 讀 `memory/index.md`（專案知識庫分級查詢入口）
+- 若需要某個具體主題的細節，再從 index 找到對應 wiki 頁面讀取
 
 ### 4. 讀架構總覽
 - 讀 `memory/reference_architecture.md`（在 git repo 裡，兩台電腦皆同步）
