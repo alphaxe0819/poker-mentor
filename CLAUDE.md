@@ -123,10 +123,37 @@
 1. 跑 `/compound` — 掃描對話，提取決策/教訓/新知寫回 wiki（專案或個人）
 2. 確認所有改動已 commit（含版號遞增 + dev-log 更新）
 3. `git push` 到 remote（feature branch 或 dev）
-4. 若有推到 dev → 跑「推送到測試機後的必做驗證」流程
+4. 若有推到 dev → 依「改動分類」判斷：產品改動才跑測試機驗證，開發流程改動跳過
 
 ### 為何這條規則存在
 每次對話產出的副產品（踩坑記錄、設定決策、新知識）如果不在收工時提取，下個 session 就找不回來。`/compound` 把隱性知識變成顯性記錄，實現知識複利。
+
+## 改動分類：產品 vs 開發流程（commit / push 前必須判斷）
+**每次 commit 前，先判斷這次改的是「產品」還是「開發流程」，兩者的 push 後流程不同：**
+
+### 產品改動（push dev 後必須跑測試機驗證）
+改了這些目錄 = 產品改動：
+- `src/` 裡的 `.ts` / `.tsx` / `.css`
+- `supabase/`（Edge Function / migration）
+- `public/`（靜態資源）
+- `package.json`（依賴變更）
+
+→ push dev 後**必須**跑「推送到測試機後的必做驗證」流程（curl 確認 HTTP 200 + Vite build OK）
+
+### 開發流程改動（push dev 只需同步，不跑驗證）
+改了這些 = 開發流程改動：
+- `CLAUDE.md`、`.claude/skills/`、`scripts/session-start*.sh`
+- `memory/`（wiki / index / log / dev-log）
+- `docs/`（specs、mockup HTML、流程圖）
+- `.claude/settings*.json`
+
+→ 直接 `git push origin dev` 同步到雲端，**不跑** curl / Vercel 驗證
+
+### 混合改動
+如果同一個 commit 裡同時有產品 + 開發流程的檔案 → **視為產品改動**，跑驗證流程。
+
+### 為何這條規則存在
+2026-04-17 wiki 系統（純 markdown）建好後，Claude 對開發流程改動也問「要跑測試機驗證嗎？」造成混淆。產品代碼才需要 Vercel 部署驗證，wiki/skill/config 改動只需 git push 同步。
 
 ## Git 工作流程（雲端為中心）
 - **每完成一組修復/功能就 commit**，不要累積大量未 commit 的改動
