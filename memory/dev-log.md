@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-04-19 v0.8.1-dev.10 [dev]
+- 6-max 100bb postflop solver batch **全部解完**：125 flops（25 場景 × 5 代表性 texture）
+- Fast mode 實測單 flop 平均 1.4 分（最慢 6.2 分 BTN vs SB 3BP，最快 8s）
+- 總解算時間 178.6 分鐘（2.98 小時），比原估 8-12h 快 3 倍
+- `solver_postflop_6max` 入庫 127 rows（含 pilot 額外 2 筆）
+- 清理 5.7 GB 中間 JSON 檔
+
 ## 2026-04-19 v0.8.1-dev.9 [dev]
 - Pilot 解算驗證通過（3 flops × UTG vs HJ SRP，57.5 分鐘）
 - 修 IP/OOP swap bug（opener 不一定是 IP，依 post-flop 位置判斷）
