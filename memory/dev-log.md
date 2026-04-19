@@ -5,6 +5,15 @@
 
 ---
 
+## 2026-04-19 v0.8.1-dev.15 [dev]
+- 重寫下注輪 action engine（engState 狀態機 + wrap-around）
+- Bug 14: 籌碼放圓圈內、圓圈 34→44px、UTG+1→U+1, UTG+2→U+2
+- Bug 15: 動作未完成時「繼續」按鈕灰色+禁止
+- Bug 16+17: re-raise 後已 call 者重新加入動作佇列；Raise 金額驗證 + min-raise
+- Bug 18: 無注時 Call 按鈕變 Check；有注時才顯示 Call + 金額
+- Bug 19: 翻後下注改用 BB 實數（之前是 pot %）
+- Bug 20: streetNext 阻擋未完成的街；手牌只剩 1 人自動進確認頁
+
 ## 2026-04-19 v0.8.1-dev.14 [dev]
 - Exploit Coach mockup 11 個 bug 修復
 - Bug 3：S2 手牌設定 sticky 下一步按鈕
