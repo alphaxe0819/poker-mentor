@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-04-19 v0.8.1-dev.11 [dev]
+- Phase 2 解算擴充：5→13 flops 全覆蓋（加 9d5c2h/KsQd4h/Td8h4c/Js9c3h/9h8d7c/Qd7s2c/Jc7d2h/KcKd5h）
+- 全批次 306.9 分鐘（5.1 小時）— 2 個 BB 防守 flops segfault，retry 成功
+- DB **325/325 rows**（25 scenarios × 13 flops），全 25 個場景完整覆蓋
+- 新 `mark-solved-from-db.mjs`：從 DB 拉已解清單建 marker file，讓 -SkipExisting 能跨清檔續跑
+- BOARDS_FAST 改為全 BOARDS（13）以支援全紋理覆蓋
+
 ## 2026-04-19 v0.8.1-dev.10 [dev]
 - 6-max 100bb postflop solver batch **全部解完**：125 flops（25 場景 × 5 代表性 texture）
 - Fast mode 實測單 flop 平均 1.4 分（最慢 6.2 分 BTN vs SB 3BP，最快 8s）

@@ -28,8 +28,8 @@ import { BOARDS } from './boards.mjs'
 import { BOARDS_EXTENDED } from './boards-extended.mjs'
 import { ALL_FORMATS, BET_PROFILES, autoBetProfile } from './scenarios.mjs'
 
-// Fast-mode board subset (5 diverse textures for breadth-first solving)
-const BOARDS_FAST = BOARDS.filter(b => ['As7d2c','Kc8h3s','JsTc9h','7s7d2h','Tc9c6d'].includes(b.slug))
+// Fast-mode board set — full 13 textures (Phase 2 expansion from initial 5)
+const BOARDS_FAST = BOARDS
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const INPUT_DIR = resolve(__dirname, 'inputs')
