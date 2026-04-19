@@ -5,6 +5,16 @@
 
 ---
 
+## 2026-04-19 v0.8.1-dev.14 [dev]
+- Exploit Coach mockup 11 個 bug 修復
+- Bug 3：S2 手牌設定 sticky 下一步按鈕
+- Bug 4+10：選牌器全局排除已用牌（hero + board 共用 usedCards）
+- Bug 5+6+7+8：座位顯示籌碼/盲注（SB 0.5, BB 1）、動作扣減、中央底池累計
+- Bug 11+12：翻後街未選完公牌不開始動作佇列，選完自動啟動
+- Bug 13：接入 supabase-js client 自動 refresh token + 401 retry
+- ExploitCoachTab 改 100dvh 避免 iOS Safari chrome 擠掉底部
+- .bot-nav 全部改 position:sticky bottom:0
+
 ## 2026-04-19 v0.8.1-dev.13 [dev]
 - 教練 Tab 改為 Exploit Coach v3 mockup（iframe 嵌入）
 - 原 CoachScreen（free-form 聊天）下線，import 移除避免 TS6133
