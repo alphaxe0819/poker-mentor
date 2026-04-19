@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-04-19 v0.8.1-dev.9 [dev]
+- Pilot 解算驗證通過（3 flops × UTG vs HJ SRP，57.5 分鐘）
+- 修 IP/OOP swap bug（opener 不一定是 IP，依 post-flop 位置判斷）
+- 3 筆 6-max solver tree 入 DB，retrieval 三層 tier 全端到端通
+- 新 `CoachChatDialog` 組件 + ExploitLabPage 加「問剝削教練」入口
+- `test-retrieval.mjs` 本地驗證 Tier A/B/C + 節點導航
+
 ## 2026-04-19 v0.8.1-dev.8 [dev]
 - 建 6-max 100bb solver pipeline 基礎：25 場景（15 SRP + 10 3BP）+ 325 input 檔
 - `cash_6max_ranges.mjs` 從 `gtoData_cash_6max_100bb.ts` 抽取 TexasSolver-compat range 字串；修 SRP IP/OOP 依 post-flop 位置判斷（原本誤把 opener 當 IP）
