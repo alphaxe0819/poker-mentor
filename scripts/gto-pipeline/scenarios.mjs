@@ -154,82 +154,81 @@ export const HU_SCENARIOS = [
 // ════════════════════════════════════════════════════════════
 // Phase 2: 6-max Cash — 100BB
 //
-// Position order (post-flop): SB → BB → UTG → MP → CO → BTN
-// IP = later position, OOP = earlier position
+// Position order (post-flop): SB → BB → UTG → HJ → CO → BTN
+// IP = later position postflop, OOP = earlier position postflop
+// (Note BB is OOP vs UTG/HJ/CO/BTN, but IP vs SB)
 //
-// SRP matchups: opener vs BB (most common) + BTN vs SB
-// 3BP matchups: 3bettor vs caller
+// Ranges pulled from cash_6max_ranges.mjs (mirrored from
+// src/lib/gto/gtoData_cash_6max_100bb.ts).
 // ════════════════════════════════════════════════════════════
 
-// Ranges TBD — will be populated from purchased data or GTO Wizard
+import { srpRangePair, threeBPRangePair } from './cash_6max_ranges.mjs'
+
+// 9-max scenarios still use placeholder ranges (out of scope for 6-max MVP)
 const RANGE_PLACEHOLDER = { ip: '', oop: '' }
 
+// Post-flop order: who acts first postflop (lower = earlier)
+const POSTFLOP_ORDER = { SB: 0, BB: 1, UTG: 2, HJ: 3, CO: 4, BTN: 5 }
+
+function buildSrpScenario(opener, caller) {
+  const { ip_range, oop_range } = srpRangePair(opener, caller)
+  const ip = POSTFLOP_ORDER[opener] > POSTFLOP_ORDER[caller] ? opener : caller
+  const oop = ip === opener ? caller : opener
+  // Pot sizing: normal opens 2.5; SB opens 3. BB/SB blinds contribute to dead money when they fold.
+  // - Non-blind opener vs BB: pot = 2.5 + 2.5 + 0.5 (SB dead) = 5.5, eff = 97.5
+  // - Non-blind opener vs SB (BB folds): pot = 2.5 + 2.5 + 1 (BB dead) = 6, eff = 97.5
+  // - SB vs BB: SB opens 3, BB calls 3: pot = 6, eff = 97
+  let pot_bb, effective_stack_bb
+  if (opener === 'SB' && caller === 'BB') { pot_bb = 6; effective_stack_bb = 97 }
+  else if (caller === 'SB') { pot_bb = 6; effective_stack_bb = 97.5 }
+  else if (caller === 'BB') { pot_bb = 5.5; effective_stack_bb = 97.5 }
+  else { pot_bb = 6; effective_stack_bb = 97.5 } // cold caller scenarios: both blinds dead
+  return {
+    format: '6max', matchup: { ip, oop },
+    slug: `6max_100bb_srp_${opener.toLowerCase()}_open_${caller.toLowerCase()}_call`,
+    label: `6max 100BB SRP ${opener} open / ${caller} call`,
+    depth_bb: 100, pot_type: 'srp', pot_bb, effective_stack_bb,
+    description: `${opener} open → ${caller} call → flop. Post-flop IP=${ip} OOP=${oop}`,
+    ranges: { ip: ip_range, oop: oop_range },
+  }
+}
+
+function build3bpScenario(opener, threebettor) {
+  const rp = threeBPRangePair(opener, threebettor)
+  // Pot: 3bettor sizes vary by position — BB 3bs to 11, SB 3bs to 10, IP 3bs to 8.5
+  let pot_bb, effective_stack_bb
+  if (threebettor === 'BB') { pot_bb = 22; effective_stack_bb = 89 }
+  else if (threebettor === 'SB') { pot_bb = 21; effective_stack_bb = 89.5 }
+  else { pot_bb = 18; effective_stack_bb = 91.5 } // IP 3bet (CO, BTN, etc)
+  return {
+    format: '6max', matchup: { ip: rp.ip_pos, oop: rp.oop_pos },
+    slug: `6max_100bb_3bp_${opener.toLowerCase()}_open_${threebettor.toLowerCase()}_3b`,
+    label: `6max 100BB 3BP ${opener} open / ${threebettor} 3bet / ${opener} call`,
+    depth_bb: 100, pot_type: '3bp', pot_bb, effective_stack_bb,
+    description: `${opener} open → ${threebettor} 3b → ${opener} call → flop. Post-flop IP=${rp.ip_pos} OOP=${rp.oop_pos}`,
+    ranges: { ip: rp.ip_range, oop: rp.oop_range },
+  }
+}
+
+// 15 SRP matchups (all combinations where we have ranges)
+const SRP_MATCHUPS = [
+  ['UTG','HJ'], ['UTG','CO'], ['UTG','BTN'], ['UTG','SB'], ['UTG','BB'],
+  ['HJ','CO'],  ['HJ','BTN'], ['HJ','SB'],  ['HJ','BB'],
+  ['CO','BTN'], ['CO','SB'],  ['CO','BB'],
+  ['BTN','SB'], ['BTN','BB'],
+  ['SB','BB'],
+]
+
+// 10 common 3BP matchups covering BB/SB/IP 3bettor types
+const THREEBP_MATCHUPS = [
+  ['UTG','BB'], ['HJ','BB'], ['CO','BB'], ['BTN','BB'], ['SB','BB'],  // BB 3bets 5 positions
+  ['CO','SB'], ['BTN','SB'],                                          // SB 3bets 2 positions
+  ['UTG','HJ'], ['HJ','CO'], ['CO','BTN'],                            // IP 3bets 3 positions
+]
+
 export const SIXMAX_SCENARIOS = [
-  // ── SRP 100BB ──
-  {
-    format: '6max', matchup: { ip: 'BTN', oop: 'BB' },
-    slug: '6max_100bb_srp_btn_vs_bb', label: '6max 100BB SRP BTN vs BB', depth_bb: 100,
-    pot_type: 'srp', pot_bb: 5.5, effective_stack_bb: 97,
-    description: 'BTN open 2.5 → BB call → pot 5.5, eff 97 (0.5 SB dead)',
-    ranges: RANGE_PLACEHOLDER,
-  },
-  {
-    format: '6max', matchup: { ip: 'CO', oop: 'BB' },
-    slug: '6max_100bb_srp_co_vs_bb', label: '6max 100BB SRP CO vs BB', depth_bb: 100,
-    pot_type: 'srp', pot_bb: 5.5, effective_stack_bb: 97,
-    description: 'CO open 2.5 → BB call → pot 5.5, eff 97',
-    ranges: RANGE_PLACEHOLDER,
-  },
-  {
-    format: '6max', matchup: { ip: 'HJ', oop: 'BB' },
-    slug: '6max_100bb_srp_hj_vs_bb', label: '6max 100BB SRP HJ vs BB', depth_bb: 100,
-    pot_type: 'srp', pot_bb: 5.5, effective_stack_bb: 97,
-    description: 'HJ open 2.5 → BB call → pot 5.5, eff 97',
-    ranges: RANGE_PLACEHOLDER,
-  },
-  {
-    format: '6max', matchup: { ip: 'UTG', oop: 'BB' },
-    slug: '6max_100bb_srp_utg_vs_bb', label: '6max 100BB SRP UTG vs BB', depth_bb: 100,
-    pot_type: 'srp', pot_bb: 5.5, effective_stack_bb: 97,
-    description: 'UTG open 2.5 → BB call → pot 5.5, eff 97',
-    ranges: RANGE_PLACEHOLDER,
-  },
-  {
-    format: '6max', matchup: { ip: 'BTN', oop: 'SB' },
-    slug: '6max_100bb_srp_btn_vs_sb', label: '6max 100BB SRP BTN vs SB', depth_bb: 100,
-    pot_type: 'srp', pot_bb: 5, effective_stack_bb: 97.5,
-    description: 'BTN open 2.5 → SB call → pot 5, eff 97.5',
-    ranges: RANGE_PLACEHOLDER,
-  },
-  {
-    format: '6max', matchup: { ip: 'BB', oop: 'SB' },
-    slug: '6max_100bb_srp_sb_vs_bb', label: '6max 100BB SRP SB vs BB', depth_bb: 100,
-    pot_type: 'srp', pot_bb: 6, effective_stack_bb: 97,
-    description: 'SB open 3 → BB call → pot 6, eff 97',
-    ranges: RANGE_PLACEHOLDER,
-  },
-  // ── 3BP 100BB ──
-  {
-    format: '6max', matchup: { ip: 'BTN', oop: 'BB' },
-    slug: '6max_100bb_3bp_btn_vs_bb', label: '6max 100BB 3BP BTN vs BB', depth_bb: 100,
-    pot_type: '3bp', pot_bb: 22, effective_stack_bb: 89,
-    description: 'BTN open 2.5 → BB 3b to 11 → BTN call → pot 22, eff 89',
-    ranges: RANGE_PLACEHOLDER,
-  },
-  {
-    format: '6max', matchup: { ip: 'BTN', oop: 'CO' },
-    slug: '6max_100bb_3bp_co_vs_btn', label: '6max 100BB 3BP CO vs BTN 3b', depth_bb: 100,
-    pot_type: '3bp', pot_bb: 24, effective_stack_bb: 88,
-    description: 'CO open 2.5 → BTN 3b to 8.5 → CO call → pot 24, eff 88 (CO OOP)',
-    ranges: RANGE_PLACEHOLDER,
-  },
-  {
-    format: '6max', matchup: { ip: 'CO', oop: 'BB' },
-    slug: '6max_100bb_3bp_co_vs_bb', label: '6max 100BB 3BP CO vs BB 3b', depth_bb: 100,
-    pot_type: '3bp', pot_bb: 22, effective_stack_bb: 89,
-    description: 'CO open 2.5 → BB 3b to 11 → CO call → pot 22, eff 89',
-    ranges: RANGE_PLACEHOLDER,
-  },
+  ...SRP_MATCHUPS.map(([o, c]) => buildSrpScenario(o, c)),
+  ...THREEBP_MATCHUPS.map(([o, t]) => build3bpScenario(o, t)),
 ]
 
 // ════════════════════════════════════════════════════════════

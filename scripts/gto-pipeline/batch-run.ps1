@@ -21,7 +21,10 @@
 param(
     [switch]$KeepJson,
     [switch]$StopOnError,
-    [switch]$SkipExisting
+    [switch]$SkipExisting,
+    [switch]$NoConvert,                # skip TS conversion (just dump JSONs for DB ingestion)
+    [int]$Limit = 0,                   # 0 = no limit; N = only first N inputs (pilot mode)
+    [string]$Filter = $null            # regex to match input filename (e.g. "^6max_100bb_srp_utg")
 )
 
 $ErrorActionPreference = "Stop"
@@ -74,14 +77,27 @@ if (-not (Test-Path $SolverOutDir)) {
 
 # Get all input files
 $inputFiles = Get-ChildItem -Path $InputDir -Filter "*.txt" | Sort-Object Name
+
+# Apply filename regex filter
+if ($Filter) {
+    $inputFiles = $inputFiles | Where-Object { $_.Name -match $Filter }
+    Write-Host "Filter '$Filter' matched $($inputFiles.Count) file(s)" -ForegroundColor Yellow
+}
+
+# Apply N-limit (pilot mode)
+if ($Limit -gt 0) {
+    $inputFiles = $inputFiles | Select-Object -First $Limit
+    Write-Host "Limit=$Limit → running first $($inputFiles.Count) file(s) only (pilot mode)" -ForegroundColor Yellow
+}
+
 $totalCount = $inputFiles.Count
 
 if ($totalCount -eq 0) {
-    Write-Host "ERROR: no input files found in $InputDir" -ForegroundColor Red
+    Write-Host "ERROR: no input files match filter/limit" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "Found $totalCount input file(s)" -ForegroundColor Green
+Write-Host "Queued $totalCount input file(s)" -ForegroundColor Green
 Write-Host ""
 
 # ---- Run loop ----
@@ -149,6 +165,14 @@ for ($i = 0; $i -lt $totalCount; $i++) {
     # Move JSON to project-level output
     $finalJson = Join-Path $OutputDir "$baseName.json"
     Move-Item $expectedJson $finalJson -Force
+
+    # Skip conversion if -NoConvert (6-max pipeline writes to DB, not per-flop TS files)
+    if ($NoConvert) {
+        Write-Host "  Skipped TS conversion (-NoConvert). JSON kept at $finalJson" -ForegroundColor DarkGray
+        $succeeded += $baseName
+        Write-Host ""
+        continue
+    }
 
     # Convert
     $convertStart = Get-Date

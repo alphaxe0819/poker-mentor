@@ -21,3 +21,8 @@
 - [[auto-open-html]] — 更新 docs/*.html 後直接用瀏覽器打開
 - [[deploy-scope]] — 產品改動需測試機驗證；開發流程改動只需 push 同步
 - [[auto-memory-path]] — auto-memory 和 git repo memory/ 可能是同一目錄，禁止在 auto-memory 路徑下 rm -rf
+- [[claude-execute-self]] — 能自己跑的命令（PowerShell/bash/node/git）直接執行，不要列給使用者貼
+
+## Scraping
+
+- [[project_pokerdinosaur_scraping]] — pokerdinosaur.com 備份進度、正確技術方案、待爬 project 清單（未經允許不得更改方案）

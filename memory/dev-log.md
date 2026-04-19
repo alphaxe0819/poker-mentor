@@ -5,6 +5,16 @@
 
 ---
 
+## 2026-04-19 v0.8.1-dev.8 [dev]
+- 建 6-max 100bb solver pipeline 基礎：25 場景（15 SRP + 10 3BP）+ 325 input 檔
+- `cash_6max_ranges.mjs` 從 `gtoData_cash_6max_100bb.ts` 抽取 TexasSolver-compat range 字串；修 SRP IP/OOP 依 post-flop 位置判斷（原本誤把 opener 當 IP）
+- 新 `convert-to-db.mjs` + `ingest-all-to-db.mjs`：solver JSON 138MB → 壓縮樹 36KB → 入 `solver_postflop_6max`
+- `batch-run.ps1` 加 `-Limit` / `-Filter` / `-NoConvert`
+- Villain profiles 4→10（加 traits + postflopLeak）
+- 新 Edge Function `exploit-coach`：RAG 流程（retrieve → build prompt → Claude Haiku → log to coach_queries）
+- 新 `postflopRetrieval.ts` + `coachClient.ts`：client 側檢索 + call Edge Function
+- Auto-memory feedback：能自己跑就自己跑（feedback_execute_self.md / claude-execute-self.md）
+
 ## 2026-04-17 v0.8.1-dev.7 [dev]
 - 重構 GTO pipeline 架構：scenarios.mjs 支援 HU / 6-max Cash / 9-max Tournament 三種格式
 - 校正 HU ranges（RYE 資料比對）：40BB SRP IP 79→148, OOP 63→119；3BP/4BP 同步修正
