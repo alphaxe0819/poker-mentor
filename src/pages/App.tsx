@@ -23,7 +23,7 @@ const StatsTab       = lazy(() => import('../tabs/StatsTab'))
 const AnalysisTab    = lazy(() => import('../tabs/AnalysisTab'))
 const ProfileTab     = lazy(() => import('../tabs/ProfileTab'))
 const CourseTab      = lazy(() => import('../tabs/CourseTab'))
-const CoachScreen    = lazy(() => import('../components/CoachScreen'))
+const ExploitCoachTab = lazy(() => import('../tabs/ExploitCoachTab'))
 const UpgradePage    = lazy(() => import('./UpgradePage'))
 const SharePage      = lazy(() => import('./SharePage'))
 const AdminDashboard = lazy(() => import('./AdminDashboard'))
@@ -595,17 +595,7 @@ export default function App() {
         {user && (
           <div style={{ display: tab === 'coach' ? 'block' : 'none' }}>
             <Suspense fallback={<LazyFallback />}>
-              <CoachScreen
-                userId={user.id}
-                points={points}
-                coachOnboardingDone={profile?.coach_onboarding_done ?? false}
-                onPointsChanged={refreshPoints}
-                onNavigateToMissions={navigateToMissions}
-                onOnboardingDone={async () => {
-                  const p = await getProfile()
-                  setProfile(p)
-                }}
-              />
+              <ExploitCoachTab />
             </Suspense>
           </div>
         )}

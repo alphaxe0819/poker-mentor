@@ -5,6 +5,11 @@
 
 ---
 
+## 2026-04-19 v0.8.1-dev.13 [dev]
+- 教練 Tab 改為 Exploit Coach v3 mockup（iframe 嵌入）
+- 原 CoachScreen（free-form 聊天）下線，import 移除避免 TS6133
+- BottomNav 保留，用戶點教練 tab → 看到完整 12 畫面剝削教練流程
+
 ## 2026-04-19 v0.8.1-dev.12 [dev]
 - mockup v3 接真 Claude：`startAI` / `aiQ` / `aiSend` 改呼叫 `exploit-coach` Edge Function
 - 加 `callCoach` / `buildCoachContext` / `getSupabaseSession` 輔助
