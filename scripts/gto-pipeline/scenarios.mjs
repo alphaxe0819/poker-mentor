@@ -57,6 +57,18 @@ export const BET_PROFILES = {
     turn:  { bet: [50, 100],    raise: [60],  allin: true },
     river: { bet: [100],        raise: [100], allin: true },
   },
+  // Fast mode (--fast): single bet size per street, minimal raise tree.
+  // Used for breadth-first solver passes — trades precision for coverage.
+  srp_fast: {
+    flop:  { bet: [50],  raise: [60], allin: true },
+    turn:  { bet: [75],  raise: [60], allin: true },
+    river: { bet: [75],  raise: [60], allin: true },
+  },
+  '3bp_fast': {
+    flop:  { bet: [50],  raise: [60], allin: true },
+    turn:  { bet: [75],  raise: [60], allin: true },
+    river: { bet: [100], raise: [60], allin: true },
+  },
 }
 
 /**

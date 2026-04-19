@@ -115,14 +115,23 @@ for ($i = 0; $i -lt $totalCount; $i++) {
     Write-Host "$progress $baseName" -ForegroundColor Cyan
     Write-Host "===========================================" -ForegroundColor Cyan
 
-    # Skip if TS file already exists (when -SkipExisting)
+    # Skip if output already exists (JSON for -NoConvert mode, or TS file for normal mode)
     if ($SkipExisting) {
-        $ProjectRoot = (Resolve-Path (Join-Path $ScriptDir "..\..")).Path
-        $tsFile = Join-Path $ProjectRoot "src\lib\gto\gtoData_$baseName.ts"
-        if (Test-Path $tsFile) {
-            Write-Host "  SKIP: TS file already exists" -ForegroundColor Yellow
-            $succeeded += $baseName
-            continue
+        if ($NoConvert) {
+            $jsonFile = Join-Path $OutputDir "$baseName.json"
+            if (Test-Path $jsonFile) {
+                Write-Host "  SKIP: JSON already exists" -ForegroundColor Yellow
+                $succeeded += $baseName
+                continue
+            }
+        } else {
+            $ProjectRoot = (Resolve-Path (Join-Path $ScriptDir "..\..")).Path
+            $tsFile = Join-Path $ProjectRoot "src\lib\gto\gtoData_$baseName.ts"
+            if (Test-Path $tsFile) {
+                Write-Host "  SKIP: TS file already exists" -ForegroundColor Yellow
+                $succeeded += $baseName
+                continue
+            }
         }
     }
 

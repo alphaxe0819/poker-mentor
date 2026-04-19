@@ -28,6 +28,9 @@ import { BOARDS } from './boards.mjs'
 import { BOARDS_EXTENDED } from './boards-extended.mjs'
 import { ALL_FORMATS, BET_PROFILES, autoBetProfile } from './scenarios.mjs'
 
+// Fast-mode board subset (5 diverse textures for breadth-first solving)
+const BOARDS_FAST = BOARDS.filter(b => ['As7d2c','Kc8h3s','JsTc9h','7s7d2h','Tc9c6d'].includes(b.slug))
+
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const INPUT_DIR = resolve(__dirname, 'inputs')
 mkdirSync(INPUT_DIR, { recursive: true })
@@ -43,6 +46,7 @@ const boardsArg = args.includes('--boards')
   : 'original'
 const cleanFirst = args.includes('--clean')
 const dryRun = args.includes('--dry-run')
+const fastMode = args.includes('--fast')
 
 // ── Validate format ──
 let scenarios = ALL_FORMATS[formatKey]
@@ -68,7 +72,9 @@ if (skipped > 0) {
   console.log(`⚠  Skipping ${skipped} scenario(s) with empty ranges (placeholder)\n`)
 }
 
-const boards = boardsArg === 'extended' ? BOARDS_EXTENDED : BOARDS
+const boards = fastMode ? BOARDS_FAST
+  : boardsArg === 'extended' ? BOARDS_EXTENDED
+  : BOARDS
 
 // ── Clean existing inputs if requested ──
 if (cleanFirst && !dryRun) {
@@ -107,8 +113,13 @@ function buildBetLines(profile, pos) {
 }
 
 function buildInput(board, scenario) {
-  const profileKey = scenario.bet_profile
+  let profileKey = scenario.bet_profile
     || autoBetProfile(scenario.pot_type, scenario.effective_stack_bb, scenario.pot_bb)
+  // Fast mode overrides: use single-size bet trees for speed
+  if (fastMode) {
+    if (scenario.pot_type === '3bp') profileKey = '3bp_fast'
+    else if (scenario.pot_type === 'srp') profileKey = 'srp_fast'
+  }
   const profile = BET_PROFILES[profileKey]
   if (!profile) {
     throw new Error(`Unknown bet profile: ${profileKey} (scenario: ${scenario.slug})`)
@@ -125,12 +136,12 @@ function buildInput(board, scenario) {
   lines.push(...buildBetLines(profile, 'oop'))
   lines.push(...buildBetLines(profile, 'ip'))
 
-  // Solver settings
+  // Solver settings (fast mode: 1.0% accuracy / 100 iter — half the compute)
   lines.push('set_allin_threshold 0.67')
   lines.push('build_tree')
   lines.push('set_thread_num 8')
-  lines.push('set_accuracy 0.5')
-  lines.push('set_max_iteration 200')
+  lines.push(fastMode ? 'set_accuracy 1.0' : 'set_accuracy 0.5')
+  lines.push(fastMode ? 'set_max_iteration 100' : 'set_max_iteration 200')
   lines.push('set_print_interval 50')
   lines.push('set_use_isomorphism 1')
   lines.push('start_solve')
