@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-04-19 v0.8.1-dev.12 [dev]
+- mockup v3 接真 Claude：`startAI` / `aiQ` / `aiSend` 改呼叫 `exploit-coach` Edge Function
+- 加 `callCoach` / `buildCoachContext` / `getSupabaseSession` 輔助
+- Context 包：heroPos / heroCards / flop / villain_type / scenario_slug（從 tableSize=6 + preflop action 推導）
+- 保留整個 mockup 視覺設計不變
+
 ## 2026-04-19 v0.8.1-dev.11 [dev]
 - Phase 2 解算擴充：5→13 flops 全覆蓋（加 9d5c2h/KsQd4h/Td8h4c/Js9c3h/9h8d7c/Qd7s2c/Jc7d2h/KcKd5h）
 - 全批次 306.9 分鐘（5.1 小時）— 2 個 BB 防守 flops segfault，retry 成功
