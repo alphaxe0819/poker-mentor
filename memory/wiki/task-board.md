@@ -175,19 +175,7 @@ updated: 2026-04-20
   - 內容：解析 pd table.name（`"BB VS MP"` / `"10bb SB Push"`）→ scenario / depth / position；加 MTT catalog
   - 完成條件：parser 能消化現有 10 個 pd project 的 table.name；scenarios.mjs 能 enumerate MTT scenarios
 
-- [~] **T-020** | Pipeline | **Solver P1 HU 40bb SRP 補齊到 21 flops（peer parity 25bb）**
-  - branch: `wip/T020-hu40bb-srp-fill`
-  - 機器：另一台電腦
-  - 執行者 session 起：2026-04-20
-  - **scope 修正（2026-04-20 大腦）**：原寫「25 flops」是 6-max 早期規劃殘留數字，
-    實際應對齊 HU 25bb SRP 的 21 unique flops（BOARDS 13 + 8 個 Ace-low extras）
-  - 現況：13 flops（= BOARDS 全集）→ 補 +8 個 extras
-  - 8 extras：5s5c5d / 6d5h4c / 8s5h2c / 8s7s5d / 9s7s3s / Ah2d2c / Ah5c2d / Ah8h3c
-  - 實作：boards.mjs 加 `export const BOARDS_HU`（不動 BOARDS 主常數，避免影響 6-max scope）
-  - 預估：2 hr 背景（8 flops × ~15 min）
-  - 產出：`src/lib/gto/gtoData_hu_40bb_srp_*.ts` +8 檔
-  - 完成條件：21 unique flops 全 solve 完，gtoData_index 接上，tsc EXIT=0
-  - **連帶**：T-021（HU 40bb 3bp）/ T-023（HU 深度擴充）後續也應對齊 21 flops
+<!-- T-020 → In Review 2026-04-20，見下方 In Review 區 -->
 
 - [~] **T-042** | Pipeline | **部署 20260416-gto-postflop.sql 到測試 Supabase**
   - branch: 無（純 Dashboard 操作；最後標 task-board 完成的 commit 由大腦做）
@@ -236,7 +224,21 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-*（空）*
+- [?] **T-020** | Pipeline | **HU 40bb SRP 補齊到 21 flops + 命名統一**
+  - branch: `wip/T020-hu40bb-srp-fill`（推 origin 完成）
+  - 最後 commit: `9545e7c`
+  - 執行者備註：
+    - **Stage 1 (6119d74)**：boards.mjs 新 `BOARDS_HU_EXTRAS` + `BOARDS_HU`（21 = 13 base + 8 extras）；generate-input-v2.mjs 加 `--boards hu`
+    - **Stage 2 (9545e7c)**：solver 產出 8 個 extras .ts + 命名統一
+      - 8 新 extras：`gtoData_hu_40bb_srp_{5s5c5d, 6d5h4c, 8s5h2c, 8s7s5d, 9s7s3s, Ah2d2c, Ah5c2d, Ah8h3c}.ts`
+      - 10 base 從 `_flop_<slug>` rename 為 `_<slug>`（去 FLOP_ 中綴統一命名）
+      - 3 base（7s7d2h / 9d5c2h / 9h8d7c）為 solver 新跑產出覆蓋
+      - `gtoData_hu_postflop_index.ts`: HU_40BB_FLOP_SRP_DB map 從 13 → 21 entries
+    - **solver 中止原因**：SkipExisting 對舊 `_flop_` 命名誤判為「未產」，會意外重跑所有 base。已 kill；省 3 小時 churn
+    - **HU 25bb / 13bb SRP**：仍保留 `_flop_` 舊命名，由 T-021 / T-023 統一處理
+  - tsc：✅ EXIT=0
+  - 變動：25 files（+1718 / -348）
+  - 等大腦 merge
 
 <!-- T-050 已 merge 到 dev，移至 Done -->
 
