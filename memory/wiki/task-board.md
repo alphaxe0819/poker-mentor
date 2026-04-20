@@ -40,11 +40,77 @@ updated: 2026-04-20
 
 <!-- T-011 → Done 2026-04-21 -->
 
-- [ ] **T-012** | Pipeline | **C4 MTT DB migration**
-  - 建議 branch：`wip/T012-mtt-db-migration`
-  - 範圍：`solver_postflop_mtt` table schema（仿 `solver_postflop_6max`）
-  - 依賴：T-011
-  - 產出：migration SQL + 測試 Supabase 貼碼
+- [ ] **T-012** | Pipeline | **C4 MTT DB migration（solver_postflop_mtt table）** `(派工 2026-04-21)`
+  - **建議 branch**：`wip/T012-mtt-db-migration`（從 origin/dev 切出）
+  - **前置**：T-011 已完成 ✅，`solver_postflop_6max` 暫存 1 筆 `mtt_*` row 可當 migration 測資
+  - **產出檔**：
+    1. 新檔：`supabase/migrations/20260421-solver-postflop-mtt.sql`（schema + data 搬移）
+    2. 改 `scripts/gto-pipeline/convert-to-db.mjs`：MTT slug 改寫到 `solver_postflop_mtt`
+    3. 改 `scripts/gto-pipeline/test-retrieval.mjs`：MTT tier A 測試改查新 table
+  - **禁碰**：其他 pipeline script / src/ / supabase/functions/
+
+  **migration SQL 結構**（仿 `solver_postflop_6max`）：
+  ```sql
+  -- 1. 建 solver_postflop_mtt（schema 同 6max）
+  CREATE TABLE IF NOT EXISTS public.solver_postflop_mtt (
+    id BIGSERIAL PRIMARY KEY,
+    scenario_slug TEXT NOT NULL,
+    flop TEXT NOT NULL,
+    ip_pos TEXT,
+    oop_pos TEXT,
+    pot_bb NUMERIC,
+    effective_stack_bb NUMERIC,
+    tree JSONB NOT NULL,
+    solver_config JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (scenario_slug, flop)
+  );
+
+  -- 2. 搬 mtt_ 開頭的 row 從 6max 到 mtt
+  INSERT INTO public.solver_postflop_mtt
+    (scenario_slug, flop, ip_pos, oop_pos, pot_bb, effective_stack_bb, tree, solver_config, created_at)
+  SELECT scenario_slug, flop, ip_pos, oop_pos, pot_bb, effective_stack_bb, tree, solver_config, created_at
+  FROM public.solver_postflop_6max
+  WHERE scenario_slug LIKE 'mtt_%'
+  ON CONFLICT (scenario_slug, flop) DO NOTHING;
+
+  -- 3. 從 6max 刪掉已搬走的 row
+  DELETE FROM public.solver_postflop_6max WHERE scenario_slug LIKE 'mtt_%';
+
+  -- 4. RLS policy（仿 6max）
+  ALTER TABLE public.solver_postflop_mtt ENABLE ROW LEVEL SECURITY;
+  CREATE POLICY "authenticated users can read solver_postflop_mtt"
+    ON public.solver_postflop_mtt FOR SELECT TO authenticated USING (true);
+
+  -- 5. Index for retrieval speed
+  CREATE INDEX IF NOT EXISTS idx_solver_postflop_mtt_scenario_flop
+    ON public.solver_postflop_mtt (scenario_slug, flop);
+
+  -- 驗證查詢（貼 migration 後順便跑）
+  SELECT scenario_slug, flop FROM public.solver_postflop_mtt;
+  -- 預期：1 row (mtt_40bb_srp_btn_open_bb_call / As7d2c) 來自 T-011
+  ```
+
+  **convert-to-db.mjs 改動**：根據 slug prefix 決定 target table
+  ```js
+  const targetTable = scenarioSlug.startsWith('mtt_') ? 'solver_postflop_mtt' : 'solver_postflop_6max'
+  // 沿用同樣 upsert 邏輯
+  ```
+
+  **test-retrieval.mjs 改動**：MTT tier A 的 `.from('solver_postflop_6max')` 改 `.from('solver_postflop_mtt')`
+
+  **完成條件（執行者）**：
+  1. migration SQL 語法正確（本地 sql 檔格式 ok，文法沒明顯錯）
+  2. convert-to-db.mjs 能識別 slug prefix 分流（dry run：執行者手動 stub 測或純 code review）
+  3. test-retrieval.mjs 的 MTT tier A 測試改 table 名
+  4. commit（**不動** `src/version.ts` / `memory/dev-log.md`）
+  5. push wip + task-board 移 In Review
+
+  **大腦後續**：
+  - review + merge wip
+  - 產出 migration SQL 貼碼指令給用戶貼到測試 Supabase (`btiqmckyjyswzrarmfxa`)
+  - 用戶貼完回報 → 大腦跑 `test-retrieval.mjs` 驗 MTT tier A 從新 table 能拿到 row
+  - 全通過 → 標 Done
 
 - [ ] **T-013** | Pipeline | **Scraping 成果盤點 + 整理**
   - 建議 branch：`wip/T013-scraping-audit`
@@ -62,6 +128,43 @@ updated: 2026-04-20
 - [ ] **T-023** | Pipeline | **Solver P4 6-max 深度擴充（40bb/60bb SRP）**
   - 建議 branch：`wip/T023-6max-shallow`
   - 待確認具體範圍
+
+- [ ] **T-062** | Pipeline | **wip1 worktree 隔離強化（防 T-011 踩坑重演）** `(派工 2026-04-21)`
+  - **建議 branch**：`wip/T062-wip1-isolation`（從 origin/dev 切出）
+  - **背景**：T-011 執行者 feat commit 誤落在 `wip/T056-skipexisting-dual-naming`，原因：T-056 執行者完成後 wip1 HEAD 留在 wip/T056（沒切 detached），T-011 執行者接手時 `git checkout -b wip/T011-c3-e2e` **沒指定 base**，從當前 HEAD (wip/T056) 切出 → commits 疊到 wip/T056。花 solver 16:28 跑完才發現，cherry-pick 救回。
+  - **範圍**：`scripts/session-start-reminder.sh` 的 `*-wip*` 分支
+  - **禁碰**：其他 script / src / supabase
+
+  **實作（2 處）**：
+
+  **1. `-wip*` 模式偵測當前 HEAD 非 detached → 警告**
+  在 `if [[ "$cwd" == *-wip* ]]` 區塊內加：
+  ```bash
+  CURRENT_BRANCH=$(git branch --show-current 2>/dev/null)
+  if [[ -n "$CURRENT_BRANCH" ]]; then
+    echo ""
+    echo "⚠️ 當前 HEAD 在 branch: $CURRENT_BRANCH（不是 detached）"
+    echo "   上一個 task 可能沒切回 detached。若要開新 wip，請先："
+    echo "     git checkout --detach origin/dev"
+    echo "   否則 git checkout -b wip/T0xx 會從 $CURRENT_BRANCH 切出，"
+    echo "   commits 會疊到上個 wip branch（T-011 踩坑實例）"
+    echo ""
+    echo "   繼續當前 task 則忽略此警告"
+  fi
+  ```
+
+  **2. 指令範例改明確指定 base**
+  現有：`git checkout -b wip/T0xx-短描述 origin/dev`
+  這個指令本來就對，但某些執行者會縮短成 `git checkout -b wip/T0xx-短描述`（沒 base），就會從當前 HEAD 切。task-board 的執行者 SOP 段 / reminder 輸出要**反覆強調**必須帶 `origin/dev`。
+
+  **完成條件**：
+  1. reminder script 改動
+  2. 手動驗證：cd 到 `-wip1`（當前在 wip/T056 local branch 還在），跑 `bash scripts/session-start-reminder.sh`，應看到警告
+  3. commit（**不動** `src/version.ts` / `memory/dev-log.md`）
+  4. push wip + task-board 移 In Review
+
+  **後續延伸**（不在 T-062 scope）：
+  - 寫進 `memory/wiki/two-machine-workflow.md`「執行者紀律」段：開工前 `git worktree list` + 確認 HEAD detached
 
 <!-- T-059 → Done 2026-04-20（deploy guide 產出） -->
 <!-- T-060 → Done 2026-04-20（用戶實機驗收 3 條全 pass） -->
