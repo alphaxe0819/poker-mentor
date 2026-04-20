@@ -148,25 +148,7 @@ updated: 2026-04-20
   - 建議 branch：無
   - 動作：`ls .env`；無則 `powershell scripts/setup-env.ps1`
 
-- [ ] **T-051** | Product | **exploit-coach「登入已過期」401 診斷 + 修 fuzzy match** 🔴 實機確認 bug 仍在
-  - 建議 branch：`wip/T051-exploit-coach-401-diag`
-  - 背景：2026-04-20 實機（iPhone Safari, WiFi + 4G 都壞）在 AI 分析步驟顯示「⚠ 登入已過期，請重新整理頁面（或回主 App 登入）後再試。」= `public/exploit-coach-mockup-v3.html:1574`，代表走完「callCoach 第一次 fetch → 401 → askParentRefresh → retry fetch → 仍 401」全流程
-  - 假設（T-050 修的 Bug 2「Load failed」網路層修好了，現在卡 token refresh 鏈路）：
-    - **RC1（高機率）**：Vercel poker-goal-dev 的 `VITE_SUPABASE_URL` 設到正式 project，parent token issuer ≠ iframe 打的 Edge Function project → JWT 驗證失敗 401（這條由 T-052 驗證）
-    - **RC2（中機率）**：`readTokenFromStorage` fuzzy match (`indexOf('sb-')===0 && indexOf('-auth-token')>0`) 在 localStorage 有多個 `sb-*-auth-token` 時拿錯 key
-    - **RC3（低）**：refresh token 真過期 → `askParentRefresh` 回 null → retry 用 null → 401
-  - 範圍：
-    - **A. 修 fuzzy match → exact**：`public/exploit-coach-mockup-v3.html` line 1459-1464 的 `readTokenFromStorage` 改用 `localStorage.getItem('sb-btiqmckyjyswzrarmfxa-auth-token')` 直接取（storageKey 在 line 1454 已 hardcode，exact match 才對）
-    - **B. 加診斷 log**：`callCoach` 第一次 401 和 retry 401 的 catch point 加 `console.error('[exploit-coach-401]', {status, tokenHead: token?.slice(0,20), tokenTail: token?.slice(-8), supabaseUrl: SUPABASE_URL, hasNewTok: !!newTok})`，方便 Safari 遠端 Inspector 看
-    - **C. Parent 端 log**：`src/tabs/ExploitCoachTab.tsx` 的 `onMessage` handler 在 refresh 前後 `console.log('[parent-refresh]', {origin: e.origin, gotToken: !!token})`
-  - 完成條件：
-    - tsc EXIT=0
-    - 實機重測（iPhone Safari）→ 若 RC2 成立，fuzzy match 修好後 401 應消失；若 RC1 成立，仍 401 但 log 能明確指出 issuer mismatch，等 T-052 結果
-    - log 在 Safari 遠端 Inspector Console 能看到，且能判斷根因
-  - 產出：
-    - 修法 commit + 實機重測結果貼到 task-board In Review
-    - 若修 fuzzy match 後 bug 消失 → 直接 Done
-    - 若仍異常 → 把 console.error 內容貼給大腦，等 T-052 結果再決定下一步
+<!-- T-051 → In Review 2026-04-20 -->
 
 - [ ] **T-052** | 大腦 + 用戶 | **Vercel dev 環境 env var 核對（poker-goal-dev）**
   - 建議 branch：無（純 dashboard 確認 + 截圖）
@@ -277,7 +259,25 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-*（空）*
+- [?] **T-051** | Product | **exploit-coach 401 診斷 + 修 fuzzy match → exact** ⚠ 等實機 log
+  - branch: `wip/T051-exploit-coach-401-diag`（從 origin/dev `d037e12` 切出）
+  - 最後 commit: 待 push
+  - 機器：這台主目錄（純程式碼修改，無實機環境）
+  - 改動範圍：
+    - **A** `public/exploit-coach-mockup-v3.html:1459-1473` — `readTokenFromStorage` 從 fuzzy `sb-*-auth-token` 改為 exact `localStorage.getItem('sb-btiqmckyjyswzrarmfxa-auth-token')`（與 line 1454 storageKey 對齊；fuzzy 在 localStorage 殘留多 sb-key 時會抓錯 project）
+    - **B** `public/exploit-coach-mockup-v3.html:1568-1587` — `callCoach` 加 3 個 console.error 診斷點：`[exploit-coach-401][first]`（含 status / tokenHead / tokenTail / SUPABASE_URL）、`[exploit-coach-401][refresh]`（含 gotNewTok / newHead / newTail / sameAsOld）、`[exploit-coach-401][retry-failed]`
+    - **C** `src/tabs/ExploitCoachTab.tsx:14-39` — `onMessage` handler 加 5 個 log：`[parent-refresh] got request`（origin vs expected）、`origin blocked` warn、`no targetWindow` warn、`refresh threw` error、`replied`（hasToken）
+  - 不變動：`askParentRefresh` 流程、token 解析邏輯、T-050 picker DOM 修法
+  - 驗證：
+    - ✅ `npx tsc -b --noEmit` EXIT=0
+    - ⏳ 實機驗證需用戶在 iPhone Safari + Mac 遠端 Web Inspector 跑（Windows dev preview 無法重現 staging 401）
+  - **等用戶實機 log**：iPhone Safari 開 AI 分析觸發 401 後，把 Mac Safari Inspector Console 抓到的 `[exploit-coach-401]` + `[parent-refresh]` log 全部貼回
+  - 預期判讀：
+    - 若 fuzzy match 是元凶（RC2）→ A 修好後 401 直接消失，沒有任何 `[exploit-coach-401]` log → 直接移 Done
+    - 若 `[exploit-coach-401][first]` 出現且 `[refresh] sameAsOld=true` → askParentRefresh 沒拿到新 token，可能 parent supabase client 沒登入到測試 project（=RC1，等 T-052 Vercel env 結果）
+    - 若 `[parent-refresh] origin blocked` → mockup 與 parent 同 origin，blocked = 多了第三方 iframe 在送 message，要查 source
+    - 若 `[parent-refresh] replied hasToken=false` → parent supabase 也拿不到 session，可能未登入或環境 mismatch
+  - 等大腦 merge（無論實機結果）— 診斷 log 跟著 merge 進測試環境，下次實機重現可立刻看
 
 <!-- T-010 已 merge 到 dev，移至 Done -->
 <!-- T-043 已 merge 到 dev，移至 Done -->
