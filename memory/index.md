@@ -16,6 +16,7 @@
 
 ## Feedback & Rules
 
+- [[task-board]] — 中央大腦看板（Queue / In Progress / Done），兩台共工任務分派入口
 - [[two-machine-workflow]] — 兩台電腦共工 SOP：SessionStart auto-stash/pull、角色偏好、衝突解法
 - [[no-unauthorized-push]] — 絕對禁止未授權 merge/push 到 main（2026-04-14 事件教訓）
 - [[whiteboard-standard]] — 產品架構圖 HTML 白板規格：Zone 分層、動態連線

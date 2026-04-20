@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.22 [dev]
+- 中央大腦 task-board 建立
+- 新 `memory/wiki/task-board.md`：Queue / In Progress / Done 三區看板
+- Queue 列 14 個 task（桌機 Pipeline 8 項、行動機 Product 3 項、大腦 2 項）
+- Done 紀錄 5 個今天已完成（converter C0-C1.5、exploit-coach bug 修、跨機 sync、settings 整頓、roadmap）
+- session-start-reminder.sh 加第 5 步「讀 task-board 看指派給本機的 task」
+- memory/index.md 加入 task-board 連結
+
 ## 2026-04-20 v0.8.1-dev.21 [dev]
 - 跨機共工自動化
 - 新 `scripts/session-sync.sh`：auto-stash → pull → pop（容 WIP 不再擋開工）
