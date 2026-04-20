@@ -5,7 +5,21 @@
 
 ---
 
-## 2026-04-20 [flow] 另一台電腦 worktree setup 完成 + 全面清理
+## 2026-04-20 [flow] 大腦 dispatch 三 task + 大腦 worktree 規則確立
+- 大腦分派 T-010 / T-020 / T-042 三個獨立 task（task-board 移到 In Progress）
+- T-020 執行者 red-flag 抓到 scope 數字錯：「25 flops」是 6-max 早期規劃殘留
+  - 修正為 21 unique flops（peer parity HU 25bb SRP）
+  - 8 extras：5s5c5d / 6d5h4c / 8s5h2c / 8s7s5d / 9s7s3s / Ah2d2c / Ah5c2d / Ah8h3c
+  - 不動 BOARDS 主常數，加 `BOARDS_HU` 常數
+  - 連帶 T-021 / T-023 後續同樣對齊 21
+- **新規則：大腦必須開 `-brain` worktree on dev**
+  - 教訓：T-042 執行者直接 checkout wip 而沒開 worktree → 主目錄 branch 被切走
+  - 後果：大腦的 task-board commit 誤落到 wip/T042（用 `git push wip:dev` rename 救回）
+  - 寫入 `memory/wiki/two-machine-workflow.md`
+- 這台 worktree 現況：`poker-mentor` (wip/T042) + `poker-mentor-wip1` (wip/T010) + `poker-mentor-brain` (dev)
+- 純 flow 改動，不 bump 版本
+
+
 - 另一台（身邊機器）按新架構完成 setup：
   - 主目錄 `POKERNEW/poker-mentor` = dev（大腦或三角色）
   - 新 worktree `POKERNEW/poker-mentor-wip1` = detached HEAD（執行者專用）

@@ -111,9 +111,19 @@ git worktree list
 | 情境 | 開哪個目錄的 Claude Code |
 |---|---|
 | 單對話切角色 | 主目錄 |
-| 多對話：大腦 | 主目錄（永遠 dev） |
+| 多對話：大腦 | **`-brain` 目錄**（鎖 dev，不被執行者搶走） |
 | 多對話：執行者 A | `-wip1` 目錄 |
 | 多對話：執行者 B | `-wip2` 目錄 |
+
+⚠️ **大腦不要在主目錄工作**：若執行者 session 直接 checkout 到 wip branch（不開 worktree），主目錄的 branch 會被搶走，大腦的 commit 會誤落到 wip branch。**大腦永遠用 `-brain` worktree**。修正方式：
+
+```bash
+cd <repo 主目錄>
+git worktree add ../<repo-name>-brain dev
+# 之後新大腦 session 都從 -brain 目錄開
+```
+
+若已誤 commit 到 wip：用 `git push wip/Txxx:dev` 把 commit rename 推到 dev，再 `git reset --hard origin/dev` 收乾淨。
 
 ### 執行者 worktree 流程
 
