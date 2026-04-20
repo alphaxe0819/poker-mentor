@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.17 [dev]
+- 範圍收集成果提交（pokerdinosaur scraping + HU 13bb/25bb GTO data）
+- 新 `scripts/gto-pipeline/scrape-pokerdinosaur.js` + `scripts/upload-pd-data.js`
+- 新 70+ 個 `src/lib/gto/gtoData_hu_{13bb,25bb}_{srp,3bp}_*.ts`（TexasSolver 本機產出，尚未接 gtoData_index）
+- 新 200+ 個 `scripts/gto-pipeline/inputs/6max_100bb_{srp,3bp}_*.txt`
+- 新 `supabase/migrations/_all_migrations_staging.sql`（測試 Supabase schema 統一匯出）
+- 新 `memory/project_pokerdinosaur_scraping.md`（wiki 頁）
+- 新 `package.json` 依賴：`sharp@^0.34.5`（scrape-pokerdinosaur 用）
+- 整頓 `.claude/settings*.json`：共用 permission 搬到 shared `settings.json`；本機路徑/PID/Downloads 操作留 `settings.local.json` 並 gitignore
+- `.gitignore` 加入 `RYE Rangeviewer 2021/`（604 MB 外部資料夾）、`tmp_log.txt`
+
 ## 2026-04-20 v0.8.1-dev.16 [dev]
 - Exploit Coach mockup 5 個 bug 修復
 - Bug 1：Call 動作加金額（actDo 記 owe，actLabel 顯示 call X）

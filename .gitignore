@@ -36,3 +36,13 @@ scripts/gto-pipeline/output/
 scripts/gto-pipeline/test_solver.txt
 # Brainstorm visual companion cache
 .superpowers/
+
+# Claude Code 本機個人 permission（settings.local.json 屬於個人覆蓋）
+.claude/settings.local.json
+
+# 大型外部資料集（不該進 repo）
+RYE Rangeviewer 2021 Updated with ICM Ranges/
+
+# 暫存 log
+tmp_log.txt
+**/tmp_log.txt
