@@ -9,6 +9,14 @@ if [[ -z "$BRANCH" ]]; then
   exit 0
 fi
 
+# Claude Code Sandbox / Isolation worktree：branch 在 origin 沒對應，只 fetch 不 pull
+if [[ "$PWD" == */.claude/worktrees/* ]] || [[ "$BRANCH" == claude/* ]]; then
+  echo "[session-sync] Sandbox / isolation worktree（branch: $BRANCH）→ 只 fetch，不 pull"
+  git fetch --all 2>&1 | tail -3
+  echo "[session-sync] 若要當執行者，手動：git checkout -b wip/T0xx origin/dev"
+  exit 0
+fi
+
 echo "[session-sync] fetch..."
 git fetch --all 2>&1 | tail -5
 

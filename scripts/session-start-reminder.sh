@@ -5,6 +5,36 @@
 # Worktree 模式偵測
 cwd=$(basename "$PWD")
 
+# Claude Code Sandbox / Isolation 模式（桌面版或 `/plan` 類 slash command 自動建）
+# 路徑包含 .claude/worktrees/ → branch 命名 claude/<adjective>-<name>-<hash>
+# 這種 session 不在我們 workflow 體系內，要教它怎麼加入
+if [[ "$PWD" == */.claude/worktrees/* ]]; then
+  SANDBOX_BRANCH=$(git branch --show-current 2>/dev/null || echo "?")
+  echo "⚠️ Claude Code Sandbox / Isolation 偵測到"
+  echo "   目前 branch: $SANDBOX_BRANCH（隔離 worktree，remote 尚未建立）"
+  echo ""
+  echo "📍 你的 session 可能是：brainstorm / plan / 實驗（這時照常做即可）"
+  echo ""
+  echo "🛠 若要當「正規執行者」push 到 origin 給大腦 review，跑以下 4 步："
+  echo ""
+  echo "   git fetch --all"
+  echo "   git checkout -b wip/T0xx-短描述 origin/dev   # 從最新 dev 切，不用 merge sandbox branch"
+  echo "   # 做事、commit（不動 src/version.ts 和 memory/dev-log.md）"
+  echo "   git push -u origin wip/T0xx-短描述"
+  echo ""
+  echo "📋 要接什麼 task：讀 memory/wiki/task-board.md"
+  echo "   完整 briefing 都在 task-board，不用大腦另外給。"
+  echo "   找標 \`(派工 2026-04-20)\` 且狀態 Queue 的 task。"
+  echo ""
+  echo "✅ 完成後：更新 task-board 移到 In Review，回報 commit hash 給大腦"
+  echo ""
+  echo "── 遠端 origin/dev 最近 5 筆 commit（你的參考起點） ──"
+  git fetch origin dev 2>&1 | tail -2
+  git log origin/dev --pretty=format:"%h %ad %s" --date=short -5 2>/dev/null
+  echo ""
+  exit 0
+fi
+
 # 執行者 worktree：目錄名含 "-wip" 後綴（例：poker-mentor-wip1 / gto-poker-trainer-wip1）
 if [[ "$cwd" == *-wip* ]]; then
   echo "🛠 執行者 worktree 模式（固定執行者角色）："
