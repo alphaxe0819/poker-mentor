@@ -34,7 +34,7 @@ updated: 2026-04-20
 
 ### Pipeline 線
 
-<!-- T-010 → In Progress 2026-04-20 -->
+<!-- T-010 → Done 2026-04-20 -->
 <!-- T-020 → In Progress 2026-04-20 -->
 <!-- T-042 → In Progress 2026-04-20 -->
 
@@ -167,13 +167,7 @@ updated: 2026-04-20
 
 ## 🔨 In Progress（執行中）
 
-- [~] **T-010** | Pipeline | **C2 場景化（converter 接 scenarios.mjs）**
-  - branch: `wip/T010-c2-scenarios`
-  - 機器：這台（worktree `POKERNEW-wipT010`）
-  - 執行者 session 起：2026-04-20
-  - 範圍：`scripts/gto-pipeline/scenarios.mjs` + 新 `scripts/gto-pipeline/parse-pd-table-name.mjs`
-  - 內容：解析 pd table.name（`"BB VS MP"` / `"10bb SB Push"`）→ scenario / depth / position；加 MTT catalog
-  - 完成條件：parser 能消化現有 10 個 pd project 的 table.name；scenarios.mjs 能 enumerate MTT scenarios
+<!-- T-010 已 merge 到 dev，移至 Done -->
 
 - [~] **T-020** | Pipeline | **Solver P1 HU 40bb SRP 補齊到 21 flops（peer parity 25bb）**
   - branch: `wip/T020-hu40bb-srp-fill`
@@ -236,7 +230,18 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-*（空）*
+- [?] **T-010** | Pipeline | **C2 場景化（converter 接 scenarios.mjs）+ MTT catalog**
+  - branch: `wip/T010-c2-scenarios`（推 origin 完成）
+  - 最後 commit: `4914334`
+  - 執行者備註：
+    - **新檔** `scripts/gto-pipeline/parse-pd-table-name.mjs`（~245 行）— prefix-based token scanner（同 pd-to-range.mjs 風格）。`parseTableName(raw)` 回 `{scenario, hero, villain, positions, depth_bb, format, modifiers, unknown, reason}`。`unknown=true` 一定附 reason，**不 silently drop**。CLI mode 可掃 pd-ranges dir 印 parsing rate + sample unknowns。
+    - **新檔** `scripts/gto-pipeline/__tests__/parse-pd-table-name.test.mjs`（~150 行）— **57 tests 全通過**，涵蓋 task-spec 3 範例 + 全 scenario keywords + 全 position aliases + depth/modifier/format/unknown bucket + post-"vs" villain 抽取
+    - **改檔** `scripts/gto-pipeline/scenarios.mjs`（+170 行）— 新增 `MTT_SCENARIOS`（54 個：6 depths [15/20/25/30/40/50] × SRP 7 matchups + 3BP 3 matchups，自動 skip eff < 6bb）、新增 `enumerateMTTFromPD(pdRangesDir)` async 掃 pd-ranges → 對 catalog → 回傳 `{scenarios, parsing_summary, unmatched_pd, unknown_pd}`、新增 `mtt` 進 `ALL_FORMATS`
+  - 驗證：57/57 tests pass｜tsc EXIT=0｜synthetic 5-table dataset E2E 通過（4 ok / 1 unknown / 1 unmatched scenario "jam"，行為符合預期）
+  - **未做但建議大腦補**（不阻擋 C2 完成）：
+    - 在實機（另一台桌機）上跑 `node scripts/gto-pipeline/parse-pd-table-name.mjs scripts/gto-pipeline/output/pd-ranges` 拿真實 10 個 pd project 的 parsing rate / unknown 樣本，根據結果擴充 prefix dict（例：發現 "Open Limp" 多到該獨立分類，再加 keyword）
+    - C3（T-011）會用 enumerateMTTFromPD 的輸出，但 hand map → TexasSolver range 字串轉換還沒寫 — 這留給 C3 任務
+  - 等大腦 merge
 
 <!-- T-050 已 merge 到 dev，移至 Done -->
 
@@ -286,6 +291,15 @@ updated: 2026-04-20
   - 另一台之前報告的「04-16 WIP」（batch-worker / seed-batches / getGTOPostflopFromDB / DB migration）實際上已在 dev（dev.8-dev.11 那批 commit 正是）
   - 動作：remote 三個 branch 全刪（`git push --delete`）
   - 另一台 Claude 後續動作：checkout dev + pull + 跑新 SOP（見本次 dev-log）
+- [x] **T-010** | Pipeline + 大腦 | **C2 場景化（pd table.name parser + MTT catalog）** | 2026-04-20 | merge + dev.29
+  - 執行者：這台（worktree `POKERNEW-wipT010`，`4914334` + task-board In Review `b79718a`）
+  - 大腦：review + merge（這台 `-brain` worktree）
+  - 產出（3 檔）：
+    - `scripts/gto-pipeline/parse-pd-table-name.mjs`（新，prefix-based token scanner，VS 抽取、unknown 都附 reason）
+    - `scripts/gto-pipeline/__tests__/parse-pd-table-name.test.mjs`（新，57 tests pass）
+    - `scripts/gto-pipeline/scenarios.mjs`（+MTT_SCENARIOS 54 個 + `enumerateMTTFromPD` async scanner，mtt 進 ALL_FORMATS）
+  - 驗證：57/57 tests pass，`npx tsc -b --noEmit` EXIT=0
+  - 限制：pd hand map → TexasSolver range 字串轉換屬 T-011（C3）；真實 ~16k pd tables parsing rate 需跑 CLI 實測
 
 ---
 

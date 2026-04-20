@@ -5,6 +5,21 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.29 [dev]
+- T-010 正式整合（wip/T010-c2-scenarios → dev）
+- merge --no-ff，task-board conflict 手動解（HEAD 保留 In Progress 標記 → 改為 Done 標記）
+- 產出（3 檔）：
+  - `scripts/gto-pipeline/parse-pd-table-name.mjs`（新 +376 行，prefix-based token scanner；VS 抽取 "BB VS MP"→ hero=BB villain=MP；所有 unknown 附 reason 不 silently drop；含 CLI 診斷模式）
+  - `scripts/gto-pipeline/__tests__/parse-pd-table-name.test.mjs`（新 +220 行，57 tests 全通過）
+  - `scripts/gto-pipeline/scenarios.mjs`（+223 行，MTT Phase 4 新增）
+    - `MTT_SCENARIOS` 54 個 catalog 場景（6 depths × SRP 7 matchup + 3BP 3 matchup）
+    - `enumerateMTTFromPD(pdRangesDir)` async scanner 把 pd table.name 對應到 catalog，unknown/unmatched 進 buckets
+    - mtt 進 ALL_FORMATS（不破壞 HU/6max/9max）
+- 驗證：57/57 tests pass，tsc EXIT=0
+- 下游：pd hand map → TexasSolver range 字串轉換屬 T-011（C3）
+- task-board T-010 → Done
+- wip/T010-c2-scenarios 待刪
+
 ## 2026-04-20 [flow] 大腦 dispatch 三 task + 大腦 worktree 規則確立
 - 大腦分派 T-010 / T-020 / T-042 三個獨立 task（task-board 移到 In Progress）
 - T-020 執行者 red-flag 抓到 scope 數字錯：「25 flops」是 6-max 早期規劃殘留
