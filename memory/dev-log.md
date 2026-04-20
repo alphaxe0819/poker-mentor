@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.24 [dev]
+- 大腦整合：清理 3 個過時 feature branches
+- 調查結果：`feature/exploit-lab` / `feature/hu-simulator-v1` / `feature/ui-v2` 全部 `git log dev..` 顯示 **0 獨有 commits**
+- 另一台報告的「04-16 WIP」實際上已在 dev（dev.8-dev.11 批次）
+- 動作：三個 remote branch 全刪
+- 另一台 Claude 下一步指令（已給使用者）：
+  1. `git status --short` 確認本機 WIP
+  2. 若有 WIP → `git stash push -u -m "..."`（丟棄用）
+  3. `git checkout dev && git pull --ff-only origin dev`
+  4. 拿到 dev.24 + 新三角色 SOP
+- T-031 task 完成（task-board 已更新）
+
 ## 2026-04-20 v0.8.1-dev.23 [dev]
 - 雙角色 workflow 升級：大腦 / 執行者 / 單機快修
 - `memory/wiki/two-machine-workflow.md` 全面重寫（wip branch + 大腦整合模型）

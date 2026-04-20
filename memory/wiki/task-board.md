@@ -89,10 +89,7 @@ updated: 2026-04-20
     5. Bug 5 token refresh（久待不過期）
   - 產出：pass / fail + console log（若 fail）
 
-- [ ] **T-031** | Product | **feature/exploit-lab WIP 處理**
-  - 建議 branch：先在該分支 commit 保存，再評估
-  - 現況：04-16 WIP（batch-worker、seed-batches、DB migration、getGTOPostflopFromDB）
-  - 動作：保存 → checkout dev → 評估 WIP 是否補 dev 缺漏
+<!-- T-031 已完成，移至 Done -->
 
 - [ ] **T-032** | Product | **`.env` 檢查 + 環境驗證**（另一台電腦）
   - 建議 branch：無
@@ -145,8 +142,13 @@ updated: 2026-04-20
   - 產出：session-sync.sh + session-start-reminder.sh + two-machine-workflow 初版
 - [x] **T-003** | Pipeline | 範圍收集成果 + .claude settings 整頓 | 2026-04-20 | `754f651` (dev.17)
 - [x] **T-004** | 大腦 | range-collection-roadmap 初版 | 2026-04-20 | `ca11e86` (dev.18)
-- [x] **T-005** | 大腦 | 雙角色 workflow 升級（wip branch 模型） | 2026-04-20 | 本次 commit
+- [x] **T-005** | 大腦 | 雙角色 workflow 升級（wip branch 模型） | 2026-04-20 | `4ccc701` (dev.23)
   - 產出：two-machine-workflow.md 重寫 + session-start-reminder 改 3 角色問句 + task-board 加 In Review
+- [x] **T-031** | 大腦 | feature branches 盤點 + 清理 | 2026-04-20 | 本次 commit
+  - 調查結果：`feature/exploit-lab` / `feature/hu-simulator-v1` / `feature/ui-v2` 三個 branch 相對於 dev 都 **0 獨有 commits**，全是 dev 舊副本
+  - 另一台之前報告的「04-16 WIP」（batch-worker / seed-batches / getGTOPostflopFromDB / DB migration）實際上已在 dev（dev.8-dev.11 那批 commit 正是）
+  - 動作：remote 三個 branch 全刪（`git push --delete`）
+  - 另一台 Claude 後續動作：checkout dev + pull + 跑新 SOP（見本次 dev-log）
 
 ---
 
