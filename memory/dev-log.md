@@ -5,6 +5,19 @@
 
 ---
 
+## 2026-04-21 [flow] T-012 整合完成：MTT DB migration + scripts routing（code 部分）
+- 執行者：Sandbox `wip/T012-mtt-db-migration` @ `3d308a4` / `27acc0f` / `cc561bb`（base c036f3d）
+- 大腦：這台主目錄
+- merge commit `065ee0f`（task-board conflict 解：採執行者版本 `<!-- T-012 → In Review -->`）
+- 改動 3 檔：
+  - 新 `supabase/migrations/20260421-solver-postflop-mtt.sql`（+107，idempotent + CHECK + RLS + index）
+  - `scripts/gto-pipeline/convert-to-db.mjs`：slug prefix 分流到對應 table
+  - `scripts/gto-pipeline/test-retrieval.mjs`：Tier A+B MTT routing；Tier C 保留 6max fallback（執行者 design 採納）
+- 狀態：**code 已 merge，但 migration 尚未部署到測試 Supabase** → 開 T-063 追蹤
+- 踩坑（執行者回報）：scripts commit 原 `77e9833` 誤落 `wip/T062-wip1-isolation`（wip1 HEAD 殘留 T-062 branch）。執行者 cherry-pick 救回到 T-012 branch，push 前 reset T-062 wip HEAD^ 清污染。諷刺在 T-062 merge 前踩進 T-062 要防的情境。
+- 純 flow 改動（scripts + migration sql，不影響 Vercel build），無 version bump
+- wip/T012 待刪
+
 ## 2026-04-21 [flow] T-062 整合完成：wip1 worktree HEAD 隔離警告
 - 執行者：Sandbox `wip/T062-wip1-isolation` @ `fafaa16` / `83c1dd6`（base 0d5f0bf）
 - 大腦：這台主目錄

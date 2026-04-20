@@ -40,7 +40,22 @@ updated: 2026-04-20
 
 <!-- T-011 → Done 2026-04-21 -->
 
-<!-- T-012 → In Review 2026-04-21 -->
+<!-- T-012 → Code Done 2026-04-21，migration 部署待 T-063 -->
+
+- [ ] **T-063** | 用戶 + 大腦 | **T-012 migration 部署到測試 Supabase + 實測 verify**
+  - 建議 branch：無（純 Dashboard 操作 + retrieval verify）
+  - 前置：T-012 code 已 merge @ `065ee0f`，`supabase/migrations/20260421-solver-postflop-mtt.sql` 就緒
+  - 動作（用戶）：
+    1. 打開 `supabase/migrations/20260421-solver-postflop-mtt.sql` 全選複製
+    2. 登入測試 Supabase Dashboard (`btiqmckyjyswzrarmfxa`) → SQL Editor
+    3. 貼整檔 → Run（idempotent 可重跑）
+    4. 驗證 SQL 輸出：最後 `SELECT scenario_slug, flop FROM public.solver_postflop_mtt` 應看到 1 row (`mtt_40bb_srp_btn_open_bb_call / As7d2c`)
+    5. 回報：SQL Run 結果 + 1 row 確認
+  - 動作（大腦，用戶貼完後）：
+    6. 跑 `cd scripts/gto-pipeline && node test-retrieval.mjs`（要配好 .env）
+    7. 驗 MTT scenario tier A 命中 `solver_postflop_mtt`（不是 6max）
+    8. 全通過 → 標 T-012 / T-063 Done
+    9. 失敗 → 開 follow-up 修
 
 - [ ] **T-013** | Pipeline | **Scraping 成果盤點 + 整理**
   - 建議 branch：`wip/T013-scraping-audit`
@@ -303,25 +318,9 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-- [?] **T-012** | Pipeline | **C4 MTT DB migration（solver_postflop_mtt table）**
-  - branch: `wip/T012-mtt-db-migration`
-  - 最後 commit: `27acc0f`（cherry-pick 回 T-012，原 77e9833 誤落 T-062 已救回）
-  - 完整 commits 序列：`3d308a4` (migration) + `27acc0f` (scripts routing) + 緊隨 chore (task-board In Review)
-  - 改動 3 檔：
-    1. 新檔 `supabase/migrations/20260421-solver-postflop-mtt.sql`（+107 行）
-       - CREATE TABLE + CHECK(`scenario_slug LIKE 'mtt_%'`) + RLS + index + INSERT...SELECT (ON CONFLICT DO NOTHING) + DELETE (EXISTS guard)
-       - 單檔一次 Run，全段 idempotent
-       - 與大腦 briefing template 差異：composite PK `(scenario_slug, flop)` 代替 `BIGSERIAL id + UNIQUE`（功能等價）；多加 CHECK constraint + DO block idempotent 守住重跑
-    2. `scripts/gto-pipeline/convert-to-db.mjs`（+4/-1）— 依 `scenarioSlug.startsWith('mtt_')` 決定 `targetTable`，直接套大腦 briefing template
-    3. `scripts/gto-pipeline/test-retrieval.mjs`（+8/-3）— `retrieve()` 開頭加 `targetTable` prefix routing
-       - **Design note**：Tier A/B 都路由到對應 table（MTT ctx 的 A、B 都查 `solver_postflop_mtt`），Tier C fallback 保留 `solver_postflop_6max`（MTT 資料稀疏，全 miss 時退回 cash 近似）。大腦 spec 原文只提 tier A，延伸到 B 對稱 `convert-to-db`；若大腦要嚴格 A-only 可收回
-  - 不動：`src/version.ts` / `memory/dev-log.md` / `supabase/functions/` / 其他 pipeline
-  - ⚠ **踩坑記錄**：scripts commit (77e9833) 原本誤落 `wip/T062-wip1-isolation`（wip1 worktree HEAD 被 T-062 session 切走，正是 T-062 要防的情境 — 諷刺地在 T-062 merge 前踩進）。搶救流程：stash task-board → switch T-012 → cherry-pick → reset task-board → drop stash → 重新 Edit；原 T-062 的 77e9833 尚未 push，大腦 review T-062 時 reset 該 branch HEAD^ 即可清掉
-  - ⚠ **task-board merge conflict 預期**：T-012 branch base 為 `c036f3d`（T-011 整合），origin/dev 已推 `0d5f0bf`（含大腦寫的 T-012 完整 briefing），merge 時 task-board Queue 區的 T-012 entry 會衝突。建議大腦 merge 時選擇「T-012 → In Review 註解」的版本（即本 branch 的改動）
-  - 驗證：
-    - migration SQL 語法肉眼檢查 ✅（無 plpgsql function、無 `INTO` bug、DO block 只做 IF NOT EXISTS / ADD CONSTRAINT）
-    - script 改動純變數路由，無 runtime 可跑；test-retrieval 要連測試 Supabase 實測屬大腦 review 後流程
-  - 等大腦：review → 產貼碼指令 → 用戶貼測試 Supabase → 跑 test-retrieval 驗 MTT tier A 從新 table 命中 → Done
+*（空）*
+
+<!-- T-012 → Code Done 2026-04-21，migration 部署待 T-063 -->
 
 <!-- T-062 → Done 2026-04-21（見 Done 區） -->
 
@@ -457,6 +456,15 @@ updated: 2026-04-20
   - 併收 T-052（RC1 排除）
   - 副產物 TODO：Edge Function code 加 `response.ok` check + log Claude error body（記在 wiki 坑 3，未做）
   - 正式 Supabase `qaiwsocjwkjrmyzawabt` 若啟用 ES256 會同樣壞，待用戶授權
+- [x] **T-012** | Pipeline + 大腦 | **C4 MTT DB migration（code 部分）** | 2026-04-21 | merge only (flow, no bump)
+  - 執行者：Sandbox `wip/T012-mtt-db-migration` @ `3d308a4` / `27acc0f` / `cc561bb`
+  - 改動 3 檔：
+    - 新 `supabase/migrations/20260421-solver-postflop-mtt.sql`（+107，CREATE TABLE + CHECK + RLS + index + INSERT...SELECT + DELETE）
+    - `convert-to-db.mjs`：slug prefix 分流（mtt_* → mtt table）
+    - `test-retrieval.mjs`：Tier A+B prefix routing；Tier C 固定 6max fallback（MTT 稀疏時退回 cash 近似，合理設計，採納）
+  - 驗證：SQL 肉眼檢查 OK（idempotent、無 plpgsql parser 地雷）；script 純變數路由
+  - migration 部署 → T-063 follow-up
+  - 踩坑：執行者 scripts commit 原誤落 wip/T062（T-062 要防的情境在 T-062 merge 前踩進），cherry-pick 救回
 - [x] **T-062** | Pipeline + 大腦 | **wip1 worktree HEAD 隔離強化** | 2026-04-21 | merge only (flow, no bump)
   - 執行者：Sandbox `wip/T062-wip1-isolation` @ `fafaa16` / `83c1dd6`
   - 改動：單檔 `scripts/session-start-reminder.sh`（+15 行）`*-wip*` 區塊
