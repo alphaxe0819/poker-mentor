@@ -267,7 +267,25 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-*（空）*
+- [?] **T-011** | Pipeline | **C3 E2E 小樣本（MTT scenario 入 DB）**
+  - branch: `wip/T011-c3-e2e`（基於 origin/dev `4d6a0e2`，feat commit `f861b6a` cherry-pick 自救位錯分支）
+  - 最後 feat commit: `f861b6a`（task-board 移 In Review 是緊隨的 chore commit）
+  - 改動：
+    - `scripts/gto-pipeline/scenarios.mjs`：MTT override 場景 `mtt_40bb_srp_btn_open_bb_call` + range（暫用 HU_40BB_RANGES 當骨架近似）
+    - `scripts/gto-pipeline/convert-to-db.mjs`：吃 `ALL_FORMATS` 不只 `SIXMAX_SCENARIOS`
+    - `scripts/gto-pipeline/test-retrieval.mjs`：加 MTT tier A 測試
+    - `scripts/gto-pipeline/inputs/mtt_40bb_srp_btn_open_bb_call_*.txt`（13 個，新）— `node generate-input-v2.mjs mtt --pot srp --fast` 產出
+  - 實跑驗證：
+    - ✅ Solver fast mode 16:28，exploitability 3.22%（accuracy 1.0 / 100 iter / srp_fast bet profile）
+    - ✅ DB upsert：`mtt_40bb_srp_btn_open_bb_call + As7d2c` → `solver_postflop_6max`（82 MB raw → 31.5 KB tree, 23 nodes）
+    - ✅ Tier A retrieval 命中（BB CHECK 79.7% / BET 50% pot 20.3%；代表手牌 22→BET 54%, 76s→CHECK 59%）
+    - ⚠ TS check 未跑：wip1 worktree 無 node_modules / type defs（同 T-056 環境限制），但本次 3 檔皆為 `.mjs`、`src/` 完全未動，主目錄 tsc 可正常驗
+  - 注意事項（給大腦 review）：
+    - slug 用 `mtt_` prefix（T-012 migration 時用 `WHERE scenario_slug LIKE 'mtt_%'` 搬）
+    - range 是 `HU_40BB_RANGES` 近似值，非真實 MTT range — dev-log 需註明
+  - 踩坑記錄：feat commits 原本錯落在 `wip/T056-skipexisting-dual-naming`（跑 solver 16:28 期間 wip1 worktree 被外部 session 切走未察覺），cherry-pick 救回到 wip/T011-c3-e2e
+  - 不動：`src/version.ts` / `memory/dev-log.md` / `src/` / `supabase/`
+  - 等大腦 review + merge
 
 <!-- T-056 → Done 2026-04-20 -->
 
