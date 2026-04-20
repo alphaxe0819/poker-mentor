@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-04-20 [flow] T-059 整合完成：T-058 deploy guide
+- 執行者：Sandbox session（`wip/T059-T058-deploy-guide` @ `716b802` / `e7501b5`）
+- 大腦：這台主目錄
+- merge clean，tsc EXIT=0
+- 產出：`docs/supabase-migrations/20260420-T058-zh-tw-terminology-deploy.md`
+  - 42 行，含：前置 / 部署步驟 7 步 / 3 條實機驗收 / 失敗回報格式 / 全 pass 後動作
+- 純 doc 改動，不 bump version
+- 拆分 follow-up：T-060（用戶實機部署 + 3 條驗收）進 Queue
+  - T-059（guide 產出）與 T-060（實機驗收）分開，避免 task-board 狀態混亂
+- wip/T059 待刪
+
 ## 2026-04-20 [flow] T-057 整合完成：gto-pipeline-conventions wiki
 - 執行者：Sandbox session（`wip/T057-gto-pipeline-conventions` @ `6d944fc` / `75ecb05`）
 - 大腦：這台主目錄 session

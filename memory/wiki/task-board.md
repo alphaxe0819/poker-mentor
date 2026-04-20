@@ -67,7 +67,18 @@ updated: 2026-04-20
   - 建議 branch：`wip/T023-6max-shallow`
   - 待確認具體範圍
 
-<!-- T-059 → In Review 2026-04-20 -->
+<!-- T-059 → Done 2026-04-20（deploy guide 產出）。T-060 實機驗收 ↓ -->
+
+- [ ] **T-060** | 用戶 + 大腦 | **T-058 Edge Function 實機部署 + 3 條驗收**
+  - 建議 branch：無（純 Dashboard 操作 + 實機測試）
+  - 前置：deploy guide 已就緒 @ `docs/supabase-migrations/20260420-T058-zh-tw-terminology-deploy.md`
+  - 動作（用戶）：
+    1. 照 guide 把 `supabase/functions/exploit-coach/index.ts` 整檔貼到測試 Supabase Dashboard
+    2. 跑 3 條驗收（壓制 / bluff catcher / 不用大陸用語）
+    3. 回報 pass/fail + 若 fail 的 AI 回覆原文
+  - 大腦動作：依驗收結果
+    - 全 pass → T-060 Done + 標 T-058 真正 Done（完整部署 + 驗收）
+    - 有 fail → 開 follow-up task 補強 prompt 黑名單
 
 - [ ] **T-056** | Pipeline | **batch-run.ps1 -SkipExisting 改雙命名偵測（防 T-020 churn 重演）** 🔴 優先 `(派工 2026-04-20)`
   - **建議 branch**：`wip/T056-skipexisting-dual-naming`（從 origin/dev 切出）
@@ -296,15 +307,9 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-- [?] **T-059** | Product + 用戶 | **T-058 Edge Function 部署 + 實機驗收**
-  - branch: `wip/T059-T058-deploy-guide`（從 origin/dev `b337205` 切出）
-  - 最後 commit: `716b802` docs(T-059): T-058 Edge Function 部署指南 + 3 條實機驗收
-  - 完成備註：
-    - 新檔 `docs/supabase-migrations/20260420-T058-zh-tw-terminology-deploy.md`（完整依派單範本：前置 / 部署步驟 7 步 / 3 條實機驗收 / 失敗回報格式 / 全 pass 後動作）
-    - 未動 `supabase/functions/exploit-coach/index.ts` / src/ / public/ / `src/version.ts` / `memory/dev-log.md`
-  - 驗證：✅ `npx tsc -b --noEmit` EXIT=0
-  - 大腦動作：review md → merge wip 到 dev → 通知用戶照 guide 部署 + 跑 3 條驗收
-  - 後續（用戶）：照 guide deploy Edge Function + 跑 3 條驗收 → 全 pass 則 T-059 → Done + T-058 升級為真正 Done
+*（空）*
+
+<!-- T-059 → Done 2026-04-20，實機驗收見 T-060 -->
 
 <!-- T-057 → Done 2026-04-20 -->
 
@@ -432,6 +437,12 @@ updated: 2026-04-20
   - 併收 T-052（RC1 排除）
   - 副產物 TODO：Edge Function code 加 `response.ok` check + log Claude error body（記在 wiki 坑 3，未做）
   - 正式 Supabase `qaiwsocjwkjrmyzawabt` 若啟用 ES256 會同樣壞，待用戶授權
+- [x] **T-059** | Product + 大腦 | **T-058 Edge Function deploy guide** | 2026-04-20 | merge only (flow, no bump)
+  - 執行者：`wip/T059-T058-deploy-guide` @ `716b802` / `e7501b5`（Sandbox session）
+  - 產出：`docs/supabase-migrations/20260420-T058-zh-tw-terminology-deploy.md`（42 行，含部署 7 步 + 3 條驗收）
+  - 驗證：tsc EXIT=0
+  - 純 doc 改動，不 bump version
+  - 後續：T-060（用戶實機驗收）
 - [x] **T-057** | Pipeline + 大腦 | **wiki: gto-pipeline-conventions.md 命名規範** | 2026-04-20 | merge only (flow, no bump)
   - 執行者：`wip/T057-gto-pipeline-conventions` @ `6d944fc` / `75ecb05`（Sandbox session）
   - 產出：
