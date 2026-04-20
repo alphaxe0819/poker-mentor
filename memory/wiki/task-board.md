@@ -67,6 +67,19 @@ updated: 2026-04-20
   - 建議 branch：`wip/T023-6max-shallow`
   - 待確認具體範圍
 
+- [ ] **T-059** | Product + 用戶 | **T-058 Edge Function 部署 + 實機驗收**
+  - 建議 branch：無（純 Dashboard 操作）
+  - 前置：T-058 已 merge 到 dev @ `bfdc762`（dev.37）
+  - 動作：
+    1. 大腦產出 `supabase/functions/exploit-coach/index.ts` 整檔貼碼指令
+    2. 用戶手動貼到測試 Supabase Dashboard → Edge Functions → `exploit-coach` → Via Editor → 整檔取代 → Deploy
+    3. 實機驗收 3 條：
+       - (1) QQ vs AK/AA/KK 對話 → 驗 AI 用「壓制」非「過度」
+       - (2) 追問「bluff catcher 是什麼」→ 驗 AI 回「抓詐唬牌」不是「詐唬捕手」
+       - (3) 隨機翻後場景 → 不蹦大陸用語（蝨子/踢子等）
+  - 產出：三條驗收 pass/fail + console log（若 fail）
+  - 後續：全 pass → 真 Done；有零星錯譯 → 補強 prompt 黑名單
+
 - [ ] **T-056** | Pipeline | **batch-run.ps1 -SkipExisting 改雙命名偵測（防 T-020 churn 重演）** 🔴 優先
   - 建議 branch：`wip/T056-skipexisting-dual-naming`
   - 背景：T-020 執行者跑 HU 40bb SRP 時，`-SkipExisting` 只 check 新命名 `gtoData_<slug>.ts`，對舊命名 `gtoData_flop_<slug>.ts` 誤判「未產」→ 全部 base 意外重跑，差點燒 3 hr。執行者及時 kill
@@ -277,6 +290,13 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
+*（空）*
+
+<!-- T-058 → Done 2026-04-20，實機部署/驗收見 follow-up T-059 -->
+
+<details>
+<summary>📦 T-058 原 In Review 描述（已 merged）</summary>
+
 - [?] **T-058** | Product | **exploit-coach 繁中 poker 術語 grounding** ⚠ 含 Edge Function 部署
   - branch: `wip/T058-zh-tw-terminology`（從 origin/dev `9b51e30` 切出）
   - 最後 commit: 待 push
@@ -305,6 +325,8 @@ updated: 2026-04-20
     - ⚠ Token cost / latency 顯著上升 → 評估是否要把術語表搬到 system prompt cache（Anthropic prompt caching）
   - 相關記憶：[[poker-terminology-zh-tw]]（完整表 + 8 來源）/ [[supabase-edge-function-gotchas]]（部署流程）
   - 等大腦 merge + 安排 Edge Function 部署
+
+</details>
 
 <!-- T-010 / T-020 / T-043 / T-050 / T-051 / T-055 今日全部 merge 到 dev，見 Done 區 -->
 
@@ -394,6 +416,14 @@ updated: 2026-04-20
   - 併收 T-052（RC1 排除）
   - 副產物 TODO：Edge Function code 加 `response.ok` check + log Claude error body（記在 wiki 坑 3，未做）
   - 正式 Supabase `qaiwsocjwkjrmyzawabt` 若啟用 ES256 會同樣壞，待用戶授權
+- [x] **T-058** | Product + 大腦 | **exploit-coach 繁中 poker 術語 grounding** | 2026-04-20 | merge + dev.37
+  - 執行者：`wip/T058-zh-tw-terminology` @ `ff496c1`
+  - 大腦整合：身邊機器 `-brain` worktree
+  - 改動：單檔 `supabase/functions/exploit-coach/index.ts:170-204`（+31/-1 行）
+  - 內容：buildSystemPrompt 加繁中術語校準段（5 高風險詞 + 21 保留英文 + 12 推薦譯法 + 3 使用規則）
+  - prompt +~700 token
+  - 驗證：tsc EXIT=0
+  - ⚠ **Edge Function 未部署**（merge 到 repo ≠ 部署到 Supabase）→ 由 T-059 follow-up
 - [x] **T-055** | Product + 大腦 | **exploit-coach 連續對話 context grounding（修法 A）** | 2026-04-20 | merge + dev.35
   - 執行者：`wip/T055-coach-context-continuity` @ `4583694`
   - 改動：單檔 `supabase/functions/exploit-coach/index.ts:159-200`（+10/-4 行）— `buildSystemPrompt` base prompt 加「本輪場景 grounding」段 + 各 context 段加「【本輪場景】/【本輪實際手牌】/本輪實況不變」前綴

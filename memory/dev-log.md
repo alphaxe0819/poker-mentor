@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-20 [flow] task-board 清理：T-058 移 Done + 開 T-059 follow-up
+- 身邊大腦 merge T-058 到 dev.37 但 task-board 忘了移 Done
+- 這台大腦接手清理：
+  - task-board T-058 In Review → Done（附 Edge Function 未部署註記）
+  - 新 T-059 進 Queue：Edge Function 部署 + 實機驗收（3 條：壓制 / 抓詐唬牌 / 不用大陸用語）
+- `origin/wip/T020-hu40bb-srp-fill` 也是殘留 cache，`git fetch --prune` 清掉
+- 純 flow 改動，不 bump version
+
 ## 2026-04-20 v0.8.1-dev.37 [dev]
 - T-058 正式整合（wip/T058-zh-tw-terminology → dev）
 - 改動：單檔 `supabase/functions/exploit-coach/index.ts:170-204`（+31/-1）
