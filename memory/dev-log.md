@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.34 [dev]
+- T-053 完成（大腦單機快修）：自動化診斷 log，避開用戶需手動跑 console 命令/無 Mac Web Inspector 的限制
+- 用戶首次實機 log 已拿到：tokenHead `eyJhbGciOiJFUzI1NiIs`（ES256 asymmetric JWT）、supabaseUrl 測試 project、origin match，但 `[parent-refresh] replied` 缺失 → parent refreshSession 3s timeout
+- 缺的關鍵欄位：token payload (iss/aud/role/exp) + parent VITE_SUPABASE_URL 實際值
+- 改動：
+  - `public/exploit-coach-mockup-v3.html`（callCoach `[first]` log）— 新增 JWT decode，自動印 `payload_iss / payload_aud / payload_role / payload_ref / payload_exp_date / payload_expired / payload_full`，不需用戶手動 `atob(token.split('.')[1])`
+  - `src/tabs/ExploitCoachTab.tsx`（useEffect 頂部）— 新增 `[parent-env]` log 印 `VITE_SUPABASE_URL / project_ref / mismatch`（自動化 T-052 的 Vercel env 核對）
+- 完成條件：tsc EXIT=0（本機未跑，執行者已驗）；實機 console 打開就看得到新 log，不用任何手動指令
+- 下一輪實機測試：用戶只要開 Chrome DevTools Console 觸發 bug，把 `[parent-env]` + `[exploit-coach-401][first]` 貼回即可判根因
+- 產品改動（src/ + public/）→ 跑測試機 curl 驗證
+
 ## 2026-04-20 v0.8.1-dev.33 [dev]
 - T-051 正式整合（wip/T051-exploit-coach-401-diag → dev）
 - 背景：2026-04-20 實機（iPhone Safari WiFi+4G 都壞）在 AI 分析顯示「登入已過期」= `exploit-coach-mockup-v3.html:1574`

@@ -321,6 +321,11 @@ updated: 2026-04-20
   - 另一台之前報告的「04-16 WIP」（batch-worker / seed-batches / getGTOPostflopFromDB / DB migration）實際上已在 dev（dev.8-dev.11 那批 commit 正是）
   - 動作：remote 三個 branch 全刪（`git push --delete`）
   - 另一台 Claude 後續動作：checkout dev + pull + 跑新 SOP（見本次 dev-log）
+- [x] **T-053** | 大腦（單機快修） | **exploit-coach 401 自動化診斷 log（JWT decode + parent env）** | 2026-04-20 | dev.34
+  - 背景：用戶無 Mac Web Inspector、無法手動跑 console 指令 → 把診斷 baked into code，任何人開 Console 就能看到
+  - `public/exploit-coach-mockup-v3.html` `[exploit-coach-401][first]` log 擴充：JWT decode 自動印 `payload_iss / payload_aud / payload_role / payload_ref / payload_exp_date / payload_expired / payload_full`
+  - `src/tabs/ExploitCoachTab.tsx` useEffect 頂部新增 `[parent-env]` log：印 `VITE_SUPABASE_URL / project_ref / mismatch`（= T-052 自動化核對，parent 載入就印）
+  - 併 T-051 首輪實機 log 分析：ES256 token、origin match、但缺 `[parent-refresh] replied` → 下輪重測就會有完整拼圖
 - [x] **T-051** | Product + 大腦 | **exploit-coach 401 診斷 + fuzzy → exact storage key** | 2026-04-20 | merge + dev.33
   - 執行者：這台主目錄（`wip/T051-exploit-coach-401-diag` @ `8817e74`）
   - 大腦：review + merge（這台 `-brain` worktree）
