@@ -156,12 +156,8 @@ updated: 2026-04-20
 ### Follow-up（T-033 引發）
 
 <!-- T-042 → Done 2026-04-20 -->
-- [ ] **T-043** | Pipeline | **batch-worker 環境準備 + 首次實跑** ⚡ **Ready**（T-042 已解）
-  - 動作：scripts/gto-pipeline/ 下 `npm install @supabase/supabase-js`
-  - 加 `.env` 含 `SUPABASE_URL` + `SUPABASE_SERVICE_KEY`
-  - 跑 `node seed-batches.mjs` → 應填 N 筆 pending 到 gto_batch_progress
-  - 跑 `node batch-worker.mjs --machine DESKTOP-A --dry-run` 驗證領取流程
-  - 依賴：~~T-042~~ ✅ migration 已部署到測試 Supabase
+<!-- T-043 → In Progress 2026-04-20 -->
+
 
 - [ ] **T-044** | 大腦 | **修 migration 20260416-gto-postflop.sql 的 plpgsql 解析問題**
   - 背景：T-042 部署時，原 plpgsql function `claim_gto_batch` 在 Supabase SQL Editor 跑會報 `42P01: relation "v_id" does not exist`（即使用 `$func$` 具名 dollar quote 也擋不住）
@@ -190,6 +186,8 @@ updated: 2026-04-20
   - **連帶**：T-021（HU 40bb 3bp）/ T-023（HU 深度擴充）後續也應對齊 21 flops
 
 <!-- T-042 已部署完成，移至 Done -->
+
+<!-- T-043 → In Review 2026-04-20 -->
 
 <!-- T-033 已 merge 到 dev，移至 Done -->
 
@@ -240,6 +238,28 @@ updated: 2026-04-20
   - **未做但建議大腦補**（不阻擋 C2 完成）：
     - 在實機（另一台桌機）上跑 `node scripts/gto-pipeline/parse-pd-table-name.mjs scripts/gto-pipeline/output/pd-ranges` 拿真實 10 個 pd project 的 parsing rate / unknown 樣本，根據結果擴充 prefix dict（例：發現 "Open Limp" 多到該獨立分類，再加 keyword）
     - C3（T-011）會用 enumerateMTTFromPD 的輸出，但 hand map → TexasSolver range 字串轉換還沒寫 — 這留給 C3 任務
+  - 等大腦 merge
+
+- [?] **T-043** | Pipeline | **batch-worker 環境準備 + 首次實跑（dry-run）**
+  - branch: `wip/T043-batch-worker-setup`（從 origin/dev `d7944e0` dev.30 切出）
+  - 最後 commit: 待 push
+  - 機器：這台主目錄
+  - 改動範圍（純 scripts/ + memory/，無 src/ 動）：
+    - **新檔** `scripts/gto-pipeline/package.json` + `package-lock.json`（`npm init -y` + `npm install @supabase/supabase-js`，13 packages, 0 vulns）
+    - 不變動：`.gitignore`（root 既有 `node_modules` / `.env` 無前綴 pattern，子目錄全層級覆蓋；確認過 `git check-ignore -v` 兩個都 hit `.gitignore:10` 與 `.gitignore:16`）
+    - **本機**（不入 commit）：`scripts/gto-pipeline/.env` 已寫入測試 Supabase URL + service_role key
+  - 執行驗證：
+    - ✅ `node seed-batches.mjs` → seed **390 turn batches**（13 BOARDS × 平均 10 turnCards × 3 STACK_RATIOS [40/25/13bb]，無 river）
+    - ✅ `node batch-worker.mjs --machine TEST-DRY --dry-run --max 2` → 連續領到 2 筆 `turn | 7s7d2h+3c | 13bb`（dry-run skip solver，code line 391-396 已實作）
+    - ✅ post dry-run state：total=390 / pending=390 / machine_id=TEST-DRY=0（dry-run 自動還原 row 至 pending，**派單 step 6 的 manual reset SQL 不需執行**）
+    - ✅ `npx tsc -b --noEmit` EXIT=0
+  - 派單 vs 實際差異（給大腦參考）：
+    1. 派單 step 5 寫「驗 status='processing'」— schema CHECK constraint 沒 `processing`（合法只有 `pending/claimed/uploading/done/failed`）；且 dry-run 立即還原，所以本來就看不到 `claimed`
+    2. dry-run 連續 claim 會一直拿同一筆（還原後排序仍排第一）— 是預期行為，real run mark `done` 不會重複
+    3. seed 量 390 比派單預估的「156 rows」多 — 因為 STACK_RATIOS 是 3（13/25/40bb 都 seed），不是 1
+  - 後續 task（待大腦排）：
+    - **T-045** | Pipeline | 真跑 1 個 batch（去掉 --dry-run，跑 1 個 turn 看 solver → JSON → DB upload 完整鏈路 ≈ 15-30 min）
+    - **T-046** | Pipeline | seed `--include-river`（會插入大量 river batches，建議估算後再跑）
   - 等大腦 merge
 
 <!-- T-050 已 merge 到 dev，移至 Done -->
