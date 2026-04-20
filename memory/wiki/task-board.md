@@ -75,6 +75,21 @@ updated: 2026-04-20
   - 預估：15 min，5 行 PowerShell 改動
   - 完成條件：在 HU 25bb 舊命名 fixture 上 `-SkipExisting` 不會誤判重跑
 
+- [ ] **T-058** | Product | **exploit-coach Claude 教練繁中術語 grounding**
+  - 建議 branch：`wip/T058-zh-tw-terminology`
+  - 背景：T-055 實機驗 OK 但 Claude Haiku 把 `dominate` 翻成「過度」（不通）、`bluff catcher` 類抽象詞也常直翻。需要把繁中術語表塞進 system prompt 當強制 grounding
+  - Source：`memory/wiki/poker-terminology-zh-tw.md`（新 wiki，大腦已整理好 70+ 詞 + 8 個台灣來源 + LLM 高風險詞清單）
+  - 範圍：單檔 `supabase/functions/exploit-coach/index.ts` `buildSystemPrompt`
+    - 把 wiki 中「術語對照表」+「使用規則」複製貼入 prompt base（放在 T-055 加的「本輪場景 grounding」段之後）
+    - 建議只保留 Markdown table 核心 + 使用規則 3 條，省 token（完整表留在 wiki，prompt 只放精華）
+    - 特別強調 4 個 LLM 高風險詞：dominate / cooler / bluff catcher / polarized、merged
+  - 完成條件：
+    - tsc EXIT=0
+    - 實機驗證：之前會出現「過度」的 QQ 對 AK/AA/KK 問題，現在應改用「壓制」
+    - 追問用過「抓詐唬牌」或保留英文「bluff catcher」，不出現「詐唬捕手」類怪譯
+  - 部署：大腦 merge 後產出 Edge Function 整檔貼碼指令給用戶貼到測試 Supabase
+  - 預估：15-20 min（純 prompt 文字改動，不動邏輯）
+
 - [ ] **T-057** | 大腦 | **wiki: gto-pipeline-conventions.md 命名規範**
   - 建議 branch：`wip/T057-gto-pipeline-conventions`
   - 範圍：新 wiki 頁面明文定義：

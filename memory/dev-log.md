@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-20 [flow] T-058 前置：繁中 poker 術語 wiki 完成
+- T-055 實機驗證 OK 但 Claude Haiku 把 `dominate` 翻「過度」(不通)、其他 LLM 高風險詞也易直翻
+- 大腦派 research agent 收集 70+ 詞繁中術語表（交叉比對 8 個台灣撲克站：Taiwan Rounders / pokerdomain / sixpoker666 / Andy Poker / Monsterstack）
+- 新 wiki `memory/wiki/poker-terminology-zh-tw.md`：完整術語表 + 使用規則 + LLM 高風險詞標粗體（dominate / cooler / bluff catcher / polarized / merged）
+- `memory/index.md` 加連結
+- T-058 進 Queue 派執行者：把 wiki 精華塞 exploit-coach `buildSystemPrompt`
+- 純 flow 改動，不 bump version
+
 ## 2026-04-20 v0.8.1-dev.36 [dev]
 - T-020 正式整合（wip/T020-hu40bb-srp-fill → dev）
 - 執行者：另一台電腦（Stage 1 `6119d74` + Stage 2 `9545e7c` + In Review `5e3c7ee`）

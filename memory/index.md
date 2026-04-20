@@ -14,6 +14,7 @@
 - [[ui-v2-rules]] — V2 UI 設計規則：牌面樣式、版面結構、HU 換手 UX
 - [[deployment-state]] — Supabase Edge Functions / DB Tables / RPC / Vercel 基礎設施狀態
 - [[supabase-edge-function-gotchas]] — Edge Function 部署坑：ES256 JWT 不被 runtime 支援、Secrets 跨 project 不自動帶、fetch 沒 response.ok check
+- [[poker-terminology-zh-tw]] — 繁中撲克術語對照表（台灣社群用法）：LLM 教練 system prompt 的術語 grounding，避免 `dominate`→「過度」類直翻
 
 ## Feedback & Rules
 
