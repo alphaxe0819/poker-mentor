@@ -25,4 +25,5 @@
 
 ## Scraping
 
+- [[range-collection-roadmap]] — 範圍收集總進度表：scraping / converter / solver 三線分批 + 跨機器協作指引
 - [[project_pokerdinosaur_scraping]] — pokerdinosaur.com 備份進度、正確技術方案、待爬 project 清單（未經允許不得更改方案）

@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.18 [dev]
+- 新增 `memory/wiki/range-collection-roadmap.md`：三線分批進度表（scraping / converter / solver）
+- 方案 1（converter 串接）拆成 C0-C4 phase；MTT postflop（P5）依賴 C4
+- `memory/index.md` 加入 roadmap 連結
+- 跨機器協作指引：檔案邊界 + 預期衝突點（version.ts / dev-log.md）
+
 ## 2026-04-20 v0.8.1-dev.17 [dev]
 - 範圍收集成果提交（pokerdinosaur scraping + HU 13bb/25bb GTO data）
 - 新 `scripts/gto-pipeline/scrape-pokerdinosaur.js` + `scripts/upload-pd-data.js`
