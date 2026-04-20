@@ -78,6 +78,44 @@ updated: 2026-04-20
 
 ### Product 線
 
+- [ ] **T-050** | Product | **exploit-coach v2 bug 修復（3 個新 bug）** 🔥 優先
+  - 建議 branch：`wip/T050-exploit-coach-bugs-v2`
+  - 範圍：`public/exploit-coach-mockup-v3.html` + 可能 `src/tabs/ExploitCoachTab.tsx`
+  - 使用者驗證發現：
+
+  **Bug 0** — Hero 手牌未選仍可進「下一步 →」
+  - 位置：S1 頁面（位置 & 手牌）的「下一步」按鈕
+  - 成因推測：按鈕 onclick 沒檢查 `heroCards[0] && heroCards[1]`
+  - 修法：加按鈕 disabled 條件或 onclick guard
+  - 順便：對手位置也該必選才能「下一步」
+
+  **Bug 1** — S5b「我知道」→ 點卡槽沒開 picker / 無法輸入
+  - 位置：`openVillPicker` / `renderVillainSlots` / `pickSuit` 的 `v` prefix 分支
+  - 成因推測：
+    - `openVillPicker` 有設 `pickerTarget = 'v' + idx` 但 `#card-picker` DOM 沒顯示（z-index? `.show` class?）
+    - 或 `pickSuit` 的 `typeof tgt === 'string' && tgt.charAt(0) === 'v'` 判斷出錯
+  - Debug 步驟：iframe DevTools 看 `document.getElementById('card-picker').classList`，看點擊卡槽時是否加上 `show`
+  - Console 觀察：點卡槽時有沒有 error
+
+  **Bug 2** — AI 分析顯示「⚠ 連線錯誤：Load failed」
+  - 位置：
+    - `public/exploit-coach-mockup-v3.html` 的 `callCoach`
+    - `src/tabs/ExploitCoachTab.tsx` 的 postMessage listener
+  - 成因推測（三選一或多項同發）：
+    - (a) postMessage 鏈路斷：parent listener 的 `e.source !== iframe.contentWindow` 判斷過嚴
+    - (b) 未登入 → `getFreshAccessToken` 回 null → 直接 fetch 觸發 CORS error
+    - (c) Edge Function 本身 4xx/5xx（測試 Supabase 的 exploit-coach Function 狀態）
+  - Debug 步驟：
+    1. iframe DevTools Network tab 看 `functions/v1/exploit-coach` 的 request status
+    2. 若是 401/403 → token 問題（回到 postMessage 橋接 debug）
+    3. 若是 CORS → parent 沒 listener（回 ExploitCoachTab.tsx debug）
+    4. 若是 500 → Edge Function 掛（看 Supabase Dashboard logs）
+
+  - 完成條件：
+    - `npx tsc -b --noEmit` EXIT=0
+    - 實機測試 3 個 bug 都 pass（iOS Safari + Chrome）
+    - Console 無 error / warning
+
 - [ ] **T-030** | Product | **實機驗證 exploit-coach 5 bug（dev.16）**
   - 建議 branch：無（純手動 UI 驗證，不需 branch）
   - 操作位置：瀏覽器 `https://poker-goal-dev.vercel.app/`

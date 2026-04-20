@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-04-20 [flow] 大腦規劃：T-050 新 bug + 分工列表
+- 使用者實機驗證發現 3 個 exploit-coach bug：
+  - Bug 0: Hero 手牌空白仍能按「下一步」
+  - Bug 1: S5b 對手手牌「我知道」→ 點卡槽 picker 沒顯示
+  - Bug 2: AI 分析顯示「連線錯誤：Load failed」
+- task-board 加 T-050（Product 線，建議 `wip/T050-exploit-coach-bugs-v2`）
+- 附詳細成因推測 + debug 步驟給執行者
+- 分工：
+  - 這台（桌機，等下切執行者）：solver 擴充（T-042 → T-043 → T-020~T-023）
+  - 另一台：T-050（3 個 bug 修復）
+- 本次純 flow 改動（task-board + dev-log），不 bump version（新規則：只有 wip merge 才 bump）
+
 ## 2026-04-20 v0.8.1-dev.27 [dev]
 - T-033 正式整合（wip/T033-gto-postflop-v2-wip → dev）
 - merge --no-ff：2 commits 進 dev（c64d2eb 保留 + b673b0b async fix）
