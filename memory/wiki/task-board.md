@@ -326,6 +326,15 @@ updated: 2026-04-20
 - [x] **T-001** | Product | exploit-coach 5 bug 程式修復 | 2026-04-19~20 | `ff6f1f9` (dev.16)
   - 產出：mockup-v3.html + ExploitCoachTab.tsx + exploit-coach/index.ts
   - 狀態：**待 T-030 實機驗證**
+- [x] **T-058** | Product + 大腦 | **exploit-coach Claude 教練繁中術語 grounding** | 2026-04-20 | merge + dev.37
+  - 執行者：`wip/T058-zh-tw-terminology` @ `ff496c1`
+  - 大腦：review + merge（這台 `-brain` worktree）+ 產 Edge Function 貼碼指令
+  - 改動：單檔 `supabase/functions/exploit-coach/index.ts:170-204`（+31/-1）
+  - 內容（接在 T-055 grounding 之後）：5 LLM 高風險詞 ❌ 黑名單（dominate/cooler/bluff catcher/polarized/merged）+ 21 保留英文清單 + 12 推薦譯法 + 3 使用規則
+  - Prompt 增加 ~700 token（派單預估範圍內）
+  - 驗證：tsc EXIT=0
+  - ⚠ 部署：用戶手動貼整檔到測試 Supabase Edge Function editor
+  - 實機驗收 3 條：QQ vs AK/AA/KK 不再出現「過度」；「bluff catcher」用「抓詐唬牌」或保留英文；不蹦「蝨子/踢子」大陸用語
 - [x] **T-020** | Pipeline + 大腦 | **HU 40bb SRP 13 → 21 flops (peer parity 25bb) + 命名統一去除 FLOP_** | 2026-04-20 | merge + dev.36
   - 執行者：另一台電腦（`wip/T020-hu40bb-srp-fill`：`6119d74` → `9545e7c` → `5e3c7ee`）
   - 大腦：review + merge（這台 `-brain` worktree）

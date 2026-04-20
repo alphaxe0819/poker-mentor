@@ -5,6 +5,21 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.37 [dev]
+- T-058 正式整合（wip/T058-zh-tw-terminology → dev）
+- 改動：單檔 `supabase/functions/exploit-coach/index.ts:170-204`（+31/-1）
+- 內容：`buildSystemPrompt` 接在 T-055 grounding 之後新增「繁中 poker 術語校準」段
+  - 5 LLM 高風險詞 ❌ 黑名單：dominate / cooler / bluff catcher / polarized / merged
+  - 21 保留英文清單：c-bet / 3-bet / 4-bet / GTO / MDF / ICM / SRP / 位置縮寫 / TAG / LAG / nit / maniac 等
+  - 12 推薦譯法：bluff / equity / pot odds / implied odds / fold equity / blocker / squeeze / donk / float / set / trips / calling station
+  - 3 使用規則：保留英文 / 表外英文+解釋 / 避免大陸用語
+- Prompt 增加 ~700 token（派單預估 500-800 範圍內）
+- 驗證：tsc EXIT=0
+- ⚠ Edge Function 部署需用戶手動貼整檔到測試 Supabase (btiqmckyjyswzrarmfxa)
+- 實機驗收 3 條：(1) QQ vs AK/AA/KK 用「壓制」非「過度」；(2) bluff catcher 用「抓詐唬牌」非「詐唬捕手」；(3) 不蹦大陸用語
+- 產品改動（supabase/）→ 測試機 curl 驗證 Vite build（Edge Function 不影響 Vite，走過場）
+- wip/T058-zh-tw-terminology 待刪
+
 ## 2026-04-20 [flow] T-058 前置：繁中 poker 術語 wiki 完成
 - T-055 實機驗證 OK 但 Claude Haiku 把 `dominate` 翻「過度」(不通)、其他 LLM 高風險詞也易直翻
 - 大腦派 research agent 收集 70+ 詞繁中術語表（交叉比對 8 個台灣撲克站：Taiwan Rounders / pokerdomain / sixpoker666 / Andy Poker / Monsterstack）
