@@ -6,9 +6,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "git fetch --all 2>&1 && git pull --ff-only origin $(git branch --show-current) 2>&1 || true",
+            "command": "bash scripts/session-sync.sh",
             "timeout": 30,
-            "statusMessage": "Pulling latest from remote"
+            "statusMessage": "Pulling latest from remote (auto-stash if WIP)"
           },
           {
             "type": "command",

@@ -5,6 +5,15 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.21 [dev]
+- 跨機共工自動化
+- 新 `scripts/session-sync.sh`：auto-stash → pull → pop（容 WIP 不再擋開工）
+- 改 `scripts/session-start-reminder.sh`：印遠端 5 筆 commit + 本地 diff + WIP 清單 + dev-log 前 3 筆
+- `.claude/settings.json` SessionStart hook 改呼叫 session-sync.sh
+- 新 wiki `memory/wiki/two-machine-workflow.md`：一分支/硬紀律/腳本包容 + 角色偏好 + 衝突解法
+- `memory/index.md` 加入 two-machine-workflow 連結
+- 目的：解決今天另一台 feature/exploit-lab 孤島 + WIP 擋 pull 的痛點
+
 ## 2026-04-20 v0.8.1-dev.20 [dev]
 - C1.5 完成：labelToBucket 改 prefix-based token scanner
 - 新增 `"All in"` / `"all-in"` normalize 成 `allin`
