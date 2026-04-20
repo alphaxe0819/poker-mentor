@@ -350,15 +350,9 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-- [?] **T-057** | Pipeline | **wiki: gto-pipeline-conventions.md 命名規範**
-  - branch: `wip/T057-gto-pipeline-conventions`（從 origin/dev `b337205` 切出）
-  - 最後 commit: `6d944fc` feat(T-057): gto-pipeline-conventions wiki + index link
-  - 完成備註：
-    - 新檔 `memory/wiki/gto-pipeline-conventions.md`（完整依派單範本貼入：檔名規範 / Export 名規範 / 目的 / 當前遺留清單 / 相關 wikilink）
-    - 改 `memory/index.md` Development 區塊，加 `[[gto-pipeline-conventions]]` 一行連結（接在 `poker-terminology-zh-tw` 之後）
-    - 未動 `src/version.ts` / `memory/dev-log.md` / scripts/ / src/ / supabase/
-  - 驗證：✅ `npx tsc -b --noEmit` EXIT=0
-  - 大腦動作：review → merge wip 到 dev → bump version + append dev-log → 移 Done
+*（空）*
+
+<!-- T-057 → Done 2026-04-20 -->
 
 <!-- T-058 → Done 2026-04-20，實機部署/驗收見 follow-up T-059 -->
 
@@ -484,6 +478,13 @@ updated: 2026-04-20
   - 併收 T-052（RC1 排除）
   - 副產物 TODO：Edge Function code 加 `response.ok` check + log Claude error body（記在 wiki 坑 3，未做）
   - 正式 Supabase `qaiwsocjwkjrmyzawabt` 若啟用 ES256 會同樣壞，待用戶授權
+- [x] **T-057** | Pipeline + 大腦 | **wiki: gto-pipeline-conventions.md 命名規範** | 2026-04-20 | merge only (flow, no bump)
+  - 執行者：`wip/T057-gto-pipeline-conventions` @ `6d944fc` / `75ecb05`（Sandbox session）
+  - 產出：
+    - 新 `memory/wiki/gto-pipeline-conventions.md`：檔名規範 + Export 名規範 + 遺留清單（HU 25bb/13bb SRP _flop_）
+    - `memory/index.md` Development 區加連結
+  - 驗證：tsc EXIT=0
+  - 純 flow 改動（memory/wiki + index），不 bump version
 - [x] **T-058** | Product + 大腦 | **exploit-coach 繁中 poker 術語 grounding** | 2026-04-20 | merge + dev.37
   - 執行者：`wip/T058-zh-tw-terminology` @ `ff496c1`
   - 大腦整合：身邊機器 `-brain` worktree

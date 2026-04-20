@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-04-20 [flow] T-057 整合完成：gto-pipeline-conventions wiki
+- 執行者：Sandbox session（`wip/T057-gto-pipeline-conventions` @ `6d944fc` / `75ecb05`）
+- 大腦：這台主目錄 session
+- merge commit `XXXXXXX` — no conflict
+- 產出：
+  - `memory/wiki/gto-pipeline-conventions.md`（42 行）：檔名規範 `gtoData_<gameType>_<stack>_<pottype>_<slug>.ts`（無 `flop_` 前綴）+ Export 名 `<GAMETYPE>_<STACK>_<POTTYPE>_<SLUG>`（無 `FLOP_` 中綴）+ T-021/T-023 遺留清單
+  - `memory/index.md` Development 區加 `[[gto-pipeline-conventions]]` 連結
+- 驗證：tsc EXIT=0
+- 純 flow 改動（memory/wiki + memory/index.md），**不 bump version**（符合新規則）
+- wip/T057 待刪
+- 副產物（為本次整合發現）：session-start-reminder.sh 加 Sandbox 偵測 → `245fd5b`，未來 sandbox 新對話自動看到 bootstrap 指引
+
 ## 2026-04-20 [flow] task-board 清理：T-058 移 Done + 開 T-059 follow-up
 - 身邊大腦 merge T-058 到 dev.37 但 task-board 忘了移 Done
 - 這台大腦接手清理：
