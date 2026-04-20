@@ -20,7 +20,12 @@
 
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { SIXMAX_SCENARIOS } from './scenarios.mjs'
+import { ALL_FORMATS } from './scenarios.mjs'
+
+// Accept any scenario slug across formats (hu / 6max / 9max / mtt).
+// T-011 E2E：MTT scenario 暫借 solver_postflop_6max table 入庫，等 T-012 建
+// solver_postflop_mtt 後用 `WHERE scenario_slug LIKE 'mtt_%'` 遷移。
+const ALL_SCENARIOS_LIST = ALL_FORMATS.all
 
 const SUPABASE_URL = process.env.SUPABASE_URL
   || 'https://btiqmckyjyswzrarmfxa.supabase.co'
@@ -34,10 +39,10 @@ if (!jsonPath || !scenarioSlug || !flopSlug) {
   process.exit(1)
 }
 
-const scenario = SIXMAX_SCENARIOS.find(s => s.slug === scenarioSlug)
+const scenario = ALL_SCENARIOS_LIST.find(s => s.slug === scenarioSlug)
 if (!scenario) {
   console.error(`Unknown scenario slug: ${scenarioSlug}`)
-  console.error(`Available: ${SIXMAX_SCENARIOS.map(s => s.slug).join(', ')}`)
+  console.error(`Available (${ALL_SCENARIOS_LIST.length}): ${ALL_SCENARIOS_LIST.map(s => s.slug).join(', ')}`)
   process.exit(1)
 }
 

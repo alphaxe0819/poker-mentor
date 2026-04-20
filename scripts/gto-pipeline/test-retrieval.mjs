@@ -89,6 +89,11 @@ const tests = [
     label: '節點導航：IP 面對 OOP check',
     ctx: { scenario_slug: '6max_100bb_srp_utg_open_hj_call', flop: '7s7d2h', pot_type: 'srp', path: ['CHECK'] },
   },
+  // T-011 E2E：MTT scenario Tier A 必中（暫借 solver_postflop_6max，T-012 後遷移）
+  {
+    label: 'T-011 Tier A — MTT E2E 骨架驗證',
+    ctx: { scenario_slug: 'mtt_40bb_srp_btn_open_bb_call', flop: 'As7d2c', pot_type: 'srp' },
+  },
 ]
 
 for (const t of tests) {
