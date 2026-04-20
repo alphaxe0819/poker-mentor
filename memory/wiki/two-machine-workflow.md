@@ -80,26 +80,61 @@ updated: 2026-04-20
 
 ---
 
-## 🌳 多 Session 並行（同電腦多對話）
+## 🌳 多 Session 並行架構（統一命名）
 
-同一台電腦開多個 Claude Code 對話時，**不能共用同一個 working directory**（Git 狀態打架）。用 `git worktree`：
+**規則三條**：
+1. **主目錄** = 單對話通用（三角色問句），多對話時當大腦
+2. **`-wip*` 後綴目錄** = 執行者 worktree（自動執行者 SOP）
+3. 不用時 `-wip` 目錄停在 detached HEAD
+
+### 目錄配置
+
+| 目錄 | Branch 狀態 | 用途 |
+|---|---|---|
+| `<repo>` 主目錄 | `dev` | 單對話 / 大腦 |
+| `<repo>-wip1` | detached 或 `wip/T0xx-...` | 執行者 #1 |
+| `<repo>-wip2` | detached 或 `wip/T0yy-...` | 執行者 #2（選配） |
+
+### 建立 `-wip` worktree（一次指令）
 
 ```bash
-# 在主 repo 建第二個工作目錄
-cd C:\Users\User\POKERNEW
-git worktree add ../POKERNEW-brain dev       # 大腦專用 worktree
-git worktree add ../POKERNEW-solver dev      # 或其他執行者 worktree
+# 假設 repo 名是 poker-mentor 或 gto-poker-trainer
+cd <repo 主目錄>
+git worktree add ../<repo-name>-wip1 --detach origin/dev
+
+# 驗證
+git worktree list
 ```
 
-工作目錄命名：
-- `POKERNEW`（主）— 通常是主要執行者
-- `POKERNEW-brain` — **特殊**：SessionStart hook 偵測到會走大腦模式 SOP
-- `POKERNEW-<task>` / `POKERNEW-*` — 其他執行者 worktree（獨立 branch）
+### 日常使用
 
-每個 Claude Code session 的 cwd 決定它的角色：
-- 主 repo → 走三角色問句
-- `POKERNEW-brain` → 自動大腦模式
-- `POKERNEW-*` → 自動執行者 worktree 模式
+| 情境 | 開哪個目錄的 Claude Code |
+|---|---|
+| 單對話切角色 | 主目錄 |
+| 多對話：大腦 | 主目錄（永遠 dev） |
+| 多對話：執行者 A | `-wip1` 目錄 |
+| 多對話：執行者 B | `-wip2` 目錄 |
+
+### 執行者 worktree 流程
+
+```bash
+cd <repo>-wip1
+
+# 開工接 task
+git fetch --all
+git checkout -b wip/T0xx-短描述 origin/dev
+# 做事、commit、push
+git push -u origin wip/T0xx-短描述
+
+# idle（交還給大腦）
+git checkout --detach origin/dev
+```
+
+**重要**：執行者**不動** `src/version.ts` / `memory/dev-log.md`，這兩個檔大腦整合時才動。
+
+### 舊命名（`POKERNEW-brain` / `POKERNEW-*`）
+
+保留向後相容，但建議新配置改用 `-wip*` 後綴的簡潔模型。
 
 ## 🌳 分支命名規則
 

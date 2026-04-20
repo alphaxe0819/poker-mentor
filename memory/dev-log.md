@@ -5,6 +5,15 @@
 
 ---
 
+## 2026-04-20 [flow] Worktree 命名簡化：`-wip*` 統一後綴
+- 原 `POKERNEW-brain` / `POKERNEW-*` 太複雜，改為簡單規則：
+  - 主目錄 = 單對話通用 / 多對話時當大腦
+  - `-wip*` 後綴 = 執行者 worktree
+  - 不用時 detached HEAD
+- session-start-reminder 新偵測：cwd basename 含 `-wip` → 固定執行者 SOP
+- two-machine-workflow.md 簡化並行章節
+- 舊 POKERNEW-* 保留向後相容
+
 ## 2026-04-20 v0.8.1-dev.28 [dev]
 - T-050 正式整合（wip/T050-exploit-coach-bugs-v2 → dev）
 - merge --no-ff，tsc EXIT=0

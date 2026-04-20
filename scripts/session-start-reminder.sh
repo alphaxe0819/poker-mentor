@@ -5,29 +5,30 @@
 # Worktree 模式偵測
 cwd=$(basename "$PWD")
 
-# 大腦專用 worktree：POKERNEW-brain（身邊機器當 integrator 用）
-if [[ "$cwd" == POKERNEW-brain ]]; then
-  echo "🧠 大腦 worktree 模式（身邊機器的 integrator session）："
-  echo "  1. 讀 memory/wiki/task-board.md — 看 In Review 有什麼 wip 要整合"
-  echo "  2. 讀 memory/dev-log.md 最新 5 筆"
-  echo "  3. git fetch --all 看遠端 wip branches（git branch -r | grep wip/）"
-  echo "  4. 依序 review + merge --no-ff + bump version + append dev-log"
-  echo "  5. push dev 後驗證 Vercel 部署（curl dev.vercel.app）"
-  echo "  6. 刪 merged wip branch（git push origin --delete wip/...）"
-  echo "  7. 等用戶指示下一步"
+# 執行者 worktree：目錄名含 "-wip" 後綴（例：poker-mentor-wip1 / gto-poker-trainer-wip1）
+if [[ "$cwd" == *-wip* ]]; then
+  echo "🛠 執行者 worktree 模式（固定執行者角色）："
+  echo "  1. 讀 memory/dev-log.md 最新 5 筆（下方已印）"
+  echo "  2. 讀 memory/wiki/task-board.md Queue 區，看要接哪個 task-id"
+  echo "  3. 開 wip branch：git checkout -b wip/T0xx-短描述 origin/dev"
+  echo "  4. 做事、commit（不動 src/version.ts / memory/dev-log.md）"
+  echo "  5. push wip branch，編輯 task-board 移到 In Review"
+  echo "  6. idle 時切回 detached：git checkout --detach origin/dev"
   echo ""
-  echo "  完整規則：memory/wiki/two-machine-workflow.md"
+  echo "  規則詳見 memory/wiki/two-machine-workflow.md"
+  echo "  完成後告知大腦 session（主目錄 / 另一台大腦對話）整合"
   exit 0
 fi
 
-# 其他 POKERNEW-* worktree = 執行者獨立 branch 模式
+# 舊的 POKERNEW-brain worktree 向後相容（建議改用主目錄當大腦）
+if [[ "$cwd" == POKERNEW-brain ]]; then
+  echo "🧠 大腦 worktree 模式（legacy，建議搬回主目錄）："
+  echo "  整合流程：fetch → merge --no-ff wip/T0xx → bump version + append dev-log → push dev → 刪 wip"
+  exit 0
+fi
 if [[ "$cwd" == POKERNEW-* ]]; then
-  echo "🛠 執行者 worktree 模式（獨立 branch）："
-  echo "  1. 讀 memory/dev-log.md 了解最近開發"
-  echo "  2. 讀 memory/index.md 取得專案知識庫索引"
-  echo "  3. 讀 memory/wiki/task-board.md — 看指派給本 worktree 的 task"
-  echo "  4. 回報：分支 / 版本 / 最近改動 / 未完成事項"
-  echo "  5. 等用戶指示要做什麼"
+  echo "🛠 執行者 worktree（legacy POKERNEW-* 命名，建議改用 -wip 後綴）："
+  echo "  git checkout -b wip/T0xx origin/dev 開工"
   exit 0
 fi
 
