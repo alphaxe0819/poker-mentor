@@ -402,6 +402,19 @@ export const MTT_SCENARIOS = (() => {
   return out
 })()
 
+// T-011 E2E 小樣本：mtt_40bb_srp_btn_open_bb_call 作為 C3 骨架打通 scenario。
+// range 借 HU 40BB SRP 近似（真 MTT range 轉換器留 T-011 後續 task 處理）；
+// pot/eff 對齊 HU 40BB SRP (5 / 37.5) 以沿用成熟的 srp_medium bet profile。
+{
+  const t011 = MTT_SCENARIOS.find(s => s.slug === 'mtt_40bb_srp_btn_open_bb_call')
+  if (t011) {
+    t011.ranges = HU_40BB_RANGES
+    t011.pot_bb = 5
+    t011.effective_stack_bb = 37.5
+    t011.description = 'T-011 E2E: BTN open 2.5 → BB call → pot 5, eff 37.5 (range 借 HU 40BB SRP 近似)'
+  }
+}
+
 // ── Dynamic: pd hand-map → MTT catalog matching ──
 //
 // 把 pd 解析結果 group 進 catalog entries。每張 table 用 (depth, hero, scenario)
