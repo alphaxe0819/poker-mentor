@@ -104,7 +104,18 @@ updated: 2026-04-20
 
 ## 🔨 In Progress（執行中）
 
-*（空）*
+- [~] **T-033** | Pipeline | **GTO postflop v2 WIP 保留 + review**
+  - branch: `wip/T033-gto-postflop-v2-wip`（另一台執行中）
+  - 內容（7 檔）：
+    - `scripts/gto-pipeline/boards.mjs` (M) — flop+turn+river batch 擴充
+    - `scripts/gto-pipeline/batch-worker.mjs` (新) — Node 批次 worker（vs dev 的 `batch-run.ps1`）
+    - `scripts/gto-pipeline/seed-batches.mjs` (新) — seed batches
+    - `src/lib/gto/getHUPostflopAction.ts` (M)
+    - `src/lib/gto/huHeuristics.ts` (M)
+    - `src/lib/gto/getGTOPostflopFromDB.ts` (新) — **dev 缺：client 端從 DB 讀 postflop**
+    - `supabase/migrations/20260416-gto-postflop.sql` (新) — **dev 缺：postflop schema migration**
+  - 動作：另一台把 stash 轉 wip branch push → 大腦逐檔 review → 決定 cherry-pick 或丟棄
+  - 交接：另一台 push 完回報 commit hash，大腦接手 review
 
 格式範例：
 ```

@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.25 [dev]
+- 大腦判斷：另一台回報的 stash 不是垃圾，是 GTO postflop v2 WIP
+- dev 確認缺失：`src/lib/gto/getGTOPostflopFromDB.ts`（DB 讀取端）
+- dev 確認缺失：`supabase/migrations/20260416-gto-postflop.sql`（正式 migration）
+- 另一台將把 stash push 成 `wip/T033-gto-postflop-v2-wip` 等大腦 review
+- task-board 加 T-033 到 In Progress
+
 ## 2026-04-20 v0.8.1-dev.24 [dev]
 - 大腦整合：清理 3 個過時 feature branches
 - 調查結果：`feature/exploit-lab` / `feature/hu-simulator-v1` / `feature/ui-v2` 全部 `git log dev..` 顯示 **0 獨有 commits**
