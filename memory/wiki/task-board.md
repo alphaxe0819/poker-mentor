@@ -68,37 +68,155 @@ updated: 2026-04-20
   - 待確認具體範圍
 
 - [ ] **T-059** | Product + 用戶 | **T-058 Edge Function 部署 + 實機驗收** `(派工 2026-04-20)`
-  - 建議 branch：無（純 Dashboard 操作）
-  - 前置：T-058 已 merge 到 dev @ `bfdc762`（dev.37）
-  - 動作：
-    1. 大腦產出 `supabase/functions/exploit-coach/index.ts` 整檔貼碼指令
-    2. 用戶手動貼到測試 Supabase Dashboard → Edge Functions → `exploit-coach` → Via Editor → 整檔取代 → Deploy
-    3. 實機驗收 3 條：
-       - (1) QQ vs AK/AA/KK 對話 → 驗 AI 用「壓制」非「過度」
-       - (2) 追問「bluff catcher 是什麼」→ 驗 AI 回「抓詐唬牌」不是「詐唬捕手」
-       - (3) 隨機翻後場景 → 不蹦大陸用語（蝨子/踢子等）
-  - 產出：三條驗收 pass/fail + console log（若 fail）
-  - 後續：全 pass → 真 Done；有零星錯譯 → 補強 prompt 黑名單
+  - **建議 branch**：`wip/T059-T058-deploy-guide`（從 origin/dev 切出）
+  - **前置**：T-058 已 merge @ `bfdc762`（dev.37）
+  - **產出檔**：`docs/supabase-migrations/20260420-T058-zh-tw-terminology-deploy.md`（新檔）
+  - **禁碰**：`supabase/functions/exploit-coach/index.ts`（只讀）；其他 src/ public/
+
+  **deploy guide 結構（必要內容）**：
+
+  ```markdown
+  # T-058 繁中 poker 術語 grounding — 部署指南
+
+  ## 前置
+  - dev 版本 ≥ v0.8.1-dev.37
+  - 測試 Supabase project: btiqmckyjyswzrarmfxa
+
+  ## 部署步驟
+  1. 打開 supabase/functions/exploit-coach/index.ts，全選複製整檔
+  2. 登入 https://supabase.com/dashboard/project/btiqmckyjyswzrarmfxa
+  3. 左側選 Edge Functions → exploit-coach
+  4. 右上「Edit function」或「Via Editor」
+  5. 整檔貼上（覆蓋原內容）
+  6. 按 Deploy
+  7. Deploy 完成 log 顯示 new version 即 OK
+
+  ## 實機驗收（3 條，全 pass 才算真 Done）
+  打開 https://poker-goal-dev.vercel.app/ → 教練 tab
+  設定：hero BTN / villain CO (跟注站型) / board K♠Q♣7♥
+
+  ### 驗收 1：壓制
+  - 輸入：「我拿 QQ 面對 AK 擊中 K，怎麼辦」
+  - ✅ AI 用「被 AK 壓制」/「QQ 被壓制」
+  - ❌ 說「過度」= fail
+
+  ### 驗收 2：bluff catcher
+  - 追問：「bluff catcher 是什麼」
+  - ✅ AI 回「抓詐唬牌」或保留英文
+  - ❌ 回「詐唬捕手」= fail
+
+  ### 驗收 3：大陸用語
+  - 隨機問翻後場景（例：「如果對手跟 bet，該怎麼辦」）
+  - ✅ 不蹦「蝨子」「踢子」「皮卡」等
+  - ❌ 有大陸用語 = fail
+
+  ## 失敗回報格式
+  - Bug #：(1/2/3)
+  - 實際 AI 回覆全文
+  - Chrome DevTools Console log（若有）
+
+  ## 全 pass 後
+  - task-board T-059 → Done
+  - T-058 從「code merged」升級為「真正 Done（含部署）」
+  ```
+
+  - **完成條件（執行者）**：md 檔創建 + `npx tsc -b --noEmit` EXIT=0 + commit + push wip + task-board 移 In Review
+  - **後續（用戶 + 大腦）**：用戶照 guide 部署 + 跑 3 條驗收 → 大腦 merge + 標 Done 或追加修復 task
 
 - [ ] **T-056** | Pipeline | **batch-run.ps1 -SkipExisting 改雙命名偵測（防 T-020 churn 重演）** 🔴 優先 `(派工 2026-04-20)`
-  - 建議 branch：`wip/T056-skipexisting-dual-naming`
-  - 背景：T-020 執行者跑 HU 40bb SRP 時，`-SkipExisting` 只 check 新命名 `gtoData_<slug>.ts`，對舊命名 `gtoData_flop_<slug>.ts` 誤判「未產」→ 全部 base 意外重跑，差點燒 3 hr。執行者及時 kill
-  - 範圍：`scripts/gto-pipeline/batch-run.ps1` 的 `-SkipExisting` 邏輯
-  - 修法：`gtoData_X.ts` OR `gtoData_flop_X.ts` 任一存在就 skip
-  - 預估：15 min，5 行 PowerShell 改動
-  - 完成條件：在 HU 25bb 舊命名 fixture 上 `-SkipExisting` 不會誤判重跑
+  - **建議 branch**：`wip/T056-skipexisting-dual-naming`（從 origin/dev 切出）
+  - **範圍**：`scripts/gto-pipeline/batch-run.ps1` 第 118-137 行 `if ($SkipExisting)` 區塊
+  - **禁碰**：其他 pipeline script / src/ / supabase/
+
+  **背景（必讀）**：T-020 執行者跑 HU 40bb SRP 時，`-SkipExisting` 只 check 新命名 `gtoData_<slug>.ts`，對舊 `gtoData_flop_<slug>.ts` 誤判「未產」→ 全部 base 意外重跑 3 hr。T-056 就是防再踩。
+
+  **實作 step-by-step**：
+
+  第 129 行目前只 check 新命名：
+  ```powershell
+  $tsFile = Join-Path $ProjectRoot "src\lib\gto\gtoData_$baseName.ts"
+  if (Test-Path $tsFile) { ... skip }
+  ```
+
+  改成同時 check 舊命名（baseName 例 `hu_40bb_srp_As7d2c` → 舊命名是 `hu_40bb_srp_flop_As7d2c`，`flop_` 插在 slug 前）：
+  ```powershell
+  $parts = $baseName -split '_'
+  $legacy = ($parts[0..($parts.Length - 2)] -join '_') + '_flop_' + $parts[-1]
+  $tsFile = Join-Path $ProjectRoot "src\lib\gto\gtoData_$baseName.ts"
+  $legacyFile = Join-Path $ProjectRoot "src\lib\gto\gtoData_$legacy.ts"
+  if ((Test-Path $tsFile) -or (Test-Path $legacyFile)) {
+      Write-Host "  SKIP: TS file exists (new or legacy)" -ForegroundColor Yellow
+      $succeeded += $baseName
+      continue
+  }
+  ```
+
+  **完成條件**：
+  1. dry run 驗證：`powershell -ExecutionPolicy Bypass -File scripts/gto-pipeline/batch-run.ps1 -SkipExisting -Filter "^hu_25bb_srp"` → 應跳過 13 個 `_flop_` 舊命名 + 12 個新命名 = 25 個全 skip（HU 25bb SRP 目前 25 檔都已存在）
+  2. commit（**不動** `src/version.ts` / `memory/dev-log.md`）
+  3. push wip + task-board 移 In Review
 
 <!-- T-058 → In Review 2026-04-20 -->
 
-- [ ] **T-057** | 大腦 | **wiki: gto-pipeline-conventions.md 命名規範** `(派工 2026-04-20)`
-  - 建議 branch：`wip/T057-gto-pipeline-conventions`
-  - 範圍：新 wiki 頁面明文定義：
-    - 檔名：`gtoData_<gameType>_<stack>_<pottype>_<slug>.ts`（無 `flop_` 前綴）
-    - Export 名：`<GAMETYPE>_<STACK>_<POTTYPE>_<SLUG>`（無 `FLOP_` 中綴）
-    - 例：`gtoData_hu_40bb_srp_As7d2c.ts` → `export const HU_40BB_SRP_AS7D2C`
-  - 目的：新 solver 產出、手寫 GTO data 都遵守；未來寫 T-056 skip 邏輯時有權威來源
-  - 相關：`memory/index.md` 加連結到 Development 區塊
-  - 預估：10-15 min
+- [ ] **T-057** | Pipeline | **wiki: gto-pipeline-conventions.md 命名規範** `(派工 2026-04-20)`
+  - **建議 branch**：`wip/T057-gto-pipeline-conventions`（從 origin/dev 切出）
+  - **產出檔**：
+    1. 新檔：`memory/wiki/gto-pipeline-conventions.md`
+    2. 改：`memory/index.md` Development 區塊加連結
+  - **禁碰**：scripts/ / src/ / supabase/
+
+  **wiki 檔完整範本（執行者直接套用）**：
+
+  ```markdown
+  ---
+  name: GTO Pipeline Naming Conventions
+  description: solver 產出與手寫 GTO data 的檔名 / export 命名規範，避免 _flop_ 新舊混用
+  type: reference
+  updated: 2026-04-20
+  ---
+
+  ## 檔名規範
+
+  格式：`gtoData_<gameType>_<stack>_<pottype>_<slug>.ts`（**無 flop_ 前綴**）
+
+  - ✅ `gtoData_hu_40bb_srp_As7d2c.ts`
+  - ❌ `gtoData_hu_40bb_srp_flop_As7d2c.ts`（舊格式，T-021 / T-023 會統一）
+
+  ## Export 名規範
+
+  格式：`<GAMETYPE>_<STACK>_<POTTYPE>_<SLUG>`（**無 FLOP_ 中綴**）
+
+  - ✅ `export const HU_40BB_SRP_AS7D2C`
+  - ❌ `export const HU_40BB_SRP_FLOP_AS7D2C`（舊格式）
+
+  ## 目的
+
+  - `convert-to-ts.mjs` 產出自動遵守
+  - 手寫 GTO data 照此命名
+  - T-056 的 `batch-run.ps1 -SkipExisting` 雙命名偵測靠此定義 legacy 格式
+
+  ## 當前遺留清單（待統一）
+
+  - HU 25bb SRP：13 個 `_flop_` 舊命名 → T-021 順便 rename
+  - HU 13bb SRP：13 個 `_flop_` 舊命名 → T-023 順便 rename
+  - 其他 `src/lib/gto/` 下 `_flop_` 檔 → 見各自 task
+
+  ## 相關
+
+  - [[task-board]] T-056 雙命名 skip / T-021 / T-023
+  - [[range-collection-roadmap]]
+  ```
+
+  **index.md 加的一行**（Development 區塊）：
+  ```
+  - [[gto-pipeline-conventions]] — solver 產出與手寫 GTO data 的檔名 / export 命名規範
+  ```
+
+  **完成條件**：
+  1. 兩檔創建/更新
+  2. `npx tsc -b --noEmit` EXIT=0（純 doc 不影響，但跑一次確認沒誤觸）
+  3. commit（**不動** `src/version.ts` / `memory/dev-log.md`）
+  4. push wip + task-board 移 In Review
 
 ### Product 線
 
