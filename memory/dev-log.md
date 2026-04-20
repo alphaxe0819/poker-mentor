@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.16 [dev]
+- Exploit Coach mockup 5 個 bug 修復
+- Bug 1：Call 動作加金額（actDo 記 owe，actLabel 顯示 call X）
+- Bug 2：任一方 all-in 且本街結算完 → 直接進 s5 攤牌；按鈕文字改「All-in → 攤牌」
+- Bug 3：raise size input 加 inputmode=decimal + onfocus scrollIntoView（避開 iOS 鍵盤擠壓）
+- Bug 4：新增 S5b「對手手牌」步驟（知道/不知道）；picker target 擴充 'v0/v1'；context 帶 villain_hand；Edge Function buildSystemPrompt 支援對手牌
+- Bug 5：iframe 不再自己 autoRefresh/persistSession，改以 localStorage 讀 parent session；過期透過 postMessage 請 parent refresh（修兩個 supabase client 搶 rotating refresh_token）
+
 ## 2026-04-19 v0.8.1-dev.15 [dev]
 - 重寫下注輪 action engine（engState 狀態機 + wrap-around）
 - Bug 14: 籌碼放圓圈內、圓圈 34→44px、UTG+1→U+1, UTG+2→U+2
