@@ -373,16 +373,9 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-- [?] **T-062** | Pipeline | **wip1 worktree HEAD 隔離強化（防 T-011 踩坑重演）**
-  - branch: `wip/T062-wip1-isolation`（從 origin/dev `0d5f0bf` 切出）
-  - 最後 feat commit: `fafaa16`（task-board 移 In Review 是緊隨的 chore commit）
-  - 改動：單檔 `scripts/session-start-reminder.sh`（+15 行），`*-wip*` 區塊內：
-    1. SOP 第 3 步加 ⚠ 標記強調 `git checkout -b wip/T0xx 必須帶 origin/dev` base，附 T-011 踩坑情境（省略 base → 從當前 HEAD 切 → commits 疊到上個 wip branch；T-011 跑 solver 16 分鐘才發現）
-    2. SOP 之後加 HEAD 隔離檢查：`git branch --show-current` 偵測非 detached → 印警告 + 提示 `git checkout --detach origin/dev` 救法
-  - 不動：`src/version.ts` / `memory/dev-log.md` / 其他 script / src / supabase
-  - 驗證：當前 wip1 HEAD 在 `wip/T062-wip1-isolation`，跑 `bash scripts/session-start-reminder.sh` 觸發新警告段（branch 名 `wip/T062-wip1-isolation` 正確顯示）
-  - 後續延伸（briefing 標明不在 T-062 scope）：寫進 `memory/wiki/two-machine-workflow.md` 執行者紀律段
-  - 等大腦 review + merge
+*（空）*
+
+<!-- T-062 → Done 2026-04-21（見 Done 區） -->
 
 <!-- T-011 → Done 2026-04-21（見 Done 區） -->
 
@@ -516,6 +509,13 @@ updated: 2026-04-20
   - 併收 T-052（RC1 排除）
   - 副產物 TODO：Edge Function code 加 `response.ok` check + log Claude error body（記在 wiki 坑 3，未做）
   - 正式 Supabase `qaiwsocjwkjrmyzawabt` 若啟用 ES256 會同樣壞，待用戶授權
+- [x] **T-062** | Pipeline + 大腦 | **wip1 worktree HEAD 隔離強化** | 2026-04-21 | merge only (flow, no bump)
+  - 執行者：Sandbox `wip/T062-wip1-isolation` @ `fafaa16` / `83c1dd6`
+  - 改動：單檔 `scripts/session-start-reminder.sh`（+15 行）`*-wip*` 區塊
+    - SOP 第 3 步加 ⚠ 強調 `origin/dev` base 必須帶
+    - 加 HEAD 非 detached 偵測 → 印警告 + 救法
+  - 驗證：執行者在當前 wip1 觸發警告 OK
+  - 防 T-011 踩坑重演
 - [x] **T-011** | Pipeline + 大腦 | **C3 E2E 小樣本（MTT scenario 入 DB）** | 2026-04-21 | merge only (flow, no bump)
   - 執行者：Sandbox `wip/T011-c3-e2e` @ `f861b6a` / `50d85fb`（base 4d6a0e2）
   - 改動（全 .mjs pipeline，17 檔 / +474 / -4）：

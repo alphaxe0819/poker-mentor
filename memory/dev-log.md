@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-04-21 [flow] T-062 整合完成：wip1 worktree HEAD 隔離警告
+- 執行者：Sandbox `wip/T062-wip1-isolation` @ `fafaa16` / `83c1dd6`（base 0d5f0bf）
+- 大腦：這台主目錄
+- merge clean
+- 改動：單檔 `scripts/session-start-reminder.sh`（+15 行）
+  - SOP 第 3 步加 ⚠ 強調 `git checkout -b wip/T0xx origin/dev` 必須帶 base
+  - 加 HEAD 非 detached 偵測區塊 → 印警告（含 T-011 踩坑教訓）+ 救法 `git checkout --detach origin/dev`
+- 防 T-011 那種 commits 誤落上個 wip branch 的意外重演
+- 純 flow 改動（script），無 version bump
+- wip/T062 待刪
+
 ## 2026-04-21 [flow] T-011 整合完成：C3 E2E 小樣本
 - 執行者：Sandbox session（`wip/T011-c3-e2e` @ `f861b6a` / `50d85fb`，base 4d6a0e2）
 - 大腦：這台主目錄
