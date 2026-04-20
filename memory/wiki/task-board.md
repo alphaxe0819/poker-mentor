@@ -90,26 +90,48 @@ updated: 2026-04-20
   - 順便：對手位置也該必選才能「下一步」
 
   **Bug 1** — S5b「我知道」→ 點卡槽沒開 picker / 無法輸入
-  - 位置：`openVillPicker` / `renderVillainSlots` / `pickSuit` 的 `v` prefix 分支
-  - 成因推測：
-    - `openVillPicker` 有設 `pickerTarget = 'v' + idx` 但 `#card-picker` DOM 沒顯示（z-index? `.show` class?）
-    - 或 `pickSuit` 的 `typeof tgt === 'string' && tgt.charAt(0) === 'v'` 判斷出錯
-  - Debug 步驟：iframe DevTools 看 `document.getElementById('card-picker').classList`，看點擊卡槽時是否加上 `show`
-  - Console 觀察：點卡槽時有沒有 error
+  - **根本原因（已查出）**：`#card-picker` DOM 只在 `<div id="s3">` 內（`public/exploit-coach-mockup-v3.html:257`）
+    - 當用戶在 S5b screen 時，`#s3` 被 CSS `.screen:not(.active)` 隱藏
+    - `openVillPicker` 呼叫 `classList.add('show')` **成功**，但父層 `#s3` 隱藏 → 看不見
+  - **修法建議（三選一）**：
+    - **A 最乾淨**：把 `#card-picker` 從 `#s3` 內移到 body 層級，CSS 加 `position: fixed; z-index: 1000`，讓任何 screen 都能共用
+    - **B 最小改動**：S5b screen 裡再複製一份 `<div class="picker" id="vill-card-picker">...</div>`（改 id），`openVillPicker` 改用新 id
+    - **C JavaScript 搬家**：`openVillPicker` 執行時用 `appendChild` 把 picker 暫時搬到 S5b 的 DOM 裡，close 時再搬回
+  - 推薦 A：最一勞永逸
+  - 完成後驗證：S5b 點卡槽 → picker 浮出 → 選牌 → 卡槽填入
 
   **Bug 2** — AI 分析顯示「⚠ 連線錯誤：Load failed」
-  - 位置：
-    - `public/exploit-coach-mockup-v3.html` 的 `callCoach`
-    - `src/tabs/ExploitCoachTab.tsx` 的 postMessage listener
-  - 成因推測（三選一或多項同發）：
-    - (a) postMessage 鏈路斷：parent listener 的 `e.source !== iframe.contentWindow` 判斷過嚴
-    - (b) 未登入 → `getFreshAccessToken` 回 null → 直接 fetch 觸發 CORS error
-    - (c) Edge Function 本身 4xx/5xx（測試 Supabase 的 exploit-coach Function 狀態）
-  - Debug 步驟：
-    1. iframe DevTools Network tab 看 `functions/v1/exploit-coach` 的 request status
-    2. 若是 401/403 → token 問題（回到 postMessage 橋接 debug）
-    3. 若是 CORS → parent 沒 listener（回 ExploitCoachTab.tsx debug）
-    4. 若是 500 → Edge Function 掛（看 Supabase Dashboard logs）
+  - **重要線索**：「Load failed」是 iOS Safari 的 **fetch 網路層失敗**訊息（不是 HTTP 4xx/5xx）
+    - 走到 `callCoach` 的 `catch(e) { return { error: '連線錯誤：' + e.message } }`
+    - `e.message === "Load failed"` = iOS Safari 對 network error 的 message
+  - **排除項**（從代碼看已處理）：
+    - ❌ token null → callCoach 會提前 `return { error: '需要先登入...' }`，不會走到 Load failed
+    - ❌ Edge Function 4xx/5xx → 會走 `r.status === 401` 分支，不是 catch
+  - **最可能成因**（依機率）：
+    - (a) 🔴 **iOS Safari + iframe + cross-origin fetch** 在 4G 下的特殊行為
+      - Supabase 是 `*.supabase.co`（不同 origin），iframe fetch 要 CORS preflight
+      - 某些 iOS 版本 + 4G ISP 會對 iframe 跨域 POST 做額外限制
+    - (b) 🟡 postMessage refresh race：iframe 發 `request-supabase-refresh` → parent listener 的 `e.source !== iframe.contentWindow` 判斷**過嚴**，訊息被 drop → iframe 永遠等不到 token → 用過期 token fetch → 401 → 又 askParentRefresh 又失敗 → 最終某處 throw → Load failed
+    - (c) 🟡 `ExploitCoachTab.tsx:26` 的 `iframe.contentWindow?.postMessage(...)` 若 iframe 在 Safari 重新整理過，`iframeRef.current?.contentWindow` 可能指向舊 window，訊息 drop
+  - **Debug 步驟（必做）**：
+    1. **用 Mac Safari 遠端 Web Inspector 連 iPhone**（重現 bug 時 inspector 要開著）
+       - iPhone: 設定 > Safari > 進階 > 網頁檢閱器 ON
+       - Mac Safari: 開發 > [iPhone 名稱] > 選 poker-goal-dev.vercel.app
+    2. **Network tab** 看 `functions/v1/exploit-coach` 的 request：
+       - 有送出？status？response body？
+       - OPTIONS preflight 通過嗎？
+    3. **Console** 看 `console.error('refresh failed', e)` 等訊息
+    4. **在 iframe context 跑** `localStorage.getItem('sb-btiqmckyjyswzrarmfxa-auth-token')` 看 token 是否存在
+    5. **測試 parent listener**：在 iframe console 跑
+       ```js
+       window.parent.postMessage({type:'request-supabase-refresh'}, '*')
+       window.addEventListener('message', e => console.log('got', e.data))
+       ```
+       確認 parent 有回 `supabase-token-refreshed`
+  - **修法方向**：
+    - 若是 (a) iOS 4G → 加 retry + longer timeout，或 fallback 改 Supabase client SDK（會自己處理很多 edge case）
+    - 若是 (b) → 改 parent listener 的 source 判斷為 `e.origin === window.location.origin`（用 origin 而非 contentWindow）
+    - 若是 (c) → 每次 `iframeRef.current?.contentWindow` 先存 local variable 再用，避免 ref 變動
 
   - 完成條件：
     - `npx tsc -b --noEmit` EXIT=0
