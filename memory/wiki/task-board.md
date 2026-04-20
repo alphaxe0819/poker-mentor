@@ -175,14 +175,19 @@ updated: 2026-04-20
   - 內容：解析 pd table.name（`"BB VS MP"` / `"10bb SB Push"`）→ scenario / depth / position；加 MTT catalog
   - 完成條件：parser 能消化現有 10 個 pd project 的 table.name；scenarios.mjs 能 enumerate MTT scenarios
 
-- [~] **T-020** | Pipeline | **Solver P1 HU 40bb SRP 補齊到 25 flops**
+- [~] **T-020** | Pipeline | **Solver P1 HU 40bb SRP 補齊到 21 flops（peer parity 25bb）**
   - branch: `wip/T020-hu40bb-srp-fill`
   - 機器：另一台電腦
   - 執行者 session 起：2026-04-20
-  - 現況：只 13 flops；補 +12 flop
-  - 預估：2-3 hr 背景
-  - 產出：`src/lib/gto/gtoData_hu_40bb_srp_*.ts` +12 檔
-  - 完成條件：25/25 flops 全 solve 完，gtoData_index 接上
+  - **scope 修正（2026-04-20 大腦）**：原寫「25 flops」是 6-max 早期規劃殘留數字，
+    實際應對齊 HU 25bb SRP 的 21 unique flops（BOARDS 13 + 8 個 Ace-low extras）
+  - 現況：13 flops（= BOARDS 全集）→ 補 +8 個 extras
+  - 8 extras：5s5c5d / 6d5h4c / 8s5h2c / 8s7s5d / 9s7s3s / Ah2d2c / Ah5c2d / Ah8h3c
+  - 實作：boards.mjs 加 `export const BOARDS_HU`（不動 BOARDS 主常數，避免影響 6-max scope）
+  - 預估：2 hr 背景（8 flops × ~15 min）
+  - 產出：`src/lib/gto/gtoData_hu_40bb_srp_*.ts` +8 檔
+  - 完成條件：21 unique flops 全 solve 完，gtoData_index 接上，tsc EXIT=0
+  - **連帶**：T-021（HU 40bb 3bp）/ T-023（HU 深度擴充）後續也應對齊 21 flops
 
 - [~] **T-042** | Pipeline | **部署 20260416-gto-postflop.sql 到測試 Supabase**
   - branch: 無（純 Dashboard 操作；最後標 task-board 完成的 commit 由大腦做）
