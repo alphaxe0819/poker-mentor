@@ -5,6 +5,22 @@
 
 ---
 
+## 2026-04-20 [flow] 另一台電腦 worktree setup 完成 + 全面清理
+- 另一台（身邊機器）按新架構完成 setup：
+  - 主目錄 `POKERNEW/poker-mentor` = dev（大腦或三角色）
+  - 新 worktree `POKERNEW/poker-mentor-wip1` = detached HEAD（執行者專用）
+- 清掉 2 個過時 worktree：`POKERNEW-hu-sim` / `POKERNEW-ui-v2`（確認 0 獨有 commits）
+- 清掉 3 個 local 殘留 branches：
+  - `feature/exploit-lab`（dev.24 已確認無獨有 commits）
+  - `wip/T033-gto-postflop-v2-wip`（已 merge + remote 已刪）
+  - `wip/T050-exploit-coach-bugs-v2`（已 merge + remote 已刪）
+- `git fetch --prune` 同步 5 個 stale remote tracking refs
+- 兩台電腦最終狀態：
+  - 本地 branches 只剩 `dev` + `main`
+  - remote 只剩 `origin/dev` + `origin/main`
+  - 完全對齊 origin/dev @ `a1c7015`（含 dev.28）
+- 明天開工任一台 session 會直接走新三角色 SOP / worktree 自動 SOP
+
 ## 2026-04-20 [flow] Worktree 命名簡化：`-wip*` 統一後綴
 - 原 `POKERNEW-brain` / `POKERNEW-*` 太複雜，改為簡單規則：
   - 主目錄 = 單對話通用 / 多對話時當大腦
