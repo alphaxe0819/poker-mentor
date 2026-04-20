@@ -67,7 +67,7 @@ updated: 2026-04-20
   - 建議 branch：`wip/T023-6max-shallow`
   - 待確認具體範圍
 
-- [ ] **T-059** | Product + 用戶 | **T-058 Edge Function 部署 + 實機驗收**
+- [ ] **T-059** | Product + 用戶 | **T-058 Edge Function 部署 + 實機驗收** `(派工 2026-04-20)`
   - 建議 branch：無（純 Dashboard 操作）
   - 前置：T-058 已 merge 到 dev @ `bfdc762`（dev.37）
   - 動作：
@@ -80,7 +80,7 @@ updated: 2026-04-20
   - 產出：三條驗收 pass/fail + console log（若 fail）
   - 後續：全 pass → 真 Done；有零星錯譯 → 補強 prompt 黑名單
 
-- [ ] **T-056** | Pipeline | **batch-run.ps1 -SkipExisting 改雙命名偵測（防 T-020 churn 重演）** 🔴 優先
+- [ ] **T-056** | Pipeline | **batch-run.ps1 -SkipExisting 改雙命名偵測（防 T-020 churn 重演）** 🔴 優先 `(派工 2026-04-20)`
   - 建議 branch：`wip/T056-skipexisting-dual-naming`
   - 背景：T-020 執行者跑 HU 40bb SRP 時，`-SkipExisting` 只 check 新命名 `gtoData_<slug>.ts`，對舊命名 `gtoData_flop_<slug>.ts` 誤判「未產」→ 全部 base 意外重跑，差點燒 3 hr。執行者及時 kill
   - 範圍：`scripts/gto-pipeline/batch-run.ps1` 的 `-SkipExisting` 邏輯
@@ -90,7 +90,7 @@ updated: 2026-04-20
 
 <!-- T-058 → In Review 2026-04-20 -->
 
-- [ ] **T-057** | 大腦 | **wiki: gto-pipeline-conventions.md 命名規範**
+- [ ] **T-057** | 大腦 | **wiki: gto-pipeline-conventions.md 命名規範** `(派工 2026-04-20)`
   - 建議 branch：`wip/T057-gto-pipeline-conventions`
   - 範圍：新 wiki 頁面明文定義：
     - 檔名：`gtoData_<gameType>_<stack>_<pottype>_<slug>.ts`（無 `flop_` 前綴）
