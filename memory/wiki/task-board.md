@@ -67,61 +67,7 @@ updated: 2026-04-20
   - 建議 branch：`wip/T023-6max-shallow`
   - 待確認具體範圍
 
-- [ ] **T-059** | Product + 用戶 | **T-058 Edge Function 部署 + 實機驗收** `(派工 2026-04-20)`
-  - **建議 branch**：`wip/T059-T058-deploy-guide`（從 origin/dev 切出）
-  - **前置**：T-058 已 merge @ `bfdc762`（dev.37）
-  - **產出檔**：`docs/supabase-migrations/20260420-T058-zh-tw-terminology-deploy.md`（新檔）
-  - **禁碰**：`supabase/functions/exploit-coach/index.ts`（只讀）；其他 src/ public/
-
-  **deploy guide 結構（必要內容）**：
-
-  ```markdown
-  # T-058 繁中 poker 術語 grounding — 部署指南
-
-  ## 前置
-  - dev 版本 ≥ v0.8.1-dev.37
-  - 測試 Supabase project: btiqmckyjyswzrarmfxa
-
-  ## 部署步驟
-  1. 打開 supabase/functions/exploit-coach/index.ts，全選複製整檔
-  2. 登入 https://supabase.com/dashboard/project/btiqmckyjyswzrarmfxa
-  3. 左側選 Edge Functions → exploit-coach
-  4. 右上「Edit function」或「Via Editor」
-  5. 整檔貼上（覆蓋原內容）
-  6. 按 Deploy
-  7. Deploy 完成 log 顯示 new version 即 OK
-
-  ## 實機驗收（3 條，全 pass 才算真 Done）
-  打開 https://poker-goal-dev.vercel.app/ → 教練 tab
-  設定：hero BTN / villain CO (跟注站型) / board K♠Q♣7♥
-
-  ### 驗收 1：壓制
-  - 輸入：「我拿 QQ 面對 AK 擊中 K，怎麼辦」
-  - ✅ AI 用「被 AK 壓制」/「QQ 被壓制」
-  - ❌ 說「過度」= fail
-
-  ### 驗收 2：bluff catcher
-  - 追問：「bluff catcher 是什麼」
-  - ✅ AI 回「抓詐唬牌」或保留英文
-  - ❌ 回「詐唬捕手」= fail
-
-  ### 驗收 3：大陸用語
-  - 隨機問翻後場景（例：「如果對手跟 bet，該怎麼辦」）
-  - ✅ 不蹦「蝨子」「踢子」「皮卡」等
-  - ❌ 有大陸用語 = fail
-
-  ## 失敗回報格式
-  - Bug #：(1/2/3)
-  - 實際 AI 回覆全文
-  - Chrome DevTools Console log（若有）
-
-  ## 全 pass 後
-  - task-board T-059 → Done
-  - T-058 從「code merged」升級為「真正 Done（含部署）」
-  ```
-
-  - **完成條件（執行者）**：md 檔創建 + `npx tsc -b --noEmit` EXIT=0 + commit + push wip + task-board 移 In Review
-  - **後續（用戶 + 大腦）**：用戶照 guide 部署 + 跑 3 條驗收 → 大腦 merge + 標 Done 或追加修復 task
+<!-- T-059 → In Review 2026-04-20 -->
 
 - [ ] **T-056** | Pipeline | **batch-run.ps1 -SkipExisting 改雙命名偵測（防 T-020 churn 重演）** 🔴 優先 `(派工 2026-04-20)`
   - **建議 branch**：`wip/T056-skipexisting-dual-naming`（從 origin/dev 切出）
@@ -350,7 +296,15 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-*（空）*
+- [?] **T-059** | Product + 用戶 | **T-058 Edge Function 部署 + 實機驗收**
+  - branch: `wip/T059-T058-deploy-guide`（從 origin/dev `b337205` 切出）
+  - 最後 commit: `716b802` docs(T-059): T-058 Edge Function 部署指南 + 3 條實機驗收
+  - 完成備註：
+    - 新檔 `docs/supabase-migrations/20260420-T058-zh-tw-terminology-deploy.md`（完整依派單範本：前置 / 部署步驟 7 步 / 3 條實機驗收 / 失敗回報格式 / 全 pass 後動作）
+    - 未動 `supabase/functions/exploit-coach/index.ts` / src/ / public/ / `src/version.ts` / `memory/dev-log.md`
+  - 驗證：✅ `npx tsc -b --noEmit` EXIT=0
+  - 大腦動作：review md → merge wip 到 dev → 通知用戶照 guide 部署 + 跑 3 條驗收
+  - 後續（用戶）：照 guide deploy Edge Function + 跑 3 條驗收 → 全 pass 則 T-059 → Done + T-058 升級為真正 Done
 
 <!-- T-057 → Done 2026-04-20 -->
 
