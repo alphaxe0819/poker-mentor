@@ -156,11 +156,22 @@ updated: 2026-04-20
 ### Follow-up（T-033 引發）
 
 <!-- T-042 → Done 2026-04-20 -->
-<!-- T-043 → In Progress 2026-04-20 -->
-
-
+<!-- T-043 → Done 2026-04-20 -->
 <!-- T-044 → Done 2026-04-20 -->
-<!-- T-043 → 待執行者認領 -->
+
+- [ ] **T-045** | Pipeline | **真跑 1 個 batch（去掉 --dry-run，完整鏈路）**
+  - 建議 branch：`wip/T045-first-real-batch`
+  - 範圍：從 T-043 已 seed 的 390 turn batches 挑 1 個 → TexasSolver 實解 → JSON parse → upload 到 `gto_postflop` → mark done
+  - 前置：TexasSolver 已解壓到 `scripts/gto-pipeline/TexasSolver-v0.2.0-Windows/`（batch-worker 會自動偵測 nested/flat 路徑）
+  - 預估：15-30 min（solver ~10-20 min + upload/verify）
+  - 完成條件：`gto_postflop` 表新增 N 筆 row（一個 turn 節點約 10 roles × 169 hand_class ≈ 1690 row），`gto_batch_progress` 該筆 status=done
+  - 用：`node batch-worker.mjs --machine <機器名> --max 1`（不加 --dry-run）
+
+- [ ] **T-046** | Pipeline | **seed --include-river 前的 row 數估算**
+  - 建議 branch：`wip/T046-seed-river-estimate`
+  - 範圍：先**不**真的 seed，計算 include-river 會插入多少 row（`generateRiverCards` × 390 turn × river/turn 的 fan-out）
+  - 評估：若 > 10k row 要考慮分批 seed 或 partitioned batch；若可接受再實 seed
+  - 產出：實際數字 + 建議（full seed / phased seed / skip）
 
 ---
 
@@ -224,41 +235,10 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-- [?] **T-010** | Pipeline | **C2 場景化（converter 接 scenarios.mjs）+ MTT catalog**
-  - branch: `wip/T010-c2-scenarios`（推 origin 完成）
-  - 最後 commit: `4914334`
-  - 執行者備註：
-    - **新檔** `scripts/gto-pipeline/parse-pd-table-name.mjs`（~245 行）— prefix-based token scanner（同 pd-to-range.mjs 風格）。`parseTableName(raw)` 回 `{scenario, hero, villain, positions, depth_bb, format, modifiers, unknown, reason}`。`unknown=true` 一定附 reason，**不 silently drop**。CLI mode 可掃 pd-ranges dir 印 parsing rate + sample unknowns。
-    - **新檔** `scripts/gto-pipeline/__tests__/parse-pd-table-name.test.mjs`（~150 行）— **57 tests 全通過**，涵蓋 task-spec 3 範例 + 全 scenario keywords + 全 position aliases + depth/modifier/format/unknown bucket + post-"vs" villain 抽取
-    - **改檔** `scripts/gto-pipeline/scenarios.mjs`（+170 行）— 新增 `MTT_SCENARIOS`（54 個：6 depths [15/20/25/30/40/50] × SRP 7 matchups + 3BP 3 matchups，自動 skip eff < 6bb）、新增 `enumerateMTTFromPD(pdRangesDir)` async 掃 pd-ranges → 對 catalog → 回傳 `{scenarios, parsing_summary, unmatched_pd, unknown_pd}`、新增 `mtt` 進 `ALL_FORMATS`
-  - 驗證：57/57 tests pass｜tsc EXIT=0｜synthetic 5-table dataset E2E 通過（4 ok / 1 unknown / 1 unmatched scenario "jam"，行為符合預期）
-  - **未做但建議大腦補**（不阻擋 C2 完成）：
-    - 在實機（另一台桌機）上跑 `node scripts/gto-pipeline/parse-pd-table-name.mjs scripts/gto-pipeline/output/pd-ranges` 拿真實 10 個 pd project 的 parsing rate / unknown 樣本，根據結果擴充 prefix dict（例：發現 "Open Limp" 多到該獨立分類，再加 keyword）
-    - C3（T-011）會用 enumerateMTTFromPD 的輸出，但 hand map → TexasSolver range 字串轉換還沒寫 — 這留給 C3 任務
-  - 等大腦 merge
+*（空）*
 
-- [?] **T-043** | Pipeline | **batch-worker 環境準備 + 首次實跑（dry-run）**
-  - branch: `wip/T043-batch-worker-setup`（從 origin/dev `d7944e0` dev.30 切出）
-  - 最後 commit: 待 push
-  - 機器：這台主目錄
-  - 改動範圍（純 scripts/ + memory/，無 src/ 動）：
-    - **新檔** `scripts/gto-pipeline/package.json` + `package-lock.json`（`npm init -y` + `npm install @supabase/supabase-js`，13 packages, 0 vulns）
-    - 不變動：`.gitignore`（root 既有 `node_modules` / `.env` 無前綴 pattern，子目錄全層級覆蓋；確認過 `git check-ignore -v` 兩個都 hit `.gitignore:10` 與 `.gitignore:16`）
-    - **本機**（不入 commit）：`scripts/gto-pipeline/.env` 已寫入測試 Supabase URL + service_role key
-  - 執行驗證：
-    - ✅ `node seed-batches.mjs` → seed **390 turn batches**（13 BOARDS × 平均 10 turnCards × 3 STACK_RATIOS [40/25/13bb]，無 river）
-    - ✅ `node batch-worker.mjs --machine TEST-DRY --dry-run --max 2` → 連續領到 2 筆 `turn | 7s7d2h+3c | 13bb`（dry-run skip solver，code line 391-396 已實作）
-    - ✅ post dry-run state：total=390 / pending=390 / machine_id=TEST-DRY=0（dry-run 自動還原 row 至 pending，**派單 step 6 的 manual reset SQL 不需執行**）
-    - ✅ `npx tsc -b --noEmit` EXIT=0
-  - 派單 vs 實際差異（給大腦參考）：
-    1. 派單 step 5 寫「驗 status='processing'」— schema CHECK constraint 沒 `processing`（合法只有 `pending/claimed/uploading/done/failed`）；且 dry-run 立即還原，所以本來就看不到 `claimed`
-    2. dry-run 連續 claim 會一直拿同一筆（還原後排序仍排第一）— 是預期行為，real run mark `done` 不會重複
-    3. seed 量 390 比派單預估的「156 rows」多 — 因為 STACK_RATIOS 是 3（13/25/40bb 都 seed），不是 1
-  - 後續 task（待大腦排）：
-    - **T-045** | Pipeline | 真跑 1 個 batch（去掉 --dry-run，跑 1 個 turn 看 solver → JSON → DB upload 完整鏈路 ≈ 15-30 min）
-    - **T-046** | Pipeline | seed `--include-river`（會插入大量 river batches，建議估算後再跑）
-  - 等大腦 merge
-
+<!-- T-010 已 merge 到 dev，移至 Done -->
+<!-- T-043 已 merge 到 dev，移至 Done -->
 <!-- T-050 已 merge 到 dev，移至 Done -->
 
 格式範例：
@@ -314,6 +294,18 @@ updated: 2026-04-20
   - 另一台之前報告的「04-16 WIP」（batch-worker / seed-batches / getGTOPostflopFromDB / DB migration）實際上已在 dev（dev.8-dev.11 那批 commit 正是）
   - 動作：remote 三個 branch 全刪（`git push --delete`）
   - 另一台 Claude 後續動作：checkout dev + pull + 跑新 SOP（見本次 dev-log）
+- [x] **T-043** | Pipeline + 大腦 | **batch-worker 環境準備 + dry-run validated** | 2026-04-20 | merge + dev.32
+  - 執行者：這台主目錄（`wip/T043-batch-worker-setup` @ `90ee465`）
+  - 大腦：review + merge（這台 `-brain` worktree）
+  - 產出：
+    - `scripts/gto-pipeline/package.json` + `package-lock.json`（新，單 dep `@supabase/supabase-js`，13 packages, 0 vulns）
+    - `.env` + `node_modules/` 確認 root `.gitignore` 子目錄覆蓋（不入 commit）
+  - 驗證結果：
+    - seed：**390 turn batches** = 13 BOARDS × 平均 10 turnCards × 3 STACK_RATIOS（預設不含 river）
+    - dry-run：claim RPC 領到 `turn | 7s7d2h+3c | 13bb`，`--dry-run` skip solver (line 391-396) + 自動還原 row
+    - tsc EXIT=0
+  - 派單勘誤（大腦記錄給未來參考）：`status='processing'` 是筆誤（schema 只有 pending/claimed/uploading/done/failed）；dry-run 自動還原，手動 reset SQL 多餘；seed 量 390 而非 156（STACK_RATIOS=3）
+  - 衍生：T-045（真跑 1 個 batch）+ T-046（river seed 估算）進 Queue
 - [x] **T-044** | 大腦（單機快修） | **修 migration 20260416-gto-postflop.sql 對齊正式機部署流程** | 2026-04-20 | dev.31
   - 拆兩檔：`20260416-gto-postflop.sql`（tables + RLS + CHECK，idempotent DO block 包）+ `20260416b-gto-postflop-function.sql`（pure SQL `claim_gto_batch`）
   - function 由 `LANGUAGE plpgsql` + `RETURNING...INTO v_id` 改成 `LANGUAGE sql` + 單一 `UPDATE...RETURNING`，語意相同但不會觸發 Supabase SQL Editor 的 `$$...INTO v_id...$$` 解析 bug

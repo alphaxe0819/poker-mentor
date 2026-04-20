@@ -5,6 +5,24 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.32 [dev]
+- T-043 正式整合（wip/T043-batch-worker-setup → dev）
+- 執行者：這台主目錄；大腦：這台 `-brain` worktree
+- 產出：
+  - `scripts/gto-pipeline/package.json` + `package-lock.json`（`npm install @supabase/supabase-js`，13 packages, 0 vulns）
+  - `.env` + `node_modules/` 確認 root `.gitignore` 子目錄覆蓋（不入 commit）
+- 驗證：
+  - `node seed-batches.mjs` → **390 turn batches** 落測試 Supabase（13 BOARDS × 平均 10 turnCards × 3 STACK_RATIOS，預設不含 river）
+  - `node batch-worker.mjs --machine TEST-DRY --dry-run --max 2` → claim RPC 領到 `turn | 7s7d2h+3c | 13bb`，dry-run skip solver 且自動還原 row
+  - tsc EXIT=0
+- 派單 vs 實際差異（大腦記錄，下次派單注意）：
+  - schema 合法 status 為 `pending/claimed/uploading/done/failed`（不是 `processing`）
+  - `--dry-run` 已實作 skip solver + 自動還原（不需手動 reset SQL）
+  - seed 量 390（STACK_RATIOS=3），不是派單預估的 156
+- 衍生：T-045（真跑 1 個 batch）+ T-046（river seed 估算）進 Queue
+- 純 pipeline 工具改動（`scripts/gto-pipeline/` 子目錄 package.json，不影響 Vercel build）= 開發流程，不跑測試機驗證
+- wip/T043-batch-worker-setup 待刪
+
 ## 2026-04-20 v0.8.1-dev.31 [dev]
 - T-044 完成（大腦單機快修）：修 migration 檔對齊正式機部署流程
 - 檔案改動：
