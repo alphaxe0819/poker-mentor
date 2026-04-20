@@ -5,6 +5,21 @@
 
 ---
 
+## 2026-04-21 [flow] T-056 整合完成：batch-run.ps1 雙命名 skip
+- 執行者：Sandbox session（`wip/T056-skipexisting-dual-naming` @ `01421bb` / `28b9d75`）
+- 大腦：這台主目錄
+- merge clean
+- 改動：單檔 `scripts/gto-pipeline/batch-run.ps1` 第 127-139 行（+8/-3）
+  - `-SkipExisting` else branch 同時 Test-Path 新命名 `gtoData_<base>.ts` + 舊 `gtoData_<prefix>_flop_<slug>.ts`
+  - skip 訊息附 matched filename（除錯友好）
+- 驗證雙層：
+  - ✅ 執行者 fixture 4-case（舊存新無 / 新舊都有 / 新存舊無 / 皆無）全通過
+  - ✅ 大腦補跑 real batch dry-run：HU 25bb SRP 前 7 個 SKIP 都正確印 matched filename
+- 防範目標達成：T-020 churn（SkipExisting 對舊命名誤判）從此不會再發生
+- ⚠ 副產物發現：HU 25bb SRP 30 個 input 中 9 個**無對應 .ts**（pipeline state gap），非 T-056 scope，若將來需要可開 T-061 補齊
+- 純 flow 改動（scripts/，不影響 Vercel build），無 version bump
+- wip/T056 待刪
+
 ## 2026-04-20 [flow] T-060 完成：T-058 Edge Function 實機部署 + 3 條驗收全 pass ✅
 - 用戶照 `docs/supabase-migrations/20260420-T058-zh-tw-terminology-deploy.md` 部署到測試 Supabase
 - 3 條實機驗收結果：
