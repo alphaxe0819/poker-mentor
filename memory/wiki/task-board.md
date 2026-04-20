@@ -42,6 +42,11 @@ updated: 2026-04-20
 
 <!-- T-012 → Code Done 2026-04-21，migration 部署待 T-063 -->
 
+<!-- T-063 → Done 2026-04-21（含 RLS policy patch 修正） -->
+
+<details>
+<summary>📦 T-063 原任務（已 Done）</summary>
+
 - [ ] **T-063** | 用戶 + 大腦 | **T-012 migration 部署到測試 Supabase + 實測 verify**
   - 建議 branch：無（純 Dashboard 操作 + retrieval verify）
   - 前置：T-012 code 已 merge @ `065ee0f`，`supabase/migrations/20260421-solver-postflop-mtt.sql` 就緒
@@ -56,6 +61,8 @@ updated: 2026-04-20
     7. 驗 MTT scenario tier A 命中 `solver_postflop_mtt`（不是 6max）
     8. 全通過 → 標 T-012 / T-063 Done
     9. 失敗 → 開 follow-up 修
+
+</details>
 
 - [ ] **T-013** | Pipeline | **Scraping 成果盤點 + 整理**
   - 建議 branch：`wip/T013-scraping-audit`
@@ -456,7 +463,12 @@ updated: 2026-04-20
   - 併收 T-052（RC1 排除）
   - 副產物 TODO：Edge Function code 加 `response.ok` check + log Claude error body（記在 wiki 坑 3，未做）
   - 正式 Supabase `qaiwsocjwkjrmyzawabt` 若啟用 ES256 會同樣壞，待用戶授權
-- [x] **T-012** | Pipeline + 大腦 | **C4 MTT DB migration（code 部分）** | 2026-04-21 | merge only (flow, no bump)
+- [x] **T-063** | 用戶 + 大腦 | **T-012 migration 部署到測試 Supabase + verify Tier A** | 2026-04-21 | dev.38
+  - 用戶動作：貼 migration SQL → 貼 RLS patch（大腦補）
+  - 實機驗證：`test-retrieval.mjs` MTT scenario → **Tier A 命中** `solver_postflop_mtt`
+  - 副 fix (dev.38)：RLS policy `TO authenticated` → `TO anon, authenticated` 對齊 6max（anon key pipeline scripts 才讀得到）
+- [x] **T-012** | Pipeline + 大腦 | **C4 MTT DB migration（完整：code + 部署 + verify）** | 2026-04-21 | merge + T-063 完成
+  - 升級為真正 Done（含測試 Supabase 部署 + Tier A 實機驗證）
   - 執行者：Sandbox `wip/T012-mtt-db-migration` @ `3d308a4` / `27acc0f` / `cc561bb`
   - 改動 3 檔：
     - 新 `supabase/migrations/20260421-solver-postflop-mtt.sql`（+107，CREATE TABLE + CHECK + RLS + index + INSERT...SELECT + DELETE）

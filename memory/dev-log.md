@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-21 [flow] T-063 + T-012 真正 Done：MTT Tier A 實機驗證通過 ✅
+- 用戶貼 patch SQL（RLS policy 開 anon+authenticated）
+- 大腦跑 `test-retrieval.mjs` → **MTT scenario Tier A 命中** `solver_postflop_mtt`
+  - 回應：`mtt_40bb_srp_btn_open_bb_call / As7d2c` / pot=5 / eff=37.5
+- T-011 → T-012 → T-063 完整 C3→C4 鏈路端到端通：solver → mtt table → Tier A retrieval
+- T-058 / T-060 / T-063 / T-062 / T-057 / T-056 / T-011 / T-012 今日全結案
+- 純 flow 改動（task-board 移動 + dev-log 紀錄），不 bump version
+
 ## 2026-04-21 v0.8.1-dev.38 [dev]
 - T-063 部署 verify：用戶貼 migration 成功（table + row 搬移都對），但 `test-retrieval.mjs` 回 Tier C 而非 Tier A
 - 根因：`solver_postflop_mtt` RLS policy `TO authenticated` 擋 anon key，而 pipeline scripts 全用 ANON_KEY
