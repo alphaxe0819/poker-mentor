@@ -138,7 +138,11 @@ const row = {
   },
 }
 
-const url = `${SUPABASE_URL}/rest/v1/solver_postflop_6max`
+// T-012：MTT scenario 入 solver_postflop_mtt，其他入 solver_postflop_6max
+const targetTable = scenarioSlug.startsWith('mtt_')
+  ? 'solver_postflop_mtt'
+  : 'solver_postflop_6max'
+const url = `${SUPABASE_URL}/rest/v1/${targetTable}`
 const r = await fetch(url, {
   method: 'POST',
   headers: {

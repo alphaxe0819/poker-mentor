@@ -40,77 +40,7 @@ updated: 2026-04-20
 
 <!-- T-011 → Done 2026-04-21 -->
 
-- [ ] **T-012** | Pipeline | **C4 MTT DB migration（solver_postflop_mtt table）** `(派工 2026-04-21)`
-  - **建議 branch**：`wip/T012-mtt-db-migration`（從 origin/dev 切出）
-  - **前置**：T-011 已完成 ✅，`solver_postflop_6max` 暫存 1 筆 `mtt_*` row 可當 migration 測資
-  - **產出檔**：
-    1. 新檔：`supabase/migrations/20260421-solver-postflop-mtt.sql`（schema + data 搬移）
-    2. 改 `scripts/gto-pipeline/convert-to-db.mjs`：MTT slug 改寫到 `solver_postflop_mtt`
-    3. 改 `scripts/gto-pipeline/test-retrieval.mjs`：MTT tier A 測試改查新 table
-  - **禁碰**：其他 pipeline script / src/ / supabase/functions/
-
-  **migration SQL 結構**（仿 `solver_postflop_6max`）：
-  ```sql
-  -- 1. 建 solver_postflop_mtt（schema 同 6max）
-  CREATE TABLE IF NOT EXISTS public.solver_postflop_mtt (
-    id BIGSERIAL PRIMARY KEY,
-    scenario_slug TEXT NOT NULL,
-    flop TEXT NOT NULL,
-    ip_pos TEXT,
-    oop_pos TEXT,
-    pot_bb NUMERIC,
-    effective_stack_bb NUMERIC,
-    tree JSONB NOT NULL,
-    solver_config JSONB,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE (scenario_slug, flop)
-  );
-
-  -- 2. 搬 mtt_ 開頭的 row 從 6max 到 mtt
-  INSERT INTO public.solver_postflop_mtt
-    (scenario_slug, flop, ip_pos, oop_pos, pot_bb, effective_stack_bb, tree, solver_config, created_at)
-  SELECT scenario_slug, flop, ip_pos, oop_pos, pot_bb, effective_stack_bb, tree, solver_config, created_at
-  FROM public.solver_postflop_6max
-  WHERE scenario_slug LIKE 'mtt_%'
-  ON CONFLICT (scenario_slug, flop) DO NOTHING;
-
-  -- 3. 從 6max 刪掉已搬走的 row
-  DELETE FROM public.solver_postflop_6max WHERE scenario_slug LIKE 'mtt_%';
-
-  -- 4. RLS policy（仿 6max）
-  ALTER TABLE public.solver_postflop_mtt ENABLE ROW LEVEL SECURITY;
-  CREATE POLICY "authenticated users can read solver_postflop_mtt"
-    ON public.solver_postflop_mtt FOR SELECT TO authenticated USING (true);
-
-  -- 5. Index for retrieval speed
-  CREATE INDEX IF NOT EXISTS idx_solver_postflop_mtt_scenario_flop
-    ON public.solver_postflop_mtt (scenario_slug, flop);
-
-  -- 驗證查詢（貼 migration 後順便跑）
-  SELECT scenario_slug, flop FROM public.solver_postflop_mtt;
-  -- 預期：1 row (mtt_40bb_srp_btn_open_bb_call / As7d2c) 來自 T-011
-  ```
-
-  **convert-to-db.mjs 改動**：根據 slug prefix 決定 target table
-  ```js
-  const targetTable = scenarioSlug.startsWith('mtt_') ? 'solver_postflop_mtt' : 'solver_postflop_6max'
-  // 沿用同樣 upsert 邏輯
-  ```
-
-  **test-retrieval.mjs 改動**：MTT tier A 的 `.from('solver_postflop_6max')` 改 `.from('solver_postflop_mtt')`
-
-  **完成條件（執行者）**：
-  1. migration SQL 語法正確（本地 sql 檔格式 ok，文法沒明顯錯）
-  2. convert-to-db.mjs 能識別 slug prefix 分流（dry run：執行者手動 stub 測或純 code review）
-  3. test-retrieval.mjs 的 MTT tier A 測試改 table 名
-  4. commit（**不動** `src/version.ts` / `memory/dev-log.md`）
-  5. push wip + task-board 移 In Review
-
-  **大腦後續**：
-  - review + merge wip
-  - 產出 migration SQL 貼碼指令給用戶貼到測試 Supabase (`btiqmckyjyswzrarmfxa`)
-  - 用戶貼完回報 → 大腦跑 `test-retrieval.mjs` 驗 MTT tier A 從新 table 能拿到 row
-  - 全通過 → 標 Done
+<!-- T-012 → In Review 2026-04-21 -->
 
 - [ ] **T-013** | Pipeline | **Scraping 成果盤點 + 整理**
   - 建議 branch：`wip/T013-scraping-audit`
@@ -373,7 +303,25 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-*（空）*
+- [?] **T-012** | Pipeline | **C4 MTT DB migration（solver_postflop_mtt table）**
+  - branch: `wip/T012-mtt-db-migration`
+  - 最後 commit: `27acc0f`（cherry-pick 回 T-012，原 77e9833 誤落 T-062 已救回）
+  - 完整 commits 序列：`3d308a4` (migration) + `27acc0f` (scripts routing) + 緊隨 chore (task-board In Review)
+  - 改動 3 檔：
+    1. 新檔 `supabase/migrations/20260421-solver-postflop-mtt.sql`（+107 行）
+       - CREATE TABLE + CHECK(`scenario_slug LIKE 'mtt_%'`) + RLS + index + INSERT...SELECT (ON CONFLICT DO NOTHING) + DELETE (EXISTS guard)
+       - 單檔一次 Run，全段 idempotent
+       - 與大腦 briefing template 差異：composite PK `(scenario_slug, flop)` 代替 `BIGSERIAL id + UNIQUE`（功能等價）；多加 CHECK constraint + DO block idempotent 守住重跑
+    2. `scripts/gto-pipeline/convert-to-db.mjs`（+4/-1）— 依 `scenarioSlug.startsWith('mtt_')` 決定 `targetTable`，直接套大腦 briefing template
+    3. `scripts/gto-pipeline/test-retrieval.mjs`（+8/-3）— `retrieve()` 開頭加 `targetTable` prefix routing
+       - **Design note**：Tier A/B 都路由到對應 table（MTT ctx 的 A、B 都查 `solver_postflop_mtt`），Tier C fallback 保留 `solver_postflop_6max`（MTT 資料稀疏，全 miss 時退回 cash 近似）。大腦 spec 原文只提 tier A，延伸到 B 對稱 `convert-to-db`；若大腦要嚴格 A-only 可收回
+  - 不動：`src/version.ts` / `memory/dev-log.md` / `supabase/functions/` / 其他 pipeline
+  - ⚠ **踩坑記錄**：scripts commit (77e9833) 原本誤落 `wip/T062-wip1-isolation`（wip1 worktree HEAD 被 T-062 session 切走，正是 T-062 要防的情境 — 諷刺地在 T-062 merge 前踩進）。搶救流程：stash task-board → switch T-012 → cherry-pick → reset task-board → drop stash → 重新 Edit；原 T-062 的 77e9833 尚未 push，大腦 review T-062 時 reset 該 branch HEAD^ 即可清掉
+  - ⚠ **task-board merge conflict 預期**：T-012 branch base 為 `c036f3d`（T-011 整合），origin/dev 已推 `0d5f0bf`（含大腦寫的 T-012 完整 briefing），merge 時 task-board Queue 區的 T-012 entry 會衝突。建議大腦 merge 時選擇「T-012 → In Review 註解」的版本（即本 branch 的改動）
+  - 驗證：
+    - migration SQL 語法肉眼檢查 ✅（無 plpgsql function、無 `INTO` bug、DO block 只做 IF NOT EXISTS / ADD CONSTRAINT）
+    - script 改動純變數路由，無 runtime 可跑；test-retrieval 要連測試 Supabase 實測屬大腦 review 後流程
+  - 等大腦：review → 產貼碼指令 → 用戶貼測試 Supabase → 跑 test-retrieval 驗 MTT tier A 從新 table 命中 → Done
 
 <!-- T-062 → Done 2026-04-21（見 Done 區） -->
 

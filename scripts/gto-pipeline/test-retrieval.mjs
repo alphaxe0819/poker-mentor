@@ -18,17 +18,23 @@ async function query(url) {
 async function retrieve(ctx) {
   let row = null, tier = 'C'
 
+  // T-012：scenario 前綴決定查哪張表（MTT 走 solver_postflop_mtt，其他走 6max）
+  // Tier C fallback 保留 6max — 若 MTT 全 miss 仍能拿相近 pot_type 的近似策略
+  const targetTable = ctx.scenario_slug?.startsWith('mtt_')
+    ? 'solver_postflop_mtt'
+    : 'solver_postflop_6max'
+
   // Tier A: exact
   if (ctx.scenario_slug && ctx.flop) {
-    const data = await query(`${SUPABASE_URL}/rest/v1/solver_postflop_6max?scenario_slug=eq.${ctx.scenario_slug}&flop=eq.${ctx.flop}&select=*`)
+    const data = await query(`${SUPABASE_URL}/rest/v1/${targetTable}?scenario_slug=eq.${ctx.scenario_slug}&flop=eq.${ctx.flop}&select=*`)
     if (data[0]) { row = data[0]; tier = 'A' }
   }
   // Tier B: same scenario
   if (!row && ctx.scenario_slug) {
-    const data = await query(`${SUPABASE_URL}/rest/v1/solver_postflop_6max?scenario_slug=eq.${ctx.scenario_slug}&select=*&limit=1`)
+    const data = await query(`${SUPABASE_URL}/rest/v1/${targetTable}?scenario_slug=eq.${ctx.scenario_slug}&select=*&limit=1`)
     if (data[0]) { row = data[0]; tier = 'B' }
   }
-  // Tier C: same pot_type
+  // Tier C: same pot_type（固定查 6max，MTT 全 miss 時退回 cash 近似）
   if (!row && ctx.pot_type) {
     const data = await query(`${SUPABASE_URL}/rest/v1/solver_postflop_6max?scenario_slug=like.*${ctx.pot_type}*&select=*&limit=1`)
     if (data[0]) { row = data[0]; tier = 'C' }
