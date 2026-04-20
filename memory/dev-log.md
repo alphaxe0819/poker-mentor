@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.23 [dev]
+- 雙角色 workflow 升級：大腦 / 執行者 / 單機快修
+- `memory/wiki/two-machine-workflow.md` 全面重寫（wip branch + 大腦整合模型）
+- 開工 SOP 第 6 步改問三角色（見 session-start-reminder.sh + CLAUDE.md）
+- task-board 加 In Review 欄位 + 每 task 建議 wip branch 名
+- CLAUDE.md 分支策略：wip/<task-id>-<短描述> 取代 feature/*；執行者不動 version.ts / dev-log
+- （規則過渡）本次仍按舊規則遞增版號，未來執行者 commit 不動版號，只在大腦 merge 時 bump
+
 ## 2026-04-20 v0.8.1-dev.22 [dev]
 - 中央大腦 task-board 建立
 - 新 `memory/wiki/task-board.md`：Queue / In Progress / Done 三區看板

@@ -107,9 +107,13 @@
 3. **主動讀** `memory/index.md`（專案知識庫索引，分級查詢入口）
 4. **主動讀** `memory/reference_architecture.md` — 了解專案目錄結構、技術棧、資料流、關鍵檔案位置。**這一步確保你在動手前知道整個系統怎麼運作**
 5. 主動回報：目前分支、版本、最近做了什麼、未完成事項
-6. **主動詢問角色**：「這個 Tab 負責哪個角色？(UI / Frontend / Backend / 自由)」（詳見「多 Tab 平行開發角色分工」）
-   - 若工作目錄是 worktree 子目錄（POKERNEW-ui-v2、POKERNEW-hu-sim 等），跳過此步驟
-7. 然後問用戶「要做什麼」
+6. **主動詢問 session 角色**（雙角色模型，詳見 `memory/wiki/two-machine-workflow.md`）：
+   - 🧠 **大腦**：整合 wip branch、merge 到 dev、bump 版本、部署測試機
+   - 🛠 **執行者**：挑 task、開 `wip/<task-id>-<短描述>` 作業；**不動** `src/version.ts` / `memory/dev-log.md`
+   - ⚡ **單機快修**：直接在 dev 做+bump+push（確定無其他 session 在跑時）
+   - 若工作目錄是 worktree 子目錄（POKERNEW-*），跳過此步驟
+7. 根據角色提建議：大腦→列 In Review wip；執行者→列 Queue；單機→按現狀
+8. 然後問用戶「要做什麼」
 - 若任務需要個人背景知識 → 讀個人 wiki 的 `C:\Users\User\Desktop\second-brain\index.md`
 
 **禁止行為：**
@@ -160,21 +164,33 @@
 - **收工前一定 `git push`**，確保雲端有最新版本（多台電腦開發靠 Git 同步）
 - **開工前一定 `git pull`**，確保拿到最新版本
 
-### 分支策略（feature → dev → main）
-- `feature/*` — 功能開發，任何電腦都在這裡工作
-- `dev` — 測試環境分支，push 後 Vercel 自動部署到 `poker-goal-dev.vercel.app`
-- `main` — 正式環境分支，push 後 Vercel 自動部署到 `poker-goal.vercel.app`
+### 分支策略（wip → dev → main，雙角色模型）
+- `wip/<task-id>-<短描述>` — **執行者**的獨立作業空間（短命 branch，完成後 merge 刪除）
+- `dev` — 測試環境分支；**只有大腦 merge wip 時才動 version.ts / dev-log**；push 後 Vercel 自動部署 `poker-goal-dev.vercel.app`
+- `main` — 正式環境分支；push 後 Vercel 自動部署 `poker-goal.vercel.app`
+- `feature/<名>` — ⚠️ **避免**（易變孤島，2026-04-14 / 2026-04-20 都出狀況）；只有明確需要長期隔離時才開
 
-### 標準流程
-1. 在 `feature/*` branch 上開發
-2. 每完成一組邏輯完整的改動就 `git commit` + `git push`（feature branch）——【自動，不需確認】
-3. 功能告一段落 → Claude 主動 merge 到 `dev` → push → 測試環境 Vercel 自動部署——【自動，不需確認】
-4. 測試通過 → merge `dev` 到 `main` → push → 正式環境 Vercel 自動部署——【⚠️ 需用戶在聊天中明確授權】
+### 標準流程（執行者 → 大腦）
+1. 執行者：`git checkout -b wip/<task-id>-<短描述>`（從最新 dev 切出）
+2. 在 wip branch 自由 commit + push（**不動** `src/version.ts` / `memory/dev-log.md`）
+3. 執行者在 `memory/wiki/task-board.md` 移 task 到 In Review
+4. 大腦：`git fetch` → review wip → `git merge --no-ff wip/<task-id>` 到 dev
+5. 大腦在 merge commit 或 follow-up commit 中：bump version.ts + append dev-log
+6. 大腦：`git push origin dev` → 測試環境部署——【自動，不需確認】
+7. 大腦：刪已 merge 的 wip branch（`git push origin --delete wip/<task-id>-...`）
+8. 測試通過 → merge `dev` 到 `main` → push → 正式環境部署——【⚠️ 需用戶明確授權】
+
+### 單機快修（無其他 session 在跑時可用）
+- 跳過 wip branch，直接在 dev 做
+- commit 時自己 bump version + append dev-log + push
+- 適用「快速修一件事 + 確定沒其他作業中」
 
 ### 禁止事項
 - **絕對不要**在有大量未 commit 改動時切換分支（`git checkout` 會丟棄未 commit 的修改）
-- **絕對不要**跳過 `dev` 直接 merge feature 到 `main`
-- 如果用戶說「不要上正式機」，意思是不要 push/merge 到 main，但**仍然應該在 feature branch 和 dev 上 commit + push**
+- **絕對不要**跳過 `dev` 直接 merge wip 到 `main`
+- 執行者**不要**自己 merge 自己的 wip branch 到 dev（避免繞過大腦 review）
+- 執行者**不要**動 `src/version.ts` / `memory/dev-log.md`（交給大腦整合時一次改）
+- 如果用戶說「不要上正式機」，意思是不要 push/merge 到 main，但**仍然應該在 wip branch 和 dev 上 commit + push**
 
 ### 為何這條規則存在
 2026-04-13 在 feature branch 上做了大量引擎修復（engine.ts、botAI.ts 等 33 個檔案）但未 commit。用戶切換到 main 再切回來，git checkout 丟棄了所有未 commit 的改動，導致一整天的工作丟失。
@@ -182,9 +198,10 @@
 ## 自動部署授權（測試環境）
 **Claude 可在**不需要每次詢問用戶**的情況下自動執行以下動作：**
 
-1. **Feature branch 操作**
-   - `git commit` 到 `feature/*`
-   - `git push` `feature/*` 到 remote 同名 branch
+1. **Wip branch 操作**（執行者）
+   - `git commit` 到 `wip/<task-id>-...`
+   - `git push` `wip/<task-id>-...` 到 remote 同名 branch
+   - 完成後 task-board 標 In Review 等大腦整合
 
 2. **Dev branch 操作（測試環境部署）**
    - `git checkout dev && git merge <feature> && git push origin dev`

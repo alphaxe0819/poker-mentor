@@ -1,137 +1,191 @@
 ---
-name: Two-Machine Workflow
-description: 兩台電腦共用 dev 分支的開工 / 收工 SOP + 自動化機制 + 衝突解法
+name: Multi-Session Workflow
+description: 多 session / 多電腦協作 — 大腦 + 執行者雙角色模型，以 wip branch 隔離作業、大腦整合到 dev
 type: project
 updated: 2026-04-20
 ---
 
-## 核心原則
+## 核心模型：雙角色 + wip branch + 大腦整合
 
-**一分支、硬紀律、腳本包容**
-
-- 兩台都在 `dev`，不開 `feature/*`（避免孤島，2026-04-14 / 2026-04-20 都發生過）
-- `main` 仍需用戶明確授權才 push
-- 每一個 session 打開 = 自動 sync；收工 = 當日必 push
-
----
-
-## 自動化機制（SessionStart hook）
-
-每次 Claude Code 打開，hook 依序跑：
-
-### 1. `scripts/session-sync.sh` — 容 WIP 的 pull
-- `git fetch --all`
-- 有 tracked/staged 改動 → `git stash push -u` → `git pull --ff-only` → `git stash pop`
-- 沒 WIP → 直接 `git pull --ff-only`
-- 任何環節失敗不中斷 session，Claude 會看到輸出後跟用戶確認
-
-### 2. `scripts/session-start-reminder.sh` — 印出實況
-Claude 啟動後立刻看到：
-- 遠端 `origin/dev` 最近 5 筆 commit（另一台今天做了什麼）
-- 本地 vs 遠端差異（+N / -N commits）
-- 分支 + 版本
-- 本機 WIP 清單
-- `memory/dev-log.md` 最新 3 筆
-
-**這樣打開第一秒就知道差異，不用問、不用查。**
-
----
-
-## 角色偏好（軟規則，不強制）
-
-| 機器 | 偏好領域 | 檔案範圍 |
-|---|---|---|
-| A 桌機 | **Pipeline** | `scripts/gto-pipeline/` / `src/lib/gto/gtoData_*` / `memory/wiki/range-*` |
-| B 行動機 | **Product** | `public/exploit-coach-*` / `src/components/` / `src/tabs/` / `src/lib/exploit/` / `supabase/functions/` |
-| 共用 | **Memory / Docs** | `memory/dev-log.md` / `src/version.ts` / `CLAUDE.md` / `memory/wiki/*` |
-
-- 越界 OK（另一台沒開時這台可以全包）
-- 同日同檔兩邊都要動 → 先告知對方（或隔天 pull 後再改）
-- 角色只是啟動時的「建議」，不是強制牆
-
----
-
-## 預期衝突 + 自動解法
-
-### `src/version.ts`
-兩台都遞增版號，衝突 100% 會發生。
-- **解法**：取較大數字（`max(dev.N, dev.M)` + 1）
-- 不要回退
-
-### `memory/dev-log.md`
-兩台都在檔頭 `---` 下追加區塊。
-- **解法**：兩邊區塊並存，按時間排序（新的在上）
-- Git 3-way merge 多半自動解；手動解時兩段都保留
-
-### `memory/wiki/*.md`（roadmap / workflow）
-通常只一台維護，但可能重疊。
-- **解法**：停下問人
-
-### `package.json` / `package-lock.json`
-任一台加依賴都會動。
-- **解法**：停下，確認雙方是否都需要這個依賴；需要則取聯集 + `npm install` 重建 lock
-
----
-
-## 開工 SOP（兩台通用）
-
-Claude 打開後自動做（按 `session-start-reminder.sh`）：
-
-1. 看遠端最近 5 筆 commit（認知對方活動）
-2. 看本機 WIP（認知自己未完事）
-3. 讀 `memory/dev-log.md` 近期 3 筆
-4. 回報：分支 / 版本 / 近期改動 / 角色建議
-5. 【必問】這個 Tab 角色？(Pipeline / Product / 自由)
-6. 等用戶指示
-
----
-
-## 收工 SOP（兩台通用）
-
-用戶喊「收工」→ Claude 跑 CLAUDE.md 的收工流程：
-
-1. `/compound` 提取對話副產品進 wiki
-2. 所有改動 commit（含版號遞增 + dev-log 追加）
-3. **`git push` 到 remote**（當日必 push，不留孤島）
-4. 產品改動才跑測試機驗證（curl dev Vercel）
-
----
-
-## 孤島預防清單
-
-觸發「另一台拿不到」的典型情境：
-
-| 情境 | 後果 | 防禦 |
-|---|---|---|
-| WIP 沒 commit 就關機 | 另一台完全看不到 | 收工 SOP 強制 commit；session-sync 會提示 WIP |
-| commit 沒 push 就關機 | 另一台 pull 拿不到 | 收工 SOP 強制 push |
-| 在 `feature/*` 分支工作 | push 上去但另一台在 dev 看不到 | 不開 feature branch；硬性規則 |
-| 本地 `.env` 改了沒同步 | 另一台 session 跑錯 config | `.env` 永遠本機，不進 repo；改動要口頭告知對方 |
-
----
-
-## 故障排查
-
-**開工後發現「本地落後 -N」但 pull 不動**
-→ session-sync 已嘗試 auto-stash；看 terminal 輸出確認 stash 狀態：
 ```
-git stash list
-git stash apply stash@{0}
+執行者 A 在 wip/T010-c2 作業          執行者 B 在 wip/T030-verify 作業
+        ↓                                     ↓
+   push wip branch                        push wip branch
+        ↓                                     ↓
+        └──────────────┬──────────────────────┘
+                       ↓
+               大腦 session
+                ↓ pull 各 wip branch
+                ↓ review + merge --no-ff 到 dev
+                ↓ 在 merge commit bump version + append dev-log
+                ↓ push dev → Vercel 自動部署測試機
+                ↓ 刪 wip branch
 ```
 
-**開工後發現自己在 feature 分支**
-→ 今天另一台遇到的 `feature/exploit-lab` 案例。處理：
-1. `git add <wip 檔>` → `git commit -m "wip: ..."` → `git push origin <branch>`（先保留）
-2. `git checkout dev` → `git pull --ff-only origin dev`
-3. 之後再決定 feature 分支要不要 merge / cherry-pick / 丟棄
+---
 
-**src/version.ts 版號衝突**
-→ 取兩邊較大數字 +1，重新 commit。dev-log 把兩邊區塊都保留。
+## 三種角色（開工 SOP 第一問）
+
+### 🧠 大腦（Integrator）
+
+**適用情境**：多個 wip branch 等整合、要部署測試機、要決定 merge 順序
+
+**能做的事**：
+- 看 task-board 的 `In Review` 欄位
+- `git fetch --all` 拉最新 wip branches
+- `git merge --no-ff wip/<branch>` 到 `dev`（保留 merge commit 標記整合點）
+- **在 merge commit 或 follow-up commit 中**：bump `src/version.ts` + append `memory/dev-log.md`
+- `git push origin dev` → 觸發 Vercel 測試機部署
+- 刪已整合 wip branch：`git push origin --delete wip/...`
+- 驗證部署（curl dev.vercel.app 確認 HTTP 200 + script hash）
+
+**不該做**：
+- 不直接在 dev 寫功能程式碼（有需求就開 wip branch 當執行者做完再自己整合）
+- 不未經 review 就 merge（看 diff 再動）
+
+---
+
+### 🛠 執行者（Worker）
+
+**適用情境**：挑 task 做，純作業，不要管整合 / 版號
+
+**能做的事**：
+- 從 task-board 的 `Queue` 挑 task（或大腦指派）
+- `git checkout dev && git pull --ff-only`
+- `git checkout -b wip/<task-id>-<短描述>`（例：`wip/T010-c2-scenarios`）
+- **在 wip branch 自由 commit**（可多個 commit，不用每次 commit 就改 version.ts）
+- `git push -u origin wip/<task-id>-<短描述>`
+- task-board 從 Queue → In Progress → In Review（附 wip branch 名 + 最後 commit hash）
+
+**不該做**：
+- **不動** `src/version.ts`（交給大腦整合時 bump）
+- **不動** `memory/dev-log.md`（交給大腦整合時 append）
+- 不主動 merge 自己的 wip branch 到 dev（避免繞過 review）
+
+---
+
+### ⚡ 單機快修（Solo）
+
+**適用情境**：當下確定沒其他 session / 對話在跑，想快速修一件事
+
+**能做的事**：
+- 不開 wip branch，直接在 dev 做
+- commit 時自己 bump `src/version.ts` + append `memory/dev-log.md`
+- `git push origin dev` → 觸發部署
+- 驗證部署
+
+**風險**：
+- 若實際上有其他 session / 對話也在動，容易卡版號衝突
+- 只在「確定單工」時用
+
+---
+
+## 🌳 分支命名規則
+
+| 分支 | 命名 | 生命週期 | 動到哪些檔 |
+|---|---|---|---|
+| `dev` | 固定 | 永久 | 產品 + 整合後的 version / dev-log |
+| `main` | 固定 | 永久 | 正式機（需明確授權） |
+| `wip/<task-id>-<短描述>` | 例：`wip/T010-c2-scenarios` | **短命**（完成後刪） | 功能改動，**不動** version.ts / dev-log |
+| `feature/<名>` | 舊例：`feature/exploit-lab` | ⚠ **避免**（易變孤島） | 只有明確需要長期隔離時才開 |
+
+**wip branch 衛生守則**：
+- 一個 task = 一個 wip branch
+- 完成後大腦 merge + 刪 branch，不留殘屍
+- 若超過 3 天未 merge，大腦要跟執行者確認是否要繼續或丟棄
+
+---
+
+## 任務代號系統
+
+- 每個 task 在 `memory/wiki/task-board.md` 有唯一 id：`T-NNN`
+- wip branch 名 = `wip/<task-id>-<短描述>`
+- 大腦 merge 時的 commit message 引用 task id：`Merge wip/T010 c2-scenarios`
+- dev-log 整合紀錄也引用 task id
+
+這樣從 branch 名、commit、dev-log、task-board 四處都能交叉追蹤。
+
+---
+
+## 開工 SOP（SessionStart 第一問）
+
+```
+⚠️ 今天這個 session 的角色？
+  🧠 大腦      — 整合 wip branch / merge 到 dev / bump 版本 / 部署測試機
+  🛠 執行者    — 挑 task / 開 wip branch 作業 / 不動 version / dev-log
+  ⚡ 單機快修  — 直接在 dev 做+bump+push（確定無其他 session 在跑時）
+```
+
+根據選擇，Claude 自動：
+- **大腦** → 列 In Review 的 wip branches；建議整合順序
+- **執行者** → 列 Queue 中未指派 task；問要接哪個 task-id
+- **單機** → 照目前方式直接動工
+
+---
+
+## 版號 + dev-log 規則（新）
+
+| 動作 | 誰 | 何時 | 動哪些檔 |
+|---|---|---|---|
+| commit 產品程式 | 執行者 | wip branch 上每個 commit | `src/` / `public/` / `supabase/` |
+| bump `version.ts` | 大腦 | merge wip → dev 時 | `src/version.ts` +1 |
+| append dev-log | 大腦 | merge wip → dev 時 | `memory/dev-log.md` append 檔尾 |
+| 驗證部署 | 大腦 | push dev 後 | curl + 確認 HTTP 200 |
+
+**關鍵**：版號 / dev-log 的改動**只發生在大腦整合時**，一次改好。兩台執行者各自 wip branch 永遠不會動到這兩檔 → 衝突不發生。
+
+---
+
+## 整合範例（大腦的典型一天）
+
+```bash
+git fetch --all
+
+# 看看有哪些 wip 在等
+git branch -r | grep wip/
+
+# 依序整合
+git checkout dev
+git pull --ff-only origin dev
+
+for branch in wip/T010-c2-scenarios wip/T030-verify-bugs; do
+  echo "=== 整合 $branch ==="
+  git log dev..origin/$branch --oneline
+  git merge --no-ff origin/$branch -m "Merge $branch"
+  # 解衝突（若有）
+done
+
+# bump + dev-log 一次到位
+vi src/version.ts          # dev.22 → dev.23
+vi memory/dev-log.md       # append 兩個 task 的說明
+git add src/version.ts memory/dev-log.md
+git commit -m "chore: integrate T-010 + T-030 (v0.8.1-dev.23)"
+
+# push + 部署
+git push origin dev
+bash scripts/verify-dev-deploy.sh  # （可選，手動也可）
+
+# 刪已整合 wip branch
+git push origin --delete wip/T010-c2-scenarios
+git push origin --delete wip/T030-verify-bugs
+```
+
+---
+
+## 衝突情境（還剩哪些？）
+
+| 情境 | 頻率 | 解法 |
+|---|---|---|
+| 兩個 wip branch 改同個功能檔 | 低 | 大腦 merge 時手動解，並告知執行者之後分工注意 |
+| 兩個大腦同時整合 | 極低 | 後整合的 `git pull --rebase origin dev` 再推 |
+| wip branch 跟 dev 分叉太久 | 中 | 大腦定期通知執行者 `git rebase origin/dev` 到最新 dev |
+
+**版號 / dev-log 衝突 = 0**（兩檔只有大腦動）。
 
 ---
 
 ## 相關連結
 
-- [[range-collection-roadmap]] — 目前 Pipeline 線的分批進度
-- [[no-unauthorized-push]] — main 分支保護規則
-- [[deploy-scope]] — 產品 vs 開發流程改動的驗證差異
+- [[task-board]] — 任務看板（Queue / In Progress / In Review / Done）
+- [[range-collection-roadmap]] — Pipeline 線三線分批進度
+- [[no-unauthorized-push]] — main 分支保護（不變）
