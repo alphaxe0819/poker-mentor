@@ -21,7 +21,7 @@
 export type GtoRange = Record<string, string>
 export type GtoDatabase = Record<string, GtoRange>
 
-export const HU_40BB_SRP_FLOP_KC8H3S: GtoDatabase = {
+export const HU_40BB_SRP_KC8H3S: GtoDatabase = {
 
   // ──────────────────────────────
   hu_40bb_srp_flop_Kc8h3s_btn_cbet: {
