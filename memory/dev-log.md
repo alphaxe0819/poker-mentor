@@ -5,6 +5,19 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.30 [dev]
+- T-042 正式整合（wip/T042-deploy-gto-migration → dev）
+- 執行者：這台主目錄 wip branch；大腦：這台 `-brain` worktree
+- 動作：gto_postflop + gto_batch_progress 兩 table + RLS + RPC `claim_gto_batch` 部署到測試 Supabase (btiqmckyjyswzrarmfxa)
+- 驗證：`information_schema.tables` 回 2 row，`SELECT claim_gto_batch('DESKTOP-TEST')` 回空 row（pending 為空）
+- **踩坑**：原 plpgsql function `RETURNING ... INTO v_id` 在 Supabase SQL Editor 報 `42P01: relation "v_id" does not exist`，即使 `$func$` 具名 dollar quote 都擋不住
+- **暫解**：測試 Supabase 手動改用 `LANGUAGE sql` 純 UPDATE...RETURNING 版（語意相同，一句解決）
+- **衍生 T-044**（大腦 task）：把 migration 檔 `supabase/migrations/20260416-gto-postflop.sql` 的 function 替換成 SQL 版，對齊正式機部署流程
+- T-043（batch-worker 首次實跑）阻塞已解 → Ready
+- task-board：T-042 → Done，T-043 標 Ready，新增 T-044
+- 純 task-board 改動（無 `src/` / `supabase/` / `public/`），不需測試機驗證
+- wip/T042-deploy-gto-migration 待刪
+
 ## 2026-04-20 v0.8.1-dev.29 [dev]
 - T-010 正式整合（wip/T010-c2-scenarios → dev）
 - merge --no-ff，task-board conflict 手動解（HEAD 保留 In Progress 標記 → 改為 Done 標記）
