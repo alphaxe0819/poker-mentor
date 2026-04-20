@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.19 [dev]
+- 方案 1 Converter 線 C0 + C1 完成
+- 新 `scripts/gto-pipeline/inspect-pd.mjs`：pd JSON schema 探查工具
+- 新 `scripts/gto-pipeline/pd-to-range.mjs`：pd `_ranges.json` + `action_id_map.json` → per-table hand map JSON
+- Live MTT Ben Adjusted 測試 OK（1149 tables 全映射，7 個乾淨 label）
+- Course / ICM 系列需要 C1.5 處理複合 label（現行走 unknown bucket）
+- roadmap 更新 C0/C1 狀態為 ✅ + 附映射規則備忘
+
 ## 2026-04-20 v0.8.1-dev.18 [dev]
 - 新增 `memory/wiki/range-collection-roadmap.md`：三線分批進度表（scraping / converter / solver）
 - 方案 1（converter 串接）拆成 C0-C4 phase；MTT postflop（P5）依賴 C4

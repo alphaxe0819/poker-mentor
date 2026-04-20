@@ -57,11 +57,30 @@ pokerdinosaur scrape
 
 | Phase | 任務 | 產出 | 狀態 |
 |---|---|---|---|
-| C0 | 探查 pd JSON 實際 schema；確認 COLOR_MAP → TexasSolver action 對照（raise/call/jam/3bet/4b_bluff/mixed 權重處理） | 一頁映射表 | ⬜ |
-| C1 | 寫 `scripts/gto-pipeline/pd-to-range.mjs`（仿 parse-rye-html.mjs） | pd JSON → hand map JSON | ⬜ |
-| C2 | `scenarios.mjs` 擴充 MTT 場景（Openraising / Rejamming / Multiway 等 9 類） | catalog 新增 MTT block | ⬜ |
+| C0 | 探查 pd JSON 實際 schema | `inspect-pd.mjs` + 映射規則 | ✅ 2026-04-20 |
+| C1 | 寫 `pd-to-range.mjs`（輸入 `_ranges.json` + `action_id_map.json` → per-table hand map JSON） | `pd-to-range.mjs`（對 Ben 系 projects 可用，乾淨 7 label） | ✅ 2026-04-20 |
+| C1.5 | 擴充 label 規則處理複合策略（Course / ICM 系列的 Ben 教練式 label，如 `3B Value / Jam < 35bb`） | LABEL_RULES 擴充 | ⬜ |
+| C2 | `scenarios.mjs` 擴充 MTT 場景 + `table.name` 解析（`"BB VS MP"` → scenario/depth/position） | catalog 新增 MTT block | ⬜ |
 | C3 | E2E 小樣本：選 1 個 scenario → 產 input → solve 1 flop → 入 DB → 驗 retrieval | 1 筆 DB row 可查 | ⬜ |
 | C4 | 建 MTT 專用 DB table（`solver_postflop_mtt`）或擴充現有 6max table | schema migration | ⬜ |
+
+### C0 探查結果備忘
+
+**JSON 格式兩種**
+- 新：`*_ranges.json`（用 action_id，配 `action_id_map.json`）— 主力
+- 舊：`pd_*.json`（用 `rgb(...)`，配 scrape-pokerdinosaur.js COLOR_MAP）— 逐步淘汰
+
+**label → TexasSolver bucket 映射（C1 現行）**
+- `raise` ← Raise / 4B / 3B* / Jam / All-in / `Raise 2.5bb` 等
+- `call` ← Call / Check / Limp / Defend*
+- `fold` ← Fold
+- mixed strategy：`{action_id: 權重%}` → 保留權重（`AKs:0.5`）
+
+**Ben 系 projects（label 乾淨，C1 OK）**
+Live MTT Ben / Tournament Ben / Tournament Chip EV 一類 — 7 個標準 label。
+
+**Course / ICM 系（label 複合，需 C1.5）**
+`3B Value / Jam < 35bb`、`raise/4bet bluff` 這種複合語義，當前走 `unknown` bucket。
 
 **注意**：C0-C3 不阻擋 Scraping 繼續；C4 需測試 Supabase SQL Editor 貼碼（依 CLAUDE.md 規則）。
 
