@@ -17,26 +17,40 @@ import { resolve, basename, join } from 'node:path'
 import os from 'node:os'
 
 // ── label → TexasSolver bucket (raise | call | fold) ──
-const LABEL_RULES = [
-  // raise bucket
-  [/^4B$/i, 'raise'],
-  [/^3B( |$)/i, 'raise'],
-  [/^Raise( |$)/i, 'raise'],
-  [/^Jam$/i, 'raise'],
-  [/^All-?in$/i, 'raise'],
-  // call bucket
-  [/^Call$/i, 'call'],
-  [/^Check$/i, 'call'],
-  [/^Limp$/i, 'call'],
-  [/^Defend/i, 'call'],
-  // fold bucket
-  [/^Fold$/i, 'fold'],
-]
+//
+// Ben 的教練式 label 慣例：
+//   "主動作 / 次動作 條件" 格式，例如 "3B Value / Jam < 35bb"、"Limp/call only vs <3x"。
+//   主動作永遠放第一個 token（空白或 '/' 前），代表 hero 目前該街的 range 歸屬。
+//   次動作是面對後續壓力時的反應（不影響 preflop range bucket）。
+//
+// 取 label 第一個 token 套規則：
+//   raise bucket: 3B* / 4B* / 3bet / 4bet / Raise* / Openraise / Minraise / Jam / All-in / Push /
+//                 純數字+x（2.5x / 3.5x / 4x）
+//   call  bucket: Call / Check / Limp / Defend / Flat
+//   fold  bucket: Fold / 空 label
+//
+// Prefix-based matching: token starting with these keywords → bucket.
+// Allows stuck-together labels like "limp3bet", "Openshove", "flatcall".
+const RAISE_PREFIX = /^(3b|3bet|4b|4bet|raise|openraise|openjam|openshove|minraise|jam|allin|push|shove|squeeze)/i
+const CALL_PREFIX  = /^(call|check|limp|defend|flat|broke)/i
+const FOLD_PREFIX  = /^fold/i
+const SIZING_X     = /^\d+(\.\d+)?x$/i
+const DEPTH_BB     = /^\d+bb$/i  // "20bb" 等純深度 label（Course 資料品質漏） → unknown
 
 function labelToBucket(label) {
-  if (!label) return 'fold'
-  for (const [re, bucket] of LABEL_RULES) {
-    if (re.test(label)) return bucket
+  if (!label || !label.trim()) return 'fold'
+  // Normalize multi-word "All in" / "all-in" → "allin"
+  const norm = label.trim()
+    .replace(/\ball[-\s]+in\b/gi, 'allin')
+    .replace(/-/g, '')
+  const tokens = norm.split(/[\s/]+/)
+  for (const t of tokens) {
+    if (!t) continue
+    if (DEPTH_BB.test(t)) continue   // skip pure "20bb" tokens
+    if (RAISE_PREFIX.test(t)) return 'raise'
+    if (SIZING_X.test(t)) return 'raise'
+    if (CALL_PREFIX.test(t)) return 'call'
+    if (FOLD_PREFIX.test(t)) return 'fold'
   }
   return 'unknown'
 }

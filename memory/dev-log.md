@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.20 [dev]
+- C1.5 完成：labelToBucket 改 prefix-based token scanner
+- 新增 `"All in"` / `"all-in"` normalize 成 `allin`
+- RAISE prefix 擴充：openjam, openshove, shove, squeeze, push
+- CALL prefix 擴充：flat（含 flatcall）, broke, defend
+- 加 `DEPTH_BB` 規則 skip `20bb/25bb` 等非動作 label
+- 10 個 pd project 全轉：7 個零 unknown；3 個剩少量是 pd 資料品質缺陷（Course depth-as-label、Final Table 字面 Unknown）
+
 ## 2026-04-20 v0.8.1-dev.19 [dev]
 - 方案 1 Converter 線 C0 + C1 完成
 - 新 `scripts/gto-pipeline/inspect-pd.mjs`：pd JSON schema 探查工具

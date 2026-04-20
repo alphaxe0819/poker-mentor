@@ -59,7 +59,7 @@ pokerdinosaur scrape
 |---|---|---|---|
 | C0 | 探查 pd JSON 實際 schema | `inspect-pd.mjs` + 映射規則 | ✅ 2026-04-20 |
 | C1 | 寫 `pd-to-range.mjs`（輸入 `_ranges.json` + `action_id_map.json` → per-table hand map JSON） | `pd-to-range.mjs`（對 Ben 系 projects 可用，乾淨 7 label） | ✅ 2026-04-20 |
-| C1.5 | 擴充 label 規則處理複合策略（Course / ICM 系列的 Ben 教練式 label，如 `3B Value / Jam < 35bb`） | LABEL_RULES 擴充 | ⬜ |
+| C1.5 | 擴充 label 規則處理複合策略（Course / ICM 系列的 Ben 教練式 label，如 `3B Value / Jam < 35bb`） | prefix-based token scanner + `allin` normalize | ✅ 2026-04-20 |
 | C2 | `scenarios.mjs` 擴充 MTT 場景 + `table.name` 解析（`"BB VS MP"` → scenario/depth/position） | catalog 新增 MTT block | ⬜ |
 | C3 | E2E 小樣本：選 1 個 scenario → 產 input → solve 1 flop → 入 DB → 驗 retrieval | 1 筆 DB row 可查 | ⬜ |
 | C4 | 建 MTT 專用 DB table（`solver_postflop_mtt`）或擴充現有 6max table | schema migration | ⬜ |
@@ -79,8 +79,14 @@ pokerdinosaur scrape
 **Ben 系 projects（label 乾淨，C1 OK）**
 Live MTT Ben / Tournament Ben / Tournament Chip EV 一類 — 7 個標準 label。
 
-**Course / ICM 系（label 複合，需 C1.5）**
-`3B Value / Jam < 35bb`、`raise/4bet bluff` 這種複合語義，當前走 `unknown` bucket。
+**Course / ICM 系（label 複合，C1.5 已處理）**
+用 **first-matching-token + prefix** 掃描：`3B Value / Jam < 35bb` → token `3B` → raise；`limp3bet/bluff` → prefix `limp` → call；`"All in"` normalize 成 `allin`。
+
+**10 個 project 現況**（C1.5 後）
+- ✅ 0 unknown：Live MTT Ben / Tournament Ben / Tournament Chip EV / Large/Medium/Small ICM / Final Two Tables
+- ⚠️ 少量資料品質 unknown（converter 不負責）：
+  - Course：少數 cells 以 `20bb/25bb` 深度字串當 label → skip 為 unknown（pd 教練填錯）
+  - Final Table / Final Table Exploitative：字面 `Unknown` label（pd 資料源本身缺）
 
 **注意**：C0-C3 不阻擋 Scraping 繼續；C4 需測試 Supabase SQL Editor 貼碼（依 CLAUDE.md 規則）。
 
