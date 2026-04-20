@@ -315,6 +315,226 @@ export const NINEMAX_SCENARIOS = [
 ]
 
 // ════════════════════════════════════════════════════════════
+// Phase 4: MTT — pd-driven scenarios (Live MTT Ben / Tournament Ben / ICM)
+//
+// MTT 的範圍來源是 pokerdinosaur 的 _ranges.json（已由 pd-to-range.mjs
+// 轉成 per-table hand-map JSON）。本層提供：
+//
+//   1. MTT_CATALOG       — 我們想 solve 的 MTT 場景靜態藍圖
+//                          （depth × matchup × pot_type，range 先 placeholder）
+//   2. MTT_SCENARIOS     — 從 catalog 直接產生的 scenario 物件陣列
+//                          （match scenarios.mjs 既有格式，可餵 generate-input.mjs）
+//   3. enumerateMTTFromPD(pdRangesDir)
+//                        — 動態：掃 pd-ranges output，把每張 table.name 用
+//                          parse-pd-table-name 解析後 group 進 catalog；
+//                          unknown 名字進 unknown bucket（不 silently drop）。
+//                          回傳：{ scenarios, parsing_summary, unmatched_pd, unknown_pd }
+//
+// Range 字串轉換（hand map → TexasSolver range）由下游 C3 處理；本層只
+// 負責 scenario enumeration + pd-to-catalog 對應。
+// ════════════════════════════════════════════════════════════
+
+import { parseTableName, summarizeParsing } from './parse-pd-table-name.mjs'
+
+// ── MTT 場景靜態 catalog ──
+// MTT 通常 9-max；常見 stack depth 是 15-50bb。SRP 主力：late position vs BB。
+// 3BP / 4BP 罕見且資料稀少，先擺進 catalog 但 pd 未必有對應 hand map。
+const MTT_DEPTHS = [15, 20, 25, 30, 40, 50]
+const MTT_SRP_MATCHUPS = [
+  // [opener (IP postflop), defender (OOP postflop)]
+  ['BTN', 'BB'], ['CO', 'BB'], ['HJ', 'BB'], ['LJ', 'BB'],
+  ['BTN', 'SB'], ['CO', 'SB'],
+  ['SB',  'BB'],   // SB open / BB defend
+]
+const MTT_3BP_MATCHUPS = [
+  ['BTN', 'BB'], ['CO', 'BB'], ['HJ', 'BB'],   // BB 3-bets late opens
+]
+
+function buildMttSrpScenario(opener, caller, depth_bb) {
+  // Pot/eff approximation: open 2.5bb, opener vs blind defender
+  // BB defends: pot = 2.5+2.5+0.5 (SB dead) = 5.5; SB defends: pot = 6
+  const pot_bb = caller === 'SB' ? 6 : 5.5
+  const effective_stack_bb = depth_bb - 2.5
+  const ip = opener === 'SB' && caller === 'BB' ? 'BB' : opener   // SB OOP postflop vs BB
+  const oop = ip === opener ? caller : opener
+  const slug = `mtt_${depth_bb}bb_srp_${opener.toLowerCase()}_open_${caller.toLowerCase()}_call`
+  return {
+    format: 'mtt', matchup: { ip, oop }, slug,
+    label: `MTT ${depth_bb}BB SRP ${opener} open / ${caller} call`,
+    depth_bb, pot_type: 'srp', pot_bb, effective_stack_bb,
+    description: `${opener} open 2.5 → ${caller} call → flop. Post-flop IP=${ip} OOP=${oop}`,
+    ranges: RANGE_PLACEHOLDER,
+  }
+}
+
+function buildMtt3bpScenario(opener, threebettor, depth_bb) {
+  // 3-bet sizing approx: BB 3bs to 9bb, IP to 8.5bb. Caller = original opener.
+  const pot_bb = threebettor === 'BB' ? 18 : 17
+  const effective_stack_bb = depth_bb - 9
+  const ip = opener   // postflop: original opener acts last vs BB/SB 3-bettor
+  const oop = threebettor
+  const slug = `mtt_${depth_bb}bb_3bp_${opener.toLowerCase()}_open_${threebettor.toLowerCase()}_3b`
+  return {
+    format: 'mtt', matchup: { ip, oop }, slug,
+    label: `MTT ${depth_bb}BB 3BP ${opener} open / ${threebettor} 3bet / ${opener} call`,
+    depth_bb, pot_type: '3bp', pot_bb, effective_stack_bb,
+    description: `${opener} open 2.5 → ${threebettor} 3b → ${opener} call → flop. Post-flop IP=${ip} OOP=${oop}`,
+    ranges: RANGE_PLACEHOLDER,
+  }
+}
+
+// Static enumeration (depth × matchup × pot_type)
+export const MTT_SCENARIOS = (() => {
+  const out = []
+  for (const depth of MTT_DEPTHS) {
+    for (const [opener, caller] of MTT_SRP_MATCHUPS) {
+      // Eff stack < 6bb after open is push/fold territory — skip
+      if (depth - 2.5 < 6) continue
+      out.push(buildMttSrpScenario(opener, caller, depth))
+    }
+    // 3BP only meaningful when remaining eff > 8bb
+    if (depth >= 25) {
+      for (const [opener, threebettor] of MTT_3BP_MATCHUPS) {
+        out.push(buildMtt3bpScenario(opener, threebettor, depth))
+      }
+    }
+  }
+  return out
+})()
+
+// ── Dynamic: pd hand-map → MTT catalog matching ──
+//
+// 把 pd 解析結果 group 進 catalog entries。每張 table 用 (depth, hero, scenario)
+// 三鍵嘗試 match 到 catalog；對不上的 table 進 unmatched/unknown bucket。
+//
+// 規則：
+//   parsed.scenario === 'open'  → MTT_SRP_MATCHUPS opener-side
+//   parsed.scenario === 'flat'  → MTT_SRP_MATCHUPS caller-side
+//   parsed.scenario === '3bet'  → MTT_3BP_MATCHUPS threebettor-side
+//   其他 (jam / squeeze / limp...) → 暫不對 SRP/3BP catalog（會列在 byScenario 但 unmatched）
+//
+// 這只做 inventory；實際 range 轉換是 C3 的事。
+function depthBucket(depth_bb) {
+  // pd table 的 depth 不見得剛好等於 catalog depth；對到最近的 catalog depth。
+  if (depth_bb == null) return null
+  let best = null, bestDist = Infinity
+  for (const d of MTT_DEPTHS) {
+    const dist = Math.abs(depth_bb - d)
+    if (dist < bestDist) { bestDist = dist; best = d }
+  }
+  // Only snap if within ±5bb (else the table is at an exotic depth we don't catalog)
+  return bestDist <= 5 ? best : null
+}
+
+function matchParsedToCatalog(parsed) {
+  const depth = depthBucket(parsed.depth_bb)
+  if (depth == null) return { match: null, reason: 'no depth (or out of catalog range)' }
+  const hero = parsed.hero
+  if (!hero) return { match: null, reason: 'no hero position' }
+
+  const sc = parsed.scenario
+  if (sc === 'open') {
+    // hero opens → look for any SRP scenario where hero is the opener
+    for (const [opener, caller] of MTT_SRP_MATCHUPS) {
+      if (opener === hero) {
+        return { match: buildMttSrpScenario(opener, caller, depth), side: 'opener' }
+      }
+    }
+    return { match: null, reason: `no SRP catalog has ${hero} as opener` }
+  }
+  if (sc === 'flat') {
+    // hero defends → look for SRP where hero is the caller (and villain matches if known)
+    for (const [opener, caller] of MTT_SRP_MATCHUPS) {
+      if (caller === hero && (!parsed.villain || opener === parsed.villain)) {
+        return { match: buildMttSrpScenario(opener, caller, depth), side: 'caller' }
+      }
+    }
+    return { match: null, reason: `no SRP catalog has ${hero} as caller${parsed.villain ? ' vs ' + parsed.villain : ''}` }
+  }
+  if (sc === '3bet') {
+    for (const [opener, threebettor] of MTT_3BP_MATCHUPS) {
+      if (threebettor === hero && (!parsed.villain || opener === parsed.villain)) {
+        return { match: buildMtt3bpScenario(opener, threebettor, depth), side: '3bettor' }
+      }
+    }
+    return { match: null, reason: `no 3BP catalog has ${hero} as 3-bettor${parsed.villain ? ' vs ' + parsed.villain : ''}` }
+  }
+  return { match: null, reason: `scenario "${sc}" not yet bucketed into MTT SRP/3BP catalog` }
+}
+
+/**
+ * Scan a pd-ranges output dir, parse all per-table names, and group them
+ * into MTT catalog scenarios. Returns enumeration + diagnostic buckets.
+ *
+ * NOTE: this is sync I/O on a small dir tree (~16k files); fine for one-shot
+ * pipeline runs but don't call from a request hot path.
+ *
+ * @param {string} pdRangesDir — root of pd-to-range.mjs output
+ *                               (e.g. 'scripts/gto-pipeline/output/pd-ranges')
+ * @returns {{
+ *   scenarios: Array<scenario_with_pd_hand_maps>,
+ *   parsing_summary: object,
+ *   unmatched_pd: Array<{raw, reason, parsed}>,
+ *   unknown_pd:   Array<{raw, reason}>,
+ * }}
+ */
+export async function enumerateMTTFromPD(pdRangesDir) {
+  const fs = await import('node:fs')
+  const path = await import('node:path')
+
+  const root = path.resolve(pdRangesDir)
+  if (!fs.existsSync(root)) {
+    throw new Error(`pd-ranges dir not found: ${root}`)
+  }
+  const projects = fs.readdirSync(root)
+    .filter(n => fs.statSync(path.join(root, n)).isDirectory())
+
+  // catalog-slug → { scenario, pdHandMaps[] }
+  const grouped = new Map()
+  const allParsed = []
+  const unmatched = []
+  const unknown = []
+
+  for (const project of projects) {
+    const projectDir = path.join(root, project)
+    const files = fs.readdirSync(projectDir).filter(f => f.endsWith('.json'))
+    for (const f of files) {
+      let data
+      try { data = JSON.parse(fs.readFileSync(path.join(projectDir, f), 'utf8')) }
+      catch { continue }
+      const raw = data.tableName ?? path.basename(f, '.json')
+      const parsed = parseTableName(raw)
+      allParsed.push(parsed)
+      if (parsed.unknown) {
+        unknown.push({ raw, reason: parsed.reason, project })
+        continue
+      }
+      const { match, reason, side } = matchParsedToCatalog(parsed)
+      if (!match) {
+        unmatched.push({ raw, reason, parsed, project })
+        continue
+      }
+      const key = `${match.slug}__${side}`
+      if (!grouped.has(key)) grouped.set(key, { scenario: match, side, pdHandMaps: [] })
+      grouped.get(key).pdHandMaps.push({
+        project,
+        file: f,
+        tableName: raw,
+        handsCount: data.handsCount,
+        hands: data.hands,
+      })
+    }
+  }
+
+  return {
+    scenarios: [...grouped.values()],
+    parsing_summary: summarizeParsing(allParsed),
+    unmatched_pd: unmatched,
+    unknown_pd: unknown,
+  }
+}
+
+// ════════════════════════════════════════════════════════════
 // Exports — format-based selection
 // ════════════════════════════════════════════════════════════
 
@@ -322,7 +542,8 @@ export const ALL_FORMATS = {
   hu:    HU_SCENARIOS,
   '6max': SIXMAX_SCENARIOS,
   '9max': NINEMAX_SCENARIOS,
-  all:   [...HU_SCENARIOS, ...SIXMAX_SCENARIOS, ...NINEMAX_SCENARIOS],
+  mtt:   MTT_SCENARIOS,
+  all:   [...HU_SCENARIOS, ...SIXMAX_SCENARIOS, ...NINEMAX_SCENARIOS, ...MTT_SCENARIOS],
 }
 
 // Backward compat — old API used by generate-input-v2.mjs
