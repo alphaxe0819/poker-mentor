@@ -71,38 +71,7 @@ updated: 2026-04-20
 <!-- T-060 → Done 2026-04-20（用戶實機驗收 3 條全 pass） -->
 <!-- T-058 → 升級 真正 Done（完整部署 + 驗收） -->
 
-- [ ] **T-056** | Pipeline | **batch-run.ps1 -SkipExisting 改雙命名偵測（防 T-020 churn 重演）** 🔴 優先 `(派工 2026-04-20)`
-  - **建議 branch**：`wip/T056-skipexisting-dual-naming`（從 origin/dev 切出）
-  - **範圍**：`scripts/gto-pipeline/batch-run.ps1` 第 118-137 行 `if ($SkipExisting)` 區塊
-  - **禁碰**：其他 pipeline script / src/ / supabase/
-
-  **背景（必讀）**：T-020 執行者跑 HU 40bb SRP 時，`-SkipExisting` 只 check 新命名 `gtoData_<slug>.ts`，對舊 `gtoData_flop_<slug>.ts` 誤判「未產」→ 全部 base 意外重跑 3 hr。T-056 就是防再踩。
-
-  **實作 step-by-step**：
-
-  第 129 行目前只 check 新命名：
-  ```powershell
-  $tsFile = Join-Path $ProjectRoot "src\lib\gto\gtoData_$baseName.ts"
-  if (Test-Path $tsFile) { ... skip }
-  ```
-
-  改成同時 check 舊命名（baseName 例 `hu_40bb_srp_As7d2c` → 舊命名是 `hu_40bb_srp_flop_As7d2c`，`flop_` 插在 slug 前）：
-  ```powershell
-  $parts = $baseName -split '_'
-  $legacy = ($parts[0..($parts.Length - 2)] -join '_') + '_flop_' + $parts[-1]
-  $tsFile = Join-Path $ProjectRoot "src\lib\gto\gtoData_$baseName.ts"
-  $legacyFile = Join-Path $ProjectRoot "src\lib\gto\gtoData_$legacy.ts"
-  if ((Test-Path $tsFile) -or (Test-Path $legacyFile)) {
-      Write-Host "  SKIP: TS file exists (new or legacy)" -ForegroundColor Yellow
-      $succeeded += $baseName
-      continue
-  }
-  ```
-
-  **完成條件**：
-  1. dry run 驗證：`powershell -ExecutionPolicy Bypass -File scripts/gto-pipeline/batch-run.ps1 -SkipExisting -Filter "^hu_25bb_srp"` → 應跳過 13 個 `_flop_` 舊命名 + 12 個新命名 = 25 個全 skip（HU 25bb SRP 目前 25 檔都已存在）
-  2. commit（**不動** `src/version.ts` / `memory/dev-log.md`）
-  3. push wip + task-board 移 In Review
+<!-- T-056 → In Review 2026-04-20 -->
 
 <!-- T-058 → In Review 2026-04-20 -->
 
@@ -298,7 +267,25 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-*（空）*
+- [?] **T-056** | Pipeline | **batch-run.ps1 -SkipExisting 雙命名偵測**
+  - branch: `wip/T056-skipexisting-dual-naming`（推 origin 完成）
+  - 最後 commit: `01421bb`
+  - 改動：單檔 `scripts/gto-pipeline/batch-run.ps1` 第 127-139 行（+8/-3）
+    - `-SkipExisting` else branch 同時 Test-Path 新命名 `gtoData_<base>.ts` + 舊命名 `gtoData_<prefix>_flop_<slug>.ts`
+    - skip 訊息附 matched filename（除錯友好）
+  - 不動：`src/version.ts` / `memory/dev-log.md` / 其他 pipeline script
+  - 驗證：
+    - ✅ **fixture 4-case 單元測試全 pass**（直接跑 Test-Path 判斷）：
+      - `hu_25bb_srp_Jc7d2h`（舊存新無）→ SKIP 對舊 ✓
+      - `hu_25bb_srp_As7d2c`（新舊都有）→ SKIP 對新（優先）✓
+      - `hu_40bb_srp_As7d2c`（新存舊無）→ SKIP 對新 ✓
+      - `hu_40bb_srp_XxYyZz`（兩者皆無）→ NOT skip ✓
+    - ⚠ **real batch dry-run 未跑**：wip1 worktree 無 TexasSolver exe（preflight exit 1 before skip 邏輯），需大腦在主目錄補跑：
+      ```
+      powershell -ExecutionPolicy Bypass -File scripts/gto-pipeline/batch-run.ps1 -SkipExisting -Filter "^hu_25bb_srp"
+      ```
+      預期：30 個 input → 21 個 unique TS slug 全 SKIP（13 舊命名 `_flop_` matched old + 8 純新命名 matched new）+ 9 個未產 slug 會嘗試跑 solver（此時 Ctrl+C 即可）
+  - 等大腦 review + merge 到 dev
 
 <!-- T-059 → Done 2026-04-20，實機驗收見 T-060 -->
 
