@@ -126,9 +126,14 @@ for ($i = 0; $i -lt $totalCount; $i++) {
             }
         } else {
             $ProjectRoot = (Resolve-Path (Join-Path $ScriptDir "..\..")).Path
-            $tsFile = Join-Path $ProjectRoot "src\lib\gto\gtoData_$baseName.ts"
-            if (Test-Path $tsFile) {
-                Write-Host "  SKIP: TS file already exists" -ForegroundColor Yellow
+            # Dual-naming detection (T-056): both new `gtoData_<base>.ts` and
+            # legacy `gtoData_<prefix>_flop_<slug>.ts` count as "already produced"
+            $tsFileNew = Join-Path $ProjectRoot "src\lib\gto\gtoData_$baseName.ts"
+            $baseNoSlug = $baseName.Substring(0, $baseName.Length - $boardSlug.Length - 1)
+            $tsFileOld = Join-Path $ProjectRoot "src\lib\gto\gtoData_${baseNoSlug}_flop_${boardSlug}.ts"
+            if ((Test-Path $tsFileNew) -or (Test-Path $tsFileOld)) {
+                $matchedName = if (Test-Path $tsFileNew) { Split-Path $tsFileNew -Leaf } else { Split-Path $tsFileOld -Leaf }
+                Write-Host "  SKIP: TS file already exists ($matchedName)" -ForegroundColor Yellow
                 $succeeded += $baseName
                 continue
             }
