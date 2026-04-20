@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-04-21 v0.8.1-dev.38 [dev]
+- T-063 部署 verify：用戶貼 migration 成功（table + row 搬移都對），但 `test-retrieval.mjs` 回 Tier C 而非 Tier A
+- 根因：`solver_postflop_mtt` RLS policy `TO authenticated` 擋 anon key，而 pipeline scripts 全用 ANON_KEY
+- 6max table 原本開 anon SELECT/INSERT/UPDATE（T-011 能 upsert + tier C 能 read 驗證）
+- 修法：對齊 6max 開放 anon + authenticated SELECT/INSERT/UPDATE
+- 改 `supabase/migrations/20260421-solver-postflop-mtt.sql` 第 3 段 policy block
+- 用戶需貼 patch SQL（只 3 個 CREATE POLICY）到測試 Supabase
+- 後續：用戶貼完 → 大腦再跑 test-retrieval 驗 tier A 命中
+- 屬產品類（supabase/），大腦單機快修 bump dev.37 → dev.38
+- 副 TODO：之後做 security hardening，pipeline scripts 改用 service_role key bypass RLS（另開 task）
+
 ## 2026-04-21 [flow] T-012 整合完成：MTT DB migration + scripts routing（code 部分）
 - 執行者：Sandbox `wip/T012-mtt-db-migration` @ `3d308a4` / `27acc0f` / `cc561bb`（base c036f3d）
 - 大腦：這台主目錄

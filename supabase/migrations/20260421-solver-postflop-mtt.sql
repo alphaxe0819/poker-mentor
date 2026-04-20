@@ -48,14 +48,30 @@ BEGIN
   END IF;
 END $$;
 
--- 3. RLS：所有登入用戶可讀，寫入走 service_role（bypass RLS）
+-- 3. RLS：對齊 solver_postflop_6max，開放 anon + authenticated SELECT/INSERT/UPDATE
+--    （pipeline scripts 用 ANON_KEY upsert；Edge Function 走 authenticated forward 也讀得到）
+--    之後 security hardening 可改用 service_role key bypass RLS，另開 task
 ALTER TABLE solver_postflop_mtt ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "authenticated users can read solver_postflop_mtt" ON solver_postflop_mtt;
-CREATE POLICY "authenticated users can read solver_postflop_mtt"
+DROP POLICY IF EXISTS "anyone can read solver_postflop_mtt" ON solver_postflop_mtt;
+DROP POLICY IF EXISTS "anyone can insert solver_postflop_mtt" ON solver_postflop_mtt;
+DROP POLICY IF EXISTS "anyone can update solver_postflop_mtt" ON solver_postflop_mtt;
+
+CREATE POLICY "anyone can read solver_postflop_mtt"
   ON solver_postflop_mtt FOR SELECT
-  TO authenticated
+  TO anon, authenticated
   USING (true);
+
+CREATE POLICY "anyone can insert solver_postflop_mtt"
+  ON solver_postflop_mtt FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (true);
+
+CREATE POLICY "anyone can update solver_postflop_mtt"
+  ON solver_postflop_mtt FOR UPDATE
+  TO anon, authenticated
+  USING (true) WITH CHECK (true);
 
 -- 4. Scenario lookup 加速（對齊 6max table 的常見 index；PK 已含 scenario_slug
 --    第一欄，技術上冗餘，但保留以便未來 scenario-only filter 的 query plan 穩定）
