@@ -155,13 +155,19 @@ updated: 2026-04-20
 
 ### Follow-up（T-033 引發）
 
-<!-- T-042 → In Progress 2026-04-20 -->
-- [ ] **T-043** | Pipeline | **batch-worker 環境準備 + 首次實跑**
+<!-- T-042 → Done 2026-04-20 -->
+- [ ] **T-043** | Pipeline | **batch-worker 環境準備 + 首次實跑** ⚡ **Ready**（T-042 已解）
   - 動作：scripts/gto-pipeline/ 下 `npm install @supabase/supabase-js`
   - 加 `.env` 含 `SUPABASE_URL` + `SUPABASE_SERVICE_KEY`
   - 跑 `node seed-batches.mjs` → 應填 N 筆 pending 到 gto_batch_progress
   - 跑 `node batch-worker.mjs --machine DESKTOP-A --dry-run` 驗證領取流程
-  - 依賴：T-042
+  - 依賴：~~T-042~~ ✅ migration 已部署到測試 Supabase
+
+- [ ] **T-044** | 大腦 | **修 migration 20260416-gto-postflop.sql 的 plpgsql 解析問題**
+  - 背景：T-042 部署時，原 plpgsql function `claim_gto_batch` 在 Supabase SQL Editor 跑會報 `42P01: relation "v_id" does not exist`（即使用 `$func$` 具名 dollar quote 也擋不住）
+  - 暫解：T-042 改用純 SQL function（`LANGUAGE sql`，移除 DECLARE / INTO，改 UPDATE...RETURNING 一句），測試 Supabase 已正確部署
+  - 待修：`supabase/migrations/20260416-gto-postflop.sql` 仍是舊 plpgsql 版，未來部署正式 Supabase 會再踩一次坑
+  - 動作：把 migration 檔的 function 替換成 T-042 用的純 SQL 版本（語意相同），順便拆 tables / function 兩段（避免 transaction rollback 連帶失敗）
 
 ---
 
@@ -183,14 +189,7 @@ updated: 2026-04-20
   - 完成條件：21 unique flops 全 solve 完，gtoData_index 接上，tsc EXIT=0
   - **連帶**：T-021（HU 40bb 3bp）/ T-023（HU 深度擴充）後續也應對齊 21 flops
 
-- [~] **T-042** | Pipeline | **部署 20260416-gto-postflop.sql 到測試 Supabase**
-  - branch: 無（純 Dashboard 操作；最後標 task-board 完成的 commit 由大腦做）
-  - 機器：這台（worktree `POKERNEW-wipT042` 或可省略）
-  - 執行者 session 起：2026-04-20
-  - 動作：貼 migration SQL 到測試 Supabase SQL Editor（btiqmckyjyswzrarmfxa）
-  - 驗證：`SELECT * FROM information_schema.tables WHERE table_name IN ('gto_postflop', 'gto_batch_progress')`
-  - 驗證 RPC：`SELECT claim_gto_batch('DESKTOP-TEST')` 應回空 row
-  - 完成條件：兩 table + RPC 都在 Dashboard 可見並驗證通過
+<!-- T-042 已部署完成，移至 Done -->
 
 <!-- T-033 已 merge 到 dev，移至 Done -->
 
@@ -286,6 +285,13 @@ updated: 2026-04-20
     - `src/lib/gto/getHUPostflopAction.ts` + `huHeuristics.ts`（async + turn/river roles）
     - `src/lib/hu/botAI.ts` + `HeadsUpMatchScreen{,V2}.tsx`（decision chain async 化）
     - 2 個 test 檔對應 async
+- [x] **T-042** | Pipeline | **部署 gto_postflop migration 到測試 Supabase** | 2026-04-20 | wip/T042-deploy-gto-migration
+  - 執行者：這台主目錄（`wip/T042-deploy-gto-migration`）
+  - 動作：兩個 table（gto_postflop / gto_batch_progress）+ RLS policies + RPC `claim_gto_batch` 全部部署到測試 Supabase（btiqmckyjyswzrarmfxa）
+  - 驗證：`information_schema.tables` 回 2 row、`SELECT claim_gto_batch('DESKTOP-TEST')` 回空 row（pending 為空）
+  - 踩坑：原 plpgsql function `RETURNING ... INTO v_id` 在 Supabase SQL Editor 報 `42P01: relation "v_id" does not exist`（`$$` 與 `$func$` 都擋不住），最終改成 `LANGUAGE sql` 純 UPDATE...RETURNING 才過
+  - 衍生：T-044（修 migration 檔以對齊正式機部署流程）
+  - T-043 阻塞已解，可開始
 - [x] **T-031** | 大腦 | feature branches 盤點 + 清理 | 2026-04-20 | 本次 commit
   - 調查結果：`feature/exploit-lab` / `feature/hu-simulator-v1` / `feature/ui-v2` 三個 branch 相對於 dev 都 **0 獨有 commits**，全是 dev 舊副本
   - 另一台之前報告的「04-16 WIP」（batch-worker / seed-batches / getGTOPostflopFromDB / DB migration）實際上已在 dev（dev.8-dev.11 那批 commit 正是）
