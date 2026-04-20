@@ -259,24 +259,9 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-- [?] **T-051** | Product | **exploit-coach 401 診斷 + 修 fuzzy match → exact** ⚠ 等實機 log
-  - branch: `wip/T051-exploit-coach-401-diag`（從 origin/dev `d037e12` 切出）
-  - 最後 commit: 待 push
-  - 機器：這台主目錄（純程式碼修改，無實機環境）
-  - 改動範圍：
-    - **A** `public/exploit-coach-mockup-v3.html:1459-1473` — `readTokenFromStorage` 從 fuzzy `sb-*-auth-token` 改為 exact `localStorage.getItem('sb-btiqmckyjyswzrarmfxa-auth-token')`（與 line 1454 storageKey 對齊；fuzzy 在 localStorage 殘留多 sb-key 時會抓錯 project）
-    - **B** `public/exploit-coach-mockup-v3.html:1568-1587` — `callCoach` 加 3 個 console.error 診斷點：`[exploit-coach-401][first]`（含 status / tokenHead / tokenTail / SUPABASE_URL）、`[exploit-coach-401][refresh]`（含 gotNewTok / newHead / newTail / sameAsOld）、`[exploit-coach-401][retry-failed]`
-    - **C** `src/tabs/ExploitCoachTab.tsx:14-39` — `onMessage` handler 加 5 個 log：`[parent-refresh] got request`（origin vs expected）、`origin blocked` warn、`no targetWindow` warn、`refresh threw` error、`replied`（hasToken）
-  - 不變動：`askParentRefresh` 流程、token 解析邏輯、T-050 picker DOM 修法
-  - 驗證：
-    - ✅ `npx tsc -b --noEmit` EXIT=0
-    - ⏳ 實機驗證需用戶在 iPhone Safari + Mac 遠端 Web Inspector 跑（Windows dev preview 無法重現 staging 401）
-  - **等用戶實機 log**：iPhone Safari 開 AI 分析觸發 401 後，把 Mac Safari Inspector Console 抓到的 `[exploit-coach-401]` + `[parent-refresh]` log 全部貼回
-  - 預期判讀：
-    - 若 fuzzy match 是元凶（RC2）→ A 修好後 401 直接消失，沒有任何 `[exploit-coach-401]` log → 直接移 Done
-    - 若 `[exploit-coach-401][first]` 出現且 `[refresh] sameAsOld=true` → askParentRefresh 沒拿到新 token，可能 parent supabase client 沒登入到測試 project（=RC1，等 T-052 Vercel env 結果）
-    - 若 `[parent-refresh] origin blocked` → mockup 與 parent 同 origin，blocked = 多了第三方 iframe 在送 message，要查 source
-    - 若 `[parent-refresh] replied hasToken=false` → parent supabase 也拿不到 session，可能未登入或環境 mismatch
+*（空）*
+
+<!-- T-051 已 merge 到 dev，移至 Done；等用戶實機 log 才能判根因（bug fix 未必已解） -->
   - 等大腦 merge（無論實機結果）— 診斷 log 跟著 merge 進測試環境，下次實機重現可立刻看
 
 <!-- T-010 已 merge 到 dev，移至 Done -->
@@ -336,6 +321,17 @@ updated: 2026-04-20
   - 另一台之前報告的「04-16 WIP」（batch-worker / seed-batches / getGTOPostflopFromDB / DB migration）實際上已在 dev（dev.8-dev.11 那批 commit 正是）
   - 動作：remote 三個 branch 全刪（`git push --delete`）
   - 另一台 Claude 後續動作：checkout dev + pull + 跑新 SOP（見本次 dev-log）
+- [x] **T-051** | Product + 大腦 | **exploit-coach 401 診斷 + fuzzy → exact storage key** | 2026-04-20 | merge + dev.33
+  - 執行者：這台主目錄（`wip/T051-exploit-coach-401-diag` @ `8817e74`）
+  - 大腦：review + merge（這台 `-brain` worktree）
+  - 產出：
+    - `public/exploit-coach-mockup-v3.html` — A) readTokenFromStorage exact match 'sb-btiqmckyjyswzrarmfxa-auth-token'; B) callCoach 加 3 個診斷 log [first]/[refresh]/[retry-failed]
+    - `src/tabs/ExploitCoachTab.tsx` — C) onMessage 加 5 path log (got request / origin blocked / no targetWindow / refresh threw / replied)
+  - 驗證：tsc EXIT=0；測試機 Vite build OK
+  - ⚠ **bug 是否已解未知** — 等用戶實機 iPhone Safari + Mac Inspector 抓 log 回來才能判根因：
+    - 若 bug 消失（RC2）→ fuzzy match 是元凶，收工
+    - 若 [exploit-coach-401][refresh] sameAsOld=true → RC1 env 問題，看 T-052
+    - 若 [parent-refresh] replied hasToken=false → parent supabase 拿不到 session
 - [x] **T-043** | Pipeline + 大腦 | **batch-worker 環境準備 + dry-run validated** | 2026-04-20 | merge + dev.32
   - 執行者：這台主目錄（`wip/T043-batch-worker-setup` @ `90ee465`）
   - 大腦：review + merge（這台 `-brain` worktree）

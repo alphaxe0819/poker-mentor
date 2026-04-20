@@ -5,6 +5,19 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.33 [dev]
+- T-051 正式整合（wip/T051-exploit-coach-401-diag → dev）
+- 背景：2026-04-20 實機（iPhone Safari WiFi+4G 都壞）在 AI 分析顯示「登入已過期」= `exploit-coach-mockup-v3.html:1574`
+- 改動（A+B+C）：
+  - **A** `public/exploit-coach-mockup-v3.html:1459-1473` — `readTokenFromStorage` fuzzy match → exact `localStorage.getItem('sb-btiqmckyjyswzrarmfxa-auth-token')`，對齊 line 1454 的 storageKey；避免 localStorage 殘留多個 `sb-*-auth-token` 時抓錯 project
+  - **B** `public/exploit-coach-mockup-v3.html:1568-1587` — `callCoach` 加 3 個 console.error：`[exploit-coach-401][first]` / `[refresh]` / `[retry-failed]`，含 status / tokenHead / tokenTail / SUPABASE_URL / sameAsOld 欄位
+  - **C** `src/tabs/ExploitCoachTab.tsx:14-39` — `onMessage` handler 加 5 個 log path：got request / origin blocked / no targetWindow / refresh threw / replied
+- 驗證：tsc EXIT=0
+- ⚠ **bug 可能未解** — T-051 主要是「修 fuzzy match + 加診斷 log」，root cause 待用戶實機跑一遍把 Safari Inspector log 貼回才能判：RC1 env mismatch / RC2 fuzzy match / RC3 refresh 失敗
+- 併行：T-052（用戶手動核對 Vercel dev env var）
+- 產品改動（src/ + public/）→ 跑測試機 curl 驗證 Vite build
+- wip/T051-exploit-coach-401-diag 待刪
+
 ## 2026-04-20 v0.8.1-dev.32 [dev]
 - T-043 正式整合（wip/T043-batch-worker-setup → dev）
 - 執行者：這台主目錄；大腦：這台 `-brain` worktree
