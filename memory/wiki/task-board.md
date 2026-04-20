@@ -100,9 +100,29 @@ updated: 2026-04-20
 - [ ] **T-040** | 大腦 | **range-collection-roadmap 同步**（依賴 T-013）
 - [ ] **T-041** | 大腦 | **每日收工確認**：`git log --all --since=today` 看兩邊都 push
 
+### Follow-up（T-033 引發）
+
+- [ ] **T-042** | Pipeline | **部署 20260416-gto-postflop.sql 到測試 Supabase**
+  - 動作：貼 migration SQL 到測試 Supabase SQL Editor（btiqmckyjyswzrarmfxa）
+  - 驗證：`SELECT * FROM information_schema.tables WHERE table_name IN ('gto_postflop', 'gto_batch_progress')`
+  - 驗證 RPC：`SELECT claim_gto_batch('DESKTOP-TEST')` 應回空 row
+- [ ] **T-043** | Pipeline | **batch-worker 環境準備 + 首次實跑**
+  - 動作：scripts/gto-pipeline/ 下 `npm install @supabase/supabase-js`
+  - 加 `.env` 含 `SUPABASE_URL` + `SUPABASE_SERVICE_KEY`
+  - 跑 `node seed-batches.mjs` → 應填 N 筆 pending 到 gto_batch_progress
+  - 跑 `node batch-worker.mjs --machine DESKTOP-A --dry-run` 驗證領取流程
+  - 依賴：T-042
+
 ---
 
 ## 🔨 In Progress（執行中）
+
+*（空）*
+
+<!-- T-033 已 merge 到 dev，移至 Done -->
+
+<details>
+<summary>📦 T-033 歷史紀錄（已 Done）</summary>
 
 - [~] **T-033** | Pipeline | **GTO postflop v2 WIP — ⚠️ BLOCKED on call-site async-ify**
   - branch: `wip/T033-gto-postflop-v2-wip` (commit `c64d2eb`，已 push)
@@ -122,6 +142,8 @@ updated: 2026-04-20
     - 範圍：`src/lib/hu/botAI.ts`（decidePostflop / decideBotAction 改 async）
     - 連帶：所有 `decideBotAction` 的呼叫處（可能在 `src/pages/HeadsUpMatch*` 或 `src/components/HeadsUp*`）
     - 完成條件：`npx tsc -b --noEmit` EXIT=0
+
+</details>
 
 格式範例：
 ```
@@ -161,6 +183,17 @@ updated: 2026-04-20
 - [x] **T-004** | 大腦 | range-collection-roadmap 初版 | 2026-04-20 | `ca11e86` (dev.18)
 - [x] **T-005** | 大腦 | 雙角色 workflow 升級（wip branch 模型） | 2026-04-20 | `4ccc701` (dev.23)
   - 產出：two-machine-workflow.md 重寫 + session-start-reminder 改 3 角色問句 + task-board 加 In Review
+- [x] **T-033** | Pipeline + 大腦 | **GTO postflop v2 pipeline + async bot chain** | 2026-04-20 | merge commit + dev.27
+  - 執行者：另一台機器（c64d2eb 初版 + b673b0b async fix）
+  - 大腦：review 2 輪（第 1 輪 revert blocked on call-site；第 2 輪 merge clean）
+  - 產出（12 檔）：
+    - `supabase/migrations/20260416-gto-postflop.sql`（gto_postflop + gto_batch_progress + claim_gto_batch RPC）
+    - `src/lib/gto/getGTOPostflopFromDB.ts`（client DB reader with prefetch cache）
+    - `scripts/gto-pipeline/batch-worker.mjs` + `seed-batches.mjs`（跨平台雙機協調 worker）
+    - `scripts/gto-pipeline/boards.mjs`（turn cards 擴充）
+    - `src/lib/gto/getHUPostflopAction.ts` + `huHeuristics.ts`（async + turn/river roles）
+    - `src/lib/hu/botAI.ts` + `HeadsUpMatchScreen{,V2}.tsx`（decision chain async 化）
+    - 2 個 test 檔對應 async
 - [x] **T-031** | 大腦 | feature branches 盤點 + 清理 | 2026-04-20 | 本次 commit
   - 調查結果：`feature/exploit-lab` / `feature/hu-simulator-v1` / `feature/ui-v2` 三個 branch 相對於 dev 都 **0 獨有 commits**，全是 dev 舊副本
   - 另一台之前報告的「04-16 WIP」（batch-worker / seed-batches / getGTOPostflopFromDB / DB migration）實際上已在 dev（dev.8-dev.11 那批 commit 正是）

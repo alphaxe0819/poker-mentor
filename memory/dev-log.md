@@ -5,6 +5,23 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.27 [dev]
+- T-033 正式整合（wip/T033-gto-postflop-v2-wip → dev）
+- merge --no-ff：2 commits 進 dev（c64d2eb 保留 + b673b0b async fix）
+- 採納 12 檔：7 個原 wip 檔 + 5 個 call-site async 化（botAI.ts / HeadsUpMatchScreen{,V2}.tsx / 2 test）
+- 新增能力：
+  - DB-driven turn/river GTO lookup（gto_postflop table + client prefetch cache）
+  - 跨平台雙機協調解算（gto_batch_progress + claim_gto_batch RPC）
+  - PostflopRole 擴充到 turn/river
+  - bot decision chain 全 async（可查 DB）
+- tsc EXIT=0，merge clean
+- follow-up 動作（另一條 task，不在本 commit）：
+  - 部署 migration 到測試 Supabase（btiqmckyjyswzrarmfxa）
+  - 設定 SUPABASE_SERVICE_KEY secret（batch-worker 需要）
+  - seed-batches + batch-worker 實跑驗證
+- task-board T-033 → Done
+- wip/T033-gto-postflop-v2-wip 待刪
+
 ## 2026-04-20 v0.8.1-dev.26 [dev]
 - 大腦 review T-033（`wip/T033-gto-postflop-v2-wip` @ c64d2eb）
 - 結論：7 檔全部有價值，採納方向確定（migration / DB reader / worker / boards 擴充 / PostflopRole 擴充）
