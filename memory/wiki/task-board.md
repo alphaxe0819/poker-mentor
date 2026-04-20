@@ -129,6 +129,11 @@ updated: 2026-04-20
   - 建議 branch：`wip/T023-6max-shallow`
   - 待確認具體範圍
 
+<!-- T-062 → In Review 2026-04-21 -->
+
+<details>
+<summary>📦 T-062 原任務描述（已 In Review，見下方）</summary>
+
 - [ ] **T-062** | Pipeline | **wip1 worktree 隔離強化（防 T-011 踩坑重演）** `(派工 2026-04-21)`
   - **建議 branch**：`wip/T062-wip1-isolation`（從 origin/dev 切出）
   - **背景**：T-011 執行者 feat commit 誤落在 `wip/T056-skipexisting-dual-naming`，原因：T-056 執行者完成後 wip1 HEAD 留在 wip/T056（沒切 detached），T-011 執行者接手時 `git checkout -b wip/T011-c3-e2e` **沒指定 base**，從當前 HEAD (wip/T056) 切出 → commits 疊到 wip/T056。花 solver 16:28 跑完才發現，cherry-pick 救回。
@@ -165,6 +170,8 @@ updated: 2026-04-20
 
   **後續延伸**（不在 T-062 scope）：
   - 寫進 `memory/wiki/two-machine-workflow.md`「執行者紀律」段：開工前 `git worktree list` + 確認 HEAD detached
+
+</details>
 
 <!-- T-059 → Done 2026-04-20（deploy guide 產出） -->
 <!-- T-060 → Done 2026-04-20（用戶實機驗收 3 條全 pass） -->
@@ -366,7 +373,16 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-*（空）*
+- [?] **T-062** | Pipeline | **wip1 worktree HEAD 隔離強化（防 T-011 踩坑重演）**
+  - branch: `wip/T062-wip1-isolation`（從 origin/dev `0d5f0bf` 切出）
+  - 最後 feat commit: `fafaa16`（task-board 移 In Review 是緊隨的 chore commit）
+  - 改動：單檔 `scripts/session-start-reminder.sh`（+15 行），`*-wip*` 區塊內：
+    1. SOP 第 3 步加 ⚠ 標記強調 `git checkout -b wip/T0xx 必須帶 origin/dev` base，附 T-011 踩坑情境（省略 base → 從當前 HEAD 切 → commits 疊到上個 wip branch；T-011 跑 solver 16 分鐘才發現）
+    2. SOP 之後加 HEAD 隔離檢查：`git branch --show-current` 偵測非 detached → 印警告 + 提示 `git checkout --detach origin/dev` 救法
+  - 不動：`src/version.ts` / `memory/dev-log.md` / 其他 script / src / supabase
+  - 驗證：當前 wip1 HEAD 在 `wip/T062-wip1-isolation`，跑 `bash scripts/session-start-reminder.sh` 觸發新警告段（branch 名 `wip/T062-wip1-isolation` 正確顯示）
+  - 後續延伸（briefing 標明不在 T-062 scope）：寫進 `memory/wiki/two-machine-workflow.md` 執行者紀律段
+  - 等大腦 review + merge
 
 <!-- T-011 → Done 2026-04-21（見 Done 區） -->
 
