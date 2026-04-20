@@ -78,10 +78,10 @@ updated: 2026-04-20
 
 ### Product 線
 
-- [ ] **T-050** | Product | **exploit-coach v2 bug 修復（3 個新 bug）** 🔥 優先
-  - 建議 branch：`wip/T050-exploit-coach-bugs-v2`
-  - 範圍：`public/exploit-coach-mockup-v3.html` + 可能 `src/tabs/ExploitCoachTab.tsx`
-  - 使用者驗證發現：
+- [ ] **T-050** | Product | **exploit-coach v2 bug 修復（3 個新 bug）** 🔥 優先 → **已移 In Review，見下方**
+
+<details>
+<summary>原任務描述</summary>
 
   **Bug 0** — Hero 手牌未選仍可進「下一步 →」
   - 位置：S1 頁面（位置 & 手牌）的「下一步」按鈕
@@ -137,6 +137,8 @@ updated: 2026-04-20
     - `npx tsc -b --noEmit` EXIT=0
     - 實機測試 3 個 bug 都 pass（iOS Safari + Chrome）
     - Console 無 error / warning
+
+</details>
 
 - [ ] **T-030** | Product | **實機驗證 exploit-coach 5 bug（dev.16）**
   - 建議 branch：無（純手動 UI 驗證，不需 branch）
@@ -217,7 +219,17 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-*（空）*
+- [?] **T-050** | Product | **exploit-coach v2 bug 修復（3 個新 bug）**
+  - branch: `wip/T050-exploit-coach-bugs-v2`（推 origin 完成）
+  - 最後 commit: `8e715b6`
+  - 執行者備註：
+    - **Bug 0 (hero-guard)**：S3「下一步 →」改呼叫新 `proceedFromS3()`，guard `heroCards[0/1]` + `heroPos !== villPos`，未通過用 `flashError` 紅閃
+    - **Bug 1 (picker-dom)**：採推薦方案 A — `#card-picker` 從 `#s3` 內移到 body 層級（end-of-file），CSS 加 `#card-picker.show { position:fixed; z-index:1000; ... }`，hero/vill 兩處共用
+    - **Bug 2 (load-failed)**：`ExploitCoachTab.tsx` 採方案 (b)+(c) 合併 — source 判斷改 `e.origin === window.location.origin`，await 前先 capture `iframeRef.current?.contentWindow` 到 local var
+    - **Bug 2 注意**：實機 iOS Safari + 4G debug 步驟未跑（task 列出的 5 步 Web Inspector 流程）。修法是基於 task 描述最有可能成因的「最佳猜測」，部署後仍需實機回驗
+  - tsc：✅ EXIT=0
+  - 變動 2 檔：`public/exploit-coach-mockup-v3.html` (+24 / -7)、`src/tabs/ExploitCoachTab.tsx` (+8 / -2)
+  - 等大腦 merge
 
 格式範例：
 ```
