@@ -75,20 +75,7 @@ updated: 2026-04-20
   - 預估：15 min，5 行 PowerShell 改動
   - 完成條件：在 HU 25bb 舊命名 fixture 上 `-SkipExisting` 不會誤判重跑
 
-- [ ] **T-058** | Product | **exploit-coach Claude 教練繁中術語 grounding**
-  - 建議 branch：`wip/T058-zh-tw-terminology`
-  - 背景：T-055 實機驗 OK 但 Claude Haiku 把 `dominate` 翻成「過度」（不通）、`bluff catcher` 類抽象詞也常直翻。需要把繁中術語表塞進 system prompt 當強制 grounding
-  - Source：`memory/wiki/poker-terminology-zh-tw.md`（新 wiki，大腦已整理好 70+ 詞 + 8 個台灣來源 + LLM 高風險詞清單）
-  - 範圍：單檔 `supabase/functions/exploit-coach/index.ts` `buildSystemPrompt`
-    - 把 wiki 中「術語對照表」+「使用規則」複製貼入 prompt base（放在 T-055 加的「本輪場景 grounding」段之後）
-    - 建議只保留 Markdown table 核心 + 使用規則 3 條，省 token（完整表留在 wiki，prompt 只放精華）
-    - 特別強調 4 個 LLM 高風險詞：dominate / cooler / bluff catcher / polarized、merged
-  - 完成條件：
-    - tsc EXIT=0
-    - 實機驗證：之前會出現「過度」的 QQ 對 AK/AA/KK 問題，現在應改用「壓制」
-    - 追問用過「抓詐唬牌」或保留英文「bluff catcher」，不出現「詐唬捕手」類怪譯
-  - 部署：大腦 merge 後產出 Edge Function 整檔貼碼指令給用戶貼到測試 Supabase
-  - 預估：15-20 min（純 prompt 文字改動，不動邏輯）
+<!-- T-058 → In Review 2026-04-20 -->
 
 - [ ] **T-057** | 大腦 | **wiki: gto-pipeline-conventions.md 命名規範**
   - 建議 branch：`wip/T057-gto-pipeline-conventions`
@@ -290,7 +277,34 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-*（空）*
+- [?] **T-058** | Product | **exploit-coach 繁中 poker 術語 grounding** ⚠ 含 Edge Function 部署
+  - branch: `wip/T058-zh-tw-terminology`（從 origin/dev `9b51e30` 切出）
+  - 最後 commit: 待 push
+  - 機器：這台主目錄
+  - 改動範圍（單檔 `supabase/functions/exploit-coach/index.ts:170-204`，+31 / -1 行）：
+    - 在 base prompt 的「本輪場景 grounding」段**之後**新增「繁中 poker 術語校準」段（位置：T-055 段尾接續，符合派單禁碰「不動 T-055 grounding 段」要求）
+    - 內容（依派單範本完整貼入）：
+      - **5 個 LLM 高風險詞錯譯阻擋**：dominate→壓制 / cooler→冤家牌 / bluff catcher→抓詐唬牌 / polarized→極化範圍 / merged→合併範圍（每條都附 ❌ 錯譯黑名單）
+      - **保留英文清單**（21 詞）：c-bet / 3-bet / 4-bet / GTO / MDF / ICM / SRP / BTN / SB / BB / UTG / CO / HJ / LJ / IP / OOP / TAG / LAG / nit / maniac / SPR
+      - **推薦譯法**（12 詞）：bluff / equity / pot odds / implied odds / fold equity / blocker / squeeze / donk / float / set / trips / calling station
+      - **3 條使用規則**：保留英文字樣→直接英文、表外術語→英文+括號白話、避免大陸用語
+    - 預估 prompt 增 ~700 token（在派單預估 500-800 範圍內）
+  - 不變動：retrieve / Anthropic call / auth.getUser / hero/villain context push / 前端 mockup / T-055 grounding 段
+  - 驗證：✅ `npx tsc -b --noEmit` EXIT=0
+  - **⚠ 部署流程（Edge Function，需手動）**：
+    1. **大腦 merge** wip 到 dev + bump version + push
+    2. **大腦或執行者另一輪**：產出 `supabase/functions/exploit-coach/index.ts` 整檔貼碼指令
+    3. **用戶手動**貼到測試 Supabase Dashboard → Edge Functions → `exploit-coach` → Via Editor → 整檔取代 → Deploy
+    4. **用戶實機重測**：
+       - 重現原 QQ vs AK/AA/KK 對話 → 驗 AI 用「壓制」而非「過度」
+       - 追問「bluff catcher 是什麼」→ 驗 AI 回「抓詐唬牌」或保留英文，不講「詐唬捕手」
+       - 隨機詢問翻後場景 → 確認沒蹦出「蝨子」「踢子」等大陸用語
+  - 預期判讀：
+    - ✅ 5 高風險詞 + 12 譯法都符合 → A 修好，移 Done
+    - ⚠ 仍有零星錯譯 → 補加違規詞到「最容易翻錯」清單，或改用 strong negative example
+    - ⚠ Token cost / latency 顯著上升 → 評估是否要把術語表搬到 system prompt cache（Anthropic prompt caching）
+  - 相關記憶：[[poker-terminology-zh-tw]]（完整表 + 8 來源）/ [[supabase-edge-function-gotchas]]（部署流程）
+  - 等大腦 merge + 安排 Edge Function 部署
 
 <!-- T-010 / T-020 / T-043 / T-050 / T-051 / T-055 今日全部 merge 到 dev，見 Done 區 -->
 
