@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-04-20 [flow] T-060 完成：T-058 Edge Function 實機部署 + 3 條驗收全 pass ✅
+- 用戶照 `docs/supabase-migrations/20260420-T058-zh-tw-terminology-deploy.md` 部署到測試 Supabase
+- 3 條實機驗收結果：
+  - ✅ 壓制（QQ vs AK）— AI 回「壓制」不是「過度」
+  - ✅ bluff catcher — AI 回「抓詐唬牌」或保留英文，不是「詐唬捕手」
+  - ✅ 大陸用語 — 翻後場景無「蝨子」「踢子」等
+- 影響：繁中 poker 術語 grounding 正式上線測試 Supabase
+- T-058 升級：從「code merged」→「真正 Done（含部署 + 驗收）」
+- 純 flow 改動（doc 已先 merge），無 version bump
+- 整條鏈路：T-055 場景 grounding → T-058 術語 grounding → T-059 deploy guide → T-060 實機驗收，全部完成
+
 ## 2026-04-20 [flow] T-059 整合完成：T-058 deploy guide
 - 執行者：Sandbox session（`wip/T059-T058-deploy-guide` @ `716b802` / `e7501b5`）
 - 大腦：這台主目錄

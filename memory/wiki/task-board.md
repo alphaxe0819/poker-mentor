@@ -67,18 +67,9 @@ updated: 2026-04-20
   - 建議 branch：`wip/T023-6max-shallow`
   - 待確認具體範圍
 
-<!-- T-059 → Done 2026-04-20（deploy guide 產出）。T-060 實機驗收 ↓ -->
-
-- [ ] **T-060** | 用戶 + 大腦 | **T-058 Edge Function 實機部署 + 3 條驗收**
-  - 建議 branch：無（純 Dashboard 操作 + 實機測試）
-  - 前置：deploy guide 已就緒 @ `docs/supabase-migrations/20260420-T058-zh-tw-terminology-deploy.md`
-  - 動作（用戶）：
-    1. 照 guide 把 `supabase/functions/exploit-coach/index.ts` 整檔貼到測試 Supabase Dashboard
-    2. 跑 3 條驗收（壓制 / bluff catcher / 不用大陸用語）
-    3. 回報 pass/fail + 若 fail 的 AI 回覆原文
-  - 大腦動作：依驗收結果
-    - 全 pass → T-060 Done + 標 T-058 真正 Done（完整部署 + 驗收）
-    - 有 fail → 開 follow-up task 補強 prompt 黑名單
+<!-- T-059 → Done 2026-04-20（deploy guide 產出） -->
+<!-- T-060 → Done 2026-04-20（用戶實機驗收 3 條全 pass） -->
+<!-- T-058 → 升級 真正 Done（完整部署 + 驗收） -->
 
 - [ ] **T-056** | Pipeline | **batch-run.ps1 -SkipExisting 改雙命名偵測（防 T-020 churn 重演）** 🔴 優先 `(派工 2026-04-20)`
   - **建議 branch**：`wip/T056-skipexisting-dual-naming`（從 origin/dev 切出）
@@ -437,6 +428,13 @@ updated: 2026-04-20
   - 併收 T-052（RC1 排除）
   - 副產物 TODO：Edge Function code 加 `response.ok` check + log Claude error body（記在 wiki 坑 3，未做）
   - 正式 Supabase `qaiwsocjwkjrmyzawabt` 若啟用 ES256 會同樣壞，待用戶授權
+- [x] **T-060** | 用戶 + 大腦 | **T-058 Edge Function 實機部署 + 3 條驗收全 pass** | 2026-04-20 | no branch / flow
+  - 用戶動作：照 deploy guide (`docs/supabase-migrations/20260420-T058-zh-tw-terminology-deploy.md`) 貼整檔到測試 Supabase Dashboard
+  - 驗收結果：3 條全 pass ✅
+    - ✅ 壓制：QQ vs AK 對話 → AI 用「壓制」
+    - ✅ bluff catcher：追問 → AI 回「抓詐唬牌」/ 保留英文
+    - ✅ 大陸用語：翻後場景 → 無「蝨子」/「踢子」等
+  - 影響：T-058 升級為「真正 Done（含部署 + 驗收）」，繁中 poker 術語 grounding 正式上線到測試 Supabase
 - [x] **T-059** | Product + 大腦 | **T-058 Edge Function deploy guide** | 2026-04-20 | merge only (flow, no bump)
   - 執行者：`wip/T059-T058-deploy-guide` @ `716b802` / `e7501b5`（Sandbox session）
   - 產出：`docs/supabase-migrations/20260420-T058-zh-tw-terminology-deploy.md`（42 行，含部署 7 步 + 3 條驗收）
