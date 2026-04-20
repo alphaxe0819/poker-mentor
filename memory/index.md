@@ -13,6 +13,7 @@
 - [[hu-simulator]] — HU 模擬器開發流程：smoke test、已知 bug、GTO 資料、V1/V2 架構
 - [[ui-v2-rules]] — V2 UI 設計規則：牌面樣式、版面結構、HU 換手 UX
 - [[deployment-state]] — Supabase Edge Functions / DB Tables / RPC / Vercel 基礎設施狀態
+- [[supabase-edge-function-gotchas]] — Edge Function 部署坑：ES256 JWT 不被 runtime 支援、Secrets 跨 project 不自動帶、fetch 沒 response.ok check
 
 ## Feedback & Rules
 

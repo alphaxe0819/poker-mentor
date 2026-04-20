@@ -148,7 +148,32 @@ updated: 2026-04-20
   - 建議 branch：無
   - 動作：`ls .env`；無則 `powershell scripts/setup-env.ps1`
 
+- [ ] **T-055** | Product | **exploit-coach 連續對話沒帶本輪 context — AI 公式化回答** 🔴 實機實測回報
+  - 建議 branch：`wip/T055-coach-context-continuity`
+  - 背景：T-054 雙 bug 修好後實機測試 AI 分析 OK；但用戶後續在 chat 追問「如果我沒有 A 的話 比如這手牌拿 QQ 該怎麼辦」，AI 回覆公式化（QQ 翻前範圍 / 跟注站對策），沒結合「本輪實際牌面/對手/flop」等 context
+  - 疑點（看 `public/exploit-coach-mockup-v3.html`）：
+    - line 1550: `chatHistory.push({role:'user', content: userMsg})`
+    - line 1560-1561: `messages: chatHistory.slice(-10), context: buildCoachContext()`
+    - **表面上 context 每次都重新讀 global state 傳** — 技術上沒漏
+    - 但用戶追問假設「拿 QQ」時，`buildCoachContext()` 還是回原本的 `hero_hand=A♠K♠`（global state 沒改）→ **context 中的 hero_hand 與 userMsg 中假設的 QQ 衝突**，Claude 可能忽略 context 回公式
+  - 修法方向（執行者探索三選一或混合）：
+    - **A 最小改動**：Edge Function `buildSystemPrompt` 加「如果用戶在 messages 中假設不同手牌，以假設為準；但務必參考本輪 flop/villain_type/位置組合回答，不要只講翻前 GTO」的指引
+    - **B 前端處理**：在 chatHistory user 訊息裡自動注入「本輪場景提醒」(`[場景] hero=X, flop=Y, villain=Z`)，Claude 一定看得到
+    - **C 深度修**：用戶每次問問題時，解析問題裡的假設手牌（regex 抓 `QQ / AKs / 對子` 等），動態改寫 context.hero_hand 再送
+  - 建議：先 A（最保守，改 system prompt 即可），實測若仍公式化再疊 B
+  - 完成條件：
+    - tsc EXIT=0（如有改 TS code）
+    - 實機重測：用戶問「拿 QQ 怎麼辦」→ AI 回覆會明確提到「本場景是 BTN vs 跟注站 CO / flop=...」，不只講 QQ 翻前範圍
+  - **這個 task 是前端 mockup + Edge Function 跨檔改動，若改 Edge Function 需產出貼碼指令給用戶手動部署測試 Supabase**
+  - 相關記憶：[[supabase-edge-function-gotchas]]（部署流程）
+
 <!-- T-051 → In Review 2026-04-20 -->
+
+<!-- T-052 → Done 2026-04-20（T-053 自動化 parent-env log 驗證 VITE_SUPABASE_URL=btiqmckyjyswzrarmfxa，mismatch=false，RC1 排除）-->
+<!-- T-054 → Done 2026-04-20（wiki supabase-edge-function-gotchas 記錄完整）-->
+
+<details>
+<summary>📦 T-052 原任務描述（已 Done，RC1 排除）</summary>
 
 - [ ] **T-052** | 大腦 + 用戶 | **Vercel dev 環境 env var 核對（poker-goal-dev）**
   - 建議 branch：無（純 dashboard 確認 + 截圖）
@@ -171,6 +196,8 @@ updated: 2026-04-20
     - localStorage key list
     - 若 env 設錯 → 用戶改正並 redeploy（觸發 Vercel 重新 build）
     - 若 env 對 → 回饋給 T-051 執行者，往 RC2/RC3 方向深挖
+
+</details>
 
 ### 大腦任務
 
@@ -321,6 +348,28 @@ updated: 2026-04-20
   - 另一台之前報告的「04-16 WIP」（batch-worker / seed-batches / getGTOPostflopFromDB / DB migration）實際上已在 dev（dev.8-dev.11 那批 commit 正是）
   - 動作：remote 三個 branch 全刪（`git push --delete`）
   - 另一台 Claude 後續動作：checkout dev + pull + 跑新 SOP（見本次 dev-log）
+- [x] **T-054** | 大腦（純 flow） | **exploit-coach 401 + AI 兜底 bug 根因 + wiki 記錄** | 2026-04-20 | [flow]
+  - 雙 bug 完修 ✅：
+    - 「登入已過期」401 → Supabase Invocation log `sb_error_code: UNAUTHORIZED_UNSUPPORTED_TOKEN_ALGORITHM` → ES256 JWT 不被 Edge Function runtime 支援 → 測試 project 每個 auth function 關 **Verify JWT**
+    - 「抱歉，暫時無法回答」→ 測試 Supabase Secrets 缺 `ANTHROPIC_API_KEY` → 加進去
+  - 產出：
+    - `memory/wiki/supabase-edge-function-gotchas.md`（新）— 3 個坑 + 診斷捷徑 + 新 project secret checklist + 相關 Supabase issue links
+    - `memory/index.md` 加連結
+    - `memory/dev-log.md` 完整記錄事件鏈路
+  - 併收 T-052（RC1 排除）
+  - 副產物 TODO：Edge Function code 加 `response.ok` check + log Claude error body（記在 wiki 坑 3，未做）
+  - 正式 Supabase `qaiwsocjwkjrmyzawabt` 若啟用 ES256 會同樣壞，待用戶授權
+- [x] **T-054** | 大腦（純 flow） | **exploit-coach 401 + AI 兜底 bug 根因 + wiki 記錄** | 2026-04-20 | [flow]
+  - 雙 bug 完修 ✅：
+    - 「登入已過期」401 → Supabase Invocation log `sb_error_code: UNAUTHORIZED_UNSUPPORTED_TOKEN_ALGORITHM` → ES256 JWT 不被 Edge Function runtime 支援 → 測試 project 每個 auth function 關 **Verify JWT**
+    - 「抱歉，暫時無法回答」→ 測試 Supabase Secrets 缺 `ANTHROPIC_API_KEY` → 加進去
+  - 產出：
+    - `memory/wiki/supabase-edge-function-gotchas.md`（新，3 個坑 + 診斷捷徑 + 新 project secret checklist + 相關 Supabase issue links）
+    - `memory/index.md` 加連結
+    - `memory/dev-log.md` 完整記錄事件鏈路
+  - 併收 T-052（RC1 排除）
+  - 副產物 TODO：Edge Function code 加 `response.ok` check + log Claude error body（記在 wiki 坑 3，未做）
+  - 正式 Supabase `qaiwsocjwkjrmyzawabt` 若啟用 ES256 會同樣壞，待用戶授權
 - [x] **T-053** | 大腦（單機快修） | **exploit-coach 401 自動化診斷 log（JWT decode + parent env）** | 2026-04-20 | dev.34
   - 背景：用戶無 Mac Web Inspector、無法手動跑 console 指令 → 把診斷 baked into code，任何人開 Console 就能看到
   - `public/exploit-coach-mockup-v3.html` `[exploit-coach-401][first]` log 擴充：JWT decode 自動印 `payload_iss / payload_aud / payload_role / payload_ref / payload_exp_date / payload_expired / payload_full`

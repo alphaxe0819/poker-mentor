@@ -5,6 +5,24 @@
 
 ---
 
+## 2026-04-20 [flow] T-055 新 bug：連續對話沒帶本輪 context
+- 實機測試 T-054 成功後發現：用戶追問「如果拿 QQ 呢」→ AI 回覆看起來公式化、沒結合本輪的牌面/對手 context
+- 疑似 `public/exploit-coach-mockup-v3.html` 的 `callCoach` 後續對話只送 chatHistory 沒帶場景 context，或 buildCoachContext() 第二輪 state 變了
+- 進 task-board Queue 派執行者深查
+
+## 2026-04-20 [flow] T-054 wiki 記錄 + 401/AI bug 完修
+- exploit-coach 「登入已過期」+「抱歉，暫時無法回答」雙 bug 完全修好 ✅
+- **根因 1（平台級 gap）**：測試 Supabase project `btiqmckyjyswzrarmfxa` 啟用 Asymmetric JWT Keys (ES256)，但 `supabase-edge-runtime-1.73.8` gateway 只支援 HS256 → user token 直接被擋，function code 根本沒跑
+- **修法 1**：測試 project 每個需 auth 的 Edge Function（ai-coach / analyze-weakness / exploit-coach / redeem-promo）關 **Verify JWT** — function 自己用 `supabase.auth.getUser()` 打 Auth API 驗
+- **根因 2**：新建測試 Supabase 的 Secrets 只有內建 4 把，`ANTHROPIC_API_KEY` 沒帶過來 → Claude fetch 401 → 兜底文字「抱歉，暫時無法回答」
+- **修法 2**：Secrets 頁加 `ANTHROPIC_API_KEY`
+- 完整 wiki：`memory/wiki/supabase-edge-function-gotchas.md`（3 個坑 + 診斷捷徑 + 新 project secret checklist）
+- index.md 加連結
+- 副產物 TODO：Edge Function code 應加 `response.ok` check + log Claude error body（記在 wiki 坑 3）
+- 併收 T-052（Vercel env 核對 RC1 由 T-053 parent-env log 自動排除）
+- 純 flow 改動，不 bump version
+- 正式 Supabase `qaiwsocjwkjrmyzawabt` 若也啟用 ES256 會同樣壞，待用戶授權
+
 ## 2026-04-20 v0.8.1-dev.34 [dev]
 - T-053 完成（大腦單機快修）：自動化診斷 log，避開用戶需手動跑 console 命令/無 Mac Web Inspector 的限制
 - 用戶首次實機 log 已拿到：tokenHead `eyJhbGciOiJFUzI1NiIs`（ES256 asymmetric JWT）、supabaseUrl 測試 project、origin match，但 `[parent-refresh] replied` 缺失 → parent refreshSession 3s timeout
