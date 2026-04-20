@@ -148,24 +148,7 @@ updated: 2026-04-20
   - 建議 branch：無
   - 動作：`ls .env`；無則 `powershell scripts/setup-env.ps1`
 
-- [ ] **T-055** | Product | **exploit-coach 連續對話沒帶本輪 context — AI 公式化回答** 🔴 實機實測回報
-  - 建議 branch：`wip/T055-coach-context-continuity`
-  - 背景：T-054 雙 bug 修好後實機測試 AI 分析 OK；但用戶後續在 chat 追問「如果我沒有 A 的話 比如這手牌拿 QQ 該怎麼辦」，AI 回覆公式化（QQ 翻前範圍 / 跟注站對策），沒結合「本輪實際牌面/對手/flop」等 context
-  - 疑點（看 `public/exploit-coach-mockup-v3.html`）：
-    - line 1550: `chatHistory.push({role:'user', content: userMsg})`
-    - line 1560-1561: `messages: chatHistory.slice(-10), context: buildCoachContext()`
-    - **表面上 context 每次都重新讀 global state 傳** — 技術上沒漏
-    - 但用戶追問假設「拿 QQ」時，`buildCoachContext()` 還是回原本的 `hero_hand=A♠K♠`（global state 沒改）→ **context 中的 hero_hand 與 userMsg 中假設的 QQ 衝突**，Claude 可能忽略 context 回公式
-  - 修法方向（執行者探索三選一或混合）：
-    - **A 最小改動**：Edge Function `buildSystemPrompt` 加「如果用戶在 messages 中假設不同手牌，以假設為準；但務必參考本輪 flop/villain_type/位置組合回答，不要只講翻前 GTO」的指引
-    - **B 前端處理**：在 chatHistory user 訊息裡自動注入「本輪場景提醒」(`[場景] hero=X, flop=Y, villain=Z`)，Claude 一定看得到
-    - **C 深度修**：用戶每次問問題時，解析問題裡的假設手牌（regex 抓 `QQ / AKs / 對子` 等），動態改寫 context.hero_hand 再送
-  - 建議：先 A（最保守，改 system prompt 即可），實測若仍公式化再疊 B
-  - 完成條件：
-    - tsc EXIT=0（如有改 TS code）
-    - 實機重測：用戶問「拿 QQ 怎麼辦」→ AI 回覆會明確提到「本場景是 BTN vs 跟注站 CO / flop=...」，不只講 QQ 翻前範圍
-  - **這個 task 是前端 mockup + Edge Function 跨檔改動，若改 Edge Function 需產出貼碼指令給用戶手動部署測試 Supabase**
-  - 相關記憶：[[supabase-edge-function-gotchas]]（部署流程）
+<!-- T-055 → In Review 2026-04-20 -->
 
 <!-- T-051 → In Review 2026-04-20 -->
 
@@ -286,7 +269,29 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-*（空）*
+- [?] **T-055** | Product | **exploit-coach 連續對話沒帶本輪 context — 修法 A** ⚠ 含 Edge Function 部署
+  - branch: `wip/T055-coach-context-continuity`（從 origin/dev `f0b0f7d` 切出）
+  - 最後 commit: 待 push
+  - 機器：這台主目錄
+  - 採用方案：**A 最保守**（只改 Edge Function `buildSystemPrompt`，不動前端 mockup / chatHistory 結構）
+  - 改動範圍（單檔 `supabase/functions/exploit-coach/index.ts:159-200`，+10 / -4 行）：
+    - **base prompt 新增「本輪場景 grounding」段**：明確告訴 Claude「下方場景整輪沿用」「若用戶在後續訊息假設不同手牌（如 QQ）以假設為準但 flop/對手/位置不變」「每次回答必須提到 flop+對手+位置讓用戶知道接住上下文」「不要退化成翻前公式化答案」
+    - `villain_type` 段加 `【本輪場景】` 前綴
+    - `hero_hand` 段加註「若用戶在對話中假設不同手牌，以假設為準，但 flop/對手/位置沿用本輪」
+    - `hero_pos` 段加「（本輪實況，不變）」
+  - 不變動：retrieveSolverNode / summarizeNodeForPrompt / Anthropic call / auth.getUser / villain labels / 前端 mockup / ExploitCoachTab / 今天剛修的 fuzzy match / JWT decode / parent-env log
+  - 驗證：✅ `npx tsc -b --noEmit` EXIT=0（注：Edge Function 走 Deno，tsc 看的是其他 TS code 沒被誤改）
+  - **⚠ 部署流程（Edge Function，需手動）**：
+    1. **大腦 merge wip 到 dev** + bump version + push（mockup 部分自動上 Vercel）
+    2. **大腦或執行者另一輪** 產出 `supabase/functions/exploit-coach/index.ts` 完整檔案內容貼碼指令給用戶
+    3. **用戶手動貼到測試 Supabase Dashboard** → Edge Functions → `exploit-coach` → Via Editor → 整檔取代 → Deploy
+    4. **用戶實機重測**：iPhone Safari 開 AI 分析後追問「如果我拿 QQ 呢」→ 預期 AI 回覆會明確點出「本場景 [位置] vs [對手類型] / flop=...」並結合 QQ 在此 flop 的玩法
+  - 預期判讀：
+    - ✅ AI 回覆有「本輪場景描述（flop+對手+位置）」+ 結合假設手牌 → A 修好，移 Done
+    - ⚠ AI 仍公式化只講 QQ 翻前範圍 → 疊 B（前端 callCoach 強制注入「[本輪場景] hero=X flop=Y vill=Z」到 userMsg 前面），開 T-056
+    - ⚠ AI 過度依賴本輪原本的手牌（忽略假設）→ 微調 prompt 強化「以假設為準」字眼
+  - 相關記憶：[[supabase-edge-function-gotchas]]（部署流程 + ES256 坑）
+  - 等大腦 merge + 安排 Edge Function 部署
 
 <!-- T-051 已 merge 到 dev，移至 Done；等用戶實機 log 才能判根因（bug fix 未必已解） -->
   - 等大腦 merge（無論實機結果）— 診斷 log 跟著 merge 進測試環境，下次實機重現可立刻看
