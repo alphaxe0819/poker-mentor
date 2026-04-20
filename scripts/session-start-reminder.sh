@@ -41,12 +41,27 @@ if [[ "$cwd" == *-wip* ]]; then
   echo "  1. 讀 memory/dev-log.md 最新 5 筆（下方已印）"
   echo "  2. 讀 memory/wiki/task-board.md Queue 區，看要接哪個 task-id"
   echo "  3. 開 wip branch：git checkout -b wip/T0xx-短描述 origin/dev"
+  echo "     ⚠ 必須帶 \`origin/dev\` base！省略會從當前 HEAD 切出 →"
+  echo "       commits 疊到上個 wip branch（T-011 踩坑實例：solver 跑 16 分鐘才發現）"
   echo "  4. 做事、commit（不動 src/version.ts / memory/dev-log.md）"
   echo "  5. push wip branch，編輯 task-board 移到 In Review"
   echo "  6. idle 時切回 detached：git checkout --detach origin/dev"
   echo ""
   echo "  規則詳見 memory/wiki/two-machine-workflow.md"
   echo "  完成後告知大腦 session（主目錄 / 另一台大腦對話）整合"
+
+  # ── HEAD 隔離檢查：若 wip1 worktree 留在某個 wip branch 而非 detached，警告 ──
+  CURRENT_BRANCH=$(git branch --show-current 2>/dev/null)
+  if [[ -n "$CURRENT_BRANCH" ]]; then
+    echo ""
+    echo "⚠️ 當前 HEAD 在 branch: $CURRENT_BRANCH（不是 detached）"
+    echo "   上一個 task 可能沒切回 detached。若要開新 wip，請先："
+    echo "     git checkout --detach origin/dev"
+    echo "   否則 git checkout -b wip/T0xx 會從 $CURRENT_BRANCH 切出，"
+    echo "   commits 會疊到上個 wip branch（T-011 踩坑實例）"
+    echo ""
+    echo "   繼續當前 task 則忽略此警告"
+  fi
   exit 0
 fi
 
