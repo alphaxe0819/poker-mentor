@@ -5,6 +5,28 @@
 
 ---
 
+## 2026-04-21 [flow] T-011 整合完成：C3 E2E 小樣本
+- 執行者：Sandbox session（`wip/T011-c3-e2e` @ `f861b6a` / `50d85fb`，base 4d6a0e2）
+- 大腦：這台主目錄
+- merge clean（純 .mjs 改動，tsc 不在範圍）
+- 改動（17 檔 / +474 / -4）：
+  - `scripts/gto-pipeline/scenarios.mjs`：MTT override `mtt_40bb_srp_btn_open_bb_call`
+  - `scripts/gto-pipeline/convert-to-db.mjs`：擴吃 `ALL_FORMATS`
+  - `scripts/gto-pipeline/test-retrieval.mjs`：加 MTT tier A 測試
+  - 13 個 `mtt_40bb_srp_btn_open_bb_call_*.txt` inputs
+- 實跑驗證（E2E 全通）：
+  - ✅ Solver fast 16:28，exploitability 3.22%
+  - ✅ DB upsert：`mtt_40bb_srp_btn_open_bb_call + As7d2c` → `solver_postflop_6max`（82 MB → 31.5 KB tree）
+  - ✅ Tier A retrieval 命中（BB CHECK 79.7% / BET 50% pot 20.3%）
+- 骨架決策（大腦 review）：
+  - 暫借 `solver_postflop_6max`（T-012 migration 時用 `WHERE scenario_slug LIKE 'mtt_%'` 搬）
+  - range 用 HU_40BB_RANGES 近似（非真實 MTT range，pd→range converter 另開 task）
+- 踩坑：執行者 feat commit 先誤落 `wip/T056-skipexisting-dual-naming`（wip1 worktree 被 T-056 完成後沒切 detached，T-011 執行者接手時 HEAD 還在 wip/T056），跑 solver 16:28 期間沒察覺，事後 cherry-pick 救回 wip/T011
+  - 啟示：**執行者開工前必做 `git worktree list` 確認 HEAD**
+  - 可考慮寫進 wiki 或 session-start-reminder（未來 task T-062 / T-063）
+- 純 flow 改動（scripts/ 不影響 Vercel build），無 version bump
+- wip/T011 待刪
+
 ## 2026-04-21 [flow] T-056 整合完成：batch-run.ps1 雙命名 skip
 - 執行者：Sandbox session（`wip/T056-skipexisting-dual-naming` @ `01421bb` / `28b9d75`）
 - 大腦：這台主目錄

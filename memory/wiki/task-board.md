@@ -38,11 +38,7 @@ updated: 2026-04-20
 <!-- T-020 → In Progress 2026-04-20 -->
 <!-- T-042 → In Progress 2026-04-20 -->
 
-- [ ] **T-011** | Pipeline | **C3 E2E 小樣本**
-  - 建議 branch：`wip/T011-c3-e2e`
-  - 範圍：挑 1 MTT scenario → TexasSolver input → solve 1 flop → 入 DB → 驗 retrieval
-  - 依賴：T-010
-  - 產出：1 筆 DB row 可查
+<!-- T-011 → Done 2026-04-21 -->
 
 - [ ] **T-012** | Pipeline | **C4 MTT DB migration**
   - 建議 branch：`wip/T012-mtt-db-migration`
@@ -267,25 +263,9 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-- [?] **T-011** | Pipeline | **C3 E2E 小樣本（MTT scenario 入 DB）**
-  - branch: `wip/T011-c3-e2e`（基於 origin/dev `4d6a0e2`，feat commit `f861b6a` cherry-pick 自救位錯分支）
-  - 最後 feat commit: `f861b6a`（task-board 移 In Review 是緊隨的 chore commit）
-  - 改動：
-    - `scripts/gto-pipeline/scenarios.mjs`：MTT override 場景 `mtt_40bb_srp_btn_open_bb_call` + range（暫用 HU_40BB_RANGES 當骨架近似）
-    - `scripts/gto-pipeline/convert-to-db.mjs`：吃 `ALL_FORMATS` 不只 `SIXMAX_SCENARIOS`
-    - `scripts/gto-pipeline/test-retrieval.mjs`：加 MTT tier A 測試
-    - `scripts/gto-pipeline/inputs/mtt_40bb_srp_btn_open_bb_call_*.txt`（13 個，新）— `node generate-input-v2.mjs mtt --pot srp --fast` 產出
-  - 實跑驗證：
-    - ✅ Solver fast mode 16:28，exploitability 3.22%（accuracy 1.0 / 100 iter / srp_fast bet profile）
-    - ✅ DB upsert：`mtt_40bb_srp_btn_open_bb_call + As7d2c` → `solver_postflop_6max`（82 MB raw → 31.5 KB tree, 23 nodes）
-    - ✅ Tier A retrieval 命中（BB CHECK 79.7% / BET 50% pot 20.3%；代表手牌 22→BET 54%, 76s→CHECK 59%）
-    - ⚠ TS check 未跑：wip1 worktree 無 node_modules / type defs（同 T-056 環境限制），但本次 3 檔皆為 `.mjs`、`src/` 完全未動，主目錄 tsc 可正常驗
-  - 注意事項（給大腦 review）：
-    - slug 用 `mtt_` prefix（T-012 migration 時用 `WHERE scenario_slug LIKE 'mtt_%'` 搬）
-    - range 是 `HU_40BB_RANGES` 近似值，非真實 MTT range — dev-log 需註明
-  - 踩坑記錄：feat commits 原本錯落在 `wip/T056-skipexisting-dual-naming`（跑 solver 16:28 期間 wip1 worktree 被外部 session 切走未察覺），cherry-pick 救回到 wip/T011-c3-e2e
-  - 不動：`src/version.ts` / `memory/dev-log.md` / `src/` / `supabase/`
-  - 等大腦 review + merge
+*（空）*
+
+<!-- T-011 → Done 2026-04-21（見 Done 區） -->
 
 <!-- T-056 → Done 2026-04-20 -->
 
@@ -417,6 +397,20 @@ updated: 2026-04-20
   - 併收 T-052（RC1 排除）
   - 副產物 TODO：Edge Function code 加 `response.ok` check + log Claude error body（記在 wiki 坑 3，未做）
   - 正式 Supabase `qaiwsocjwkjrmyzawabt` 若啟用 ES256 會同樣壞，待用戶授權
+- [x] **T-011** | Pipeline + 大腦 | **C3 E2E 小樣本（MTT scenario 入 DB）** | 2026-04-21 | merge only (flow, no bump)
+  - 執行者：Sandbox `wip/T011-c3-e2e` @ `f861b6a` / `50d85fb`（base 4d6a0e2）
+  - 改動（全 .mjs pipeline，17 檔 / +474 / -4）：
+    - `scenarios.mjs`：加 `mtt_40bb_srp_btn_open_bb_call` override（骨架近似 HU_40BB_RANGES）
+    - `convert-to-db.mjs`：擴吃 `ALL_FORMATS`（不只 `SIXMAX_SCENARIOS`）
+    - `test-retrieval.mjs`：加 MTT tier A 測試
+    - 13 個 `mtt_40bb_srp_btn_open_bb_call_*.txt` inputs（全 13 BOARDS）
+  - 實跑：
+    - Solver fast 16:28，exploitability 3.22%
+    - DB upsert：`mtt_40bb_srp_btn_open_bb_call + As7d2c` → `solver_postflop_6max`（82 MB → 31.5 KB tree）
+    - Tier A retrieval 命中（BB CHECK 79.7% / BET 50% pot 20.3%）
+  - 暫借 `solver_postflop_6max`（T-012 migration 用 `WHERE scenario_slug LIKE 'mtt_%'` 搬）
+  - ⚠ range 是 HU_40BB_RANGES 近似，非真 MTT range（pd→range converter 另開 task）
+  - 踩坑：執行者 feat commit 先誤落 wip/T056（wip1 被外部 session 切走），cherry-pick 救回 wip/T011
 - [x] **T-056** | Pipeline + 大腦 | **batch-run.ps1 -SkipExisting 雙命名偵測（防 T-020 churn 重演）** | 2026-04-20 | merge only (flow, no bump)
   - 執行者：`wip/T056-skipexisting-dual-naming` @ `01421bb` / `28b9d75`
   - 改動：單檔 `scripts/gto-pipeline/batch-run.ps1` 第 127-139 行（+8/-3）
