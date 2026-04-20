@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-20 [flow] 多 session 並行支援：POKERNEW-brain worktree
+- 用戶要在另一台開 2 個 Claude Code 對話（大腦 + 執行者）
+- 單 repo 多對話會 git 打架 → 用 git worktree 分目錄
+- 新規則：`POKERNEW-brain` 目錄名被 session-start-reminder 識別為大腦模式
+- 其他 `POKERNEW-*` 走執行者 worktree 模式
+- wiki `two-machine-workflow.md` 加多 session 並行章節
+- 指令：`git worktree add ../POKERNEW-brain dev`
+
 ## 2026-04-20 [flow] 大腦規劃：T-050 新 bug + 分工列表
 - 使用者實機驗證發現 3 個 exploit-coach bug：
   - Bug 0: Hero 手牌空白仍能按「下一步」

@@ -2,14 +2,32 @@
 # Session start reminder — 印出開工 SOP + 實際 git / dev-log 狀態。
 # 輸出以 additionalContext 餵給 Claude，讓它看得到另一台最近 push + 本機 WIP。
 
-# Worktree 模式（POKERNEW-*）只顯示精簡版
+# Worktree 模式偵測
 cwd=$(basename "$PWD")
+
+# 大腦專用 worktree：POKERNEW-brain（身邊機器當 integrator 用）
+if [[ "$cwd" == POKERNEW-brain ]]; then
+  echo "🧠 大腦 worktree 模式（身邊機器的 integrator session）："
+  echo "  1. 讀 memory/wiki/task-board.md — 看 In Review 有什麼 wip 要整合"
+  echo "  2. 讀 memory/dev-log.md 最新 5 筆"
+  echo "  3. git fetch --all 看遠端 wip branches（git branch -r | grep wip/）"
+  echo "  4. 依序 review + merge --no-ff + bump version + append dev-log"
+  echo "  5. push dev 後驗證 Vercel 部署（curl dev.vercel.app）"
+  echo "  6. 刪 merged wip branch（git push origin --delete wip/...）"
+  echo "  7. 等用戶指示下一步"
+  echo ""
+  echo "  完整規則：memory/wiki/two-machine-workflow.md"
+  exit 0
+fi
+
+# 其他 POKERNEW-* worktree = 執行者獨立 branch 模式
 if [[ "$cwd" == POKERNEW-* ]]; then
-  echo "⚠️ 開工 SOP（worktree 模式，獨立 branch）："
+  echo "🛠 執行者 worktree 模式（獨立 branch）："
   echo "  1. 讀 memory/dev-log.md 了解最近開發"
   echo "  2. 讀 memory/index.md 取得專案知識庫索引"
-  echo "  3. 回報：分支 / 版本 / 最近改動 / 未完成事項"
-  echo "  4. 等用戶指示要做什麼"
+  echo "  3. 讀 memory/wiki/task-board.md — 看指派給本 worktree 的 task"
+  echo "  4. 回報：分支 / 版本 / 最近改動 / 未完成事項"
+  echo "  5. 等用戶指示要做什麼"
   exit 0
 fi
 

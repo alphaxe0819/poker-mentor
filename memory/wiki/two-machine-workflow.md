@@ -80,6 +80,27 @@ updated: 2026-04-20
 
 ---
 
+## 🌳 多 Session 並行（同電腦多對話）
+
+同一台電腦開多個 Claude Code 對話時，**不能共用同一個 working directory**（Git 狀態打架）。用 `git worktree`：
+
+```bash
+# 在主 repo 建第二個工作目錄
+cd C:\Users\User\POKERNEW
+git worktree add ../POKERNEW-brain dev       # 大腦專用 worktree
+git worktree add ../POKERNEW-solver dev      # 或其他執行者 worktree
+```
+
+工作目錄命名：
+- `POKERNEW`（主）— 通常是主要執行者
+- `POKERNEW-brain` — **特殊**：SessionStart hook 偵測到會走大腦模式 SOP
+- `POKERNEW-<task>` / `POKERNEW-*` — 其他執行者 worktree（獨立 branch）
+
+每個 Claude Code session 的 cwd 決定它的角色：
+- 主 repo → 走三角色問句
+- `POKERNEW-brain` → 自動大腦模式
+- `POKERNEW-*` → 自動執行者 worktree 模式
+
 ## 🌳 分支命名規則
 
 | 分支 | 命名 | 生命週期 | 動到哪些檔 |
