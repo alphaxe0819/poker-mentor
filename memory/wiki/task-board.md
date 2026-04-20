@@ -148,6 +148,48 @@ updated: 2026-04-20
   - 建議 branch：無
   - 動作：`ls .env`；無則 `powershell scripts/setup-env.ps1`
 
+- [ ] **T-051** | Product | **exploit-coach「登入已過期」401 診斷 + 修 fuzzy match** 🔴 實機確認 bug 仍在
+  - 建議 branch：`wip/T051-exploit-coach-401-diag`
+  - 背景：2026-04-20 實機（iPhone Safari, WiFi + 4G 都壞）在 AI 分析步驟顯示「⚠ 登入已過期，請重新整理頁面（或回主 App 登入）後再試。」= `public/exploit-coach-mockup-v3.html:1574`，代表走完「callCoach 第一次 fetch → 401 → askParentRefresh → retry fetch → 仍 401」全流程
+  - 假設（T-050 修的 Bug 2「Load failed」網路層修好了，現在卡 token refresh 鏈路）：
+    - **RC1（高機率）**：Vercel poker-goal-dev 的 `VITE_SUPABASE_URL` 設到正式 project，parent token issuer ≠ iframe 打的 Edge Function project → JWT 驗證失敗 401（這條由 T-052 驗證）
+    - **RC2（中機率）**：`readTokenFromStorage` fuzzy match (`indexOf('sb-')===0 && indexOf('-auth-token')>0`) 在 localStorage 有多個 `sb-*-auth-token` 時拿錯 key
+    - **RC3（低）**：refresh token 真過期 → `askParentRefresh` 回 null → retry 用 null → 401
+  - 範圍：
+    - **A. 修 fuzzy match → exact**：`public/exploit-coach-mockup-v3.html` line 1459-1464 的 `readTokenFromStorage` 改用 `localStorage.getItem('sb-btiqmckyjyswzrarmfxa-auth-token')` 直接取（storageKey 在 line 1454 已 hardcode，exact match 才對）
+    - **B. 加診斷 log**：`callCoach` 第一次 401 和 retry 401 的 catch point 加 `console.error('[exploit-coach-401]', {status, tokenHead: token?.slice(0,20), tokenTail: token?.slice(-8), supabaseUrl: SUPABASE_URL, hasNewTok: !!newTok})`，方便 Safari 遠端 Inspector 看
+    - **C. Parent 端 log**：`src/tabs/ExploitCoachTab.tsx` 的 `onMessage` handler 在 refresh 前後 `console.log('[parent-refresh]', {origin: e.origin, gotToken: !!token})`
+  - 完成條件：
+    - tsc EXIT=0
+    - 實機重測（iPhone Safari）→ 若 RC2 成立，fuzzy match 修好後 401 應消失；若 RC1 成立，仍 401 但 log 能明確指出 issuer mismatch，等 T-052 結果
+    - log 在 Safari 遠端 Inspector Console 能看到，且能判斷根因
+  - 產出：
+    - 修法 commit + 實機重測結果貼到 task-board In Review
+    - 若修 fuzzy match 後 bug 消失 → 直接 Done
+    - 若仍異常 → 把 console.error 內容貼給大腦，等 T-052 結果再決定下一步
+
+- [ ] **T-052** | 大腦 + 用戶 | **Vercel dev 環境 env var 核對（poker-goal-dev）**
+  - 建議 branch：無（純 dashboard 確認 + 截圖）
+  - 背景：同 T-051 RC1；最快 60 秒能排除/確認的根因
+  - 動作（用戶在 Vercel dashboard 操作）：
+    1. 登入 Vercel → 選 `poker-goal-dev` project → Settings → Environment Variables
+    2. 確認 `VITE_SUPABASE_URL` 值 = `https://btiqmckyjyswzrarmfxa.supabase.co`（測試）
+    3. 確認 `VITE_SUPABASE_ANON_KEY` 值 = 測試 Supabase 的 anon public key（開頭 `eyJ...`，可去測試 Supabase Dashboard → Settings → API 比對）
+    4. 同時確認 poker-goal（正式）的 env 是 `qaiwsocjwkjrmyzawabt`（對比用）
+  - 額外：實機 debug 一併做
+    5. iPhone：設定 → Safari → 進階 → 網頁檢閱器 ON
+    6. Mac Safari → 開發 → [iPhone 名稱] → 選 `poker-goal-dev.vercel.app`
+    7. 在 iframe context 的 Console 跑：
+       ```js
+       Object.keys(localStorage).filter(k => k.includes('auth-token'))
+       ```
+       → 看有幾把 `sb-*-auth-token`、哪個 project ref
+  - 產出：
+    - Vercel env 截圖（或文字回報）
+    - localStorage key list
+    - 若 env 設錯 → 用戶改正並 redeploy（觸發 Vercel 重新 build）
+    - 若 env 對 → 回饋給 T-051 執行者，往 RC2/RC3 方向深挖
+
 ### 大腦任務
 
 - [ ] **T-040** | 大腦 | **range-collection-roadmap 同步**（依賴 T-013）
