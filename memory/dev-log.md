@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.26 [dev]
+- 大腦 review T-033（`wip/T033-gto-postflop-v2-wip` @ c64d2eb）
+- 結論：7 檔全部有價值，採納方向確定（migration / DB reader / worker / boards 擴充 / PostflopRole 擴充）
+- Merge 嘗試：失敗 tsc `TS2345` — `getHUPostflopAction` 變 async，但 `src/lib/hu/botAI.ts` call-site 未 async 化
+- 動作：revert merge，dev 回到 `212c097` (dev.25)；tsc 重新 EXIT=0
+- T-033 移 In Progress (blocked)：等執行者補 botAI.ts async 化再次 push
+- 已在 task-board 附詳細 block 原因 + 補修指引（範圍 / 連帶影響 / 完成條件）
+
 ## 2026-04-20 v0.8.1-dev.25 [dev]
 - 大腦判斷：另一台回報的 stash 不是垃圾，是 GTO postflop v2 WIP
 - dev 確認缺失：`src/lib/gto/getGTOPostflopFromDB.ts`（DB 讀取端）

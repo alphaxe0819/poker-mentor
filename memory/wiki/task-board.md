@@ -104,18 +104,24 @@ updated: 2026-04-20
 
 ## 🔨 In Progress（執行中）
 
-- [~] **T-033** | Pipeline | **GTO postflop v2 WIP 保留 + review**
-  - branch: `wip/T033-gto-postflop-v2-wip`（另一台執行中）
-  - 內容（7 檔）：
-    - `scripts/gto-pipeline/boards.mjs` (M) — flop+turn+river batch 擴充
-    - `scripts/gto-pipeline/batch-worker.mjs` (新) — Node 批次 worker（vs dev 的 `batch-run.ps1`）
-    - `scripts/gto-pipeline/seed-batches.mjs` (新) — seed batches
-    - `src/lib/gto/getHUPostflopAction.ts` (M)
-    - `src/lib/gto/huHeuristics.ts` (M)
-    - `src/lib/gto/getGTOPostflopFromDB.ts` (新) — **dev 缺：client 端從 DB 讀 postflop**
-    - `supabase/migrations/20260416-gto-postflop.sql` (新) — **dev 缺：postflop schema migration**
-  - 動作：另一台把 stash 轉 wip branch push → 大腦逐檔 review → 決定 cherry-pick 或丟棄
-  - 交接：另一台 push 完回報 commit hash，大腦接手 review
+- [~] **T-033** | Pipeline | **GTO postflop v2 WIP — ⚠️ BLOCKED on call-site async-ify**
+  - branch: `wip/T033-gto-postflop-v2-wip` (commit `c64d2eb`，已 push)
+  - 大腦 review 結論：**7 檔全部有價值，採納方向確定**
+    - `supabase/migrations/20260416-gto-postflop.sql` — gto_postflop + gto_batch_progress + claim_gto_batch RPC，**高品質雙機協調設計**
+    - `src/lib/gto/getGTOPostflopFromDB.ts` — 乾淨的 prefetch + cache client
+    - `scripts/gto-pipeline/batch-worker.mjs` + `seed-batches.mjs` — 跨平台 Node worker，比 dev 的 `batch-run.ps1` 更完整
+    - `scripts/gto-pipeline/boards.mjs` — turnCards 擴充，不破壞現有用途
+    - `src/lib/gto/huHeuristics.ts` — PostflopRole 加 turn/river，純擴充
+  - ⚠️ **Block 原因**（merge 嘗試失敗 tsc 錯）：
+    - `getHUPostflopAction` 在 wip 改為 `async` → 回傳 `Promise<ActionDecision>`
+    - dev 上 `src/lib/hu/botAI.ts:317` 仍是**同步呼叫**
+    - 連帶：`decidePostflop` / `decideBotAction` 需 async 化；呼叫 `decideBotAction` 的 UI 元件也要 await
+    - 錯誤：`src/lib/hu/botAI.ts(328,39): error TS2345: Argument of type 'Promise<ActionDecision>' is not assignable to parameter of type 'ActionDecision'`
+  - 大腦動作：merge 試做並已 revert（dev 回到 `212c097` / dev.25）
+  - **執行者下一步**：拉 `wip/T033-gto-postflop-v2-wip` → 補 call-site async 化 → push amended commit → 標 In Review 再次
+    - 範圍：`src/lib/hu/botAI.ts`（decidePostflop / decideBotAction 改 async）
+    - 連帶：所有 `decideBotAction` 的呼叫處（可能在 `src/pages/HeadsUpMatch*` 或 `src/components/HeadsUp*`）
+    - 完成條件：`npx tsc -b --noEmit` EXIT=0
 
 格式範例：
 ```
