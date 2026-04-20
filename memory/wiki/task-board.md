@@ -78,10 +78,10 @@ updated: 2026-04-20
 
 ### Product 線
 
-- [ ] **T-050** | Product | **exploit-coach v2 bug 修復（3 個新 bug）** 🔥 優先 → **已移 In Review，見下方**
+<!-- T-050 已完成，移至 Done -->
 
 <details>
-<summary>原任務描述</summary>
+<summary>📦 T-050 原任務描述（參考）</summary>
 
   **Bug 0** — Hero 手牌未選仍可進「下一步 →」
   - 位置：S1 頁面（位置 & 手牌）的「下一步」按鈕
@@ -219,17 +219,9 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-- [?] **T-050** | Product | **exploit-coach v2 bug 修復（3 個新 bug）**
-  - branch: `wip/T050-exploit-coach-bugs-v2`（推 origin 完成）
-  - 最後 commit: `8e715b6`
-  - 執行者備註：
-    - **Bug 0 (hero-guard)**：S3「下一步 →」改呼叫新 `proceedFromS3()`，guard `heroCards[0/1]` + `heroPos !== villPos`，未通過用 `flashError` 紅閃
-    - **Bug 1 (picker-dom)**：採推薦方案 A — `#card-picker` 從 `#s3` 內移到 body 層級（end-of-file），CSS 加 `#card-picker.show { position:fixed; z-index:1000; ... }`，hero/vill 兩處共用
-    - **Bug 2 (load-failed)**：`ExploitCoachTab.tsx` 採方案 (b)+(c) 合併 — source 判斷改 `e.origin === window.location.origin`，await 前先 capture `iframeRef.current?.contentWindow` 到 local var
-    - **Bug 2 注意**：實機 iOS Safari + 4G debug 步驟未跑（task 列出的 5 步 Web Inspector 流程）。修法是基於 task 描述最有可能成因的「最佳猜測」，部署後仍需實機回驗
-  - tsc：✅ EXIT=0
-  - 變動 2 檔：`public/exploit-coach-mockup-v3.html` (+24 / -7)、`src/tabs/ExploitCoachTab.tsx` (+8 / -2)
-  - 等大腦 merge
+*（空）*
+
+<!-- T-050 已 merge 到 dev，移至 Done -->
 
 格式範例：
 ```
@@ -255,6 +247,12 @@ updated: 2026-04-20
 - [x] **T-004** | 大腦 | range-collection-roadmap 初版 | 2026-04-20 | `ca11e86` (dev.18)
 - [x] **T-005** | 大腦 | 雙角色 workflow 升級（wip branch 模型） | 2026-04-20 | `4ccc701` (dev.23)
   - 產出：two-machine-workflow.md 重寫 + session-start-reminder 改 3 角色問句 + task-board 加 In Review
+- [x] **T-050** | Product + 大腦 | **exploit-coach v2 3 bugs** | 2026-04-20 | merge + dev.28
+  - 執行者：另一台（身邊機器，`8e715b6` + task-board In Review 3878a5e）
+  - 大腦：review + merge（這台）
+  - Bug 0 (hero-guard)：新 `proceedFromS3()` + `flashError`
+  - Bug 1 (picker-dom)：`#card-picker` 移到 body + CSS fixed z-index 1000
+  - Bug 2 (load-failed)：origin 判斷 + capture contentWindow；Bug 2 仍需實機回驗
 - [x] **T-033** | Pipeline + 大腦 | **GTO postflop v2 pipeline + async bot chain** | 2026-04-20 | merge commit + dev.27
   - 執行者：另一台機器（c64d2eb 初版 + b673b0b async fix）
   - 大腦：review 2 輪（第 1 輪 revert blocked on call-site；第 2 輪 merge clean）

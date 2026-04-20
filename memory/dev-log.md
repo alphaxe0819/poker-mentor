@@ -5,6 +5,16 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.28 [dev]
+- T-050 正式整合（wip/T050-exploit-coach-bugs-v2 → dev）
+- merge --no-ff，tsc EXIT=0
+- Bug 0: public/exploit-coach-mockup-v3.html 加 `proceedFromS3()` guard
+- Bug 1: `#card-picker` DOM 移到 body 層級 + CSS `position:fixed; z-index:1000`（hero/vill 共用）
+- Bug 2: `ExploitCoachTab.tsx` postMessage 改用 `e.origin` 判斷 + await 前 capture `contentWindow`
+- Bug 2 caveat：實機 iOS Safari + 4G 未驗證，修法基於最佳猜測；部署後請實機回驗
+- task-board T-050 → Done
+- wip/T050-exploit-coach-bugs-v2 待刪
+
 ## 2026-04-20 [flow] 多 session 並行支援：POKERNEW-brain worktree
 - 用戶要在另一台開 2 個 Claude Code 對話（大腦 + 執行者）
 - 單 repo 多對話會 git 打架 → 用 git worktree 分目錄
