@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.35 [dev]
+- T-055 正式整合（wip/T055-coach-context-continuity → dev）
+- 改動：單檔 `supabase/functions/exploit-coach/index.ts:159-200`（+10/-4 行）
+- `buildSystemPrompt` base prompt 加「本輪場景 grounding」段：flop/對手/位置整輪沿用、假設手牌以假設為準但場景不變、每次必提場景、不公式化
+- `villain_type` / `hero_hand` / `hero_pos` 段加「【本輪場景】/【本輪實際手牌】/本輪實況不變」前綴
+- 驗證：tsc EXIT=0
+- ⚠ Edge Function 改動 Vercel build 不自動部署 — 要用戶手動貼整檔到測試 Supabase (btiqmckyjyswzrarmfxa) Dashboard Edge Functions → exploit-coach → Via Editor（大腦產貼碼指令給用戶）
+- 實機驗收待：用戶追問「如果拿 QQ 呢」→ AI 會明確提及本輪場景（flop/對手類型/位置）+ 結合 QQ 玩法，不只講翻前範圍
+- 若修法 A 還不夠，執行者建議疊 B（前端 callCoach 強制注入場景提醒到 userMsg）→ 開 T-056
+- 產品改動（supabase/）→ 跑測試機 curl 驗證 Vite build（Edge Function 不影響 Vite，但走規則）
+- wip/T055-coach-context-continuity 待刪
+
 ## 2026-04-20 [flow] T-055 新 bug：連續對話沒帶本輪 context
 - 實機測試 T-054 成功後發現：用戶追問「如果拿 QQ 呢」→ AI 回覆看起來公式化、沒結合本輪的牌面/對手 context
 - 疑似 `public/exploit-coach-mockup-v3.html` 的 `callCoach` 後續對話只送 chatHistory 沒帶場景 context，或 buildCoachContext() 第二輪 state 變了

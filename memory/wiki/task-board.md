@@ -364,17 +364,13 @@ updated: 2026-04-20
   - 併收 T-052（RC1 排除）
   - 副產物 TODO：Edge Function code 加 `response.ok` check + log Claude error body（記在 wiki 坑 3，未做）
   - 正式 Supabase `qaiwsocjwkjrmyzawabt` 若啟用 ES256 會同樣壞，待用戶授權
-- [x] **T-054** | 大腦（純 flow） | **exploit-coach 401 + AI 兜底 bug 根因 + wiki 記錄** | 2026-04-20 | [flow]
-  - 雙 bug 完修 ✅：
-    - 「登入已過期」401 → Supabase Invocation log `sb_error_code: UNAUTHORIZED_UNSUPPORTED_TOKEN_ALGORITHM` → ES256 JWT 不被 Edge Function runtime 支援 → 測試 project 每個 auth function 關 **Verify JWT**
-    - 「抱歉，暫時無法回答」→ 測試 Supabase Secrets 缺 `ANTHROPIC_API_KEY` → 加進去
-  - 產出：
-    - `memory/wiki/supabase-edge-function-gotchas.md`（新，3 個坑 + 診斷捷徑 + 新 project secret checklist + 相關 Supabase issue links）
-    - `memory/index.md` 加連結
-    - `memory/dev-log.md` 完整記錄事件鏈路
-  - 併收 T-052（RC1 排除）
-  - 副產物 TODO：Edge Function code 加 `response.ok` check + log Claude error body（記在 wiki 坑 3，未做）
-  - 正式 Supabase `qaiwsocjwkjrmyzawabt` 若啟用 ES256 會同樣壞，待用戶授權
+- [x] **T-055** | Product + 大腦 | **exploit-coach 連續對話 context grounding（修法 A）** | 2026-04-20 | merge + dev.35
+  - 執行者：`wip/T055-coach-context-continuity` @ `4583694`
+  - 改動：單檔 `supabase/functions/exploit-coach/index.ts:159-200`（+10/-4 行）— `buildSystemPrompt` base prompt 加「本輪場景 grounding」段 + 各 context 段加「【本輪場景】/【本輪實際手牌】/本輪實況不變」前綴
+  - 驗證：tsc EXIT=0
+  - ⚠ 部署：用戶手動貼整檔到測試 Supabase Edge Function editor（大腦產指令）
+  - 實機驗收待：用戶追問「如果拿 QQ 呢」→ AI 會明確提本輪場景 + 結合 QQ 玩法
+  - 預期判讀：pass → 真 Done；公式化持續 → 疊 B 開 T-056；過度依賴本輪手牌 → 微調 prompt
 - [x] **T-053** | 大腦（單機快修） | **exploit-coach 401 自動化診斷 log（JWT decode + parent env）** | 2026-04-20 | dev.34
   - 背景：用戶無 Mac Web Inspector、無法手動跑 console 指令 → 把診斷 baked into code，任何人開 Console 就能看到
   - `public/exploit-coach-mockup-v3.html` `[exploit-coach-401][first]` log 擴充：JWT decode 自動印 `payload_iss / payload_aud / payload_role / payload_ref / payload_exp_date / payload_expired / payload_full`
