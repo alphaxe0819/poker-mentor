@@ -5,6 +5,16 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.31 [dev]
+- T-044 完成（大腦單機快修）：修 migration 檔對齊正式機部署流程
+- 檔案改動：
+  - `supabase/migrations/20260416-gto-postflop.sql` — 去掉 plpgsql function，只保留 tables + RLS + CHECK；constraint 改用 DO block 包（避免重複 ADD 報錯）；policy 改 `DROP ... IF EXISTS` 後 `CREATE`（idempotent）
+  - `supabase/migrations/20260416b-gto-postflop-function.sql`（新）— `claim_gto_batch` 改 `LANGUAGE sql` 純 UPDATE...RETURNING 一句（語意同舊 plpgsql 版，但不會觸發 Supabase SQL Editor 的 `$$...INTO v_id...$$` 解析 bug）
+- 為何拆兩檔：T-042 踩坑 — 整包混合 DDL + plpgsql 在 SQL Editor 解析失敗會 rollback 連帶搞死 tables。拆兩檔各自獨立 transaction
+- 測試 Supabase 現況：已部署（T-042 執行者手動貼過 pure SQL 版），本次 migration 檔對齊後續正式機部署
+- task-board：T-044 移 Done
+- 屬 supabase/ 改動 → 推 dev 後跑測試機 curl 驗證（但 Vercel build 不受影響，migration 檔純文字）
+
 ## 2026-04-20 v0.8.1-dev.30 [dev]
 - T-042 正式整合（wip/T042-deploy-gto-migration → dev）
 - 執行者：這台主目錄 wip branch；大腦：這台 `-brain` worktree

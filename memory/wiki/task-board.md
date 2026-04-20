@@ -163,11 +163,8 @@ updated: 2026-04-20
   - 跑 `node batch-worker.mjs --machine DESKTOP-A --dry-run` 驗證領取流程
   - 依賴：~~T-042~~ ✅ migration 已部署到測試 Supabase
 
-- [ ] **T-044** | 大腦 | **修 migration 20260416-gto-postflop.sql 的 plpgsql 解析問題**
-  - 背景：T-042 部署時，原 plpgsql function `claim_gto_batch` 在 Supabase SQL Editor 跑會報 `42P01: relation "v_id" does not exist`（即使用 `$func$` 具名 dollar quote 也擋不住）
-  - 暫解：T-042 改用純 SQL function（`LANGUAGE sql`，移除 DECLARE / INTO，改 UPDATE...RETURNING 一句），測試 Supabase 已正確部署
-  - 待修：`supabase/migrations/20260416-gto-postflop.sql` 仍是舊 plpgsql 版，未來部署正式 Supabase 會再踩一次坑
-  - 動作：把 migration 檔的 function 替換成 T-042 用的純 SQL 版本（語意相同），順便拆 tables / function 兩段（避免 transaction rollback 連帶失敗）
+<!-- T-044 → Done 2026-04-20 -->
+<!-- T-043 → 待執行者認領 -->
 
 ---
 
@@ -297,6 +294,10 @@ updated: 2026-04-20
   - 另一台之前報告的「04-16 WIP」（batch-worker / seed-batches / getGTOPostflopFromDB / DB migration）實際上已在 dev（dev.8-dev.11 那批 commit 正是）
   - 動作：remote 三個 branch 全刪（`git push --delete`）
   - 另一台 Claude 後續動作：checkout dev + pull + 跑新 SOP（見本次 dev-log）
+- [x] **T-044** | 大腦（單機快修） | **修 migration 20260416-gto-postflop.sql 對齊正式機部署流程** | 2026-04-20 | dev.31
+  - 拆兩檔：`20260416-gto-postflop.sql`（tables + RLS + CHECK，idempotent DO block 包）+ `20260416b-gto-postflop-function.sql`（pure SQL `claim_gto_batch`）
+  - function 由 `LANGUAGE plpgsql` + `RETURNING...INTO v_id` 改成 `LANGUAGE sql` + 單一 `UPDATE...RETURNING`，語意相同但不會觸發 Supabase SQL Editor 的 `$$...INTO v_id...$$` 解析 bug
+  - 測試 Supabase 已是 pure SQL 版（T-042 執行者手動貼），本次只對齊 git 上的 migration 檔；正式 Supabase 部署時依檔順序貼兩段即可
 - [x] **T-010** | Pipeline + 大腦 | **C2 場景化（pd table.name parser + MTT catalog）** | 2026-04-20 | merge + dev.29
   - 執行者：這台（worktree `POKERNEW-wipT010`，`4914334` + task-board In Review `b79718a`）
   - 大腦：review + merge（這台 `-brain` worktree）

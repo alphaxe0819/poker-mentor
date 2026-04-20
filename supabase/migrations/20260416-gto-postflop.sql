@@ -1,9 +1,18 @@
 -- =========================================================
 -- Turn/River GTO Postflop Data + Batch Progress Tracking
+-- Part A：tables + RLS（function 在 20260416b-gto-postflop-function.sql）
 -- =========================================================
 -- 儲存 TexasSolver 解算的 turn/river GTO 策略資料。
 -- 前端透過 PostgREST 直接查詢（不走 Edge Function）。
 -- gto_batch_progress 讓兩台電腦平行解算不重複。
+--
+-- 部署順序（Supabase SQL Editor）：
+--   1. 先貼本檔（tables + RLS），Run → 確認 2 table + 2 policy 建立
+--   2. 再貼 20260416b-gto-postflop-function.sql，Run → 確認 RPC 建立
+--
+-- 為何拆兩檔：SQL Editor 對整包混合 DDL + plpgsql 解析不穩，
+-- 曾發生 function 解析失敗導致整個 transaction rollback、tables 也沒建起來。
+-- 拆兩檔各自獨立 transaction，一段失敗另一段仍 OK。
 -- =========================================================
 
 -- 1. 核心資料表：gto_postflop
@@ -21,15 +30,23 @@ CREATE TABLE IF NOT EXISTS gto_postflop (
   PRIMARY KEY (board_key, turn_card, river_card, street, stack_label, role, hand_class)
 );
 
--- CHECK constraints
-ALTER TABLE gto_postflop ADD CONSTRAINT chk_gto_street
-  CHECK (street IN ('turn', 'river'));
-ALTER TABLE gto_postflop ADD CONSTRAINT chk_gto_stack
-  CHECK (stack_label IN ('13bb', '25bb', '40bb'));
+-- CHECK constraints（用 DO block 包起來避免重複 ADD 時報錯）
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_gto_street') THEN
+    ALTER TABLE gto_postflop ADD CONSTRAINT chk_gto_street
+      CHECK (street IN ('turn', 'river'));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_gto_stack') THEN
+    ALTER TABLE gto_postflop ADD CONSTRAINT chk_gto_stack
+      CHECK (stack_label IN ('13bb', '25bb', '40bb'));
+  END IF;
+END $$;
 
 -- RLS：所有登入用戶可讀，寫入走 service_role（bypass RLS）
 ALTER TABLE gto_postflop ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "authenticated users can read gto_postflop" ON gto_postflop;
 CREATE POLICY "authenticated users can read gto_postflop"
   ON gto_postflop FOR SELECT
   TO authenticated
@@ -55,59 +72,20 @@ CREATE TABLE IF NOT EXISTS gto_batch_progress (
   UNIQUE (board_key, turn_card, river_card, street, stack_label)
 );
 
-ALTER TABLE gto_batch_progress ADD CONSTRAINT chk_batch_status
-  CHECK (status IN ('pending', 'claimed', 'uploading', 'done', 'failed'));
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_batch_status') THEN
+    ALTER TABLE gto_batch_progress ADD CONSTRAINT chk_batch_status
+      CHECK (status IN ('pending', 'claimed', 'uploading', 'done', 'failed'));
+  END IF;
+END $$;
 
 ALTER TABLE gto_batch_progress ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "authenticated users can read gto_batch_progress" ON gto_batch_progress;
 CREATE POLICY "authenticated users can read gto_batch_progress"
   ON gto_batch_progress FOR SELECT
   TO authenticated
   USING (true);
 
--- 3. 領取任務的 RPC（原子性，防兩台搶同一個）
-CREATE OR REPLACE FUNCTION claim_gto_batch(p_machine_id text)
-RETURNS TABLE (
-  id           integer,
-  board_key    text,
-  turn_card    text,
-  river_card   text,
-  street       text,
-  stack_label  text
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  v_id integer;
-BEGIN
-  -- 原子性領取：FOR UPDATE SKIP LOCKED 防止兩台搶同一個
-  UPDATE gto_batch_progress bp
-  SET status = 'claimed',
-      machine_id = p_machine_id,
-      claimed_at = now()
-  WHERE bp.id = (
-    SELECT bp2.id
-    FROM gto_batch_progress bp2
-    WHERE bp2.status = 'pending'
-    ORDER BY
-      bp2.street ASC,         -- turn 先跑完再跑 river
-      bp2.board_key,
-      bp2.turn_card,
-      bp2.river_card,
-      bp2.stack_label
-    LIMIT 1
-    FOR UPDATE SKIP LOCKED
-  )
-  RETURNING bp.id INTO v_id;
-
-  IF v_id IS NULL THEN
-    RETURN;  -- 沒有待領取的任務
-  END IF;
-
-  RETURN QUERY
-    SELECT bp.id, bp.board_key, bp.turn_card, bp.river_card, bp.street, bp.stack_label
-    FROM gto_batch_progress bp
-    WHERE bp.id = v_id;
-END;
-$$;
+-- 下一步：貼 20260416b-gto-postflop-function.sql 建立 claim_gto_batch RPC
