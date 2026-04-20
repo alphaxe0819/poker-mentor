@@ -12,13 +12,13 @@ describe('HU engine + bot AI integration', () => {
     totalStackBB: 80, stackRatio: '1:1', playerSide: 'equal', sbBB: 0.5, bbBB: 1,
   }
 
-  it('plays a full hand without crashing (bot vs bot)', () => {
+  it('plays a full hand without crashing (bot vs bot)', async () => {
     let m = createMatch(config)
     m = dealNewHand(m)
 
     let safetyCounter = 0
     while (m.currentHand && !m.currentHand.isComplete && safetyCounter < 100) {
-      const action = decideBotAction(m.currentHand, config, 'standard')
+      const action = await decideBotAction(m.currentHand, config, 'standard')
       m = applyAction(m, action)
       safetyCounter++
     }
@@ -28,7 +28,7 @@ describe('HU engine + bot AI integration', () => {
     expect(m.currentHand!.isComplete).toBe(true)
   })
 
-  it('plays multiple hands until one player busts', () => {
+  it('plays multiple hands until one player busts', async () => {
     // Small total stack so it busts within reasonable hands
     let m = createMatch({ ...config, totalStackBB: 10 })
     let outerSafety = 0
@@ -37,7 +37,7 @@ describe('HU engine + bot AI integration', () => {
       m = dealNewHand(m)
       let innerSafety = 0
       while (m.currentHand && !m.currentHand.isComplete && innerSafety < 100) {
-        const a = decideBotAction(m.currentHand, config, 'standard')
+        const a = await decideBotAction(m.currentHand, config, 'standard')
         m = applyAction(m, a)
         innerSafety++
       }
@@ -48,24 +48,24 @@ describe('HU engine + bot AI integration', () => {
     expect(outerSafety).toBeLessThan(200)
   })
 
-  it('hand history grows as hands are played', () => {
+  it('hand history grows as hands are played', async () => {
     let m = createMatch({ ...config, totalStackBB: 10 })
     m = dealNewHand(m)
     while (m.currentHand && !m.currentHand.isComplete) {
-      const a = decideBotAction(m.currentHand, config, 'standard')
+      const a = await decideBotAction(m.currentHand, config, 'standard')
       m = applyAction(m, a)
     }
     m = resolveHand(m)
     expect(m.handHistory).toHaveLength(1)
   })
 
-  it('different personalities all complete hands without errors', () => {
+  it('different personalities all complete hands without errors', async () => {
     for (const personality of ['standard', 'rock', 'aggressive'] as const) {
       let m = createMatch(config)
       m = dealNewHand(m)
       let safety = 0
       while (m.currentHand && !m.currentHand.isComplete && safety < 100) {
-        const a = decideBotAction(m.currentHand, config, personality)
+        const a = await decideBotAction(m.currentHand, config, personality)
         m = applyAction(m, a)
         safety++
       }

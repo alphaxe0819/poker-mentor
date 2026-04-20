@@ -56,16 +56,16 @@ describe('botAI', () => {
     await preloadBotData()
   })
 
-  it('returns a valid action for preflop SB RFI scenario', () => {
+  it('returns a valid action for preflop SB RFI scenario', async () => {
     // Bot is BTN (toAct='btn'), no actions yet → SB_RFI
     const hand = makeHand({ toAct: 'btn' })
-    const action = decideBotAction(hand, config, 'standard')
+    const action = await decideBotAction(hand, config, 'standard')
     expect(action).toHaveProperty('kind')
     expect(['fold', 'call', 'raise', 'allin', 'check']).toContain(action.kind)
     expect(action.actor).toBe('btn')
   })
 
-  it('returns a valid action when bot is BB facing BTN open', () => {
+  it('returns a valid action when bot is BB facing BTN open', async () => {
     // Bot is BB, BTN already raised
     const hand = makeHand({
       toAct: 'bb',
@@ -77,12 +77,12 @@ describe('botAI', () => {
         { kind: 'raise', actor: 'btn', street: 'preflop', amount: 2.5 },
       ],
     })
-    const action = decideBotAction(hand, config, 'standard')
+    const action = await decideBotAction(hand, config, 'standard')
     expect(['fold', 'call', 'raise', 'allin']).toContain(action.kind)
     expect(action.actor).toBe('bb')
   })
 
-  it('plays postflop when board is present and GTO data exists', () => {
+  it('plays postflop when board is present and GTO data exists', async () => {
     // Bot BTN c-bet decision after BB checks. Use a board we have data for: As7d2c
     const hand = makeHand({
       street: 'flop',
@@ -109,11 +109,11 @@ describe('botAI', () => {
         { kind: 'check', actor: 'bb', street: 'flop' },
       ],
     })
-    const action = decideBotAction(hand, config, 'standard')
+    const action = await decideBotAction(hand, config, 'standard')
     expect(['check', 'bet', 'allin']).toContain(action.kind)
   })
 
-  it('postflop with no GTO data falls back to heuristic', () => {
+  it('postflop with no GTO data falls back to heuristic', async () => {
     // Use a board NOT in our 13: 5h4d3c
     const hand = makeHand({
       street: 'flop',
@@ -129,13 +129,13 @@ describe('botAI', () => {
         stackBB: 39,
       }),
     })
-    const action = decideBotAction(hand, config, 'standard')
+    const action = await decideBotAction(hand, config, 'standard')
     // Should return SOMETHING (heuristic fallback)
     expect(action).toHaveProperty('kind')
     expect(['fold', 'check', 'call', 'bet', 'raise', 'allin']).toContain(action.kind)
   })
 
-  it('bot raises with AA on SB RFI (verifies GTO lookup works)', () => {
+  it('bot raises with AA on SB RFI (verifies GTO lookup works)', async () => {
     // Bot is BTN/SB, no preflop action history → SB_RFI scenario
     // Bot has AA → must not fold
     const hand = makeHand({
@@ -153,7 +153,7 @@ describe('botAI', () => {
         stackBB: 39.5,
       }),
     })
-    const action = decideBotAction(hand, config, 'standard')
+    const action = await decideBotAction(hand, config, 'standard')
     // AA must NOT fold (it's the strongest hand). It should raise (or call/check minimum).
     expect(action.kind).not.toBe('fold')
   })
