@@ -158,65 +158,7 @@ updated: 2026-04-20
 
 <!-- T-058 → In Review 2026-04-20 -->
 
-- [ ] **T-057** | Pipeline | **wiki: gto-pipeline-conventions.md 命名規範** `(派工 2026-04-20)`
-  - **建議 branch**：`wip/T057-gto-pipeline-conventions`（從 origin/dev 切出）
-  - **產出檔**：
-    1. 新檔：`memory/wiki/gto-pipeline-conventions.md`
-    2. 改：`memory/index.md` Development 區塊加連結
-  - **禁碰**：scripts/ / src/ / supabase/
-
-  **wiki 檔完整範本（執行者直接套用）**：
-
-  ```markdown
-  ---
-  name: GTO Pipeline Naming Conventions
-  description: solver 產出與手寫 GTO data 的檔名 / export 命名規範，避免 _flop_ 新舊混用
-  type: reference
-  updated: 2026-04-20
-  ---
-
-  ## 檔名規範
-
-  格式：`gtoData_<gameType>_<stack>_<pottype>_<slug>.ts`（**無 flop_ 前綴**）
-
-  - ✅ `gtoData_hu_40bb_srp_As7d2c.ts`
-  - ❌ `gtoData_hu_40bb_srp_flop_As7d2c.ts`（舊格式，T-021 / T-023 會統一）
-
-  ## Export 名規範
-
-  格式：`<GAMETYPE>_<STACK>_<POTTYPE>_<SLUG>`（**無 FLOP_ 中綴**）
-
-  - ✅ `export const HU_40BB_SRP_AS7D2C`
-  - ❌ `export const HU_40BB_SRP_FLOP_AS7D2C`（舊格式）
-
-  ## 目的
-
-  - `convert-to-ts.mjs` 產出自動遵守
-  - 手寫 GTO data 照此命名
-  - T-056 的 `batch-run.ps1 -SkipExisting` 雙命名偵測靠此定義 legacy 格式
-
-  ## 當前遺留清單（待統一）
-
-  - HU 25bb SRP：13 個 `_flop_` 舊命名 → T-021 順便 rename
-  - HU 13bb SRP：13 個 `_flop_` 舊命名 → T-023 順便 rename
-  - 其他 `src/lib/gto/` 下 `_flop_` 檔 → 見各自 task
-
-  ## 相關
-
-  - [[task-board]] T-056 雙命名 skip / T-021 / T-023
-  - [[range-collection-roadmap]]
-  ```
-
-  **index.md 加的一行**（Development 區塊）：
-  ```
-  - [[gto-pipeline-conventions]] — solver 產出與手寫 GTO data 的檔名 / export 命名規範
-  ```
-
-  **完成條件**：
-  1. 兩檔創建/更新
-  2. `npx tsc -b --noEmit` EXIT=0（純 doc 不影響，但跑一次確認沒誤觸）
-  3. commit（**不動** `src/version.ts` / `memory/dev-log.md`）
-  4. push wip + task-board 移 In Review
+<!-- T-057 → In Review 2026-04-20 -->
 
 ### Product 線
 
@@ -408,7 +350,15 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-*（空）*
+- [?] **T-057** | Pipeline | **wiki: gto-pipeline-conventions.md 命名規範**
+  - branch: `wip/T057-gto-pipeline-conventions`（從 origin/dev `b337205` 切出）
+  - 最後 commit: `6d944fc` feat(T-057): gto-pipeline-conventions wiki + index link
+  - 完成備註：
+    - 新檔 `memory/wiki/gto-pipeline-conventions.md`（完整依派單範本貼入：檔名規範 / Export 名規範 / 目的 / 當前遺留清單 / 相關 wikilink）
+    - 改 `memory/index.md` Development 區塊，加 `[[gto-pipeline-conventions]]` 一行連結（接在 `poker-terminology-zh-tw` 之後）
+    - 未動 `src/version.ts` / `memory/dev-log.md` / scripts/ / src/ / supabase/
+  - 驗證：✅ `npx tsc -b --noEmit` EXIT=0
+  - 大腦動作：review → merge wip 到 dev → bump version + append dev-log → 移 Done
 
 <!-- T-058 → Done 2026-04-20，實機部署/驗收見 follow-up T-059 -->
 
