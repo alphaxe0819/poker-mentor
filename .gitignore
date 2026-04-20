@@ -40,6 +40,9 @@ scripts/gto-pipeline/test_solver.txt
 # Claude Code 本機個人 permission（settings.local.json 屬於個人覆蓋）
 .claude/settings.local.json
 
+# Claude Code Sandbox / Isolation worktree（桌面版 / slash command 自動建）
+.claude/worktrees/
+
 # 大型外部資料集（不該進 repo）
 RYE Rangeviewer 2021 Updated with ICM Ranges/
 

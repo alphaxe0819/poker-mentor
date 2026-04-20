@@ -5,6 +5,15 @@
 
 ---
 
+## 2026-04-21 v0.8.1-dev.39 [dev]
+- 整理今日殘留
+- `.gitignore` 加 `.claude/worktrees/`（Claude Code sandbox 自動建的 isolation worktree 目錄，每次新 sandbox session 會產生一個，不該進 repo）
+- 保留 `src/lib/gto/gtoData_hu_25bb_srp_Kh8h3h.ts`（T-056 real batch dry-run 時 solver 意外補產出的 .ts）
+  - 原本以為是 orphan，查後發現 HU 13bb SRP / HU 25bb 3bp 都有同 flop `Kh8h3h` 已 tracked
+  - 這個補產出其實是 HU 25bb SRP 該 flop 缺口的補齊，保留對齊
+  - 暫不接進 `gtoData_hu_postflop_index.ts`（BOARDS_HU 還只 21 flops，Kh8h3h 不在列；若未來擴 BOARDS_HU 到更多 flops 可順手加）
+- 屬產品類（src/lib/gto/*.ts 新增），bump dev.38 → dev.39
+
 ## 2026-04-21 [flow] T-063 + T-012 真正 Done：MTT Tier A 實機驗證通過 ✅
 - 用戶貼 patch SQL（RLS policy 開 anon+authenticated）
 - 大腦跑 `test-retrieval.mjs` → **MTT scenario Tier A 命中** `solver_postflop_mtt`
