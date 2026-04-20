@@ -24,7 +24,7 @@ import { writeFileSync, mkdirSync, readdirSync, unlinkSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { BOARDS } from './boards.mjs'
+import { BOARDS, BOARDS_HU } from './boards.mjs'
 import { BOARDS_EXTENDED } from './boards-extended.mjs'
 import { ALL_FORMATS, BET_PROFILES, autoBetProfile } from './scenarios.mjs'
 
@@ -74,6 +74,7 @@ if (skipped > 0) {
 
 const boards = fastMode ? BOARDS_FAST
   : boardsArg === 'extended' ? BOARDS_EXTENDED
+  : boardsArg === 'hu' ? BOARDS_HU
   : BOARDS
 
 // ── Clean existing inputs if requested ──
