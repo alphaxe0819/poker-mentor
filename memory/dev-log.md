@@ -5,6 +5,28 @@
 
 ---
 
+## 2026-04-20 v0.8.1-dev.36 [dev]
+- T-020 正式整合（wip/T020-hu40bb-srp-fill → dev）
+- 執行者：另一台電腦（Stage 1 `6119d74` + Stage 2 `9545e7c` + In Review `5e3c7ee`）
+- 大腦：review + merge（這台 `-brain` worktree）
+- 產出（25 files, +1718/-348）：
+  - HU 40bb SRP 補齊到 21 flops = 13 base + 8 extras（peer parity HU 25bb）
+  - 8 新 extras `gtoData_hu_40bb_srp_{5s5c5d/6d5h4c/8s5h2c/8s7s5d/9s7s3s/Ah2d2c/Ah5c2d/Ah8h3c}.ts`
+  - 10 base 從 `_flop_<slug>` rename 為 `_<slug>`（去 FLOP_ 中綴）
+  - 3 base（7s7d2h/9d5c2h/9h8d7c）solver 新版覆蓋（104→151 行）
+  - `gtoData_hu_postflop_index.ts` map 13→21 entries
+  - `scripts/gto-pipeline/boards.mjs` 加 `BOARDS_HU_EXTRAS` + `BOARDS_HU`
+  - `scripts/gto-pipeline/generate-input-v2.mjs` 加 `--boards hu` 支援
+- 驗證：tsc EXIT=0
+- **踩坑（執行者抓到）**：`batch-run.ps1 -SkipExisting` 只 check 新命名，舊命名會誤判「未產」→ 全部 base 意外重跑，差點燒 3 hr。執行者及時 kill
+- 衍生 task：
+  - **T-056**（Pipeline）：batch-run.ps1 -SkipExisting 改雙命名偵測（15 min，防再踩）
+  - **T-057**（大腦）：wiki gto-pipeline-conventions.md 明文命名規範
+  - T-021 / T-023 做 HU 3bp / 深度擴充時順便 rename HU 25bb/13bb SRP 舊 `_flop_` 命名
+- 執行者原建議 T-044 / T-045 編號與今日已用的衝突（T-044=migration plpgsql、T-045=真跑 batch），大腦改為 T-056 / T-057
+- 產品改動（src/lib/gto/ TypeScript data）→ 測試機 curl 驗證 Vite build
+- wip/T020-hu40bb-srp-fill 待刪
+
 ## 2026-04-20 v0.8.1-dev.35 [dev]
 - T-055 正式整合（wip/T055-coach-context-continuity → dev）
 - 改動：單檔 `supabase/functions/exploit-coach/index.ts:159-200`（+10/-4 行）

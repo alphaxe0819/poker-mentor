@@ -1,3 +1,5 @@
+import { BOARDS_EXTENDED } from './boards-extended.mjs'
+
 /**
  * HU SRP board catalog + representative turn/river cards for batch generation.
  *
@@ -216,3 +218,19 @@ export const HU_13BB_RANGES = {
   ip: '66,55,44,33,22,A7s,A6s,A4s,A3s,A2s,K7s,K6s,K5s,K4s,K3s,K2s,Q8s,Q7s,J8s,J7s,T8s,T7s,98s,97s,87s,ATo,A9o,A8o,A7o,A6o,A5o,A4o,A3o,A2o,K9o,K8o,QTo,Q9o,JTo,J9o,T9o',
   oop: 'AA,Q8s,Q7s,Q6s,Q5s,Q4s,Q3s,Q2s,J9s,J8s,J7s,J6s,J5s,J4s,J3s,J2s,T9s,T8s,T7s,T6s,T5s,T4s,T3s,T2s,98s,97s,96s,95s,94s,93s,92s,87s,86s,85s,84s,83s,76s,75s,74s,73s,65s,64s,63s,54s,53s,43s,K8o,K7o,K6o,K5o,K4o,K3o,K2o,QTo,Q9o,Q8o,Q7o,Q6o,Q5o,JTo,J9o,J8o,J7o,T9o,T8o,T7o,98o,97o,96o,87o,86o,85o,76o,75o,65o,64o,54o',
 }
+
+// ── HU-specific board catalog (T-020 peer parity with HU 25bb SRP) ──
+//
+// HU 25bb SRP 已覆蓋 13 base + 8 extras = 21 unique flops
+// BOARDS_HU 讓 HU 40bb / 13bb 也能對齊同一套 flop 集合
+// 8 extras 都在 BOARDS_EXTENDED，這裡 filter 出來拼接
+const HU_EXTRA_SLUGS = [
+  '5s5c5d', '6d5h4c', '8s5h2c', '8s7s5d',
+  '9s7s3s', 'Ah2d2c', 'Ah5c2d', 'Ah8h3c',
+]
+
+export const BOARDS_HU_EXTRAS = BOARDS_EXTENDED.filter(b =>
+  HU_EXTRA_SLUGS.includes(b.slug)
+)
+
+export const BOARDS_HU = [...BOARDS, ...BOARDS_HU_EXTRAS]

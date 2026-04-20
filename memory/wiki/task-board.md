@@ -67,6 +67,24 @@ updated: 2026-04-20
   - 建議 branch：`wip/T023-6max-shallow`
   - 待確認具體範圍
 
+- [ ] **T-056** | Pipeline | **batch-run.ps1 -SkipExisting 改雙命名偵測（防 T-020 churn 重演）** 🔴 優先
+  - 建議 branch：`wip/T056-skipexisting-dual-naming`
+  - 背景：T-020 執行者跑 HU 40bb SRP 時，`-SkipExisting` 只 check 新命名 `gtoData_<slug>.ts`，對舊命名 `gtoData_flop_<slug>.ts` 誤判「未產」→ 全部 base 意外重跑，差點燒 3 hr。執行者及時 kill
+  - 範圍：`scripts/gto-pipeline/batch-run.ps1` 的 `-SkipExisting` 邏輯
+  - 修法：`gtoData_X.ts` OR `gtoData_flop_X.ts` 任一存在就 skip
+  - 預估：15 min，5 行 PowerShell 改動
+  - 完成條件：在 HU 25bb 舊命名 fixture 上 `-SkipExisting` 不會誤判重跑
+
+- [ ] **T-057** | 大腦 | **wiki: gto-pipeline-conventions.md 命名規範**
+  - 建議 branch：`wip/T057-gto-pipeline-conventions`
+  - 範圍：新 wiki 頁面明文定義：
+    - 檔名：`gtoData_<gameType>_<stack>_<pottype>_<slug>.ts`（無 `flop_` 前綴）
+    - Export 名：`<GAMETYPE>_<STACK>_<POTTYPE>_<SLUG>`（無 `FLOP_` 中綴）
+    - 例：`gtoData_hu_40bb_srp_As7d2c.ts` → `export const HU_40BB_SRP_AS7D2C`
+  - 目的：新 solver 產出、手寫 GTO data 都遵守；未來寫 T-056 skip 邏輯時有權威來源
+  - 相關：`memory/index.md` 加連結到 Development 區塊
+  - 預估：10-15 min
+
 ### Product 線
 
 <!-- T-050 已完成，移至 Done -->
@@ -213,19 +231,7 @@ updated: 2026-04-20
 
 <!-- T-010 已 merge 到 dev，移至 Done -->
 
-- [~] **T-020** | Pipeline | **Solver P1 HU 40bb SRP 補齊到 21 flops（peer parity 25bb）**
-  - branch: `wip/T020-hu40bb-srp-fill`
-  - 機器：另一台電腦
-  - 執行者 session 起：2026-04-20
-  - **scope 修正（2026-04-20 大腦）**：原寫「25 flops」是 6-max 早期規劃殘留數字，
-    實際應對齊 HU 25bb SRP 的 21 unique flops（BOARDS 13 + 8 個 Ace-low extras）
-  - 現況：13 flops（= BOARDS 全集）→ 補 +8 個 extras
-  - 8 extras：5s5c5d / 6d5h4c / 8s5h2c / 8s7s5d / 9s7s3s / Ah2d2c / Ah5c2d / Ah8h3c
-  - 實作：boards.mjs 加 `export const BOARDS_HU`（不動 BOARDS 主常數，避免影響 6-max scope）
-  - 預估：2 hr 背景（8 flops × ~15 min）
-  - 產出：`src/lib/gto/gtoData_hu_40bb_srp_*.ts` +8 檔
-  - 完成條件：21 unique flops 全 solve 完，gtoData_index 接上，tsc EXIT=0
-  - **連帶**：T-021（HU 40bb 3bp）/ T-023（HU 深度擴充）後續也應對齊 21 flops
+<!-- T-020 → In Review 2026-04-20，見下方 In Review 區 -->
 
 <!-- T-042 已部署完成，移至 Done -->
 
@@ -269,36 +275,9 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-- [?] **T-055** | Product | **exploit-coach 連續對話沒帶本輪 context — 修法 A** ⚠ 含 Edge Function 部署
-  - branch: `wip/T055-coach-context-continuity`（從 origin/dev `f0b0f7d` 切出）
-  - 最後 commit: 待 push
-  - 機器：這台主目錄
-  - 採用方案：**A 最保守**（只改 Edge Function `buildSystemPrompt`，不動前端 mockup / chatHistory 結構）
-  - 改動範圍（單檔 `supabase/functions/exploit-coach/index.ts:159-200`，+10 / -4 行）：
-    - **base prompt 新增「本輪場景 grounding」段**：明確告訴 Claude「下方場景整輪沿用」「若用戶在後續訊息假設不同手牌（如 QQ）以假設為準但 flop/對手/位置不變」「每次回答必須提到 flop+對手+位置讓用戶知道接住上下文」「不要退化成翻前公式化答案」
-    - `villain_type` 段加 `【本輪場景】` 前綴
-    - `hero_hand` 段加註「若用戶在對話中假設不同手牌，以假設為準，但 flop/對手/位置沿用本輪」
-    - `hero_pos` 段加「（本輪實況，不變）」
-  - 不變動：retrieveSolverNode / summarizeNodeForPrompt / Anthropic call / auth.getUser / villain labels / 前端 mockup / ExploitCoachTab / 今天剛修的 fuzzy match / JWT decode / parent-env log
-  - 驗證：✅ `npx tsc -b --noEmit` EXIT=0（注：Edge Function 走 Deno，tsc 看的是其他 TS code 沒被誤改）
-  - **⚠ 部署流程（Edge Function，需手動）**：
-    1. **大腦 merge wip 到 dev** + bump version + push（mockup 部分自動上 Vercel）
-    2. **大腦或執行者另一輪** 產出 `supabase/functions/exploit-coach/index.ts` 完整檔案內容貼碼指令給用戶
-    3. **用戶手動貼到測試 Supabase Dashboard** → Edge Functions → `exploit-coach` → Via Editor → 整檔取代 → Deploy
-    4. **用戶實機重測**：iPhone Safari 開 AI 分析後追問「如果我拿 QQ 呢」→ 預期 AI 回覆會明確點出「本場景 [位置] vs [對手類型] / flop=...」並結合 QQ 在此 flop 的玩法
-  - 預期判讀：
-    - ✅ AI 回覆有「本輪場景描述（flop+對手+位置）」+ 結合假設手牌 → A 修好，移 Done
-    - ⚠ AI 仍公式化只講 QQ 翻前範圍 → 疊 B（前端 callCoach 強制注入「[本輪場景] hero=X flop=Y vill=Z」到 userMsg 前面），開 T-056
-    - ⚠ AI 過度依賴本輪原本的手牌（忽略假設）→ 微調 prompt 強化「以假設為準」字眼
-  - 相關記憶：[[supabase-edge-function-gotchas]]（部署流程 + ES256 坑）
-  - 等大腦 merge + 安排 Edge Function 部署
+*（空）*
 
-<!-- T-051 已 merge 到 dev，移至 Done；等用戶實機 log 才能判根因（bug fix 未必已解） -->
-  - 等大腦 merge（無論實機結果）— 診斷 log 跟著 merge 進測試環境，下次實機重現可立刻看
-
-<!-- T-010 已 merge 到 dev，移至 Done -->
-<!-- T-043 已 merge 到 dev，移至 Done -->
-<!-- T-050 已 merge 到 dev，移至 Done -->
+<!-- T-010 / T-020 / T-043 / T-050 / T-051 / T-055 今日全部 merge 到 dev，見 Done 區 -->
 
 格式範例：
 ```
@@ -318,6 +297,19 @@ updated: 2026-04-20
 - [x] **T-001** | Product | exploit-coach 5 bug 程式修復 | 2026-04-19~20 | `ff6f1f9` (dev.16)
   - 產出：mockup-v3.html + ExploitCoachTab.tsx + exploit-coach/index.ts
   - 狀態：**待 T-030 實機驗證**
+- [x] **T-020** | Pipeline + 大腦 | **HU 40bb SRP 13 → 21 flops (peer parity 25bb) + 命名統一去除 FLOP_** | 2026-04-20 | merge + dev.36
+  - 執行者：另一台電腦（`wip/T020-hu40bb-srp-fill`：`6119d74` → `9545e7c` → `5e3c7ee`）
+  - 大腦：review + merge（這台 `-brain` worktree）
+  - 產出（25 files, +1718/-348）：
+    - 8 新 extras `gtoData_hu_40bb_srp_{5s5c5d/6d5h4c/8s5h2c/8s7s5d/9s7s3s/Ah2d2c/Ah5c2d/Ah8h3c}.ts`
+    - 10 base `_flop_` rename 去 FLOP_（As7d2c/Kc8h3s/Jc7d2h/KsQd4h/Td8h4c/Js9c3h/JsTc9h/Tc9c6d/KcKd5h/QsJh2h）
+    - 3 base（7s7d2h/9d5c2h/9h8d7c）為 solver 新跑產出覆蓋（104→151 行，新版本 output）
+    - `gtoData_hu_postflop_index.ts` map 13→21 entries + 命名更新
+    - `boards.mjs` 加 `BOARDS_HU_EXTRAS` + `BOARDS_HU`
+    - `generate-input-v2.mjs` 加 `--boards hu` 支援
+  - 驗證：tsc EXIT=0
+  - **踩坑（執行者抓到）**：`batch-run.ps1 -SkipExisting` 只 check 新命名（無 `_flop_`），舊命名會誤判「未產」→ 全部 base 意外重跑。執行者 kill 救回 3hr churn
+  - **衍生 T-056 / T-057**（防未來再踩）+ T-021 / T-023 做 HU 3bp / 深度擴充時順便 rename HU 25bb/13bb SRP
 - [x] **T-002** | 大腦 | 跨機 auto-sync 機制 + task-board 起初 | 2026-04-20 | `fd5fc4c` / `10b0e59`
   - 產出：session-sync.sh + session-start-reminder.sh + two-machine-workflow 初版
 - [x] **T-003** | Pipeline | 範圍收集成果 + .claude settings 整頓 | 2026-04-20 | `754f651` (dev.17)
