@@ -34,12 +34,9 @@ updated: 2026-04-20
 
 ### Pipeline 線
 
-- [ ] **T-010** | Pipeline | **C2 場景化（converter 接 scenarios.mjs）**
-  - 建議 branch：`wip/T010-c2-scenarios`
-  - 範圍：`scripts/gto-pipeline/scenarios.mjs` + 新 `parse-pd-table-name.mjs`
-  - 內容：解析 pd table.name（`"BB VS MP"` / `"10bb SB Push"`）→ scenario / depth / position；加 MTT catalog
-  - 依賴：C1.5 ✅
-  - 產出：pd hand map → scenarios.mjs 可吃的物件
+<!-- T-010 → In Progress 2026-04-20 -->
+<!-- T-020 → In Progress 2026-04-20 -->
+<!-- T-042 → In Progress 2026-04-20 -->
 
 - [ ] **T-011** | Pipeline | **C3 E2E 小樣本**
   - 建議 branch：`wip/T011-c3-e2e`
@@ -57,12 +54,6 @@ updated: 2026-04-20
   - 建議 branch：`wip/T013-scraping-audit`
   - 範圍：確認 Downloads 現有 10 個 `_ranges.json` 對應的 PNG 整理狀態 + 更新 roadmap S1-S4
   - 產出：Scraping 線實際進度對齊
-
-- [ ] **T-020** | Pipeline | **Solver P1 HU 40bb SRP 補齊到 25 flops**
-  - 建議 branch：`wip/T020-hu40bb-srp-fill`
-  - 現況：只 13 flops
-  - 預估：2-3 hr 背景
-  - 產出：`src/lib/gto/gtoData_hu_40bb_srp_*.ts` +12 檔
 
 - [ ] **T-021** | Pipeline | **Solver P2 HU 40bb 3bp × 25 flops**
   - 建議 branch：`wip/T021-hu40bb-3bp`
@@ -164,10 +155,7 @@ updated: 2026-04-20
 
 ### Follow-up（T-033 引發）
 
-- [ ] **T-042** | Pipeline | **部署 20260416-gto-postflop.sql 到測試 Supabase**
-  - 動作：貼 migration SQL 到測試 Supabase SQL Editor（btiqmckyjyswzrarmfxa）
-  - 驗證：`SELECT * FROM information_schema.tables WHERE table_name IN ('gto_postflop', 'gto_batch_progress')`
-  - 驗證 RPC：`SELECT claim_gto_batch('DESKTOP-TEST')` 應回空 row
+<!-- T-042 → In Progress 2026-04-20 -->
 - [ ] **T-043** | Pipeline | **batch-worker 環境準備 + 首次實跑**
   - 動作：scripts/gto-pipeline/ 下 `npm install @supabase/supabase-js`
   - 加 `.env` 含 `SUPABASE_URL` + `SUPABASE_SERVICE_KEY`
@@ -179,7 +167,31 @@ updated: 2026-04-20
 
 ## 🔨 In Progress（執行中）
 
-*（空）*
+- [~] **T-010** | Pipeline | **C2 場景化（converter 接 scenarios.mjs）**
+  - branch: `wip/T010-c2-scenarios`
+  - 機器：這台（worktree `POKERNEW-wipT010`）
+  - 執行者 session 起：2026-04-20
+  - 範圍：`scripts/gto-pipeline/scenarios.mjs` + 新 `scripts/gto-pipeline/parse-pd-table-name.mjs`
+  - 內容：解析 pd table.name（`"BB VS MP"` / `"10bb SB Push"`）→ scenario / depth / position；加 MTT catalog
+  - 完成條件：parser 能消化現有 10 個 pd project 的 table.name；scenarios.mjs 能 enumerate MTT scenarios
+
+- [~] **T-020** | Pipeline | **Solver P1 HU 40bb SRP 補齊到 25 flops**
+  - branch: `wip/T020-hu40bb-srp-fill`
+  - 機器：另一台電腦
+  - 執行者 session 起：2026-04-20
+  - 現況：只 13 flops；補 +12 flop
+  - 預估：2-3 hr 背景
+  - 產出：`src/lib/gto/gtoData_hu_40bb_srp_*.ts` +12 檔
+  - 完成條件：25/25 flops 全 solve 完，gtoData_index 接上
+
+- [~] **T-042** | Pipeline | **部署 20260416-gto-postflop.sql 到測試 Supabase**
+  - branch: 無（純 Dashboard 操作；最後標 task-board 完成的 commit 由大腦做）
+  - 機器：這台（worktree `POKERNEW-wipT042` 或可省略）
+  - 執行者 session 起：2026-04-20
+  - 動作：貼 migration SQL 到測試 Supabase SQL Editor（btiqmckyjyswzrarmfxa）
+  - 驗證：`SELECT * FROM information_schema.tables WHERE table_name IN ('gto_postflop', 'gto_batch_progress')`
+  - 驗證 RPC：`SELECT claim_gto_batch('DESKTOP-TEST')` 應回空 row
+  - 完成條件：兩 table + RPC 都在 Dashboard 可見並驗證通過
 
 <!-- T-033 已 merge 到 dev，移至 Done -->
 
