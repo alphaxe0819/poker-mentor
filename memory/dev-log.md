@@ -5,6 +5,38 @@
 
 ---
 
+## 2026-04-21 [收工狀態] 士林下班 — 換電腦接續
+**今日成果**：5 個版本 ship（v0.8.1 → v0.8.2 → v0.8.3 → v0.8.4 → v0.8.5）
+
+**Task 狀態**：
+- ✅ Done：T-013 / T-021 / T-030 / T-046 / T-062 / T-063 / T-064(defense)(原 T-030 follow-up)/ T-070 / T-071 / T-072 / T-073 / T-074 / T-075 Phase 0 / T-080
+- 🔨 派工中 Queue：T-075 Phase 1（只做 Course 205 tables）
+- 📥 Queue 未派：T-076（MTT postflop solver，依賴 T-075）
+
+**⚠ 未完成收尾事項**（回來續做）：
+
+1. **Vercel webhook 斷線** — 正式機 v0.8.5 卡在 v0.8.3
+   - Git remote main 已是 d022317 + empty commit 6891c6c
+   - Vercel 沒觸發 build，GitHub push 不 trigger webhook
+   - 臨時解法：去 Vercel dashboard `poker-goal` 最新 deployment 點 `...` → **Redeploy**
+   - 根因診斷：Vercel Usage / GitHub webhook status / Vercel Git integration 要查
+   - dev 也同樣狀況（但剛 empty commit 後有動了一次，可能間歇）
+
+2. **正式 Supabase Edge Function 未部署 v0.8.5**
+   - 正式 `qaiwsocjwkjrmyzawabt` 還是 v0.8.4 的 prompt
+   - 用戶要貼本地 `supabase/functions/exploit-coach/index.ts` 整檔到 Dashboard：
+     - https://supabase.com/dashboard/project/qaiwsocjwkjrmyzawabt/functions/exploit-coach/code
+   - 貼碼順序：Ctrl+A Delete → 從本地檔 Ctrl+C/V → Deploy
+   - Deploy 完打開 https://poker-goal.vercel.app/ 實機驗 T-080 快速分析 + 禁詞
+
+3. **T-075 Phase 1 派工中但還沒執行者接**
+   - scope：只處理 Course project 205 auto-parseable tables
+   - 開工指令已在對話中（「執行者接 T-075 Phase 1」那段）
+   - 回家後士林 wip1 或家裡執行者可接
+
+4. **dev 版本**：v0.8.5（已 ship）
+   - 下個開發循環應 bump 到 v0.8.5-dev.1 起算
+
 ## 2026-04-21 v0.8.5 [ship]
 - 🚀 v0.8.4 → v0.8.5 正式
 - 內容（CHANGELOG.md v0.8.5）：
