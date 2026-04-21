@@ -88,35 +88,63 @@ updated: 2026-04-20
 
 ---
 
-### 🚨 正式版重建（用戶 2026-04-21 決策，以 pokerdinosaur 為 range 真相來源）
+### 🚨 正式版重建（用戶 2026-04-21 v2 決策 — 三塊切法）
 
-<!-- T-074 → In Review 2026-04-21（家裡主目錄執行者） -->
+**用戶決策（2026-04-21）**：資料切三塊，各自獨立管理
+- **HU**：維持現狀（手寫 placeholder range），T-074 已標 TEST DATA。**未來有更明確資料源時再取代**，現在不動
+- **CASH（6max 100bb）**：同上，維持現狀 TEST DATA。**現在不動**
+- **9MAX-MTT**：**全部從頭重做**，以 pokerdinosaur 為真相來源
+  - Phase 1（T-075）：從 PD 構建 preflop range
+  - Phase 2（T-076）：用 preflop range 跑 solver 產 postflop
 
-- [ ] **T-075** | Pipeline | **翻牌前 range 從 pokerdinosaur 建立（正式版基礎）**
-  - 建議 branch：`wip/T075-preflop-ranges-from-pd`
-  - 範圍：對每個 depth × scenario（HU 13bb/25bb/40bb SRP/3bp，6max 100bb SRP/3bp/4bp 等）從 pokerdinosaur 對應 project 抓 range
-  - 前置：T-013 audit 完成（Downloads 10 個 `_ranges.json` 已盤點）
-  - 產出：新 `scripts/gto-pipeline/scenarios-prod.mjs`（或擴充現有 scenarios.mjs 加 `_PROD_RANGES`）
-  - 依賴 converter C1/C1.5 / parse-pd-table-name（C2）
-  - 預估：2-5 hr（看 matchup 數 + pokerdinosaur 對應複雜度）
+<!-- T-074 → Done 2026-04-21（既有 gtoData_*.ts 全標 TEST DATA） -->
+<!-- T-075 Phase 0 盤點 → Done 2026-04-21，見 [[pd-mtt-scenario-coverage-2026-04-21]] -->
+<!-- 關鍵發現：auto-parse 率僅 1.2%（205/16750）；只 Course 可直接用；HU/6max cash pd 沒資料 → 維持 TEST DATA -->
+<!-- 用戶 2026-04-21 決策：走路徑 A（只做 Course 205 tables），Phase 1 派工中 -->
 
-- [ ] **T-076** | Pipeline | **Solver 全場景重跑（正式版）**
-  - 建議 branch：`wip/T076-solver-prod-rerun`
-  - 前置：T-074 + T-075 完成
-  - 範圍：用正式版 range 重跑所有既有場景 → 產正式版 `src/lib/gto/prod/gtoData_*.ts`（或不開子資料夾，index 切區）
-  - 重跑清單（依 T-021 經驗，SPR 淺的很快）：
-    - HU 13bb SRP × 21 flops
-    - HU 25bb SRP × 21 flops
-    - HU 25bb 3bp × 21 flops
-    - HU 40bb SRP × 21 flops
-    - HU 40bb 3bp × 21 flops（T-021 剛跑的測試版）
-    - 6max 100bb SRP × 13 flops × 25 scenarios
-    - 6max 100bb 3bp × 13 flops（場景數 TBD）
-    - 6max 100bb 4bp × 13 flops（原 T-022 scope → 合併進 T-076）
-  - 原 T-022（6max 100bb 4bp）scope 合併進來，當 T-076 的一個子場景跑
+- [ ] **T-075 Phase 1** | Pipeline | **9MAX-MTT preflop range 只做 Course（205 tables）**
+  - 建議 branch：同 `wip/T075-mtt-preflop-from-pd`（Phase 0 已 push 完成，切新 commit 繼續做）
+  - scope：只處理 Course project 的 205 個 auto-parseable tables，其他 9 project 不動
+  - 範圍：
+    1. 從 Course_ranges.json 抽 205 auto-parseable entries（Phase 0 已確認可解）
+    2. 用 parse-pd-table-name + pd-to-range.mjs 產 TexasSolver range 字串
+    3. 寫入新 `scripts/gto-pipeline/mtt_9max_ranges.mjs`（或 scenarios-prod.mjs），每個 depth × matchup 一個 entry
+    4. scenarios.mjs 加對接（MTT 正式版區塊）
+  - 不動：HU / 6max cash 既有 TEST DATA
+  - 產出：205 entry preflop range 可直接用於 T-076 solver marathon
+  - 預估：1-2 hr
+  - 後續（T-075 Phase 2，非本 scope，待 sid metadata 方案拍板）：
+    - Ben 系 876 sid 的 metadata 解鎖路徑 — 先做**技術偵察**（pokerdinosaur UI 是否能自動抓 scenario label）
+    - 若可自動 → 重爬解鎖；若需人工 → user 花 ~7-8 hr 標
+    - ICM 12833 table 太大，暫不處理
 
-<!-- T-022 合併進 T-076 → 標記暫停 -->
-<!-- T-022 執行者：若已開 wip/T022，可考慮把 6max 4bp 的 converter 研究結果帶進 T-075 -->
+
+- [ ] **T-075** | Pipeline | **9MAX-MTT preflop range 從 pokerdinosaur 構建（正式版 Phase 1）**
+  - 建議 branch：`wip/T075-mtt-preflop-from-pd`
+  - scope 收斂（2026-04-21 v2）：**只做 9max MTT**，不碰 HU / cash（PD 本來就沒這兩塊資料）
+  - 範圍：
+    - 從 PD 10 個 project 的 9-max MTT 資料建 preflop range
+    - 資料源分類：
+      - **Course**（353 tables，`name` 欄可 auto-decode）→ parse-pd-table-name 能解，立刻可做
+      - **Live_MTT_Ben_Adjusted / Tournament_Ben_Adjusted / Tournament_Chip_EV**（共 3564 tables，scenario_id 為 UUID，**需補 metadata**）
+      - **Large/Medium/Small_Field_ICM / Final_Table* / Final_Two_Tables**（10833 tables，ICM 情境）
+    - 每個 depth × position × action 出一個 range entry（open / defend / 3bet / rejam / squeeze / ICM）
+  - **前置 blocker**（scenario_id metadata）：
+    - Live_MTT_Ben / Tournament_Ben / ICM 系列的 scenario_id → 人類可讀 label 對照表缺失
+    - 解法二選一：(a) 重爬 PD 補 scenario label，(b) 人工標 UUID → label
+  - 執行者第一步：**先盤點 PD 各 project 的 scenario coverage**（哪些 depth × matchup 有資料），回報給用戶決定 metadata 補法
+  - 產出：新 `scripts/gto-pipeline/mtt_9max_ranges.mjs` + scenarios.mjs MTT 場景對接
+  - 預估：盤點 1-2 hr + metadata 補齊 3-5 hr（看選 a 或 b）+ range 構建 2-3 hr
+
+- [ ] **T-076** | Pipeline | **9MAX-MTT postflop solver marathon（正式版 Phase 2）**
+  - 建議 branch：`wip/T076-mtt-postflop-solver`
+  - 前置：T-075 完成（MTT preflop range 齊備）
+  - 範圍：用 T-075 的 MTT preflop range 跑 solver 產 postflop → `src/lib/gto/prod/gtoData_mtt_9max_*.ts`（或統一 index PROD 區）
+  - 依 T-021 經驗：MTT 深度淺（13-40bb），SPR 通常 < 3，收斂快（~5-15s/flop）
+  - **不碰 HU / cash 既有 TEST DATA**（維持現狀，未來另開 task）
+
+<!-- T-022（原 6max 100bb 4bp）scope 廢棄：cash 維持現狀 TEST DATA，不走 PD 路徑 -->
+<!-- T-023（原 6max 深度擴充）同上廢棄 -->
 
 <!-- T-062 → In Review 2026-04-21 -->
 
@@ -255,6 +283,33 @@ updated: 2026-04-20
 - [ ] **T-032** | Product | **`.env` 檢查 + 環境驗證**（另一台電腦）
   - 建議 branch：無
   - 動作：`ls .env`；無則 `powershell scripts/setup-env.ps1`
+
+<!-- T-080 → In Review 2026-04-21 -->
+
+<details>
+<summary>📦 T-080 原任務描述（已 In Review，見下方）</summary>
+
+- [ ] **T-080** | Product | **exploit-coach 快速分析（文字敘述）**
+  - 建議 branch：`wip/T080-quick-analysis-text`
+  - 用戶需求：貼一段手牌敘述（含賭場口語，e.g.「50/100/100 n+4」「A2o open 1500」「SB donk 2800」等）→ AI 直接給 preflop → river 分街建議
+  - 跳過現有結構化 S1-S5a 流程，降低 UX 門檻
+  - **前端**（`public/exploit-coach-mockup-v3.html`）：
+    - S1 加「🚀 快速分析」入口（與「建立新對手」並列）
+    - 新 screen（建議 id `s_quick`）：textarea（placeholder 範例手牌） + 送出按鈕 → 跳 s6 顯示分析
+  - **Edge Function**（`supabase/functions/exploit-coach/index.ts`）：
+    - 新 request field `mode: 'narrative'` + `narrative: string`
+    - 不走 solver retrieval（沒結構化 context）
+    - 改用 narrative-focused prompt：教 Claude parse 賭場口語 + 依街別 breakdown + 繁中規則沿用 v0.8.4 準則
+  - **模型**：維持 Haiku（純文字，不需 vision）
+  - **點數**：10 點/次（含完整 hand breakdown，比單則對話貴）
+  - **對話歷史**：一次性分析不存 history（或存但標 `mode:'narrative'`，回頭可重看）
+  - 完成條件：
+    - 手動驗：貼用戶提供的範例手牌 → AI 給 preflop / flop / turn / river 4 段分析 + 關鍵判斷
+    - 繁中術語符合 v0.8.4 規範（「持續下注」不「c-bet」）
+    - tsc EXIT=0
+  - 圖片分析（原構想的 T-081）**暫不做**（用戶 2026-04-21 決議）
+
+</details>
 
 <!-- T-070 → In Review 2026-04-21（士林主目錄執行者 localStorage 版） -->
 
@@ -399,7 +454,8 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-<!-- T-013 / T-030 / T-021 / T-074 / T-073 已 merge 2026-04-21 -->
+<!-- T-013 / T-030 / T-021 / T-074 / T-073 / T-071 / T-072 / T-070 / T-075 Phase 0 / T-080 已 merge 2026-04-21 -->
+<!-- T-080 待用戶部署 Edge Function 到測試 Supabase 驗收 -->
 
 <!-- T-070 / T-021 / T-072 已 merge 2026-04-21 -->
 
