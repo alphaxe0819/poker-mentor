@@ -231,6 +231,11 @@ updated: 2026-04-20
   - 範圍：`public/exploit-coach-mockup-v3.html` + 可能需要 Supabase table `coach_conversations`（或擴充現有 `coach_queries`）+ 用戶配額 check
   - 免費配額邏輯建議：`coach_conversations` 讀最新 3 則 + 超過 3 則時舊的隱藏或提示升級
 
+<!-- T-072 → In Review 2026-04-21 -->
+
+<details>
+<summary>📦 T-072 原任務描述（已 In Review，見下方）</summary>
+
 - [ ] **T-072** | Product | **流程順序：對手手牌 picker 移到確認牌譜之前（s5b → s5a）** `(派工 2026-04-21 → 士林 或 家裡 wip1 執行者)`
   - 建議 branch：`wip/T072-villain-hand-s5a`
   - 問題：目前 `s4 → s5 確認牌譜 → s5b 對手手牌 picker → s6 AI 分析`，對手手牌問得太晚
@@ -243,6 +248,8 @@ updated: 2026-04-20
   - 完成條件：
     - 手動驗證：玩到 all-in → 先看到 s5a 問對手手牌 → 選完或 skip → 進 s5 確認牌譜 → 開始分析 → s6
     - `npx tsc -b --noEmit` EXIT=0
+
+</details>
 
 - [ ] **T-073** | Product | **villain 老張 → 標準 GTO 類型** `(派工 2026-04-21 → 士林 或 家裡 wip1 執行者)`
   - 建議 branch：`wip/T073-villain-laozhang-standard`
@@ -368,6 +375,32 @@ updated: 2026-04-20
 ## 👀 In Review（等大腦整合）
 
 <!-- T-013 / T-030 已 merge 2026-04-21 -->
+
+- [?] **T-072** | Product | **流程順序調整：s5b → s5a（對手手牌 picker 提前到 s5 之前）**
+  - branch: `wip/T072-villain-hand-before-review`
+  - 機器：這台主目錄
+  - 單檔改動：`public/exploit-coach-mockup-v3.html`（rename + reorder + s5 摘要增強）
+  - **新 flow**：`s4 → s5a 對手手牌 → s5 確認牌譜（已知則顯示對手牌）→ s6 AI`
+  - 改動摘要：
+    - **A. Rename**：`s5b` / `s5b-q` / `s5b-pick` / `s5b-go` 全部改 `s5a*`（12 處 HTML + JS，附 2 處註解 `S5b` → `S5a`）
+    - **B. Flow 重排**：新增 `gotoConfirmFlow()` helper（設 discussAt + 呼 goAskVillain），5 個 `s4 → s5; renderConfirm()` 進入點（Hero fold / 只剩 1 人 / streetDiscuss / anyAllIn / last-street）全改呼 `gotoConfirmFlow()`
+    - **C. s5a 出口改向**：
+      - 「❓ 不知道」從 `startAI()` 改 `go('s5'); renderConfirm()`
+      - `s5a-go` 從「✨ 開始分析」→「繼續 →」，onclick 從 `startAI()` 改 `go('s5'); renderConfirm()`
+      - 「← 返回」從 `go('s5')` 改 `goStreetEdit(discussAt)`（回 s4 編輯點）
+    - **D. s5 新職責**：
+      - 「✨ 開始分析」onclick 從 `goAskVillain()` 改 `startAI()`（s5a 已問過了直接進 s6）
+      - `renderConfirm()` 對手行：`villainHandKnown === true && villainCards` 齊全時顯示 `老張 (CO): Q♦ 9♠`（重用內部 `cardHtml()` 保持 suit color 一致）
+  - 驗證（preview server 實跑 5 情境全 pass）：
+    1. `gotoConfirmFlow()` → active = `s5a` ✅
+    2. 不知道 → active = `s5`，摘要 `老張 (CO)`（無牌） ✅
+    3. 我知道 + Q♦9♠ + 繼續 → active = `s5`，摘要 `老張 (CO): Q♦ 9♠` ✅
+    4. s5 「開始分析」 → active = `s6`（不經 s5a） ✅
+    5. s5a 「← 返回」 → active = `s4`（via goStreetEdit） ✅
+  - Console 無 error；`grep s5b` 全檔 0 matches
+  - 純 product 改動（`public/` 靜態 HTML），不影響 Vite build / TypeScript
+  - 不動 `src/version.ts` / `memory/dev-log.md`（執行者紀律）
+  - 等大腦 merge
 
 - [?] **T-046** | Pipeline | **seed --include-river row 估算（dry-run 完成）**
   - branch: `wip/T046-seed-river-estimate`
