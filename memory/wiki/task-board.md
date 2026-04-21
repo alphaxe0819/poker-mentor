@@ -264,6 +264,26 @@ updated: 2026-04-20
   - 建議 branch：無
   - 動作：`ls .env`；無則 `powershell scripts/setup-env.ps1`
 
+- [ ] **T-080** | Product | **exploit-coach 快速分析（文字敘述）**
+  - 建議 branch：`wip/T080-quick-analysis-text`
+  - 用戶需求：貼一段手牌敘述（含賭場口語，e.g.「50/100/100 n+4」「A2o open 1500」「SB donk 2800」等）→ AI 直接給 preflop → river 分街建議
+  - 跳過現有結構化 S1-S5a 流程，降低 UX 門檻
+  - **前端**（`public/exploit-coach-mockup-v3.html`）：
+    - S1 加「🚀 快速分析」入口（與「建立新對手」並列）
+    - 新 screen（建議 id `s_quick`）：textarea（placeholder 範例手牌） + 送出按鈕 → 跳 s6 顯示分析
+  - **Edge Function**（`supabase/functions/exploit-coach/index.ts`）：
+    - 新 request field `mode: 'narrative'` + `narrative: string`
+    - 不走 solver retrieval（沒結構化 context）
+    - 改用 narrative-focused prompt：教 Claude parse 賭場口語 + 依街別 breakdown + 繁中規則沿用 v0.8.4 準則
+  - **模型**：維持 Haiku（純文字，不需 vision）
+  - **點數**：10 點/次（含完整 hand breakdown，比單則對話貴）
+  - **對話歷史**：一次性分析不存 history（或存但標 `mode:'narrative'`，回頭可重看）
+  - 完成條件：
+    - 手動驗：貼用戶提供的範例手牌 → AI 給 preflop / flop / turn / river 4 段分析 + 關鍵判斷
+    - 繁中術語符合 v0.8.4 規範（「持續下注」不「c-bet」）
+    - tsc EXIT=0
+  - 圖片分析（原構想的 T-081）**暫不做**（用戶 2026-04-21 決議）
+
 <!-- T-070 → In Review 2026-04-21（士林主目錄執行者 localStorage 版） -->
 
 <!-- T-071 → In Review 2026-04-21（士林主目錄執行者 localStorage + FIFO 版） -->
