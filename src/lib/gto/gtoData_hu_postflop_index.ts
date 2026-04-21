@@ -1,10 +1,20 @@
 // =============================================================
 // HU Postflop GTO Data — Index / Aggregator
 // =============================================================
-// 把 13 個 board 個別產出的 const 集中管理。
-// 每個 board 的 const 命名規則：HU_40BB_SRP_FLOP_<BOARD_SLUG_UPPERCASE>
-// 來源：scripts/gto-pipeline/ 用 TexasSolver CLI 產生
+// 把 board 個別產出的 const 集中管理。
+// 命名規則：HU_<STACK>_<POTTYPE>_<BOARD_SLUG_UPPERCASE>
 // =============================================================
+//
+// ⚠️ T-074 降級 2026-04-21：
+// 以下所有 import + DB 都是 **TEST DATA**（scenarios.mjs 手寫 range placeholder
+// 跑出來的 solver 結果）。用戶決議以 pokerdinosaur 為正式版 range 來源，
+// 正式版 import 進入下方 PROD 區（待 T-075 / T-076 實作）。
+// app 邏輯暫時仍指向 TEST DBs，lookup 結果不變，不影響運行。
+// =============================================================
+
+// ═══════════════════════════════════════════════════════════
+// TEST DATA (scenarios.mjs placeholder range → TexasSolver)
+// ═══════════════════════════════════════════════════════════
 
 // HU 40BB SRP — 21 flops (13 base + 8 extras for peer parity with 25bb)
 // T-020: 命名統一為 HU_40BB_SRP_<BOARD>（去除 FLOP_ 中綴）
@@ -175,6 +185,20 @@ export const HU_13BB_FLOP_SRP_DB: Record<string, Record<string, HuPostflopRange>
   KcKd5h: HU_13BB_SRP_FLOP_KCKD5H,
   QsJh2h: HU_13BB_SRP_FLOP_QSJH2H,
 }
+
+// ═══════════════════════════════════════════════════════════
+// PROD DATA (pokerdinosaur-sourced) — TODO T-075 / T-076
+// ═══════════════════════════════════════════════════════════
+// TODO: import PROD DBs from src/lib/gto/prod/ 當範圍匯入流程就緒後
+// （T-075 pd range 匯入 + T-076 solver 用正式 range 重跑）
+// PROD_HU_40BB_FLOP_SRP_DB: Record<string, Record<string, HuPostflopRange>> = {}
+// PROD_HU_40BB_3BP_DB: Record<string, Record<string, HuPostflopRange>> = {}
+// ...
+// 正式版就緒後，`getPostflopDB` 可改讀 PROD DBs，或加 flag 切換。
+
+// ═══════════════════════════════════════════════════════════
+// Accessors (目前指向 TEST，正式版就緒後改指 PROD)
+// ═══════════════════════════════════════════════════════════
 
 export function getPostflopDB(effectiveStackBB: number): { db: Record<string, Record<string, HuPostflopRange>>; stackLabel: '13bb' | '25bb' | '40bb' } {
   if (effectiveStackBB <= 18) return { db: HU_13BB_FLOP_SRP_DB, stackLabel: '13bb' }

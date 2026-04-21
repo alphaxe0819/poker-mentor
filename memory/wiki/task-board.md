@@ -90,15 +90,7 @@ updated: 2026-04-20
 
 ### 🚨 正式版重建（用戶 2026-04-21 決策，以 pokerdinosaur 為 range 真相來源）
 
-- [ ] **T-074** | Pipeline | **既有 gtoData_*.ts 全部標測試版**
-  - 建議 branch：`wip/T074-mark-test-data`
-  - 背景：scenarios.mjs 的 range 原是手寫 placeholder（C 線當時未成熟），用戶 2026-04-21 決議以 pokerdinosaur 為正式版 range 來源，既有產出降級為測試版
-  - 範圍：
-    - `src/lib/gto/gtoData_*.ts`（HU 40bb SRP / 25bb SRP / 25bb 3bp / 13bb SRP / 40bb 3bp / 6max 100bb SRP）全部加 test 標記
-    - 方法建議：index 切兩區（TEST / PROD）+ 檔頭加 `// TEST DATA — 手寫 range，正式版請見 src/lib/gto/prod/...`
-    - 或 rename 進 `src/lib/gto/test/` 子資料夾（看哪個動 import 最少）
-  - 不動 app 使用邏輯（測試版仍可用）
-  - 完成條件：tsc EXIT=0，app 照常跑
+<!-- T-074 → In Review 2026-04-21（家裡主目錄執行者） -->
 
 - [ ] **T-075** | Pipeline | **翻牌前 range 從 pokerdinosaur 建立（正式版基礎）**
   - 建議 branch：`wip/T075-preflop-ranges-from-pd`
@@ -411,7 +403,34 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-<!-- T-013 / T-030 已 merge 2026-04-21 -->
+<!-- T-013 / T-030 / T-021 已 merge 2026-04-21 -->
+
+- [?] **T-074** | Pipeline | **既有 gtoData_*.ts 全部標測試版 — 完成** `(2026-04-21 家裡主目錄執行者)`
+  - branch：`wip/T074-mark-test-data`（從 `origin/dev` 切出，push origin 完成）
+  - 方法採 (a)：每檔加檔頭 `// ⚠️ TEST DATA — ...` 註解（不改 import path，app 零影響）
+  - 改動檔案：
+    - **150 個 `gtoData_*.ts` 批次 prepend test marker**（node 一鍵處理，exclude `gtoData_hu_postflop_index.ts`）
+      - HU 40bb SRP (21) / HU 25bb SRP (26 含舊 `_flop_`) / HU 25bb 3bp (30 含舊) / HU 13bb SRP (42 含舊) / HU 40bb 3bp (21)
+      - cash_hu_100bb / cash_6max_100bb / cash_4max_100bb（3 個 preflop range）
+      - tourn_hu_40bb / tourn_9max_{15,25,40,75,100}bb（6 個 preflop range）
+    - 改 `gtoData_hu_postflop_index.ts`：
+      - 檔頭加 T-074 降級說明 block
+      - 加 `═══ TEST DATA ═══` section header 在現有 imports 前
+      - 新增 `═══ PROD DATA ═══` section（暫留空註解 + TODO T-075/T-076）
+      - accessors `getPostflopDB` 前加 section header（目前指 TEST，正式版就緒後改指 PROD）
+  - 不變（app 照常跑）：
+    - 所有 export 名（`HU_40BB_SRP_*` / `HU_40BB_3BP_DB` / `getPostflopDB` / `findSupportedBoard` 等）一字不改
+    - import path 一字不改（未建 `src/lib/gto/prod/`）
+    - DB 內容一字不改（lookup 結果不變）
+  - 未動（task scope 外）：
+    - `gtoData_index.ts__`（檔名結尾 `__`，不 match `*.ts`；疑似殘留備份，未處理）
+    - `helpers.ts`（不是 gtoData_ 檔）
+  - 驗證：
+    - `npx tsc -b --noEmit` **EXIT=0** ✓
+    - 樣本檢視：3 個不同 family 檔頭都正確 prepend
+    - 批次工具：pure prepend + TS 註解，對 runtime 零影響
+  - 執行者紀律：沒動 `src/version.ts` / `memory/dev-log.md`
+  - 判讀建議：大腦 review 後直接 `git merge --no-ff wip/T074-mark-test-data` → dev + bump + push；後續 T-075（pd preflop range 匯入）→ T-076（solver 正式版重跑）會逐步填充 `gtoData_hu_postflop_index.ts` 的 PROD 區
 
 <!-- T-070 / T-021 / T-072 已 merge 2026-04-21 -->
 
