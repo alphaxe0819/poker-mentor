@@ -284,6 +284,11 @@ updated: 2026-04-20
   - 建議 branch：無
   - 動作：`ls .env`；無則 `powershell scripts/setup-env.ps1`
 
+<!-- T-080 → In Review 2026-04-21 -->
+
+<details>
+<summary>📦 T-080 原任務描述（已 In Review，見下方）</summary>
+
 - [ ] **T-080** | Product | **exploit-coach 快速分析（文字敘述）**
   - 建議 branch：`wip/T080-quick-analysis-text`
   - 用戶需求：貼一段手牌敘述（含賭場口語，e.g.「50/100/100 n+4」「A2o open 1500」「SB donk 2800」等）→ AI 直接給 preflop → river 分街建議
@@ -303,6 +308,8 @@ updated: 2026-04-20
     - 繁中術語符合 v0.8.4 規範（「持續下注」不「c-bet」）
     - tsc EXIT=0
   - 圖片分析（原構想的 T-081）**暫不做**（用戶 2026-04-21 決議）
+
+</details>
 
 <!-- T-070 → In Review 2026-04-21（士林主目錄執行者 localStorage 版） -->
 
@@ -447,11 +454,8 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-<!-- T-013 / T-030 / T-021 / T-074 / T-073 / T-071 / T-072 / T-070 已 merge 2026-04-21 -->
-<!-- T-075 Phase 0 (盤點) 已 merge 2026-04-21 -->
-
-<!-- T-075 Phase 0 / T-074 已 merge 2026-04-21，見 Done 區 -->
-
+<!-- T-013 / T-030 / T-021 / T-074 / T-073 / T-071 / T-072 / T-070 / T-075 Phase 0 / T-080 已 merge 2026-04-21 -->
+<!-- T-080 待用戶部署 Edge Function 到測試 Supabase 驗收 -->
 
 <!-- T-070 / T-021 / T-072 已 merge 2026-04-21 -->
 
