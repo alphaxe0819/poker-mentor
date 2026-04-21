@@ -64,13 +64,13 @@ updated: 2026-04-20
 
 </details>
 
-- [ ] **T-013** | Pipeline | **Scraping 成果盤點 + 整理**
-  - 建議 branch：`wip/T013-scraping-audit`
+- [ ] **T-013** | Pipeline | **Scraping 成果盤點 + 整理** `(派工 2026-04-21 → 這台電腦執行者)`
+  - 建議 branch：`wip/T013-scraping-audit`（從 `origin/dev` 切出）
   - 範圍：確認 Downloads 現有 10 個 `_ranges.json` 對應的 PNG 整理狀態 + 更新 roadmap S1-S4
   - 產出：Scraping 線實際進度對齊
 
-- [ ] **T-021** | Pipeline | **Solver P2 HU 40bb 3bp × 25 flops**
-  - 建議 branch：`wip/T021-hu40bb-3bp`
+- [ ] **T-021** | Pipeline | **Solver P2 HU 40bb 3bp × 25 flops** `(派工 2026-04-21 → 另一台電腦執行者)`
+  - 建議 branch：`wip/T021-hu40bb-3bp`（從 `origin/dev` 切出）
   - 預估：3-5 hr
 
 - [ ] **T-022** | Pipeline | **Solver P3 6-max 100bb 4bp（10 場景 × 13 flops）**
@@ -261,16 +261,16 @@ updated: 2026-04-20
 <!-- T-043 → Done 2026-04-20 -->
 <!-- T-044 → Done 2026-04-20 -->
 
-- [ ] **T-045** | Pipeline | **真跑 1 個 batch（去掉 --dry-run，完整鏈路）**
-  - 建議 branch：`wip/T045-first-real-batch`
+- [ ] **T-045** | Pipeline | **真跑 1 個 batch（去掉 --dry-run，完整鏈路）** `(派工 2026-04-21 → 這台電腦執行者)`
+  - 建議 branch：`wip/T045-first-real-batch`（從 `origin/dev` 切出）
   - 範圍：從 T-043 已 seed 的 390 turn batches 挑 1 個 → TexasSolver 實解 → JSON parse → upload 到 `gto_postflop` → mark done
   - 前置：TexasSolver 已解壓到 `scripts/gto-pipeline/TexasSolver-v0.2.0-Windows/`（batch-worker 會自動偵測 nested/flat 路徑）
   - 預估：15-30 min（solver ~10-20 min + upload/verify）
   - 完成條件：`gto_postflop` 表新增 N 筆 row（一個 turn 節點約 10 roles × 169 hand_class ≈ 1690 row），`gto_batch_progress` 該筆 status=done
   - 用：`node batch-worker.mjs --machine <機器名> --max 1`（不加 --dry-run）
 
-- [ ] **T-046** | Pipeline | **seed --include-river 前的 row 數估算**
-  - 建議 branch：`wip/T046-seed-river-estimate`
+- [ ] **T-046** | Pipeline | **seed --include-river 前的 row 數估算** `(派工 2026-04-21 → 這台電腦執行者)`
+  - 建議 branch：`wip/T046-seed-river-estimate`（從 `origin/dev` 切出）
   - 範圍：先**不**真的 seed，計算 include-river 會插入多少 row（`generateRiverCards` × 390 turn × river/turn 的 fan-out）
   - 評估：若 > 10k row 要考慮分批 seed 或 partitioned batch；若可接受再實 seed
   - 產出：實際數字 + 建議（full seed / phased seed / skip）
