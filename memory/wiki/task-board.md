@@ -88,35 +88,43 @@ updated: 2026-04-20
 
 ---
 
-### 🚨 正式版重建（用戶 2026-04-21 決策，以 pokerdinosaur 為 range 真相來源）
+### 🚨 正式版重建（用戶 2026-04-21 v2 決策 — 三塊切法）
 
-<!-- T-074 → In Review 2026-04-21（家裡主目錄執行者） -->
+**用戶決策（2026-04-21）**：資料切三塊，各自獨立管理
+- **HU**：維持現狀（手寫 placeholder range），T-074 已標 TEST DATA。**未來有更明確資料源時再取代**，現在不動
+- **CASH（6max 100bb）**：同上，維持現狀 TEST DATA。**現在不動**
+- **9MAX-MTT**：**全部從頭重做**，以 pokerdinosaur 為真相來源
+  - Phase 1（T-075）：從 PD 構建 preflop range
+  - Phase 2（T-076）：用 preflop range 跑 solver 產 postflop
 
-- [ ] **T-075** | Pipeline | **翻牌前 range 從 pokerdinosaur 建立（正式版基礎）**
-  - 建議 branch：`wip/T075-preflop-ranges-from-pd`
-  - 範圍：對每個 depth × scenario（HU 13bb/25bb/40bb SRP/3bp，6max 100bb SRP/3bp/4bp 等）從 pokerdinosaur 對應 project 抓 range
-  - 前置：T-013 audit 完成（Downloads 10 個 `_ranges.json` 已盤點）
-  - 產出：新 `scripts/gto-pipeline/scenarios-prod.mjs`（或擴充現有 scenarios.mjs 加 `_PROD_RANGES`）
-  - 依賴 converter C1/C1.5 / parse-pd-table-name（C2）
-  - 預估：2-5 hr（看 matchup 數 + pokerdinosaur 對應複雜度）
+<!-- T-074 → Done 2026-04-21（既有 gtoData_*.ts 全標 TEST DATA） -->
 
-- [ ] **T-076** | Pipeline | **Solver 全場景重跑（正式版）**
-  - 建議 branch：`wip/T076-solver-prod-rerun`
-  - 前置：T-074 + T-075 完成
-  - 範圍：用正式版 range 重跑所有既有場景 → 產正式版 `src/lib/gto/prod/gtoData_*.ts`（或不開子資料夾，index 切區）
-  - 重跑清單（依 T-021 經驗，SPR 淺的很快）：
-    - HU 13bb SRP × 21 flops
-    - HU 25bb SRP × 21 flops
-    - HU 25bb 3bp × 21 flops
-    - HU 40bb SRP × 21 flops
-    - HU 40bb 3bp × 21 flops（T-021 剛跑的測試版）
-    - 6max 100bb SRP × 13 flops × 25 scenarios
-    - 6max 100bb 3bp × 13 flops（場景數 TBD）
-    - 6max 100bb 4bp × 13 flops（原 T-022 scope → 合併進 T-076）
-  - 原 T-022（6max 100bb 4bp）scope 合併進來，當 T-076 的一個子場景跑
+- [ ] **T-075** | Pipeline | **9MAX-MTT preflop range 從 pokerdinosaur 構建（正式版 Phase 1）**
+  - 建議 branch：`wip/T075-mtt-preflop-from-pd`
+  - scope 收斂（2026-04-21 v2）：**只做 9max MTT**，不碰 HU / cash（PD 本來就沒這兩塊資料）
+  - 範圍：
+    - 從 PD 10 個 project 的 9-max MTT 資料建 preflop range
+    - 資料源分類：
+      - **Course**（353 tables，`name` 欄可 auto-decode）→ parse-pd-table-name 能解，立刻可做
+      - **Live_MTT_Ben_Adjusted / Tournament_Ben_Adjusted / Tournament_Chip_EV**（共 3564 tables，scenario_id 為 UUID，**需補 metadata**）
+      - **Large/Medium/Small_Field_ICM / Final_Table* / Final_Two_Tables**（10833 tables，ICM 情境）
+    - 每個 depth × position × action 出一個 range entry（open / defend / 3bet / rejam / squeeze / ICM）
+  - **前置 blocker**（scenario_id metadata）：
+    - Live_MTT_Ben / Tournament_Ben / ICM 系列的 scenario_id → 人類可讀 label 對照表缺失
+    - 解法二選一：(a) 重爬 PD 補 scenario label，(b) 人工標 UUID → label
+  - 執行者第一步：**先盤點 PD 各 project 的 scenario coverage**（哪些 depth × matchup 有資料），回報給用戶決定 metadata 補法
+  - 產出：新 `scripts/gto-pipeline/mtt_9max_ranges.mjs` + scenarios.mjs MTT 場景對接
+  - 預估：盤點 1-2 hr + metadata 補齊 3-5 hr（看選 a 或 b）+ range 構建 2-3 hr
 
-<!-- T-022 合併進 T-076 → 標記暫停 -->
-<!-- T-022 執行者：若已開 wip/T022，可考慮把 6max 4bp 的 converter 研究結果帶進 T-075 -->
+- [ ] **T-076** | Pipeline | **9MAX-MTT postflop solver marathon（正式版 Phase 2）**
+  - 建議 branch：`wip/T076-mtt-postflop-solver`
+  - 前置：T-075 完成（MTT preflop range 齊備）
+  - 範圍：用 T-075 的 MTT preflop range 跑 solver 產 postflop → `src/lib/gto/prod/gtoData_mtt_9max_*.ts`（或統一 index PROD 區）
+  - 依 T-021 經驗：MTT 深度淺（13-40bb），SPR 通常 < 3，收斂快（~5-15s/flop）
+  - **不碰 HU / cash 既有 TEST DATA**（維持現狀，未來另開 task）
+
+<!-- T-022（原 6max 100bb 4bp）scope 廢棄：cash 維持現狀 TEST DATA，不走 PD 路徑 -->
+<!-- T-023（原 6max 深度擴充）同上廢棄 -->
 
 <!-- T-062 → In Review 2026-04-21 -->
 
