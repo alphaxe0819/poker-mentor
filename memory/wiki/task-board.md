@@ -93,12 +93,17 @@ updated: 2026-04-20
 <!-- T-074 → In Review 2026-04-21（家裡主目錄執行者） -->
 
 - [ ] **T-075** | Pipeline | **翻牌前 range 從 pokerdinosaur 建立（正式版基礎）**
-  - 建議 branch：`wip/T075-preflop-ranges-from-pd`
-  - 範圍：對每個 depth × scenario（HU 13bb/25bb/40bb SRP/3bp，6max 100bb SRP/3bp/4bp 等）從 pokerdinosaur 對應 project 抓 range
+  - 建議 branch：`wip/T075-mtt-preflop-from-pd`
+  - 範圍：對每個 depth × scenario 從 pokerdinosaur 對應 project 抓 range
   - 前置：T-013 audit 完成（Downloads 10 個 `_ranges.json` 已盤點）
-  - 產出：新 `scripts/gto-pipeline/scenarios-prod.mjs`（或擴充現有 scenarios.mjs 加 `_PROD_RANGES`）
+  - 📊 **Phase 0 盤點完成 2026-04-21** → [[pd-mtt-scenario-coverage-2026-04-21]]
+    - 重大發現：整體 auto-parse 率僅 **1.2%**（16750 tables 只有 205 可自動解）
+    - 只有 **Course** project 可直接用（58% auto-parse），其他 9 個 project 的 `table.name` 只有 depth 或 ICM/GTO/cEV tag
+    - **pd 沒有 HU / 6max cash 資料**（10 project 全 9-max MTT），原 scope 的 HU/6max 100bb 要另找來源
+    - Phase 1+ 後續選項見 wiki 報告路徑 A/B/C/D（待大腦決策）
+  - 產出（Phase 1+，待決策方向）：`scripts/gto-pipeline/scenarios-prod.mjs` 或擴充現有 scenarios.mjs 加 `_PROD_RANGES`
   - 依賴 converter C1/C1.5 / parse-pd-table-name（C2）
-  - 預估：2-5 hr（看 matchup 數 + pokerdinosaur 對應複雜度）
+  - 預估：Phase 0 盤點 ✅ 完成；Phase 1+ 待決策後重估
 
 - [ ] **T-076** | Pipeline | **Solver 全場景重跑（正式版）**
   - 建議 branch：`wip/T076-solver-prod-rerun`
@@ -403,7 +408,27 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-<!-- T-013 / T-030 / T-021 已 merge 2026-04-21 -->
+<!-- T-013 / T-030 / T-021 / T-074 已 merge 2026-04-21 -->
+
+- [?] **T-075 Phase 0** | Pipeline | **PD scenario coverage 盤點** `(2026-04-21 家裡主目錄執行者)`
+  - branch：`wip/T075-mtt-preflop-from-pd`（從 `origin/dev` 切出，push origin 完成）
+  - scope：純掃 10 個 pd `_ranges.json` 看 table.name 語義 + auto-parse 率，**不動 scenarios.mjs / 不產 range / 不改 scripts**
+  - 產出：
+    - ✅ 新 wiki [[pd-mtt-scenario-coverage-2026-04-21]]（每 project 盤點 + 聚合 summary + 後續路徑 A/B/C/D）
+    - ✅ T-075 entry 加 Phase 0 連結
+  - 關鍵數據：
+    - 16,750 tables，auto-parse OK **205 (1.2%)**，unknown 16,545
+    - **只 Course 可直接用**（353 tables，58% parse，depth 10-50bb，主要 BB/SB/BTN vs XX matchup）
+    - Live_MTT_Ben（1149）/ Tournament_Ben（1470）/ Tournament_Chip_EV（945）：name 只有 depth，靠 scenario_id UUID；解鎖需補 ~876 個 sid 的 metadata
+    - Final_Table / ICM 系列（12833 tables）：name 只有 `"ICM"` / `"GTO"` / `"cEV"` tag，sid:table ≈ 1:1.1~1.8，每張 table 幾乎獨立場景；解鎖需標 ~9000 個 sid（天價）
+  - 重要 gap：**原 T-075 scope 的 HU / 6max cash 100bb 從 pd 完全拿不到**（pd 10 project 全是 9-max MTT），需另找來源（GTOWizard / TexasSolver preflop solver / 其他）
+  - 後續路徑選項（wiki 有詳述）：
+    - A: 只做 Course（205 tables，立刻可用，~1-2hr）
+    - B: Course + 重爬 MTT sid metadata（3564 tables 解鎖，2-5hr 爬取）
+    - C: 全 pd 解鎖（ICM 系列 ~9000 sid 要標，成本高）
+    - D: 獨立找 HU / 6max cash 來源（不在 pd）
+  - 執行者紀律：沒動 `src/version.ts` / `memory/dev-log.md` / `scripts/` / `src/`；只新增 memory/wiki + 改 memory/wiki/task-board.md
+  - 判讀建議：大腦 review wiki 後決策走 A/B/C/D 哪條，然後開 T-075 Phase 1 子 task
 
 - [?] **T-074** | Pipeline | **既有 gtoData_*.ts 全部標測試版 — 完成** `(2026-04-21 家裡主目錄執行者)`
   - branch：`wip/T074-mark-test-data`（從 `origin/dev` 切出，push origin 完成）
