@@ -264,6 +264,11 @@ updated: 2026-04-20
   - 建議 branch：無
   - 動作：`ls .env`；無則 `powershell scripts/setup-env.ps1`
 
+<!-- T-080 → In Review 2026-04-21 -->
+
+<details>
+<summary>📦 T-080 原任務描述（已 In Review，見下方）</summary>
+
 - [ ] **T-080** | Product | **exploit-coach 快速分析（文字敘述）**
   - 建議 branch：`wip/T080-quick-analysis-text`
   - 用戶需求：貼一段手牌敘述（含賭場口語，e.g.「50/100/100 n+4」「A2o open 1500」「SB donk 2800」等）→ AI 直接給 preflop → river 分街建議
@@ -283,6 +288,8 @@ updated: 2026-04-20
     - 繁中術語符合 v0.8.4 規範（「持續下注」不「c-bet」）
     - tsc EXIT=0
   - 圖片分析（原構想的 T-081）**暫不做**（用戶 2026-04-21 決議）
+
+</details>
 
 <!-- T-070 → In Review 2026-04-21（士林主目錄執行者 localStorage 版） -->
 
@@ -426,6 +433,36 @@ updated: 2026-04-20
 ---
 
 ## 👀 In Review（等大腦整合）
+
+- [?] **T-080** | Product | **exploit-coach 快速分析（文字敘述，narrative mode）**
+  - branch: `wip/T080-quick-analysis-text`（從 origin/dev `4e64872` 切出）
+  - 機器：這台主目錄
+  - 改動：2 檔 code + 1 檔 deploy 指引
+    - `public/exploit-coach-mockup-v3.html`：
+      - S1 加「🚀 快速分析」入口（紫色漸層，在「建立新對手」下方）
+      - 新 `<div id="s_quick">` screen：textarea + 範例 placeholder + 「✨ 開始分析」按鈕
+      - 新 global `currentCoachMode = 'structured'`，`callCoach` fetch body 帶 `mode` 欄位
+      - 新 `startQuickAnalysis()` + `aiSendText()`（follow-up chip 用）
+      - `startAI()` 明確 reset `currentCoachMode = 'structured'`（兩條路徑互不污染）
+    - `supabase/functions/exploit-coach/index.ts`：
+      - `CoachRequest` 加 `mode?: 'structured' | 'narrative'`
+      - 抽 `TERMINOLOGY_RULES` 常數（structured + narrative 共用，去重 ~60 行）
+      - 新 `buildNarrativeSystemPrompt()`：教 Claude parse 賭場口語（50/100 / n+4 / 有效籌碼 / 小瞎大瞎 / 後位 call / 抽隨機數 call / 埋伏 / 乾板濕板…）+ 強制 4 街結構（🎯 結論 / 📊 GTO 基準 / 🎭 對手調整 / 🔑 關鍵判斷）+ ⚡ 整手關鍵 收尾
+      - handler 分流：mode='narrative' 跳過 `retrieveSolverNode`，走敘述 prompt；max_tokens 從 600 調到 1200（4 街 breakdown 需更多）
+      - `coach_queries.context` 埋 `_mode` 欄位（事後能從 jsonb 查哪些是 narrative）
+      - `NARRATIVE_COST = 0` 體驗期常數 + 註解設計值 10（開收費時改用 service role 走 spend_points）
+    - 新 `docs/supabase-migrations/20260421-T080-quick-analysis-narrative-deploy.md`：用戶部署指引（貼整檔到測試 Supabase Dashboard → 實機驗收 5 條）
+  - 驗證（preview 實跑 + fetch 攔截，console 無 error）：
+    1. S1 快速分析 entry 點擊 → active = `s_quick`，textarea + placeholder 正常 ✅
+    2. 空敘述 alert 擋；敘述 <20 字 alert 擋 ✅
+    3. 填敘述 + 「開始分析」 → active = `s6`，`currentCoachMode = 'narrative'`；fetch body `{mode:'narrative', messages:[user], context:{hero_pos:'BTN', villain_type:'standard', ...}}` ✅
+    4. follow-up `aiSendText()` → fetch body 仍 `mode: 'narrative'`，messages 增長 ✅
+    5. 結構化路徑 `startAI()` → fetch body `mode: 'structured'`（不回歸） ✅
+  - `npx tsc -b --noEmit` EXIT=0（Edge Function 是 Deno 不在 tsc project 內，但 index.ts 語法手檢過）
+  - **待用戶動作**：貼整檔 `supabase/functions/exploit-coach/index.ts` 到測試 Supabase Dashboard 部署 + 按 deploy guide 實機驗收 5 條
+  - 純 product 改動，`public/` + Edge Function；不影響 Vite build
+  - 不動 `src/version.ts` / `memory/dev-log.md`（執行者紀律）
+  - 等大腦 merge + 用戶部署驗收
 
 <!-- T-013 / T-030 / T-021 / T-074 / T-073 已 merge 2026-04-21 -->
 
