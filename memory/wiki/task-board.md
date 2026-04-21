@@ -66,9 +66,7 @@ updated: 2026-04-20
 
 <!-- T-013 → In Review 2026-04-21（家裡電腦 wip1 執行者接手，士林原派工未動） -->
 
-- [ ] **T-021** | Pipeline | **Solver P2 HU 40bb 3bp × 25 flops** `(派工 2026-04-21 → 家裡電腦執行者)`
-  - 建議 branch：`wip/T021-hu40bb-3bp`（從 `origin/dev` 切出）
-  - 預估：3-5 hr
+<!-- T-021 骨架 → In Review 2026-04-21（家裡主目錄執行者，剩 20 flops marathon 待接手） -->
 
 - [ ] **T-022** | Pipeline | **Solver P3 6-max 100bb 4bp（10 場景 × 13 flops）**
   - 建議 branch：`wip/T022-6max-4bp`
@@ -365,22 +363,7 @@ updated: 2026-04-20
 
 <!-- T-013 / T-030 已 merge 2026-04-21 -->
 
-- [?] **T-070** | Product | **exploit-coach 新建對手 localStorage persist**
-  - branch: `wip/T070-villain-persist`（從 origin/dev `3b786db` 切出）
-  - 最後 commit: `9bbfe7a`
-  - 機器：士林主目錄
-  - 改動：單檔 `public/exploit-coach-mockup-v3.html`（+53/-11）
-    - 新 helpers：`loadSavedVillains` / `saveVillainsList` / `appendSavedVillain` / `renderSavedVillains`，key `exploit-coach-villains-v1`
-    - `saveOpp()` 改寫 localStorage + `renderSavedVillains()`（取代原本 `list.appendChild`）
-    - init 階段加 `renderSavedVillains()` 讀回 saved villains
-    - 用 `data-saved-villain="1"` 標記 saved 項，render 前先清掉避免重複累積
-  - 驗證（localhost:5173 + 程式化 iframe reload）：
-    - append → localStorage 寫入 + 列表出現 ✅
-    - 重載新 iframe → 列表「老張 + 測試阿強」（persist 成功）✅
-    - 再 append 第 2 個 → 「老張 + 測試阿強 + 測試阿莎力」無 dup ✅
-    - tsc exit=0
-  - scope：純 iframe localStorage，不碰 Supabase / 不做跨裝置同步（另開 task 做 B 方案）
-  - 等大腦 review + merge
+<!-- T-070 / T-021 已 merge 2026-04-21 -->
 
 - [?] **T-046** | Pipeline | **seed --include-river row 估算（dry-run 完成）**
   - branch: `wip/T046-seed-river-estimate`

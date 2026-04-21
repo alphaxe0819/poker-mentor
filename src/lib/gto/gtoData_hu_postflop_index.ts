@@ -59,6 +59,29 @@ import { HU_13BB_SRP_FLOP_7S7D2H } from './gtoData_hu_13bb_srp_flop_7s7d2h'
 import { HU_13BB_SRP_FLOP_KCKD5H } from './gtoData_hu_13bb_srp_flop_KcKd5h'
 import { HU_13BB_SRP_FLOP_QSJH2H } from './gtoData_hu_13bb_srp_flop_QsJh2h'
 
+// HU 40BB 3BP — 21 flops (13 base + 8 extras), T-021 marathon 2026-04-21
+import { HU_40BB_3BP_AS7D2C } from './gtoData_hu_40bb_3bp_As7d2c'
+import { HU_40BB_3BP_KC8H3S } from './gtoData_hu_40bb_3bp_Kc8h3s'
+import { HU_40BB_3BP_JC7D2H } from './gtoData_hu_40bb_3bp_Jc7d2h'
+import { HU_40BB_3BP_9D5C2H } from './gtoData_hu_40bb_3bp_9d5c2h'
+import { HU_40BB_3BP_KSQD4H } from './gtoData_hu_40bb_3bp_KsQd4h'
+import { HU_40BB_3BP_TD8H4C } from './gtoData_hu_40bb_3bp_Td8h4c'
+import { HU_40BB_3BP_JS9C3H } from './gtoData_hu_40bb_3bp_Js9c3h'
+import { HU_40BB_3BP_JSTC9H } from './gtoData_hu_40bb_3bp_JsTc9h'
+import { HU_40BB_3BP_9H8D7C } from './gtoData_hu_40bb_3bp_9h8d7c'
+import { HU_40BB_3BP_TC9C6D } from './gtoData_hu_40bb_3bp_Tc9c6d'
+import { HU_40BB_3BP_7S7D2H } from './gtoData_hu_40bb_3bp_7s7d2h'
+import { HU_40BB_3BP_KCKD5H } from './gtoData_hu_40bb_3bp_KcKd5h'
+import { HU_40BB_3BP_QSJH2H } from './gtoData_hu_40bb_3bp_QsJh2h'
+import { HU_40BB_3BP_5S5C5D } from './gtoData_hu_40bb_3bp_5s5c5d'
+import { HU_40BB_3BP_6D5H4C } from './gtoData_hu_40bb_3bp_6d5h4c'
+import { HU_40BB_3BP_8S5H2C } from './gtoData_hu_40bb_3bp_8s5h2c'
+import { HU_40BB_3BP_8S7S5D } from './gtoData_hu_40bb_3bp_8s7s5d'
+import { HU_40BB_3BP_9S7S3S } from './gtoData_hu_40bb_3bp_9s7s3s'
+import { HU_40BB_3BP_AH2D2C } from './gtoData_hu_40bb_3bp_Ah2d2c'
+import { HU_40BB_3BP_AH5C2D } from './gtoData_hu_40bb_3bp_Ah5c2d'
+import { HU_40BB_3BP_AH8H3C } from './gtoData_hu_40bb_3bp_Ah8h3c'
+
 export type HuPostflopRange = Record<string, string>
 
 /**
@@ -107,6 +130,34 @@ export const HU_25BB_FLOP_SRP_DB: Record<string, Record<string, HuPostflopRange>
   '7s7d2h': HU_25BB_SRP_FLOP_7S7D2H,
   KcKd5h: HU_25BB_SRP_FLOP_KCKD5H,
   QsJh2h: HU_25BB_SRP_FLOP_QSJH2H,
+}
+
+// HU 40BB 3BP — BOARDS_HU 21 flops（與 40BB SRP 同一 board set）
+// T-021 marathon 2026-04-21：TexasSolver 實跑 21/21 成功
+export const HU_40BB_3BP_DB: Record<string, Record<string, HuPostflopRange>> = {
+  // 13 base
+  As7d2c: HU_40BB_3BP_AS7D2C,
+  Kc8h3s: HU_40BB_3BP_KC8H3S,
+  Jc7d2h: HU_40BB_3BP_JC7D2H,
+  '9d5c2h': HU_40BB_3BP_9D5C2H,
+  KsQd4h: HU_40BB_3BP_KSQD4H,
+  Td8h4c: HU_40BB_3BP_TD8H4C,
+  Js9c3h: HU_40BB_3BP_JS9C3H,
+  JsTc9h: HU_40BB_3BP_JSTC9H,
+  '9h8d7c': HU_40BB_3BP_9H8D7C,
+  Tc9c6d: HU_40BB_3BP_TC9C6D,
+  '7s7d2h': HU_40BB_3BP_7S7D2H,
+  KcKd5h: HU_40BB_3BP_KCKD5H,
+  QsJh2h: HU_40BB_3BP_QSJH2H,
+  // 8 extras (peer parity with HU 25bb 3BP / HU 40bb SRP)
+  '5s5c5d': HU_40BB_3BP_5S5C5D,
+  '6d5h4c': HU_40BB_3BP_6D5H4C,
+  '8s5h2c': HU_40BB_3BP_8S5H2C,
+  '8s7s5d': HU_40BB_3BP_8S7S5D,
+  '9s7s3s': HU_40BB_3BP_9S7S3S,
+  Ah2d2c: HU_40BB_3BP_AH2D2C,
+  Ah5c2d: HU_40BB_3BP_AH5C2D,
+  Ah8h3c: HU_40BB_3BP_AH8H3C,
 }
 
 export const HU_13BB_FLOP_SRP_DB: Record<string, Record<string, HuPostflopRange>> = {
