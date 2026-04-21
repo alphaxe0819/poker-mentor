@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.8.4 — 2026-04-21 (exploit-coach 多項 bug fix + AI 中文化)
+
+### 新功能
+- **exploit-coach 新建對手 localStorage persist**（T-070）：建新對手關掉 app 不會消失
+- **exploit-coach 對話歷史 localStorage + FIFO 3 則**（T-071）：免費版存最新 3 則，假對話可展開當示範
+- **流程順序調整：s5b → s5a**（T-072）：對手手牌 picker 提前到「確認牌譜」之前，s5 已知對手牌時直接顯示
+
+### AI 教練文案
+- 老張 preset 類型：calling_station 跟注站型 → **standard 標準 GTO 對手**（T-073）
+- Edge Function prompt 中文化：大幅縮保留英文 list（只留 BTN/SB/BB/UTG/CO/HJ/LJ/IP/OOP/GTO/ICM/MDF/SPR/4-bet），其他 30+ 術語強制中文翻譯（c-bet → 持續下注 / nit → 緊弱 / check-raise → 過牌加注 等）
+
+### 基礎建設
+- 既有 `src/lib/gto/gtoData_*.ts`（150 檔）全部標測試版（T-074）：檔頭加 `// ⚠️ TEST DATA` 註解，index 切 TEST/PROD 兩區，正式版 range 待 T-075 從 pokerdinosaur 建立 + T-076 重跑 solver
+
 ## v0.8.3 — 2026-04-21 (AI 教練文案修正)
 
 ### exploit-coach Edge Function prompt 調整

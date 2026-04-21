@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-21 v0.8.4-dev.1 [dev][Edge Function 待部署]
+- 改 `supabase/functions/exploit-coach/index.ts` prompt「繁中術語校準」段
+- 大幅縮保留英文 list：只留 14 個（BTN/SB/BB/UTG/CO/HJ/LJ/IP/OOP/GTO/ICM/MDF/SPR/4-bet）
+- 擴展中文強制翻譯（30+ 詞）：c-bet → 持續下注 / nit → 緊弱 / check-raise → 過牌加注 / draw → 聽牌 / semi-bluff → 半詐唬 / thin value → 薄價值 等
+- 整體原則：回答盡量全中文，不混「持續下注 (c-bet)」
+- **需手動貼整檔到測試 + 正式 Supabase Edge Function**（分兩步）
+- 產品類（supabase/），bump v0.8.3-dev.6 → v0.8.4-dev.1
+
 ## 2026-04-21 v0.8.3-dev.6 [dev]
 - merge wip/T073-villain-laozhang-standard：老張 calling_station → standard GTO
 - 單檔 `public/exploit-coach-mockup-v3.html`（L165/L167/L376，2 處 selectOpp + villainProfile 預設）
