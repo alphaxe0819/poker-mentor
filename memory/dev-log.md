@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-21 v0.8.3-dev.5 [dev]
+- merge wip/T074-mark-test-data：既有 `gtoData_*.ts` 全部標測試版
+- 150 個 .ts prepend 檔頭註解 `⚠️ TEST DATA — scenarios.mjs placeholder range`（指向 src/lib/gto/prod/）
+- `gtoData_hu_postflop_index.ts` 切 TEST / PROD 兩區 + T-075/T-076 TODO 註解
+- 方法 (a)：不動 import path / export 名 / DB 內容，app 零影響
+- tsc EXIT=0
+- 產品類（src/lib/gto/），bump v0.8.3-dev.4 → v0.8.3-dev.5
+
 ## 2026-04-21 v0.8.3-dev.4 [dev]
 - merge wip/T071-chat-history-persist：exploit-coach 對話歷史 localStorage FIFO 3 則
 - 單檔 `public/exploit-coach-mockup-v3.html`（+172/-5）
