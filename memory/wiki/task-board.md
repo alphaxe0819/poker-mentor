@@ -266,14 +266,7 @@ updated: 2026-04-20
 
 <!-- T-070 → In Review 2026-04-21（士林主目錄執行者 localStorage 版） -->
 
-- [ ] **T-071** | Product | **對話歷史儲存 + 免費配額 3 則** `(派工 2026-04-21 → 士林 或 家裡 wip1 執行者)`
-  - 建議 branch：`wip/T071-chat-history-persist`
-  - 問題：
-    1. 目前 AI 對話介面只有「一個假的無法展開的對話」← 要改成假對話可展開當示範
-    2. 詢問過的對話沒儲存，下次回來看不到
-    3. 免費帳號存 3 則、超過要升級付費
-  - 範圍：`public/exploit-coach-mockup-v3.html` + 可能需要 Supabase table `coach_conversations`（或擴充現有 `coach_queries`）+ 用戶配額 check
-  - 免費配額邏輯建議：`coach_conversations` 讀最新 3 則 + 超過 3 則時舊的隱藏或提示升級
+<!-- T-071 → In Review 2026-04-21（士林主目錄執行者 localStorage + FIFO 版） -->
 
 <!-- T-072 → In Review 2026-04-21 -->
 
@@ -421,6 +414,29 @@ updated: 2026-04-20
 <!-- T-013 / T-030 已 merge 2026-04-21 -->
 
 <!-- T-070 / T-021 / T-072 已 merge 2026-04-21 -->
+
+- [?] **T-071** | Product | **exploit-coach 對話歷史 localStorage persist + FIFO 3 則**
+  - branch: `wip/T071-chat-history-persist`（從 origin/dev `1cab7a9` / v0.8.3-dev.3 切出）
+  - 最後 commit: `669be21`（cherry-pick 自 `951a251` — 先前 Claude_in_Chrome hook 亂切 HEAD 把 commit 落在另一個 wip/T073 branch，cherry-pick 救回）
+  - 機器：士林主目錄
+  - 改動：單檔 `public/exploit-coach-mockup-v3.html`（+172/-5）
+    - 硬編 demo hist-c 加 `onclick="toggleHistExpand(this)"` + 「示範」badge + 寫死範例 Q&A 兩輪
+    - 新 helpers：`loadConversations` / `saveConversationsList` / `persistCurrentConvo` / `logToCurrentConvo` / `initCurrentConvo` / `endCurrentConvo` / `renderSavedConversations` / `toggleHistExpand` / `formatConvoTime` / `escapeHtml`
+    - key `exploit-coach-conversations-v1`，shape `{id, villainName, villainColor, villainDesc, heroPos, heroHand, villPos, board, createdAt, messages:[{role,content}]}`
+    - FIFO cap=3：依 createdAt 排序，超過 `CONVO_FREE_LIMIT` 就 shift 最舊
+    - hook：`startAI` → `initCurrentConvo`；`aiQ/aiSend/自動 autoQ` + response → `logToCurrentConvo('user'/'assistant')`；`go()` 離開 s6 → `endCurrentConvo`（空殼自動清掉）；進 s1 → `renderSavedConversations`
+    - s1 配額提示：< 3「免費版 N/3 則・升級看全部→」；= 3「免費版已達上限 3 則・新對話會覆蓋最舊的・升級看全部→」
+  - 驗證（localhost:5173 + 程式化 iframe reload）：
+    - demo 展開 / 收合 ✅
+    - 3 則 convos 全存 + 最新在最上 ✅
+    - 第 4 則 → FIFO 擠掉最舊（測試對手1 out）✅
+    - reload iframe → saved 3 則全 persist + 配額文案正確 ✅
+    - saved card 點擊展開內容 ✅
+    - 空殼 convo（沒 log 訊息）離開後自動清掉 ✅
+    - 配額文案：N=1 → 「免費版 1/3 則・」；N=3 → 「免費版已達上限 3 則・新對話會覆蓋最舊的・」
+    - tsc exit=0（未改 src）
+  - scope：純 iframe localStorage，不碰 Supabase（B 方案跨裝置另開 task）
+  - 等大腦 review + merge
 
 - [?] **T-046** | Pipeline | **seed --include-river row 估算（dry-run 完成）**
   - branch: `wip/T046-seed-river-estimate`
