@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-04-21 v0.8.4 [ship]
+- 🚀 v0.8.3 → v0.8.4 正式
+- 內容（CHANGELOG.md v0.8.4）：
+  - T-070 新建對手 localStorage persist
+  - T-071 對話歷史 localStorage FIFO 3 則 + 假對話可展開
+  - T-072 流程 s5b → s5a（對手手牌提前到確認牌譜之前）
+  - T-073 老張 → standard GTO 對手
+  - T-074 既有 gtoData_*.ts 全標 TEST DATA（正式版 range 待 T-075/T-076）
+  - Edge Function prompt 中文化（縮保留英文 + 強制翻譯 30+ 術語）
+- ⚠ 需手動貼 Edge Function 整檔到**正式** Supabase（測試已部署驗證通過）
+
 ## 2026-04-21 v0.8.4-dev.1 [dev][Edge Function 待部署]
 - 改 `supabase/functions/exploit-coach/index.ts` prompt「繁中術語校準」段
 - 大幅縮保留英文 list：只留 14 個（BTN/SB/BB/UTG/CO/HJ/LJ/IP/OOP/GTO/ICM/MDF/SPR/4-bet）
