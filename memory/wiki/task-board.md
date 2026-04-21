@@ -100,7 +100,23 @@ updated: 2026-04-20
 <!-- T-074 → Done 2026-04-21（既有 gtoData_*.ts 全標 TEST DATA） -->
 <!-- T-075 Phase 0 盤點 → Done 2026-04-21，見 [[pd-mtt-scenario-coverage-2026-04-21]] -->
 <!-- 關鍵發現：auto-parse 率僅 1.2%（205/16750）；只 Course 可直接用；HU/6max cash pd 沒資料 → 維持 TEST DATA -->
-<!-- Phase 1+ 選項 A/B/C/D 待大腦 + 用戶決策 -->
+<!-- 用戶 2026-04-21 決策：走路徑 A（只做 Course 205 tables），Phase 1 派工中 -->
+
+- [ ] **T-075 Phase 1** | Pipeline | **9MAX-MTT preflop range 只做 Course（205 tables）**
+  - 建議 branch：同 `wip/T075-mtt-preflop-from-pd`（Phase 0 已 push 完成，切新 commit 繼續做）
+  - scope：只處理 Course project 的 205 個 auto-parseable tables，其他 9 project 不動
+  - 範圍：
+    1. 從 Course_ranges.json 抽 205 auto-parseable entries（Phase 0 已確認可解）
+    2. 用 parse-pd-table-name + pd-to-range.mjs 產 TexasSolver range 字串
+    3. 寫入新 `scripts/gto-pipeline/mtt_9max_ranges.mjs`（或 scenarios-prod.mjs），每個 depth × matchup 一個 entry
+    4. scenarios.mjs 加對接（MTT 正式版區塊）
+  - 不動：HU / 6max cash 既有 TEST DATA
+  - 產出：205 entry preflop range 可直接用於 T-076 solver marathon
+  - 預估：1-2 hr
+  - 後續（T-075 Phase 2，非本 scope，待 sid metadata 方案拍板）：
+    - Ben 系 876 sid 的 metadata 解鎖路徑 — 先做**技術偵察**（pokerdinosaur UI 是否能自動抓 scenario label）
+    - 若可自動 → 重爬解鎖；若需人工 → user 花 ~7-8 hr 標
+    - ICM 12833 table 太大，暫不處理
 
 
 - [ ] **T-075** | Pipeline | **9MAX-MTT preflop range 從 pokerdinosaur 構建（正式版 Phase 1）**
