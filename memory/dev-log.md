@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-04-21 v0.8.5 [ship]
+- 🚀 v0.8.4 → v0.8.5 正式
+- 內容（CHANGELOG.md v0.8.5）：
+  - T-080 exploit-coach 快速分析（narrative mode）
+  - 禁詞擴充（街別分析 / 後街 / 跑出 / 改進跡象）
+- ⚠ 需手動貼 Edge Function 整檔到**正式** Supabase（測試已驗證）
+
 ## 2026-04-21 v0.8.4-dev.2 [dev][Edge Function 待重部署]
 - 用戶實機驗收 T-080：narrative AI 仍輸出「街別分析」section header + 「後街」等詞
 - 加強 Edge Function prompt「街別指稱」段：
