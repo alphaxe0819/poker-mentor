@@ -5,6 +5,15 @@
 
 ---
 
+## 2026-04-21 v0.8.4-dev.2 [dev][Edge Function 待重部署]
+- 用戶實機驗收 T-080：narrative AI 仍輸出「街別分析」section header + 「後街」等詞
+- 加強 Edge Function prompt「街別指稱」段：
+  - 禁詞擴充：「街別分析」「跑出」「改進跡象」全黑名單
+  - 強制段落標題用「翻牌分析 / 轉牌分析 / 河牌分析」具體街名
+  - 牌面變化用「轉牌來 X 後」「河牌 Y 時」，不用「跑出 Y」
+- 需手動貼 Edge Function 整檔到測試 Supabase 重部署
+- 產品類（supabase/），bump v0.8.4-dev.1 → v0.8.4-dev.2
+
 ## 2026-04-21 v0.8.4-dev.1 [dev][Edge Function 待部署]
 - merge wip/T080-quick-analysis-text：exploit-coach 快速分析（文字敘述 narrative mode）
 - 改動：
