@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-04-21 [flow] T-030 驗收：exploit-coach 5 bug 實機（部分 pass）
+- 執行者：主目錄 `wip/T030-exploit-coach-verify`（從 origin/dev `9ee0222` 切出）
+- 工具：Claude_in_Chrome（tabId 209575093）+ https://poker-goal-dev.vercel.app/（v0.8.1-dev.39，script `index.C5QDRci6.js`）
+- 結果：
+  - ✅ **Bug 1** Call 按鈕顯示金額：runtime 看到 `Call 1` / `All-in 100`，hint `跟注需補 1 BB`（line 1249 / 1241）
+  - ✅ **Bug 2** Turn all-in → s5：跑完 BB all-in → BTN all-in call → 主按鈕變 `All-in → 攤牌`，點下去 streetIdx=2 直接跳 s5（line 1217 / 1354-1376）
+  - ⚠ **Bug 3** Raise 鍵盤 PARTIAL：viewport `maximum-scale=1.0 user-scalable=no`、`inputmode="decimal"`、`scrollIntoView` 都在（line 1262），真機軟鍵盤行為仍需 iPhone/Android 實機補驗
+  - ✅ **Bug 4** S5b 對手手牌 + AI prompt 全路徑：s5→s5b→我知道→卡槽 picker 浮出（parent=BODY, visible）→ Q♦9♠ → 開始分析 → 攔截 fetch request body 含 `"villain_hand":"Q♦9♠","villain_hand_known":true`（line 320-343 / 1517-1518）
+  - ⚠ **Bug 5** Token refresh PARTIAL：架構 fix 部署 OK（line 1479-1509 askParentRefresh / getFreshAccessToken），iframe→parent postMessage 到達（console 看到 `[parent-refresh] got request` origin match），**但 parent 的 `supabase.auth.refreshSession()` 30s 內未回覆 → 沒看到 `[parent-refresh] replied` log**；現場 token 仍新鮮（40min 才過期）所以不影響正常流程，但若 token 真過期後 401 path 同樣 hang → 會跑出「登入已過期」→ 開 T-064 follow-up 追
+- 驗收報告：[docs/verification/T-030-report.md](../docs/verification/T-030-report.md)（含 5 bug 詳細 evidence / code ref）
+- 純 flow 改動（docs + task-board），不 bump version
+
 ## 2026-04-21 v0.8.1-dev.39 [dev]
 - 整理今日殘留
 - `.gitignore` 加 `.claude/worktrees/`（Claude Code sandbox 自動建的 isolation worktree 目錄，每次新 sandbox session 會產生一個，不該進 repo）

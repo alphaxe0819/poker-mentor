@@ -199,16 +199,19 @@ updated: 2026-04-20
 
 </details>
 
-- [ ] **T-030** | Product | **實機驗證 exploit-coach 5 bug（dev.16）**
-  - 建議 branch：無（純手動 UI 驗證，不需 branch）
-  - 操作位置：瀏覽器 `https://poker-goal-dev.vercel.app/`
-  - 驗證：
-    1. Bug 1 Call 2/5 顯示金額
-    2. Bug 2 turn all-in → 跳 s5 攤牌
-    3. Bug 3 raise 輸入框鍵盤不擠畫面
-    4. Bug 4 S5b 對手手牌流程
-    5. Bug 5 token refresh（久待不過期）
-  - 產出：pass / fail + console log（若 fail）
+<!-- T-030 → In Review 2026-04-21（Claude_in_Chrome 自動化驗收，3 pass / 2 partial） -->
+
+- [ ] **T-064** | Product | **exploit-coach parent refresh handshake hang follow-up**（T-030 衍生）
+  - 建議 branch：`wip/T064-parent-refresh-hang`
+  - 背景：T-030 驗 Bug 5 時，iframe → parent `postMessage({type:'request-supabase-refresh'})` 到達，parent `ExploitCoachTab.tsx:23-59` 的 handler 有 log `[parent-refresh] got request`，但 `await supabase.auth.refreshSession()` 30s 內沒回覆 → 沒看到 `[parent-refresh] replied` → iframe 3s timeout 後 token=null
+  - 現場狀態 token 仍新鮮（expires 40min 後），**正常使用流程不會觸發 401 path**，但若 token 真過期 → 401 → askParentRefresh → parent 同樣 hang → `登入已過期`
+  - 範圍：`src/tabs/ExploitCoachTab.tsx:23-59`
+  - 建議修法：
+    - 加 race timeout：`Promise.race([supabase.auth.refreshSession(), timeoutPromise(2500)])`
+    - timeout → fallback 讀 localStorage 現有 token（若還沒過期）
+    - 或先 `getSession()` 驗活性，真過期才 `refreshSession()`
+  - 實測驗證方式：掛 tab 不動 40+ min 讓 token 過期 → 回來發問 → 看 console log + 能否順利發送（不用重新整理頁面）
+  - 相關：T-054 wiki `supabase-edge-function-gotchas`
 
 <!-- T-031 已完成，移至 Done -->
 
@@ -332,6 +335,26 @@ updated: 2026-04-20
 ---
 
 ## 👀 In Review（等大腦整合）
+
+- [?] **T-030** | Product | **exploit-coach 5 bug 實機驗收（dev.16 → dev.39）**
+  - branch: `wip/T030-exploit-coach-verify`（從 origin/dev `9ee0222` 切出）
+  - 機器：主目錄
+  - 驗收工具：Claude_in_Chrome（tabId 209575093）+ https://poker-goal-dev.vercel.app/（v0.8.1-dev.39 / `index.C5QDRci6.js`）
+  - 改動：
+    - 新增 `docs/verification/T-030-report.md`（詳細 5 bug runtime + code evidence）
+    - `memory/dev-log.md` append [flow] 條目
+    - 本檔 task-board：Queue 移除 T-030 / 加 In Review、開 T-064 follow-up
+  - **5 bug 結果**：
+    - ✅ Bug 1 Call 顯示金額：runtime 看到 `Call 1` / `All-in 100`，hint `跟注需補 1 BB`
+    - ✅ Bug 2 Turn all-in → s5：跑 BB/BTN 雙 all-in → 主按鈕變 `All-in → 攤牌` → 點下去跳 s5（skip river picker）
+    - ⚠ Bug 3 Raise 鍵盤 PARTIAL：viewport meta / `inputmode=decimal` / `scrollIntoView` 都在，真機軟鍵盤視覺需 iPhone/Android 補
+    - ✅ Bug 4 S5b 對手手牌：s5→s5b→我知道→picker 浮出 (parent=BODY)→Q♦9♠→開始分析→攔截 fetch body 含 `"villain_hand":"Q♦9♠"`→AI 回應引用 Q♦9♠
+    - ⚠ Bug 5 Token refresh PARTIAL：架構 fix 部署 OK、postMessage 到達 parent 有 `[parent-refresh] got request` log，**但 parent `await supabase.auth.refreshSession()` 30s 內沒回覆** → 開 **T-064** 追
+  - 未涵蓋（需真機）：
+    - Bug 3 iPhone Safari / Android Chrome 軟鍵盤行為
+    - Bug 5 掛 40+ min 讓 token 真過期後的 401 refresh path
+  - 純 flow 改動（docs + memory，不碰 src/supabase），無 version bump
+  - 等大腦 review + merge
 
 - [?] **T-046** | Pipeline | **seed --include-river row 估算（dry-run 完成）**
   - branch: `wip/T046-seed-river-estimate`
