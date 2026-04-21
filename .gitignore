@@ -31,6 +31,21 @@ dist-ssr
 scripts/gto-pipeline/TexasSolver-v0.2.0-Windows/
 scripts/gto-pipeline/TexasSolver-v0.2.0-Linux/
 scripts/gto-pipeline/TexasSolver-v0.2.0-MacOs/
+scripts/gto-pipeline/solver/
 scripts/gto-pipeline/output/
+scripts/gto-pipeline/test_solver.txt
 # Brainstorm visual companion cache
 .superpowers/
+
+# Claude Code 本機個人 permission（settings.local.json 屬於個人覆蓋）
+.claude/settings.local.json
+
+# Claude Code Sandbox / Isolation worktree（桌面版 / slash command 自動建）
+.claude/worktrees/
+
+# 大型外部資料集（不該進 repo）
+RYE Rangeviewer 2021 Updated with ICM Ranges/
+
+# 暫存 log
+tmp_log.txt
+**/tmp_log.txt

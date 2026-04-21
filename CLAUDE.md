@@ -81,6 +81,14 @@
 - 這讓任何電腦 `git pull` 後都能知道「上次在另一台做了什麼」
 - **新 session 開始時，先讀 `memory/dev-log.md` 了解最近的開發脈絡**
 
+## 知識庫查詢規則（分級查詢，省 token）
+1. 先讀 `memory/index.md`（一行一頁 + 摘要）
+2. 從 index 找到與當前任務相關的頁面（通常 1-5 頁）
+3. 只 Read `memory/wiki/` 裡那幾頁的具體內容
+4. 不要一次讀完所有 wiki 頁面
+5. 跨 vault 查詢：專案 wiki 找不到 → 讀個人 wiki `index.md`
+6. 寫新的知識記憶時，寫到 `memory/wiki/`（不要寫到 auto-memory 目錄）
+
 ## 新電腦設定 SOP（clone 後必做）
 **如果用戶說「設定開發環境」或這是一台新 clone 的電腦，只需兩步：**
 1. `powershell scripts/setup-env.ps1`（Windows）或 `bash scripts/setup-env.sh`（Mac/Linux）
@@ -88,45 +96,104 @@
    - **不要手動建立 .env，不要從其他地方複製 .env，腳本裡有完整的正確值**
    - **本專案沒有 `.env.example`（已刪除），不要嘗試尋找或建立它**
 2. 讀 `memory/dev-log.md` 了解最近的開發脈絡，然後回報設定結果
+3. **若用戶要跑 GTO pipeline**（batch-worker / convert-to-db / test-retrieval 等）：`setup-env.ps1` 不涵蓋 `scripts/gto-pipeline/`，要另外做本頁 Step 1-2 → 見 `memory/wiki/gto-pipeline-env-setup.md`（含 service_role 取得流程 + `.env` 範本，**不要**建議用戶把 service_role 貼進對話）
 
 ### 為何這條規則存在
 2026-04-14 新電腦 clone 後，Claude session 兩次都沒有跑 setup-env 腳本，而是自己建 .env.example 叫用戶手動填值。刪除 .env.example 並簡化 SOP 為單一腳本，消除歧義。
+
+2026-04-21 家裡電腦跑 T-045 時 Claude 不知道 `scripts/gto-pipeline/.env` setup 獨立於 root `.env`，繞圈給選項讓用戶挫折。新增第 3 條指向 `gto-pipeline-env-setup` wiki，讓下個 session 一查就到位。
 
 ## 開工 SOP（每次新 session 開始時 Claude 必須主動執行）
 **不要等用戶指示，也不要問「要跑嗎？」。Session 開始的第一件事就是依序執行：**
 1. 確認 SessionStart hook 已自動 `git fetch` + pull（看 system-reminder）
 2. **主動讀** `memory/dev-log.md` 了解最近的操作記錄
-3. **主動讀** `MEMORY.md`（在 `.claude/projects/.../memory/MEMORY.md`）了解跨 session 記憶
-4. 主動回報：目前分支、版本、最近做了什麼、未完成事項
-5. **主動詢問角色**：「這個 Tab 負責哪個角色？(UI / Frontend / Backend / 自由)」（詳見「多 Tab 平行開發角色分工」）
-   - 若工作目錄是 worktree 子目錄（POKERNEW-ui-v2、POKERNEW-hu-sim 等），跳過此步驟
-6. 然後問用戶「要做什麼」
+3. **主動讀** `memory/index.md`（專案知識庫索引，分級查詢入口）
+4. **主動讀** `memory/reference_architecture.md` — 了解專案目錄結構、技術棧、資料流、關鍵檔案位置。**這一步確保你在動手前知道整個系統怎麼運作**
+5. 主動回報：目前分支、版本、最近做了什麼、未完成事項
+6. **主動詢問 session 角色**（雙角色模型，詳見 `memory/wiki/two-machine-workflow.md`）：
+   - 🧠 **大腦**：整合 wip branch、merge 到 dev、bump 版本、部署測試機
+   - 🛠 **執行者**：挑 task、開 `wip/<task-id>-<短描述>` 作業；**不動** `src/version.ts` / `memory/dev-log.md`
+   - ⚡ **單機快修**：直接在 dev 做+bump+push（確定無其他 session 在跑時）
+   - 若工作目錄是 worktree 子目錄（POKERNEW-*），跳過此步驟
+7. 根據角色提建議：大腦→列 In Review wip；執行者→列 Queue；單機→按現狀
+8. 然後問用戶「要做什麼」
+- 若任務需要個人背景知識 → 讀個人 wiki 的 `C:\Users\User\Desktop\second-brain\index.md`
 
 **禁止行為：**
 - ❌ 問用戶「要我跑開工 SOP 嗎？」（直接跑，不要問）
-- ❌ 跳過讀 dev-log.md 或 MEMORY.md
+- ❌ 跳過讀 dev-log.md 或 index.md 或 reference_architecture.md
 - ❌ 等用戶說「繼續開發」才執行 SOP
+- ❌ 沒讀架構總覽就開始動手寫程式碼
+
+## 收工 SOP（每次 session 結束前執行）
+**用戶說「收工」「今天到這」「push 一下」時，依序執行：**
+1. 跑 `/compound` — 掃描對話，提取決策/教訓/新知寫回 wiki（專案或個人）
+2. 確認所有改動已 commit（含版號遞增 + dev-log 更新）
+3. `git push` 到 remote（feature branch 或 dev）
+4. 若有推到 dev → 依「改動分類」判斷：產品改動才跑測試機驗證，開發流程改動跳過
+
+### 為何這條規則存在
+每次對話產出的副產品（踩坑記錄、設定決策、新知識）如果不在收工時提取，下個 session 就找不回來。`/compound` 把隱性知識變成顯性記錄，實現知識複利。
+
+## 改動分類：產品 vs 開發流程（commit / push 前必須判斷）
+**每次 commit 前，先判斷這次改的是「產品」還是「開發流程」，兩者的 push 後流程不同：**
+
+### 產品改動（push dev 後必須跑測試機驗證）
+改了這些目錄 = 產品改動：
+- `src/` 裡的 `.ts` / `.tsx` / `.css`
+- `supabase/`（Edge Function / migration）
+- `public/`（靜態資源）
+- `package.json`（依賴變更）
+
+→ push dev 後**必須**跑「推送到測試機後的必做驗證」流程（curl 確認 HTTP 200 + Vite build OK）
+
+### 開發流程改動（push dev 只需同步，不跑驗證）
+改了這些 = 開發流程改動：
+- `CLAUDE.md`、`.claude/skills/`、`scripts/session-start*.sh`
+- `memory/`（wiki / index / log / dev-log）
+- `docs/`（specs、mockup HTML、流程圖）
+- `.claude/settings*.json`
+
+→ 直接 `git push origin dev` 同步到雲端，**不跑** curl / Vercel 驗證
+
+### 混合改動
+如果同一個 commit 裡同時有產品 + 開發流程的檔案 → **視為產品改動**，跑驗證流程。
+
+### 為何這條規則存在
+2026-04-17 wiki 系統（純 markdown）建好後，Claude 對開發流程改動也問「要跑測試機驗證嗎？」造成混淆。產品代碼才需要 Vercel 部署驗證，wiki/skill/config 改動只需 git push 同步。
 
 ## Git 工作流程（雲端為中心）
 - **每完成一組修復/功能就 commit**，不要累積大量未 commit 的改動
 - **收工前一定 `git push`**，確保雲端有最新版本（多台電腦開發靠 Git 同步）
 - **開工前一定 `git pull`**，確保拿到最新版本
 
-### 分支策略（feature → dev → main）
-- `feature/*` — 功能開發，任何電腦都在這裡工作
-- `dev` — 測試環境分支，push 後 Vercel 自動部署到 `poker-goal-dev.vercel.app`
-- `main` — 正式環境分支，push 後 Vercel 自動部署到 `poker-goal.vercel.app`
+### 分支策略（wip → dev → main，雙角色模型）
+- `wip/<task-id>-<短描述>` — **執行者**的獨立作業空間（短命 branch，完成後 merge 刪除）
+- `dev` — 測試環境分支；**只有大腦 merge wip 時才動 version.ts / dev-log**；push 後 Vercel 自動部署 `poker-goal-dev.vercel.app`
+- `main` — 正式環境分支；push 後 Vercel 自動部署 `poker-goal.vercel.app`
+- `feature/<名>` — ⚠️ **避免**（易變孤島，2026-04-14 / 2026-04-20 都出狀況）；只有明確需要長期隔離時才開
 
-### 標準流程
-1. 在 `feature/*` branch 上開發
-2. 每完成一組邏輯完整的改動就 `git commit` + `git push`（feature branch）——【自動，不需確認】
-3. 功能告一段落 → Claude 主動 merge 到 `dev` → push → 測試環境 Vercel 自動部署——【自動，不需確認】
-4. 測試通過 → merge `dev` 到 `main` → push → 正式環境 Vercel 自動部署——【⚠️ 需用戶在聊天中明確授權】
+### 標準流程（執行者 → 大腦）
+1. 執行者：`git checkout -b wip/<task-id>-<短描述>`（從最新 dev 切出）
+2. 在 wip branch 自由 commit + push（**不動** `src/version.ts` / `memory/dev-log.md`）
+3. 執行者在 `memory/wiki/task-board.md` 移 task 到 In Review
+4. 大腦：`git fetch` → review wip → `git merge --no-ff wip/<task-id>` 到 dev
+5. 大腦在 merge commit 或 follow-up commit 中：bump version.ts + append dev-log
+6. 大腦：`git push origin dev` → 測試環境部署——【自動，不需確認】
+7. 大腦：刪已 merge 的 wip branch（`git push origin --delete wip/<task-id>-...`）
+8. 測試通過 → merge `dev` 到 `main` → push → 正式環境部署——【⚠️ 需用戶明確授權】
+
+### 單機快修（無其他 session 在跑時可用）
+- 跳過 wip branch，直接在 dev 做
+- commit 時自己 bump version + append dev-log + push
+- 適用「快速修一件事 + 確定沒其他作業中」
 
 ### 禁止事項
 - **絕對不要**在有大量未 commit 改動時切換分支（`git checkout` 會丟棄未 commit 的修改）
-- **絕對不要**跳過 `dev` 直接 merge feature 到 `main`
-- 如果用戶說「不要上正式機」，意思是不要 push/merge 到 main，但**仍然應該在 feature branch 和 dev 上 commit + push**
+- **絕對不要**跳過 `dev` 直接 merge wip 到 `main`
+- 執行者**不要**自己 merge 自己的 wip branch 到 dev（避免繞過大腦 review）
+- 執行者**不要**動 `src/version.ts` / `memory/dev-log.md`（交給大腦整合時一次改）
+- 如果用戶說「不要上正式機」，意思是不要 push/merge 到 main，但**仍然應該在 wip branch 和 dev 上 commit + push**
 
 ### 為何這條規則存在
 2026-04-13 在 feature branch 上做了大量引擎修復（engine.ts、botAI.ts 等 33 個檔案）但未 commit。用戶切換到 main 再切回來，git checkout 丟棄了所有未 commit 的改動，導致一整天的工作丟失。
@@ -134,9 +201,10 @@
 ## 自動部署授權（測試環境）
 **Claude 可在**不需要每次詢問用戶**的情況下自動執行以下動作：**
 
-1. **Feature branch 操作**
-   - `git commit` 到 `feature/*`
-   - `git push` `feature/*` 到 remote 同名 branch
+1. **Wip branch 操作**（執行者）
+   - `git commit` 到 `wip/<task-id>-...`
+   - `git push` `wip/<task-id>-...` 到 remote 同名 branch
+   - 完成後 task-board 標 In Review 等大腦整合
 
 2. **Dev branch 操作（測試環境部署）**
    - `git checkout dev && git merge <feature> && git push origin dev`
@@ -170,7 +238,7 @@
    - 用戶說「推到測試機」/「上 dev」等，**不等於允許推正式機**
 
 3. **新 session 開始時，如果發現當前在 feature branch 上**：
-   - 讀 `memory/dev_workflow_hu_simulator.md`（或對應的 workflow 記憶）了解該 branch 的開發狀態
+   - 讀 `memory/wiki/hu-simulator.md`（或對應的 wiki 知識頁）了解該 branch 的開發狀態
    - **不要假設** 用戶想部署到正式機
    - 先問用戶要做什麼（但可以依「自動部署授權」規則主動推到 dev）
 
@@ -245,7 +313,7 @@
 1. 確認 `dev` 環境已測試通過
 2. 更新 `src/version.ts` 版本號
 3. 更新 `CHANGELOG.md` — 記錄這個版本的新功能、改動、修復
-4. 更新 memory `MEMORY.md` — 如果有新的產品決策或功能狀態變更
+4. 更新 `memory/index.md` + 對應的 `memory/wiki/*.md` — 如果有新的產品決策或功能狀態變更
 5. 更新此檔案 `CLAUDE.md` — 如果有新的固定規則需要記住
 6. `git checkout main && git merge dev && git push origin main`
 
@@ -309,7 +377,7 @@ BTN → SB → BB → UTG → UTG+1 → UTG+2 → LJ → HJ → CO → (回 BTN)
 - Hero 固定螢幕底部，依順時針往螢幕左側繞
 - 權威來源：`src/components/PokerFelt.tsx` 的 `POSITION_MAP`
 - **禁止**憑直覺放座位（「raiser 在哪看起來比較對」），先看 POSITION_MAP
-- 完整規則見 auto-memory `project_seat_order.md`
+- 完整規則定義在此段落，以 `POSITION_MAP` 為權威來源
 
 ### UI v2 設計規則
 - 牌桌：**直立 capsule wireframe**（非寫實綠 felt）、座位空心圓、2/6/9 桌型統一
@@ -319,7 +387,7 @@ BTN → SB → BB → UTG → UTG+1 → UTG+2 → LJ → HJ → CO → (回 BTN)
 - 決策期**不顯示**查看範圍按鈕（等於作弊）
 - HU：比賽中不顯示入場費 banner、用實際位置名（BTN/BB 不是 BOT/YOU）
 - Mockup：`docs/ui-v2-mockup.html`
-- 完整規則見 auto-memory `project_ui_v2_rules.md`
+- 完整規則見 `memory/wiki/ui-v2-rules.md`
 
 ## 目前產品狀態
 - 免費用戶不限訓練次數

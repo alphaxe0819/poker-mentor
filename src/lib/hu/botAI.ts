@@ -15,11 +15,11 @@ import type { Personality } from '../gto/huHeuristics'
  * Top-level bot decision function.
  * Returns an Action ready for engine.applyAction().
  */
-export function decideBotAction(
+export async function decideBotAction(
   hand: HandState,
   _config: MatchConfig,
   personality: Personality
-): Action {
+): Promise<Action> {
   const botPos = hand.toAct
   const bot = botPos === hand.hero.position ? hand.hero : hand.villain
   const handClass = handToCanonical(bot.holeCards)
@@ -303,18 +303,18 @@ function defaultRaiseAmount(hand: HandState, botPos: Position): number {
 
 // ── Postflop ────────────────────────────────────────
 
-function decidePostflop(
+async function decidePostflop(
   hand: HandState,
   botPos: Position,
   handClass: string,
   isFacingBet: boolean,
   personality: Personality
-): Action {
+): Promise<Action> {
   // Use specific GTO role if available; otherwise generic role for heuristic fallback
   const role = postflopRole(hand, botPos, isFacingBet)
     ?? (isFacingBet ? 'bb_facing_cbet_mid' as PostflopRole : 'btn_cbet' as PostflopRole)
 
-  const decision = getHUPostflopAction({
+  const decision = await getHUPostflopAction({
     street: hand.street as 'flop' | 'turn' | 'river',
     potType: 'srp',
     board: formatBoard(hand.board),

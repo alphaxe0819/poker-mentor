@@ -1,0 +1,16 @@
+{
+  "name": "gto-pipeline",
+  "version": "1.0.0",
+  "description": "v1.0 HU 模擬器的**自動化 GTO 資料產生管線**概念驗證。",
+  "main": "scrape-pokerdinosaur.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.103.3"
+  }
+}

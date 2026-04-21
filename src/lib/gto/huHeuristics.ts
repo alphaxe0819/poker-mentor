@@ -18,11 +18,24 @@ export type Personality = 'standard' | 'rock' | 'aggressive'
 export type Street = 'flop' | 'turn' | 'river'
 
 export type PostflopRole =
+  // Flop roles
   | 'btn_cbet'
   | 'bb_facing_cbet_small'
   | 'bb_facing_cbet_mid'
   | 'bb_facing_cbet_large'
   | 'bb_facing_cbet_allin'
+  // Turn/River roles
+  | 'btn_bet'
+  | 'btn_check'
+  | 'bb_bet'
+  | 'bb_check'
+  | 'btn_facing_bet_small'
+  | 'btn_facing_bet_large'
+  | 'bb_facing_bet_small'
+  | 'bb_facing_bet_mid'
+  | 'bb_facing_bet_large'
+  | 'btn_facing_raise'
+  | 'bb_facing_raise'
 
 export interface HeuristicContext {
   street: Street

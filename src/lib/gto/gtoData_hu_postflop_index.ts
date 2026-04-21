@@ -6,19 +6,30 @@
 // 來源：scripts/gto-pipeline/ 用 TexasSolver CLI 產生
 // =============================================================
 
-import { HU_40BB_SRP_FLOP_AS7D2C } from './gtoData_hu_40bb_srp_flop_As7d2c'
-import { HU_40BB_SRP_FLOP_KC8H3S } from './gtoData_hu_40bb_srp_flop_Kc8h3s'
-import { HU_40BB_SRP_FLOP_JC7D2H } from './gtoData_hu_40bb_srp_flop_Jc7d2h'
-import { HU_40BB_SRP_FLOP_9D5C2H } from './gtoData_hu_40bb_srp_flop_9d5c2h'
-import { HU_40BB_SRP_FLOP_KSQD4H } from './gtoData_hu_40bb_srp_flop_KsQd4h'
-import { HU_40BB_SRP_FLOP_TD8H4C } from './gtoData_hu_40bb_srp_flop_Td8h4c'
-import { HU_40BB_SRP_FLOP_JS9C3H } from './gtoData_hu_40bb_srp_flop_Js9c3h'
-import { HU_40BB_SRP_FLOP_JSTC9H } from './gtoData_hu_40bb_srp_flop_JsTc9h'
-import { HU_40BB_SRP_FLOP_9H8D7C } from './gtoData_hu_40bb_srp_flop_9h8d7c'
-import { HU_40BB_SRP_FLOP_TC9C6D } from './gtoData_hu_40bb_srp_flop_Tc9c6d'
-import { HU_40BB_SRP_FLOP_7S7D2H } from './gtoData_hu_40bb_srp_flop_7s7d2h'
-import { HU_40BB_SRP_FLOP_KCKD5H } from './gtoData_hu_40bb_srp_flop_KcKd5h'
-import { HU_40BB_SRP_FLOP_QSJH2H } from './gtoData_hu_40bb_srp_flop_QsJh2h'
+// HU 40BB SRP — 21 flops (13 base + 8 extras for peer parity with 25bb)
+// T-020: 命名統一為 HU_40BB_SRP_<BOARD>（去除 FLOP_ 中綴）
+import { HU_40BB_SRP_AS7D2C } from './gtoData_hu_40bb_srp_As7d2c'
+import { HU_40BB_SRP_KC8H3S } from './gtoData_hu_40bb_srp_Kc8h3s'
+import { HU_40BB_SRP_JC7D2H } from './gtoData_hu_40bb_srp_Jc7d2h'
+import { HU_40BB_SRP_9D5C2H } from './gtoData_hu_40bb_srp_9d5c2h'
+import { HU_40BB_SRP_KSQD4H } from './gtoData_hu_40bb_srp_KsQd4h'
+import { HU_40BB_SRP_TD8H4C } from './gtoData_hu_40bb_srp_Td8h4c'
+import { HU_40BB_SRP_JS9C3H } from './gtoData_hu_40bb_srp_Js9c3h'
+import { HU_40BB_SRP_JSTC9H } from './gtoData_hu_40bb_srp_JsTc9h'
+import { HU_40BB_SRP_9H8D7C } from './gtoData_hu_40bb_srp_9h8d7c'
+import { HU_40BB_SRP_TC9C6D } from './gtoData_hu_40bb_srp_Tc9c6d'
+import { HU_40BB_SRP_7S7D2H } from './gtoData_hu_40bb_srp_7s7d2h'
+import { HU_40BB_SRP_KCKD5H } from './gtoData_hu_40bb_srp_KcKd5h'
+import { HU_40BB_SRP_QSJH2H } from './gtoData_hu_40bb_srp_QsJh2h'
+// 8 extras（peer parity with HU 25bb SRP）
+import { HU_40BB_SRP_5S5C5D } from './gtoData_hu_40bb_srp_5s5c5d'
+import { HU_40BB_SRP_6D5H4C } from './gtoData_hu_40bb_srp_6d5h4c'
+import { HU_40BB_SRP_8S5H2C } from './gtoData_hu_40bb_srp_8s5h2c'
+import { HU_40BB_SRP_8S7S5D } from './gtoData_hu_40bb_srp_8s7s5d'
+import { HU_40BB_SRP_9S7S3S } from './gtoData_hu_40bb_srp_9s7s3s'
+import { HU_40BB_SRP_AH2D2C } from './gtoData_hu_40bb_srp_Ah2d2c'
+import { HU_40BB_SRP_AH5C2D } from './gtoData_hu_40bb_srp_Ah5c2d'
+import { HU_40BB_SRP_AH8H3C } from './gtoData_hu_40bb_srp_Ah8h3c'
 
 import { HU_25BB_SRP_FLOP_AS7D2C } from './gtoData_hu_25bb_srp_flop_As7d2c'
 import { HU_25BB_SRP_FLOP_KC8H3S } from './gtoData_hu_25bb_srp_flop_Kc8h3s'
@@ -57,19 +68,29 @@ export type HuPostflopRange = Record<string, string>
  *           bb_facing_cbet_large / bb_facing_cbet_allin
  */
 export const HU_40BB_FLOP_SRP_DB: Record<string, Record<string, HuPostflopRange>> = {
-  As7d2c: HU_40BB_SRP_FLOP_AS7D2C,
-  Kc8h3s: HU_40BB_SRP_FLOP_KC8H3S,
-  Jc7d2h: HU_40BB_SRP_FLOP_JC7D2H,
-  '9d5c2h': HU_40BB_SRP_FLOP_9D5C2H,
-  KsQd4h: HU_40BB_SRP_FLOP_KSQD4H,
-  Td8h4c: HU_40BB_SRP_FLOP_TD8H4C,
-  Js9c3h: HU_40BB_SRP_FLOP_JS9C3H,
-  JsTc9h: HU_40BB_SRP_FLOP_JSTC9H,
-  '9h8d7c': HU_40BB_SRP_FLOP_9H8D7C,
-  Tc9c6d: HU_40BB_SRP_FLOP_TC9C6D,
-  '7s7d2h': HU_40BB_SRP_FLOP_7S7D2H,
-  KcKd5h: HU_40BB_SRP_FLOP_KCKD5H,
-  QsJh2h: HU_40BB_SRP_FLOP_QSJH2H,
+  // 13 base
+  As7d2c: HU_40BB_SRP_AS7D2C,
+  Kc8h3s: HU_40BB_SRP_KC8H3S,
+  Jc7d2h: HU_40BB_SRP_JC7D2H,
+  '9d5c2h': HU_40BB_SRP_9D5C2H,
+  KsQd4h: HU_40BB_SRP_KSQD4H,
+  Td8h4c: HU_40BB_SRP_TD8H4C,
+  Js9c3h: HU_40BB_SRP_JS9C3H,
+  JsTc9h: HU_40BB_SRP_JSTC9H,
+  '9h8d7c': HU_40BB_SRP_9H8D7C,
+  Tc9c6d: HU_40BB_SRP_TC9C6D,
+  '7s7d2h': HU_40BB_SRP_7S7D2H,
+  KcKd5h: HU_40BB_SRP_KCKD5H,
+  QsJh2h: HU_40BB_SRP_QSJH2H,
+  // 8 extras (T-020, peer parity with HU 25bb SRP)
+  '5s5c5d': HU_40BB_SRP_5S5C5D,
+  '6d5h4c': HU_40BB_SRP_6D5H4C,
+  '8s5h2c': HU_40BB_SRP_8S5H2C,
+  '8s7s5d': HU_40BB_SRP_8S7S5D,
+  '9s7s3s': HU_40BB_SRP_9S7S3S,
+  Ah2d2c: HU_40BB_SRP_AH2D2C,
+  Ah5c2d: HU_40BB_SRP_AH5C2D,
+  Ah8h3c: HU_40BB_SRP_AH8H3C,
 }
 
 export const HU_25BB_FLOP_SRP_DB: Record<string, Record<string, HuPostflopRange>> = {

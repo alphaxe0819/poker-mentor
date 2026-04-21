@@ -176,7 +176,7 @@ export default function HeadsUpMatchScreenV2({
     waitingRef.current = true
     setWaitingForBot(true)
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const currentMatch = matchRef.current
       if (!currentMatch?.currentHand || currentMatch.currentHand.isComplete) {
         waitingRef.current = false
@@ -184,7 +184,7 @@ export default function HeadsUpMatchScreenV2({
         return
       }
       try {
-        const botAction = decideBotAction(currentMatch.currentHand, config, personality)
+        const botAction = await decideBotAction(currentMatch.currentHand, config, personality)
         const updated = applyAction(currentMatch, botAction)
         setMatch(updated)
       } catch (e: unknown) {
