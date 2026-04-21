@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-21 v0.8.3-dev.3 [dev]
+- merge wip/T072-villain-hand-before-review：exploit-coach flow reorder
+- 單檔 `public/exploit-coach-mockup-v3.html`
+- 新 flow：`s4 → s5a 對手手牌 → s5 確認牌譜（已知則顯示）→ s6 AI`
+- 改動：s5b → s5a rename + `gotoConfirmFlow()` helper + s5 renderConfirm 已知對手牌時顯示
+- 執行者 5 情境驗證全 pass
+- 產品類（public/），bump v0.8.3-dev.2 → v0.8.3-dev.3
+
 ## 2026-04-21 v0.8.3-dev.2 [dev]
 - merge wip/T021-hu40bb-3bp：HU 40bb 3bp × 21 flops solver marathon
 - 21 個 `src/lib/gto/gtoData_hu_40bb_3bp_*.ts` + index `HU_40BB_3BP_DB` 21 entries
