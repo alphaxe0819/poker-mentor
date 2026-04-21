@@ -410,6 +410,53 @@ updated: 2026-04-20
 
 <!-- T-013 / T-030 / T-021 / T-074 已 merge 2026-04-21 -->
 
+- [?] **T-075 Phase 1** | Pipeline | **Course 205 tables → preflop range module** `(2026-04-21 家裡主目錄執行者，接續 Phase 0 同 branch)`
+  - branch：`wip/T075-mtt-preflop-from-pd`（同 Phase 0，Phase 1 commits 追加）
+  - scope（路徑 A，大腦 2026-04-21 決策）：只處理 Course project，不碰 HU / 6max cash / 其他 pd project
+  - 產出：
+    - ✅ 新檔 `scripts/gto-pipeline/mtt_9max_ranges.mjs`（40 KB，**110 distinct entries** 覆蓋 205 auto-parseable tables）
+    - ✅ 新檔 `scripts/gto-pipeline/build-mtt-ranges.mjs`（5 KB builder，可重跑更新 mtt_9max_ranges.mjs）
+    - ✅ `scripts/gto-pipeline/scenarios.mjs` 加 re-export `COURSE_RANGES` + `COURSE_RANGES_META`（含 caveat 註解，不自動生 scenarios）
+  - 資料來源：**pokerdinosaur Course project**（S0 課程表格 353 tables，pd-to-range.mjs 已產 144 個 hand-map JSON 在 `output/pd-ranges/Course/`）
+  - Entry 結構（每個 entry 一個 TexasSolver range 字串）：
+    ```js
+    "flat_bb_vs_mp": {
+      hero: "BB", villain: "MP", scenario: "flat", depth_bb: null,
+      covered_sids: 1, hand_count: 128, raw_name: "BB VS MP",
+      range: "AA,KK,QQ,JJ,TT,...",
+    }
+    ```
+  - Scenario tag 分布：flat 66 / open 37 / 3bet 2 / limp 4 / jam 1（110 entries 合計）
+  - Slug collision：27 個（用 _v2/_v3 後綴唯一化；collision 源於不同 raw_name 產同 slug，例 "BU VS EP OPEN + EP FLAT" 和 "BU VS EP OPEN AND EP FLAT" 同 slug）
+  - ⚠️ **語義 caveat（重要，寫進 scenarios.mjs 註解 + 本條目）**：
+    - parser 的 `scenario` tag 是 token-based heuristic，**與 pd table 實際語義可能不一致**
+    - 例：`"BU VS EP OPEN + EP FLAT"` 被 parser 標 scenario=`open`，但此 table 的 range 是 **BTN facing EP open+flat 後的 reaction range**（squeeze/3bet/call/fold），不是 BTN 的 RFI
+    - 真正的 BTN/MP/CO RFI range 在 Course 的 `"UTG"`/`"MP"`/`"CO"`/`"BU"` 單 token tables 內，Phase 0 parser 把它們標 unknown（148 個未解）
+    - **因此本次 scope 內 Phase 1 不自動生 9-max MTT scenarios**（避免語義錯誤傳遞到 solver）
+  - 任務步驟完成對照：
+    - ✅ 步驟 1-2：parse-pd-table-name + pd-to-range 產 range 字串（110 entries）
+    - ✅ 步驟 3：新檔 mtt_9max_ranges.mjs
+    - ✅ 步驟 4：scenarios.mjs 加 MTT 正式版 range 對接（re-export，不生 scenarios 因語義 gap）
+    - ✅ 步驟 5：每 depth × matchup 一 entry，coverage 205 情境（110 distinct names × avg 1.86 sid = 205）
+  - 完成條件對照：
+    - ✅ 205 entries 就緒：110 distinct entries + 205 sid coverage，可被 solver 吃（需後續 task 拼 IP/OOP 配對 + pot/eff 估算）
+    - ✅ tsc 不需跑（未改 `src/`，task 條件「若改到 src/ 的話」未觸發）
+    - ✅ task-board Phase 1 移 In Review
+    - ✅ push wip
+  - 未做（task 未指定，留給後續）：
+    - 自動 IP/OOP 配對（138 initial pairs / 20 distinct matchups，但多數語義錯—見 caveat）
+    - 擴 parser 吃單 token position（可再救 50-100 張 RFI tables）
+    - `depth_bb` 從 Course 的 "10-15BB VS LIMP" 等範圍式 name 抽取（目前大多 null）
+    - `scenarios-prod.mjs` 的完整 solver-ready scenario 定義
+  - 執行者紀律：沒動 `src/version.ts` / `memory/dev-log.md`；只改 `scripts/gto-pipeline/` 與 `memory/wiki/task-board.md`
+  - 判讀建議：大腦 review 後決定：
+    1. 接受語義 caveat + merge（作為 preflop range 資料庫，後續 scenario 定義交給下個 task）
+    2. 或 reject + 要求擴 parser 再跑（解鎖 RFI tables 再做 Phase 1）
+    3. 產出可直接 re-run：`cd scripts/gto-pipeline && node build-mtt-ranges.mjs`
+
+<details>
+<summary>📦 T-075 Phase 0 原條目（已 Done 於 Phase 1 同 branch）</summary>
+
 - [?] **T-075 Phase 0** | Pipeline | **PD scenario coverage 盤點** `(2026-04-21 家裡主目錄執行者)`
   - branch：`wip/T075-mtt-preflop-from-pd`（從 `origin/dev` 切出，push origin 完成）
   - scope：純掃 10 個 pd `_ranges.json` 看 table.name 語義 + auto-parse 率，**不動 scenarios.mjs / 不產 range / 不改 scripts**
@@ -429,6 +476,8 @@ updated: 2026-04-20
     - D: 獨立找 HU / 6max cash 來源（不在 pd）
   - 執行者紀律：沒動 `src/version.ts` / `memory/dev-log.md` / `scripts/` / `src/`；只新增 memory/wiki + 改 memory/wiki/task-board.md
   - 判讀建議：大腦 review wiki 後決策走 A/B/C/D 哪條，然後開 T-075 Phase 1 子 task
+
+</details>
 
 - [?] **T-074** | Pipeline | **既有 gtoData_*.ts 全部標測試版 — 完成** `(2026-04-21 家裡主目錄執行者)`
   - branch：`wip/T074-mark-test-data`（從 `origin/dev` 切出，push origin 完成）

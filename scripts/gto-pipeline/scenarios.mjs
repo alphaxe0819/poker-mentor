@@ -176,6 +176,17 @@ export const HU_SCENARIOS = [
 
 import { srpRangePair, threeBPRangePair } from './cash_6max_ranges.mjs'
 
+// T-075 Phase 1 (2026-04-21): Course-sourced MTT 9-max preflop ranges.
+// 110 entries（205 auto-parseable Course tables）available for scenario composition.
+// ⚠️ Parser semantic caveat: `scenario` tag 是 token-based heuristic，**與 Course
+//    table 實際語義可能不一致**（例："BU VS EP OPEN + EP FLAT" 被 parser 標成
+//    scenario=open，但此 table 的 range 是 BTN facing EP open+flat 後的 reaction
+//    range，不是 BTN 的 RFI）。純 RFI range 在 Course 的 "UTG"/"MP"/"CO" 單 token
+//    tables 內，那些 parser 標為 unknown（Phase 0 wiki 報告提的 50-100 張缺口）。
+//    因此本 import 只暴露 raw ranges 給後續 scenario composition task 使用，
+//    **不自動生成 9-max MTT scenarios**（避免語義錯誤傳遞到 solver）。
+export { COURSE_RANGES, COURSE_RANGES_META } from './mtt_9max_ranges.mjs'
+
 // 9-max scenarios still use placeholder ranges (out of scope for 6-max MVP)
 const RANGE_PLACEHOLDER = { ip: '', oop: '' }
 
