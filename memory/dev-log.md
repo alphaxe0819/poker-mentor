@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-04-21 v0.8.3-dev.6 [dev]
+- merge wip/T073-villain-laozhang-standard：老張 calling_station → standard GTO
+- 單檔 `public/exploit-coach-mockup-v3.html`（L165/L167/L376，2 處 selectOpp + villainProfile 預設）
+- 保留 calling_station 分類規則 + dict（通用類型支援不拿掉）
+- 執行者 preview 3 項驗證 pass
+- 產品類（public/），bump v0.8.3-dev.5 → v0.8.3-dev.6
+
 ## 2026-04-21 v0.8.3-dev.5 [dev]
 - merge wip/T074-mark-test-data：既有 `gtoData_*.ts` 全部標測試版
 - 150 個 .ts prepend 檔頭註解 `⚠️ TEST DATA — scenarios.mjs placeholder range`（指向 src/lib/gto/prod/）
