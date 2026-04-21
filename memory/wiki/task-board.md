@@ -225,6 +225,11 @@ updated: 2026-04-20
   - 範圍：`public/exploit-coach-mockup-v3.html` + 可能需要 Supabase table `coach_conversations`（或擴充現有 `coach_queries`）+ 用戶配額 check
   - 免費配額邏輯建議：`coach_conversations` 讀最新 3 則 + 超過 3 則時舊的隱藏或提示升級
 
+<!-- T-072 → In Review 2026-04-21 -->
+
+<details>
+<summary>📦 T-072 原任務描述（已 In Review，見下方）</summary>
+
 - [ ] **T-072** | Product | **流程順序：對手手牌 picker 移到確認牌譜之前（s5b → s5a）** `(派工 2026-04-21 → 士林 或 家裡 wip1 執行者)`
   - 建議 branch：`wip/T072-villain-hand-s5a`
   - 問題：目前 `s4 → s5 確認牌譜 → s5b 對手手牌 picker → s6 AI 分析`，對手手牌問得太晚
@@ -237,6 +242,8 @@ updated: 2026-04-20
   - 完成條件：
     - 手動驗證：玩到 all-in → 先看到 s5a 問對手手牌 → 選完或 skip → 進 s5 確認牌譜 → 開始分析 → s6
     - `npx tsc -b --noEmit` EXIT=0
+
+</details>
 
 - [ ] **T-073** | Product | **villain 老張 → 標準 GTO 類型** `(派工 2026-04-21 → 士林 或 家裡 wip1 執行者)`
   - 建議 branch：`wip/T073-villain-laozhang-standard`
@@ -363,7 +370,7 @@ updated: 2026-04-20
 
 <!-- T-013 / T-030 已 merge 2026-04-21 -->
 
-<!-- T-070 / T-021 已 merge 2026-04-21 -->
+<!-- T-070 / T-021 / T-072 已 merge 2026-04-21 -->
 
 - [?] **T-046** | Pipeline | **seed --include-river row 估算（dry-run 完成）**
   - branch: `wip/T046-seed-river-estimate`
