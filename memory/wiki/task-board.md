@@ -280,11 +280,7 @@ updated: 2026-04-20
 
 </details>
 
-- [ ] **T-073** | Product | **villain 老張 → 標準 GTO 類型** `(派工 2026-04-21 → 士林 或 家裡 wip1 執行者)`
-  - 建議 branch：`wip/T073-villain-laozhang-standard`
-  - 問題：老張目前是「跟注站型」(calling_station)，要改成「標準 GTO 對手」(standard)
-  - 範圍：找 villain `老張` 定義處（可能在 `public/exploit-coach-mockup-v3.html` 或 `src/data/villains.ts` 類型檔）→ 改 `type: 'standard'`
-  - 驗證：進 exploit-coach 選老張 → AI 回覆段顯示對手類型為「標準 GTO 對手」
+<!-- T-073 → In Review 2026-04-21 -->
 
 <!-- T-055 → In Review 2026-04-20 -->
 
@@ -403,34 +399,7 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-<!-- T-013 / T-030 / T-021 已 merge 2026-04-21 -->
-
-- [?] **T-074** | Pipeline | **既有 gtoData_*.ts 全部標測試版 — 完成** `(2026-04-21 家裡主目錄執行者)`
-  - branch：`wip/T074-mark-test-data`（從 `origin/dev` 切出，push origin 完成）
-  - 方法採 (a)：每檔加檔頭 `// ⚠️ TEST DATA — ...` 註解（不改 import path，app 零影響）
-  - 改動檔案：
-    - **150 個 `gtoData_*.ts` 批次 prepend test marker**（node 一鍵處理，exclude `gtoData_hu_postflop_index.ts`）
-      - HU 40bb SRP (21) / HU 25bb SRP (26 含舊 `_flop_`) / HU 25bb 3bp (30 含舊) / HU 13bb SRP (42 含舊) / HU 40bb 3bp (21)
-      - cash_hu_100bb / cash_6max_100bb / cash_4max_100bb（3 個 preflop range）
-      - tourn_hu_40bb / tourn_9max_{15,25,40,75,100}bb（6 個 preflop range）
-    - 改 `gtoData_hu_postflop_index.ts`：
-      - 檔頭加 T-074 降級說明 block
-      - 加 `═══ TEST DATA ═══` section header 在現有 imports 前
-      - 新增 `═══ PROD DATA ═══` section（暫留空註解 + TODO T-075/T-076）
-      - accessors `getPostflopDB` 前加 section header（目前指 TEST，正式版就緒後改指 PROD）
-  - 不變（app 照常跑）：
-    - 所有 export 名（`HU_40BB_SRP_*` / `HU_40BB_3BP_DB` / `getPostflopDB` / `findSupportedBoard` 等）一字不改
-    - import path 一字不改（未建 `src/lib/gto/prod/`）
-    - DB 內容一字不改（lookup 結果不變）
-  - 未動（task scope 外）：
-    - `gtoData_index.ts__`（檔名結尾 `__`，不 match `*.ts`；疑似殘留備份，未處理）
-    - `helpers.ts`（不是 gtoData_ 檔）
-  - 驗證：
-    - `npx tsc -b --noEmit` **EXIT=0** ✓
-    - 樣本檢視：3 個不同 family 檔頭都正確 prepend
-    - 批次工具：pure prepend + TS 註解，對 runtime 零影響
-  - 執行者紀律：沒動 `src/version.ts` / `memory/dev-log.md`
-  - 判讀建議：大腦 review 後直接 `git merge --no-ff wip/T074-mark-test-data` → dev + bump + push；後續 T-075（pd preflop range 匯入）→ T-076（solver 正式版重跑）會逐步填充 `gtoData_hu_postflop_index.ts` 的 PROD 區
+<!-- T-013 / T-030 / T-021 / T-074 / T-073 已 merge 2026-04-21 -->
 
 <!-- T-070 / T-021 / T-072 已 merge 2026-04-21 -->
 
