@@ -216,6 +216,33 @@ updated: 2026-04-20
   - 建議 branch：無
   - 動作：`ls .env`；無則 `powershell scripts/setup-env.ps1`
 
+- [ ] **T-070** | Product | **新建立的對手不會儲存** `(派工 2026-04-21 → 士林 或 家裡 wip1 執行者)`
+  - 建議 branch：`wip/T070-villain-persist`
+  - 問題：在 exploit-coach 建立新對手（自訂 villain profile）關掉 app 就消失，沒 persist
+  - 範圍：`public/exploit-coach-mockup-v3.html` villain 相關 + 可能需要 Supabase table `villain_profiles`（or localStorage）
+  - 建議修法：先用 localStorage 存（快），若要跨裝置再做 Supabase table
+
+- [ ] **T-071** | Product | **對話歷史儲存 + 免費配額 3 則** `(派工 2026-04-21 → 士林 或 家裡 wip1 執行者)`
+  - 建議 branch：`wip/T071-chat-history-persist`
+  - 問題：
+    1. 目前 AI 對話介面只有「一個假的無法展開的對話」← 要改成假對話可展開當示範
+    2. 詢問過的對話沒儲存，下次回來看不到
+    3. 免費帳號存 3 則、超過要升級付費
+  - 範圍：`public/exploit-coach-mockup-v3.html` + 可能需要 Supabase table `coach_conversations`（或擴充現有 `coach_queries`）+ 用戶配額 check
+  - 免費配額邏輯建議：`coach_conversations` 讀最新 3 則 + 超過 3 則時舊的隱藏或提示升級
+
+- [ ] **T-072** | Product | **流程順序：先問對手手牌再進牌譜** `(派工 2026-04-21 → 士林 或 家裡 wip1 執行者)`
+  - 建議 branch：`wip/T072-villain-hand-before-review`
+  - 問題：目前流程是先進牌譜（review）才問對手手牌（S5b「我知道」），應該反過來 — 進牌譜之前先問對手手牌
+  - 範圍：`public/exploit-coach-mockup-v3.html` screen 順序調整（s5 → s5b → s6 改為 s5b → s5 → s6 或類似）
+  - 注意：T-050 Bug 1 S5b picker 已修，別動壞既有 picker 邏輯
+
+- [ ] **T-073** | Product | **villain 老張 → 標準 GTO 類型** `(派工 2026-04-21 → 士林 或 家裡 wip1 執行者)`
+  - 建議 branch：`wip/T073-villain-laozhang-standard`
+  - 問題：老張目前是「跟注站型」(calling_station)，要改成「標準 GTO 對手」(standard)
+  - 範圍：找 villain `老張` 定義處（可能在 `public/exploit-coach-mockup-v3.html` 或 `src/data/villains.ts` 類型檔）→ 改 `type: 'standard'`
+  - 驗證：進 exploit-coach 選老張 → AI 回覆段顯示對手類型為「標準 GTO 對手」
+
 <!-- T-055 → In Review 2026-04-20 -->
 
 <!-- T-051 → In Review 2026-04-20 -->
