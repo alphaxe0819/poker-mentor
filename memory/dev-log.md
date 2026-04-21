@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-04-21 v0.8.2 [hotfix][ship]
+- 🚨 v0.8.1 ship 後正式機 exploit-coach 實測：登入後仍顯示「需要先登入」
+- 根因：`public/exploit-coach-mockup-v3.html` 第 1442/1454/1464 行硬寫**測試** project ref `btiqmckyjyswzrarmfxa`
+  - 正式機用戶 token 寫入 `sb-qaiwsocjwkjrmyzawabt-auth-token`（正式 ref）
+  - iframe 讀 `sb-btiqmckyjyswzrarmfxa-auth-token`（測試 ref）→ 找不到 → 回「需要先登入」
+- 修法：
+  - `src/tabs/ExploitCoachTab.tsx` 把 `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` 透過 iframe URL query string 注入
+  - `public/exploit-coach-mockup-v3.html` 從 URL params 推導 `PROJECT_REF` + `STORAGE_KEY`
+  - fallback 到測試值（當 parent 沒傳 query 時）
+- v0.8.1 → v0.8.2，同日直接 hotfix 再 ship 正式機
+
 ## 2026-04-21 v0.8.1 [ship]
 - 🚀 dev v0.8.1-dev.39 → 正式版 v0.8.1（移除 -dev 後綴）
 - 累積 33 個 dev 版本改動一次 ship 到正式機
