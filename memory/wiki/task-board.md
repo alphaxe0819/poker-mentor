@@ -98,6 +98,10 @@ updated: 2026-04-20
   - Phase 2（T-076）：用 preflop range 跑 solver 產 postflop
 
 <!-- T-074 → Done 2026-04-21（既有 gtoData_*.ts 全標 TEST DATA） -->
+<!-- T-075 Phase 0 盤點 → Done 2026-04-21，見 [[pd-mtt-scenario-coverage-2026-04-21]] -->
+<!-- 關鍵發現：auto-parse 率僅 1.2%（205/16750）；只 Course 可直接用；HU/6max cash pd 沒資料 → 維持 TEST DATA -->
+<!-- Phase 1+ 選項 A/B/C/D 待大腦 + 用戶決策 -->
+
 
 - [ ] **T-075** | Pipeline | **9MAX-MTT preflop range 從 pokerdinosaur 構建（正式版 Phase 1）**
   - 建議 branch：`wip/T075-mtt-preflop-from-pd`
@@ -427,7 +431,11 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-<!-- T-013 / T-030 / T-021 / T-074 / T-073 已 merge 2026-04-21 -->
+<!-- T-013 / T-030 / T-021 / T-074 / T-073 / T-071 / T-072 / T-070 已 merge 2026-04-21 -->
+<!-- T-075 Phase 0 (盤點) 已 merge 2026-04-21 -->
+
+<!-- T-075 Phase 0 / T-074 已 merge 2026-04-21，見 Done 區 -->
+
 
 <!-- T-070 / T-021 / T-072 已 merge 2026-04-21 -->
 
