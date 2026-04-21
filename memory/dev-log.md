@@ -5,6 +5,15 @@
 
 ---
 
+## 2026-04-21 v0.8.5-dev.1 [dev]
+- merge wip/T075-mtt-preflop-from-pd @ 4d40f27：T-075 Phase 1（Course 205 tables → preflop range module）
+- 新檔 `scripts/gto-pipeline/mtt_9max_ranges.mjs`（40 KB，110 distinct entries）
+- 新檔 `scripts/gto-pipeline/build-mtt-ranges.mjs`（5 KB builder，可 node 重跑）
+- `scripts/gto-pipeline/scenarios.mjs` re-export COURSE_RANGES + COURSE_RANGES_META（含語義 caveat 註解，不自動生 scenarios）
+- 語義 caveat：parser `scenario` tag 是 token-based heuristic，與 pd 實際語義可能不一致；Phase 1 只暴露 raw ranges，不自動產 9-max MTT scenarios（避免語義錯誤傳 solver）
+- 開發流程類（scripts/gto-pipeline/），不影響 Vercel build，不需測試機 curl 驗證
+- T-076 未開工（依賴 T-075 Phase 1 的 ranges）
+
 ## 2026-04-21 [收工狀態] 士林下班 — 換電腦接續
 **今日成果**：5 個版本 ship（v0.8.1 → v0.8.2 → v0.8.3 → v0.8.4 → v0.8.5）
 
