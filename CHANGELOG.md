@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.2 — 2026-04-21 (hotfix)
+
+### 修復
+- **exploit-coach 正式機「需要先登入」hotfix**：`public/exploit-coach-mockup-v3.html` 原本硬寫測試 Supabase project ref，ship 到正式機後 iframe 讀錯 localStorage storage key → 永遠顯示「需要先登入」即使用戶已登入
+  - parent `ExploitCoachTab.tsx` 透過 iframe URL query string 注入 `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`
+  - iframe HTML 從 URL params 推導 `STORAGE_KEY = 'sb-' + projectRef + '-auth-token'`
+  - 正式機 / 測試機自動對齊，不再 env 錯位
+
 ## v0.8.1 — 2026-04-21
 
 ### 新功能
