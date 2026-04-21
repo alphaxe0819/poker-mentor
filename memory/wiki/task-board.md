@@ -64,10 +64,7 @@ updated: 2026-04-20
 
 </details>
 
-- [ ] **T-013** | Pipeline | **Scraping 成果盤點 + 整理** `(派工 2026-04-21 → 士林辦公室電腦執行者)`
-  - 建議 branch：`wip/T013-scraping-audit`（從 `origin/dev` 切出）
-  - 範圍：確認 Downloads 現有 10 個 `_ranges.json` 對應的 PNG 整理狀態 + 更新 roadmap S1-S4
-  - 產出：Scraping 線實際進度對齊
+<!-- T-013 → In Review 2026-04-21（家裡電腦 wip1 執行者接手，士林原派工未動） -->
 
 - [ ] **T-021** | Pipeline | **Solver P2 HU 40bb 3bp × 25 flops** `(派工 2026-04-21 → 家裡電腦執行者)`
   - 建議 branch：`wip/T021-hu40bb-3bp`（從 `origin/dev` 切出）
@@ -332,6 +329,28 @@ updated: 2026-04-20
 ---
 
 ## 👀 In Review（等大腦整合）
+
+- [?] **T-013** | Pipeline | **Scraping 成果盤點 + 整理** `(2026-04-21 家裡電腦 wip1 執行者完成)`
+  - branch：`wip/T013-scraping-audit`（從 `origin/dev` 切出，push origin 完成）
+  - 範圍：確認 Downloads 現有 10 個 `_ranges.json` 對應的 PNG 整理狀態 + 更新 roadmap S1-S4
+  - 改動檔案（全部在 `memory/`，無 src / supabase 觸及，**沒動 version.ts / dev-log**）：
+    - 新增 `memory/wiki/scraping-audit-2026-04-21.md`（audit 完整報告）
+    - 更新 `memory/wiki/range-collection-roadmap.md`（S0 實際數、S1 ✅、S4 補具體張數、S2 改為下一目標、補 audit 連結）
+    - 更新 `memory/project_pokerdinosaur_scraping.md`（進度表 2026-04-21、S1 標完成、待爬清單精簡）
+    - 更新 `memory/index.md`（加一條指向 audit 頁）
+  - 發現結論：
+    1. **10 個 `*_ranges.json` 全到位**在 `C:/Users/User/Downloads/`（converter 可直接吃），`action_id_map.json` 也在
+    2. **S1 Live_MTT_Ben_Adjusted 已爬完**（unique PNG 1149 = JSON tables 1149；`(1).png` 是下載器副本，不算新資料）
+    3. S0 段 Openraising 實際 63 / 宣稱 70（−7）、Flatting_3Betting 實際 103 / 宣稱 108（−5），其他 7 個 scenario ✓
+    4. S2-S4 僅 JSON 到位、PNG 全未爬；待爬總量 **13248 張**（S2=1470 / S3=945 / S4a-f=12833）
+  - 對後續 pipeline 影響：
+    - C2/C3（converter MTT 擴充 + E2E）可用 Live_MTT_Ben_Adjusted 任一 table 實測，不需等新 scraping
+    - C4 DB schema 估算上限 = 16750 tables × 若干 flop
+    - P5 MTT postflop solve 可優先跑 Live_MTT_Ben subset
+  - 遺留（不在本 task scope）：
+    - S0.1/S0.2 −12 張 diff 待查（建議對照 `Course_ranges.json` table 名稱）
+    - Downloads 根舊格式 `pd_*.json` / `pokerdinosaur_*.json` 待清理（roadmap C0 已標「逐步淘汰」）
+  - 判讀建議：純文件改動，大腦 review + `git merge --no-ff wip/T013-scraping-audit` 即可；本任務已同步 range-collection-roadmap，T-040（大腦 roadmap 同步）可一併收
 
 - [?] **T-046** | Pipeline | **seed --include-river row 估算（dry-run 完成）**
   - branch: `wip/T046-seed-river-estimate`

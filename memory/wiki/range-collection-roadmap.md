@@ -2,7 +2,7 @@
 name: Range Collection Roadmap
 description: 範圍收集總進度表 — scraping 線 + converter 串接 + solver 線的分批勾選清單
 type: project
-updated: 2026-04-20
+updated: 2026-04-21
 ---
 
 ## 總體目標
@@ -26,28 +26,35 @@ pokerdinosaur scrape
 
 詳細技術規則見 [[project_pokerdinosaur_scraping]]。
 
-### 已完成（365 PNG + 對應 JSON）
+### S0 已完成（課程表格，實測 353 PNG；對應 JSON: `Course_ranges.json` 353 tables）
 
-| Phase | Scenario | 檔數 | 狀態 |
-|---|---|---|---|
-| S0.1 | Openraising | 70 | ✅ |
-| S0.2 | Flatting & 3Betting | 108 | ✅ |
-| S0.3 | Rejamming | 33 | ✅ |
-| S0.4 | Calling Rejams | 16 | ✅ |
-| S0.5 | HU | 20 | ✅ |
-| S0.6 | Squeezing | 25 | ✅ |
-| S0.7 | Multiway | 56 | ✅ |
-| S0.8 | 4B / Cold Calling 3B | 26 | ✅ |
-| S0.9 | Defending | 11 | ✅ |
+| Phase | Scenario | 實際 PNG | 原宣稱 | 狀態 |
+|---|---|---|---|---|
+| S0.1 | Openraising | 63 | 70 | ✅（−7 diff，見 [[scraping-audit-2026-04-21]]） |
+| S0.2 | Flatting & 3Betting | 103 | 108 | ✅（−5 diff） |
+| S0.3 | Rejamming | 33 | 33 | ✅ |
+| S0.4 | Calling Rejams | 16 | 16 | ✅ |
+| S0.5 | HU | 20 | 20 | ✅ |
+| S0.6 | Squeezing | 25 | 25 | ✅ |
+| S0.7 | Multiway | 56 | 56 | ✅ |
+| S0.8 | 4B / Cold Calling 3B | 26 | 26 | ✅ |
+| S0.9 | Defending | 11 | 11 | ✅ |
+| **小計** | | **353** | **365** | |
 
-### 進行中 / 待爬
+### S1-S4 project 級進度（JSON 10 個全到位，見 [[scraping-audit-2026-04-21]]）
 
-| Phase | Project | 張數 | 狀態 |
-|---|---|---|---|
-| **S1** | **LiveMTT_Ben（現場錦標賽 - Ben 調整版）** | **1145** | **⏳ 進行中** |
-| S2 | 錦標賽 - Ben 調整版 | 1470 | ⬜ |
-| S3 | 錦標賽 - 籌碼期望值 | 945 | ⬜ |
-| S4 | 決賽桌 ICM 系列（決賽桌 / 削剛策略 / 最後兩桌 / 大中小 ICM） | ? | ⬜ |
+| Phase | Project | JSON tables | 已爬 PNG | 狀態 |
+|---|---|---|---|---|
+| **S1** | **Live_MTT_Ben_Adjusted（現場錦標賽 - Ben 調整版）** | **1149** | **1149** | **✅ 2026-04-21 完成** |
+| S2 | Tournament_Ben_Adjusted | 1470 | 0 | ⬜ 待爬 |
+| S3 | Tournament_Chip_EV | 945 | 0 | ⬜ 待爬 |
+| S4a | Final_Two_Tables | 857 | 0 | ⬜ 待爬 |
+| S4b | Final_Table | 2600 | 0 | ⬜ 待爬 |
+| S4c | Final_Table_Exploitative | 2600 | 0 | ⬜ 待爬 |
+| S4d | Large_Field_ICM | 2505 | 0 | ⬜ 待爬 |
+| S4e | Medium_Field_ICM | 2230 | 0 | ⬜ 待爬 |
+| S4f | Small_Field_ICM | 2041 | 0 | ⬜ 待爬 |
+| **S2-S4 待爬小計** | | **13248** | **0** | |
 
 **執行方式**：Chrome MCP + scrape-pokerdinosaur.js（詳見 [[project_pokerdinosaur_scraping]]）
 
@@ -132,10 +139,11 @@ P4 ─────── 獨立可跑
 ## 當前行動指引
 
 **這台電腦（範圍收集）**
-1. 繼續 S1：Chrome 打開 pokerdinosaur LiveMTT_Ben project → 跑 scrape-pokerdinosaur.js
-2. 抓完把 PNG 移到 `C:/Users/User/Downloads/GTO/LiveMTT_Ben/`、JSON 留 Downloads 根目錄
-3. 跑 `node scripts/upload-pd-data.js` 把 JSON 入測試 Supabase
-4. 更新本頁 S1 狀態為 ✅，然後進 S2
+1. ✅ S1 LiveMTT_Ben 已完成（1149/1149，2026-04-21 audit 確認）
+2. 開始 S2：Chrome 打開 pokerdinosaur **Tournament_Ben_Adjusted** project（id `10e6b471-b384-4a0f-8d69-255a4a8d250c`，1470 tables）→ 跑 scrape-pokerdinosaur.js
+3. 抓完把 PNG 移到 `C:/Users/User/Downloads/GTO/Tournament_Ben/`、JSON 已在 Downloads 根目錄
+4. 跑 `node scripts/upload-pd-data.js` 把 JSON 入測試 Supabase（若尚未入庫）
+5. 更新本頁 S2 狀態為 ✅，然後進 S3
 
 **另一台電腦（修 bug + 若有空接 C 線）**
 - 主要任務：exploit-coach bug 修正（見 dev-log）
@@ -151,5 +159,6 @@ P4 ─────── 獨立可跑
 ## 相關連結
 
 - [[project_pokerdinosaur_scraping]] — scraping 技術規則
+- [[scraping-audit-2026-04-21]] — T-013 scraping 現況盤點快照（10 個 JSON + PNG diff）
 - [[hu-simulator]] — HU solver 使用情境
 - [[deployment-state]] — Supabase 基礎設施

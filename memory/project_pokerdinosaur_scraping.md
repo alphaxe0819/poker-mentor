@@ -26,12 +26,12 @@ Chrome 目前有一個 pokerdinosaur.com 的標籤（tabId 可能改變，先用
 ## Why
 用戶明確要求此方案，未經允許不得更改技術實作方式。
 
-## 目前進度（2026-04-17）
+## 目前進度（2026-04-21 T-013 audit）
 
-| Scenario | 檔案數 | 狀態 |
+| Scenario | 實際 PNG | 狀態 |
 |---|---|---|
-| Openraising | 70 PNG | ✅ GTO/Openraising/ |
-| Flatting & 3Betting | 108 PNG | ✅ GTO/Flatting_3Betting/ |
+| Openraising | 63 PNG | ✅ GTO/Openraising/ |
+| Flatting & 3Betting | 103 PNG | ✅ GTO/Flatting_3Betting/ |
 | Rejamming | 33 PNG | ✅ GTO/Rejamming/ |
 | Calling Rejams | 16 PNG | ✅ GTO/Calling_Rejams/ |
 | HU | 20 PNG | ✅ GTO/HU/ |
@@ -39,14 +39,16 @@ Chrome 目前有一個 pokerdinosaur.com 的標籤（tabId 可能改變，先用
 | Multiway | 56 PNG | ✅ GTO/Multiway/ |
 | 4B / Cold Calling 3B | 26 PNG | ✅ GTO/4B_ColCalling/ |
 | Defending | 11 PNG | ✅ GTO/Defending/ |
-| **課程表格** | **~365 張** | **✅ 全部完成** |
-| LiveMTT_Ben (現場錦標賽) | 進行中 | ⏳ 用非標準方法跑中 |
+| **課程表格（Course project）** | **353 張** | **✅ 全部完成** |
+| LiveMTT_Ben_Adjusted (現場錦標賽) | 1149 PNG | ✅ GTO/LiveMTT_Ben/（2026-04-21 確認完成，1149/1149） |
+
+> S0.1 Openraising / S0.2 Flatting_3Betting 實測比最初記錄少 12 張，diff 詳見 [[scraping-audit-2026-04-21]]。
 
 ## 後續待爬 Projects（依 Workspace 順序）
-1. 現場錦標賽 - Ben調整版（project id: d28e7eb8-8cd0-41df-91d6-c5181140304a，1145 張）
-2. 錦標賽 - Ben調整版（1470 張）
-3. 錦標賽 - 籌碼期望值（945 張）
-4. 決賽桌、決賽桌削剛策略、最後兩桌、大/中/小型錦標賽 ICM
+1. ~~現場錦標賽 - Ben 調整版~~（✅ 2026-04-21 已完成，1149 張）
+2. 錦標賽 - Ben 調整版 Tournament_Ben_Adjusted（1470 張）— **下一個目標**
+3. 錦標賽 - 籌碼期望值 Tournament_Chip_EV（945 張）
+4. 決賽桌系列：Final_Two_Tables（857）、Final_Table（2600）、Final_Table_Exploitative（2600）、Large/Medium/Small_Field_ICM（2505/2230/2041）— 合計 12833 張
 
 ## 整理規則
 每個 scenario 完成後立即整理到 C:\Users\User\Downloads\GTO\{ScenarioName}\ 資料夾。
