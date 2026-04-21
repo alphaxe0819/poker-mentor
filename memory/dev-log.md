@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-21 v0.8.3-dev.4 [dev]
+- merge wip/T071-chat-history-persist：exploit-coach 對話歷史 localStorage FIFO 3 則
+- 單檔 `public/exploit-coach-mockup-v3.html`（+172/-5）
+- demo hist-c → inline expandable + 「示範」badge；FIFO cap=3 + key `exploit-coach-conversations-v1`
+- 執行者 8 phase 驗證全 pass，tsc EXIT=0
+- 踩坑：執行者 commit 被 hook 偷切 HEAD 到 wip/T073，cherry-pick 救回（跨 session hook bug，執行者已存 memory）
+- 產品類（public/），bump v0.8.3-dev.3 → v0.8.3-dev.4
+
 ## 2026-04-21 v0.8.3-dev.3 [dev]
 - merge wip/T072-villain-hand-before-review：exploit-coach flow reorder
 - 單檔 `public/exploit-coach-mockup-v3.html`
