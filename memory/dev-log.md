@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-21 v0.8.3 [AI 教練文案修正][ship]
+- 用戶實機測 v0.8.2 回饋：AI 輸出「後街」不通順（e.g.「後街有任何改進跡象」）
+- 改 `supabase/functions/exploit-coach/index.ts` system prompt：新增「街別指稱」段
+  - 禁詞：後街 / 改進跡象 / 跑出
+  - 要求具體街名：翻牌 / 轉牌 / 河牌
+  - 指 turn+river 用「轉牌或河牌」「後續兩街」
+- 需手動貼整檔到**測試 + 正式** Supabase Edge Function（分兩步）
+
 ## 2026-04-21 v0.8.2 [hotfix][ship]
 - 🚨 v0.8.1 ship 後正式機 exploit-coach 實測：登入後仍顯示「需要先登入」
 - 根因：`public/exploit-coach-mockup-v3.html` 第 1442/1454/1464 行硬寫**測試** project ref `btiqmckyjyswzrarmfxa`
