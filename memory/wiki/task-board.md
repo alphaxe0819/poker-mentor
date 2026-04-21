@@ -196,16 +196,19 @@ updated: 2026-04-20
 
 </details>
 
-- [ ] **T-030** | Product | **實機驗證 exploit-coach 5 bug（dev.16）**
-  - 建議 branch：無（純手動 UI 驗證，不需 branch）
-  - 操作位置：瀏覽器 `https://poker-goal-dev.vercel.app/`
-  - 驗證：
-    1. Bug 1 Call 2/5 顯示金額
-    2. Bug 2 turn all-in → 跳 s5 攤牌
-    3. Bug 3 raise 輸入框鍵盤不擠畫面
-    4. Bug 4 S5b 對手手牌流程
-    5. Bug 5 token refresh（久待不過期）
-  - 產出：pass / fail + console log（若 fail）
+<!-- T-030 → In Review 2026-04-21（Claude_in_Chrome 自動化驗收，3 pass / 2 partial） -->
+
+- [ ] **T-064** | Product | **exploit-coach parent refresh handshake hang follow-up**（T-030 衍生）
+  - 建議 branch：`wip/T064-parent-refresh-hang`
+  - 背景：T-030 驗 Bug 5 時，iframe → parent `postMessage({type:'request-supabase-refresh'})` 到達，parent `ExploitCoachTab.tsx:23-59` 的 handler 有 log `[parent-refresh] got request`，但 `await supabase.auth.refreshSession()` 30s 內沒回覆 → 沒看到 `[parent-refresh] replied` → iframe 3s timeout 後 token=null
+  - 現場狀態 token 仍新鮮（expires 40min 後），**正常使用流程不會觸發 401 path**，但若 token 真過期 → 401 → askParentRefresh → parent 同樣 hang → `登入已過期`
+  - 範圍：`src/tabs/ExploitCoachTab.tsx:23-59`
+  - 建議修法：
+    - 加 race timeout：`Promise.race([supabase.auth.refreshSession(), timeoutPromise(2500)])`
+    - timeout → fallback 讀 localStorage 現有 token（若還沒過期）
+    - 或先 `getSession()` 驗活性，真過期才 `refreshSession()`
+  - 實測驗證方式：掛 tab 不動 40+ min 讓 token 過期 → 回來發問 → 看 console log + 能否順利發送（不用重新整理頁面）
+  - 相關：T-054 wiki `supabase-edge-function-gotchas`
 
 <!-- T-031 已完成，移至 Done -->
 
@@ -330,27 +333,7 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-- [?] **T-013** | Pipeline | **Scraping 成果盤點 + 整理** `(2026-04-21 家裡電腦 wip1 執行者完成)`
-  - branch：`wip/T013-scraping-audit`（從 `origin/dev` 切出，push origin 完成）
-  - 範圍：確認 Downloads 現有 10 個 `_ranges.json` 對應的 PNG 整理狀態 + 更新 roadmap S1-S4
-  - 改動檔案（全部在 `memory/`，無 src / supabase 觸及，**沒動 version.ts / dev-log**）：
-    - 新增 `memory/wiki/scraping-audit-2026-04-21.md`（audit 完整報告）
-    - 更新 `memory/wiki/range-collection-roadmap.md`（S0 實際數、S1 ✅、S4 補具體張數、S2 改為下一目標、補 audit 連結）
-    - 更新 `memory/project_pokerdinosaur_scraping.md`（進度表 2026-04-21、S1 標完成、待爬清單精簡）
-    - 更新 `memory/index.md`（加一條指向 audit 頁）
-  - 發現結論：
-    1. **10 個 `*_ranges.json` 全到位**在 `C:/Users/User/Downloads/`（converter 可直接吃），`action_id_map.json` 也在
-    2. **S1 Live_MTT_Ben_Adjusted 已爬完**（unique PNG 1149 = JSON tables 1149；`(1).png` 是下載器副本，不算新資料）
-    3. S0 段 Openraising 實際 63 / 宣稱 70（−7）、Flatting_3Betting 實際 103 / 宣稱 108（−5），其他 7 個 scenario ✓
-    4. S2-S4 僅 JSON 到位、PNG 全未爬；待爬總量 **13248 張**（S2=1470 / S3=945 / S4a-f=12833）
-  - 對後續 pipeline 影響：
-    - C2/C3（converter MTT 擴充 + E2E）可用 Live_MTT_Ben_Adjusted 任一 table 實測，不需等新 scraping
-    - C4 DB schema 估算上限 = 16750 tables × 若干 flop
-    - P5 MTT postflop solve 可優先跑 Live_MTT_Ben subset
-  - 遺留（不在本 task scope）：
-    - S0.1/S0.2 −12 張 diff 待查（建議對照 `Course_ranges.json` table 名稱）
-    - Downloads 根舊格式 `pd_*.json` / `pokerdinosaur_*.json` 待清理（roadmap C0 已標「逐步淘汰」）
-  - 判讀建議：純文件改動，大腦 review + `git merge --no-ff wip/T013-scraping-audit` 即可；本任務已同步 range-collection-roadmap，T-040（大腦 roadmap 同步）可一併收
+<!-- T-013 / T-030 已 merge 2026-04-21 -->
 
 - [?] **T-046** | Pipeline | **seed --include-river row 估算（dry-run 完成）**
   - branch: `wip/T046-seed-river-estimate`

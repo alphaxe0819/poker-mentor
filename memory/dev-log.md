@@ -5,21 +5,26 @@
 
 ---
 
+## 2026-04-21 [flow] T-030 驗收：exploit-coach 5 bug 實機（部分 pass）
+- 執行者：主目錄 `wip/T030-exploit-coach-verify`（從 origin/dev `9ee0222` 切出）
+- 工具：Claude_in_Chrome（tabId 209575093）+ https://poker-goal-dev.vercel.app/（v0.8.1-dev.39，script `index.C5QDRci6.js`）
+- 結果：
+  - ✅ **Bug 1** Call 按鈕顯示金額：runtime 看到 `Call 1` / `All-in 100`，hint `跟注需補 1 BB`
+  - ✅ **Bug 2** Turn all-in → s5：跑完 BB all-in → BTN all-in call → 主按鈕變 `All-in → 攤牌`，點下去 streetIdx=2 直接跳 s5
+  - ⚠ **Bug 3** Raise 鍵盤 PARTIAL：viewport / `inputmode=decimal` / `scrollIntoView` 都在，真機軟鍵盤行為仍需 iPhone/Android 實機補驗
+  - ✅ **Bug 4** S5b 對手手牌 + AI prompt 全路徑：s5→s5b→picker→Q♦9♠→fetch body 含 `"villain_hand":"Q♦9♠"`
+  - ⚠ **Bug 5** Token refresh PARTIAL：架構 fix OK，但 parent `supabase.auth.refreshSession()` 30s 未回覆 → 開 T-064 follow-up
+- 驗收報告：[docs/verification/T-030-report.md](../docs/verification/T-030-report.md)
+- 純 flow 改動（docs + task-board），不 bump version
+
 ## 2026-04-21 [flow] compound 收工：T-045 繞圈教訓 + gto-pipeline env wiki
 - 家裡電腦 session 嘗試跑 T-045 卡在 `scripts/gto-pipeline/.env` + `node_modules` 缺失
-- 根因：T-043 setup 時沒更新 `setup-env.ps1`，gto-pipeline 子目錄 env setup 獨立於 root；Claude 不知情繞圈給 A/B/C 選項讓用戶挫折
-- 同時踩到 wip1 worktree HEAD 被切走（T-012 scripts commit 77e9833 誤落 `wip/T062-wip1-isolation`），救治：stash → switch 正確 branch → cherry-pick → reset 污染 branch HEAD^
-- 產出：
-  - 新 wiki `memory/wiki/gto-pipeline-env-setup.md`（.env 範本 + service_role 取得流程 + RLS 脈絡 + 「Claude 被派此類 task 時的動作原則」）
-  - 追加 `memory/wiki/two-machine-workflow.md`：🗺 機器識別表（家裡 `Desktop/gto-poker-trainer` vs 士林 `POKERNEW/poker-mentor`）+ 🚨 wip1 HEAD 污染救治 Playbook
-  - 追加 `memory/wiki/supabase-edge-function-gotchas.md`：坑 4 batch-worker service_role 需求 vs solver_postflop_* anon 開放的 RLS 設計差異
-  - 更新 `memory/index.md` 加 `[[gto-pipeline-env-setup]]` 連結
-  - 更新 `CLAUDE.md` 新電腦設定 SOP 加第 3 條指向新 wiki（含「不要建議用戶把 service_role 貼進對話」）
-  - 個人 wiki 新建 `wiki/insights/llm-session-context-degradation.md`（長 context session 退化信號 + 量化閾值 40 turns + 換 session 策略）
-- T-045 本身未完成（需用戶從 Supabase Dashboard 複製 service_role 到本機 `scripts/gto-pipeline/.env`），下次派工時新 session 會按 wiki 直接做，不再繞
+- 根因：T-043 setup 時沒更新 `setup-env.ps1`，gto-pipeline 子目錄 env setup 獨立於 root
+- 產出：新 wiki `gto-pipeline-env-setup.md` + 追加 `two-machine-workflow.md` 機器識別 + `supabase-edge-function-gotchas.md` RLS 設計差異
+- 個人 wiki 新建 `wiki/insights/llm-session-context-degradation.md`（長 context session 退化信號）
 - 純 flow 改動（wiki + CLAUDE.md），不 bump version
 
-
+## 2026-04-21 v0.8.1-dev.39 [dev]
 - 整理今日殘留
 - `.gitignore` 加 `.claude/worktrees/`（Claude Code sandbox 自動建的 isolation worktree 目錄，每次新 sandbox session 會產生一個，不該進 repo）
 - 保留 `src/lib/gto/gtoData_hu_25bb_srp_Kh8h3h.ts`（T-056 real batch dry-run 時 solver 意外補產出的 .ts）
