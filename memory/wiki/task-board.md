@@ -444,7 +444,7 @@ updated: 2026-04-20
 ## 👀 In Review（等大腦整合）
 
 <!-- T-013 / T-030 / T-021 / T-074 / T-073 / T-071 / T-072 / T-070 / T-075 Phase 0 / T-075 Phase 1 / T-080 已 merge 2026-04-21 -->
-<!-- T-080 待用戶部署 Edge Function 到測試 Supabase 驗收 -->
+<!-- T-080 真 Done 2026-04-22：正式 Supabase Edge Function 已部署 + v0.8.5 正式機已上（繞過 Vercel webhook silent drop，改用 CLI prebuilt+tgz；詳見 [[vercel-deployment-troubleshooting]]） -->
 <!-- T-075 Phase 1 merge @ 4d40f27 — Course 205 tables → mtt_9max_ranges.mjs (110 distinct entries)；scenarios.mjs re-export COURSE_RANGES + caveat 註解；等 T-076 消化 -->
 
 <!-- T-070 / T-021 / T-072 已 merge 2026-04-21 -->

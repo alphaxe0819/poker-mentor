@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.3 [dev]
+- ✅ **v0.8.5 正式機部署完成**：繞過 Vercel webhook silent drop，用 CLI prebuilt+tgz 推上 `dpl_2mrSemknaAJz3Y6iZPJQxiF6vcJc`
+- ✅ **T-080 真 Done**：正式 Supabase `qaiwsocjwkjrmyzawabt` Edge Function 已部署（用戶手貼 Dashboard）
+- Vercel webhook silent drop 根因未 100% 確認（Hobby plan 無 delivery log），繞過路徑 + Redeploy 行為糾正 + CLI 完整工作流寫入新 wiki [[vercel-deployment-troubleshooting]]
+- task-board T-080 尾巴清（從「待部署」→「真 Done 2026-04-22」）
+- memory/index.md 加新 wiki 索引
+- 純 flow 改動（memory/），不觸發測試機驗證
+
 ## 2026-04-21 v0.8.5-dev.2 [dev]
 - `.gitignore` 加 `.vercel`（vercel link 自動產的 `.vercel/` 目錄不進 repo）
 - context：為了繞過 Vercel webhook 斷線，嘗試 `npx vercel --prod` CLI 推正式機

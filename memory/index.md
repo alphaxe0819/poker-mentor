@@ -14,6 +14,7 @@
 - [[ui-v2-rules]] — V2 UI 設計規則：牌面樣式、版面結構、HU 換手 UX
 - [[deployment-state]] — Supabase Edge Functions / DB Tables / RPC / Vercel 基礎設施狀態
 - [[supabase-edge-function-gotchas]] — Edge Function 部署坑：ES256 JWT 不被 runtime 支援、Secrets 跨 project 不自動帶、fetch 沒 response.ok check
+- [[vercel-deployment-troubleshooting]] — Vercel webhook silent drop 繞過路徑 + CLI prebuilt+tgz 工作流 + Redeploy 行為糾正（不抓 git HEAD）
 - [[poker-terminology-zh-tw]] — 繁中撲克術語對照表（台灣社群用法）：LLM 教練 system prompt 的術語 grounding，避免 `dominate`→「過度」類直翻
 - [[gto-pipeline-conventions]] — solver 產出與手寫 GTO data 的檔名 / export 命名規範
 - [[gto-pipeline-env-setup]] — `scripts/gto-pipeline/.env` + `node_modules` setup（setup-env.ps1 不涵蓋，service_role 要從 Dashboard 手貼）
