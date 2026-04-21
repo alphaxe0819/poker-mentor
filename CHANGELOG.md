@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.3 — 2026-04-21 (AI 教練文案修正)
+
+### exploit-coach Edge Function prompt 調整
+- 禁止使用模糊詞「後街」「改進跡象」「跑出」
+- 指稱街別一律用具體名：翻牌（flop）/ 轉牌（turn）/ 河牌（river）
+- 指 turn+river 用「轉牌或河牌」「後續兩街」，不用「後街」
+- ⚠ 需手動貼整檔到測試 + 正式 Supabase Edge Function
+
 ## v0.8.2 — 2026-04-21 (hotfix)
 
 ### 修復
