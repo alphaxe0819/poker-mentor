@@ -96,9 +96,12 @@
    - **不要手動建立 .env，不要從其他地方複製 .env，腳本裡有完整的正確值**
    - **本專案沒有 `.env.example`（已刪除），不要嘗試尋找或建立它**
 2. 讀 `memory/dev-log.md` 了解最近的開發脈絡，然後回報設定結果
+3. **若用戶要跑 GTO pipeline**（batch-worker / convert-to-db / test-retrieval 等）：`setup-env.ps1` 不涵蓋 `scripts/gto-pipeline/`，要另外做本頁 Step 1-2 → 見 `memory/wiki/gto-pipeline-env-setup.md`（含 service_role 取得流程 + `.env` 範本，**不要**建議用戶把 service_role 貼進對話）
 
 ### 為何這條規則存在
 2026-04-14 新電腦 clone 後，Claude session 兩次都沒有跑 setup-env 腳本，而是自己建 .env.example 叫用戶手動填值。刪除 .env.example 並簡化 SOP 為單一腳本，消除歧義。
+
+2026-04-21 家裡電腦跑 T-045 時 Claude 不知道 `scripts/gto-pipeline/.env` setup 獨立於 root `.env`，繞圈給選項讓用戶挫折。新增第 3 條指向 `gto-pipeline-env-setup` wiki，讓下個 session 一查就到位。
 
 ## 開工 SOP（每次新 session 開始時 Claude 必須主動執行）
 **不要等用戶指示，也不要問「要跑嗎？」。Session 開始的第一件事就是依序執行：**

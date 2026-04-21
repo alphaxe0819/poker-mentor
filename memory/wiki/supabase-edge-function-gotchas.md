@@ -124,6 +124,42 @@ const json = await response.json()
 
 ---
 
+## 坑 4：batch-worker 需 service_role / solver_postflop_mtt 需 anon — RLS 設計不一致
+
+### 症狀
+- Pipeline script 某些能直接跑（用 anon key），某些 `Missing SUPABASE_SERVICE_KEY` exit 1
+- 新電腦 setup 時搞不清楚要不要建 `scripts/gto-pipeline/.env`
+
+### 根因：同一個 Supabase project 內，不同 table 的 RLS 設計不同
+
+| Table | RLS 對 anon | RLS 對 authenticated | 誰用 | 用哪個 key |
+|---|---|---|---|---|
+| `solver_postflop_6max` | SELECT + INSERT + UPDATE | 同 | pipeline scripts / Edge Function | **anon 就夠** |
+| `solver_postflop_mtt` | SELECT + INSERT + UPDATE（T-063 對齊 6max） | 同 | pipeline scripts / Edge Function | **anon 就夠** |
+| `gto_postflop` | ❌ 無（拒絕） | SELECT only | batch-worker / front-end retrieval | **service_role**（pipeline 寫入）/ authenticated user session（前端讀） |
+| `gto_batch_progress` | ❌ 無 | SELECT only | batch-worker（雙機協調） | **service_role**（pipeline 寫入） |
+
+### 歷史脈絡
+- `solver_postflop_*` 家族：T-011 / T-012 / T-063 時代，pipeline scripts 用 anon key 跑 upsert
+  （`scripts/gto-pipeline/convert-to-db.mjs` / `test-retrieval.mjs` 都硬編 anon key），
+  所以 RLS 對 anon 放行
+- `gto_postflop` / `gto_batch_progress`：T-033 / T-042 時代，改用 `batch-worker.mjs`
+  走 service_role bypass RLS（雙機 claim_gto_batch RPC 協調也仰賴 service_role），
+  RLS 只對 authenticated 開 SELECT 當前端 retrieval 用
+
+### 對「新電腦 setup」的影響
+- 如果只要跑 `convert-to-db.mjs` / `test-retrieval.mjs`（solver_postflop_* 家族）→ **只需要** repo root 的 `.env`（Vite 那個沒用，scripts 硬編 anon 了）
+- 如果要跑 `batch-worker.mjs` / `seed-batches.mjs`（gto_postflop 家族）→ **必須**額外建 `scripts/gto-pipeline/.env` 放 `SUPABASE_SERVICE_KEY`
+- `setup-env.ps1` 目前只處理前者
+
+### 要統一嗎？
+- **短期**：保留現狀。兩個家族 table 的產出頻率不同（solver_postflop 慢慢補、gto_postflop marathon 跑），設計意圖不同
+- **長期**：考慮 gto_postflop 也改走 anon（簡化 onboarding），但要重新設計 RLS 確保 anon 只能寫「已 claim 的 batch」（複雜度高）
+
+詳細 setup 流程見 [[gto-pipeline-env-setup]]。
+
+---
+
 ## 相關連結
 
 - [JWT Signing Keys | Supabase Docs](https://supabase.com/docs/guides/auth/signing-keys)

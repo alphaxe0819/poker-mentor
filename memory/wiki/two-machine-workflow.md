@@ -146,6 +146,86 @@ git checkout --detach origin/dev
 
 保留向後相容，但建議新配置改用 `-wip*` 後綴的簡潔模型。
 
+---
+
+## 🗺 機器識別（多電腦開發 — 看路徑就知道在哪台）
+
+| 電腦 | 主目錄 | wip 目錄 |
+|---|---|---|
+| **家裡電腦** | `C:/Users/User/Desktop/gto-poker-trainer` | `C:/Users/User/Desktop/gto-poker-trainer-wip1` |
+| **士林電腦** | `C:/Users/User/POKERNEW/poker-mentor` | （暫無 wip worktree） |
+
+**Claude session 的職責**：`pwd`（或看 system prompt 的 working directory）**直接判斷**自己在哪台電腦，
+**不要**問用戶。用戶同時操作多台很辛苦，Claude 該主動用路徑對應機器。
+
+### 歷史踩坑
+
+2026-04-21 大腦 session 處理 T-045 時，用戶派工指令寫「cd C:/Users/User/POKERNEW/poker-mentor」
+（士林電腦路徑），但 session 實際在家裡主目錄。Claude 沒對齊路徑 → 以為是另一台電腦的工作 →
+回報「這指令不是給我的」引發用戶挫折。修正：派工指令裡若含「或對應主目錄路徑」字樣，
+Claude 該用**自己當前機器**的對應主目錄（依本表）。
+
+---
+
+## 🚨 Wip1 HEAD 污染救治 Playbook（T-012 / T-062 踩坑）
+
+### 情境
+執行者在 `-wip1` worktree 做事，`git commit` 後發現 commit 落到**錯的 wip branch**
+（例：`wip/T-012` 的 commit 誤落 `wip/T062-wip1-isolation`）。
+
+### 根因
+- wip1 worktree 的 HEAD 不知何時被切到別的 wip branch（可能上個 task 沒 detach、或另一個 session 切走）
+- 執行者 `git checkout -b wip/T0xx-新 origin/dev` **漏掉 `origin/dev` base** → 從當前（錯的）HEAD 切
+- 新 wip branch 其實疊在前一個 wip branch 上
+
+### 預防
+1. 每個執行者 session **開始時** `git branch --show-current` 檢查當前 HEAD
+2. 非 detached → 先 `git checkout --detach origin/dev`
+3. 再 `git checkout -b wip/T0xx-新 origin/dev`（**一定帶 base**）
+
+T-062 已把這段警告寫進 `scripts/session-start-reminder.sh`，但**新開 wip branch 若 base 舊於 T-062 merge commit**，
+reminder 就不會觸發（T-062 尚未 pull 進該 branch）。
+
+### 救治流程（已發生污染時）
+
+```bash
+# 1. stash 所有未 commit 改動（含 task-board 之類的 edit）
+git status --short                 # 確認哪些檔要保
+git stash push -u -m "救治污染 <task-id>"
+
+# 2. 切到正確的 wip branch
+git switch wip/T012-正確 branch
+
+# 3. Cherry-pick 誤落的 commit
+git cherry-pick <誤落 commit hash>
+
+# 4. Stash pop 回來（可能會 conflict，視 task-board 版本差異而定）
+git stash pop
+#    → 若 conflict：
+#      - `git checkout HEAD -- <衝突檔>` 還原該檔到正確 branch 版本
+#      - `git stash drop`（丟掉不相容的 stash）
+#      - 重新 Edit 該檔（根據正確 branch 的 base）
+
+# 5. Commit 救回的改動 + push
+git add <新 edit 的檔>
+git commit -m "<描述>"
+git push -u origin wip/T012-正確 branch
+
+# 6. 回頭清理被污染的 branch（如果污染 commit 還沒 push 到 origin）
+git switch wip/T062-被污染 branch
+git log origin/wip/T062-被污染..HEAD --oneline   # 確認 unpushed commits
+git reset --hard HEAD^               # 移除污染 commit（只要 origin 沒這筆就安全）
+```
+
+### 何時會觸發
+- 多 session 同時開 wip1（其中一個 session 切 branch 後沒 detach 回去）
+- 執行者 session 完成 task 後忘記 `git checkout --detach origin/dev`
+- 下個執行者 session 開工時 base 還沒更新到最新 dev（T-062 reminder 沒觸發）
+
+### 延伸防護
+- 每個 task 完成 `push` 後，**立刻** `git checkout --detach origin/dev` 回 idle
+- 開工前 `git fetch origin --prune` 拉最新 dev，讓 T-062 reminder 有新基準檢查
+
 ## 🌳 分支命名規則
 
 | 分支 | 命名 | 生命週期 | 動到哪些檔 |
