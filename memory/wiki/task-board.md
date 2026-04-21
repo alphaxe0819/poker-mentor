@@ -66,17 +66,57 @@ updated: 2026-04-20
 
 <!-- T-013 → In Review 2026-04-21（家裡電腦 wip1 執行者接手，士林原派工未動） -->
 
-- [ ] **T-021** | Pipeline | **Solver P2 HU 40bb 3bp × 25 flops** `(派工 2026-04-21 → 家裡電腦執行者)`
-  - 建議 branch：`wip/T021-hu40bb-3bp`（從 `origin/dev` 切出）
-  - 預估：3-5 hr
+<!-- T-021 骨架 → In Review 2026-04-21（家裡主目錄執行者，剩 20 flops marathon 待接手） -->
 
-- [ ] **T-022** | Pipeline | **Solver P3 6-max 100bb 4bp（10 場景 × 13 flops）**
+- [ ] **T-022** | Pipeline | **Solver P3 6-max 100bb 4bp — 從 pokerdinosaur 抓 4B range（C 線對接）**
   - 建議 branch：`wip/T022-6max-4bp`
-  - 預估：3-5 hr
+  - scope 定案（2026-04-21，用戶選 D）：不手寫 range，走 converter 線
+  - 步驟：
+    1. `inspect-pd.mjs` 掃 pokerdinosaur **S0.8 4B / Cold Calling 3B**（26 PNG + 對應 JSON）+ `Course_ranges.json` / `Tournament_Ben_ranges.json` 看 4bp 場景結構
+    2. 挑 10 個適合跑 solver 的 matchup（opener × 3better × 4better 組合）
+    3. `pd-to-range.mjs` 產 TexasSolver range 字串
+    4. 加進 `scripts/gto-pipeline/scenarios.mjs` 作 6max 100bb 4bp 場景 + effective_stack/pot 估算（典型 100bb 4bp pot ~94bb / eff ~73bb）
+    5. 產 inputs → `batch-run.ps1 -Filter "^6max_100bb_4bp_"` marathon
+    6. 產 `src/lib/gto/gtoData_6max_100bb_4bp_*.ts` + index 更新
+  - 前置依賴：T-013 盤點完成（Downloads/ 檔案到位）
+  - 預估：converter 對接 1-2 hr + solver marathon（SPR 預估 1-2 淺，參考 T-021 教訓可能 5-10 min）
+  - 執行者紀律：不動 `src/version.ts` / `memory/dev-log.md`
 
 - [ ] **T-023** | Pipeline | **Solver P4 6-max 深度擴充（40bb/60bb SRP）**
   - 建議 branch：`wip/T023-6max-shallow`
   - 待確認具體範圍
+
+---
+
+### 🚨 正式版重建（用戶 2026-04-21 決策，以 pokerdinosaur 為 range 真相來源）
+
+<!-- T-074 → In Review 2026-04-21（家裡主目錄執行者） -->
+
+- [ ] **T-075** | Pipeline | **翻牌前 range 從 pokerdinosaur 建立（正式版基礎）**
+  - 建議 branch：`wip/T075-preflop-ranges-from-pd`
+  - 範圍：對每個 depth × scenario（HU 13bb/25bb/40bb SRP/3bp，6max 100bb SRP/3bp/4bp 等）從 pokerdinosaur 對應 project 抓 range
+  - 前置：T-013 audit 完成（Downloads 10 個 `_ranges.json` 已盤點）
+  - 產出：新 `scripts/gto-pipeline/scenarios-prod.mjs`（或擴充現有 scenarios.mjs 加 `_PROD_RANGES`）
+  - 依賴 converter C1/C1.5 / parse-pd-table-name（C2）
+  - 預估：2-5 hr（看 matchup 數 + pokerdinosaur 對應複雜度）
+
+- [ ] **T-076** | Pipeline | **Solver 全場景重跑（正式版）**
+  - 建議 branch：`wip/T076-solver-prod-rerun`
+  - 前置：T-074 + T-075 完成
+  - 範圍：用正式版 range 重跑所有既有場景 → 產正式版 `src/lib/gto/prod/gtoData_*.ts`（或不開子資料夾，index 切區）
+  - 重跑清單（依 T-021 經驗，SPR 淺的很快）：
+    - HU 13bb SRP × 21 flops
+    - HU 25bb SRP × 21 flops
+    - HU 25bb 3bp × 21 flops
+    - HU 40bb SRP × 21 flops
+    - HU 40bb 3bp × 21 flops（T-021 剛跑的測試版）
+    - 6max 100bb SRP × 13 flops × 25 scenarios
+    - 6max 100bb 3bp × 13 flops（場景數 TBD）
+    - 6max 100bb 4bp × 13 flops（原 T-022 scope → 合併進 T-076）
+  - 原 T-022（6max 100bb 4bp）scope 合併進來，當 T-076 的一個子場景跑
+
+<!-- T-022 合併進 T-076 → 標記暫停 -->
+<!-- T-022 執行者：若已開 wip/T022，可考慮把 6max 4bp 的 converter 研究結果帶進 T-075 -->
 
 <!-- T-062 → In Review 2026-04-21 -->
 
@@ -216,6 +256,32 @@ updated: 2026-04-20
   - 建議 branch：無
   - 動作：`ls .env`；無則 `powershell scripts/setup-env.ps1`
 
+<!-- T-070 → In Review 2026-04-21（士林主目錄執行者 localStorage 版） -->
+
+<!-- T-071 → In Review 2026-04-21（士林主目錄執行者 localStorage + FIFO 版） -->
+
+<!-- T-072 → In Review 2026-04-21 -->
+
+<details>
+<summary>📦 T-072 原任務描述（已 In Review，見下方）</summary>
+
+- [ ] **T-072** | Product | **流程順序：對手手牌 picker 移到確認牌譜之前（s5b → s5a）** `(派工 2026-04-21 → 士林 或 家裡 wip1 執行者)`
+  - 建議 branch：`wip/T072-villain-hand-s5a`
+  - 問題：目前 `s4 → s5 確認牌譜 → s5b 對手手牌 picker → s6 AI 分析`，對手手牌問得太晚
+  - 目標：`s4 → s5a 對手手牌 picker → s5 確認牌譜 → s6 AI 分析`
+  - 具體動作：
+    1. 把 `public/exploit-coach-mockup-v3.html` 的 `<div id="s5b">` **rename 成 `<div id="s5a">`**（連帶所有 `'s5b'` / `s5b` 字串引用都改 `s5a`）
+    2. 調整 screen 切換邏輯：原本 s4 完成 → go('s5')，改成 s4 完成 → go('s5a')；s5a 完成 → go('s5')；s5「確認牌譜」「開始分析」按鈕照樣 → go('s6')
+    3. s5「確認牌譜」頁如果已知對手手牌（`villainHandKnown=true`）→ 直接顯示對手牌面（替換原本「？？」佔位）
+    4. T-050 Bug 1 的 S5b picker DOM 修法（body 層級 + z-index 1000）保留，只是 id 改 s5a
+  - 完成條件：
+    - 手動驗證：玩到 all-in → 先看到 s5a 問對手手牌 → 選完或 skip → 進 s5 確認牌譜 → 開始分析 → s6
+    - `npx tsc -b --noEmit` EXIT=0
+
+</details>
+
+<!-- T-073 → In Review 2026-04-21 -->
+
 <!-- T-055 → In Review 2026-04-20 -->
 
 <!-- T-051 → In Review 2026-04-20 -->
@@ -333,7 +399,32 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-<!-- T-013 / T-030 已 merge 2026-04-21 -->
+<!-- T-013 / T-030 / T-021 / T-074 / T-073 已 merge 2026-04-21 -->
+
+<!-- T-070 / T-021 / T-072 已 merge 2026-04-21 -->
+
+- [?] **T-071** | Product | **exploit-coach 對話歷史 localStorage persist + FIFO 3 則**
+  - branch: `wip/T071-chat-history-persist`（從 origin/dev `1cab7a9` / v0.8.3-dev.3 切出）
+  - 最後 commit: `669be21`（cherry-pick 自 `951a251` — 先前 Claude_in_Chrome hook 亂切 HEAD 把 commit 落在另一個 wip/T073 branch，cherry-pick 救回）
+  - 機器：士林主目錄
+  - 改動：單檔 `public/exploit-coach-mockup-v3.html`（+172/-5）
+    - 硬編 demo hist-c 加 `onclick="toggleHistExpand(this)"` + 「示範」badge + 寫死範例 Q&A 兩輪
+    - 新 helpers：`loadConversations` / `saveConversationsList` / `persistCurrentConvo` / `logToCurrentConvo` / `initCurrentConvo` / `endCurrentConvo` / `renderSavedConversations` / `toggleHistExpand` / `formatConvoTime` / `escapeHtml`
+    - key `exploit-coach-conversations-v1`，shape `{id, villainName, villainColor, villainDesc, heroPos, heroHand, villPos, board, createdAt, messages:[{role,content}]}`
+    - FIFO cap=3：依 createdAt 排序，超過 `CONVO_FREE_LIMIT` 就 shift 最舊
+    - hook：`startAI` → `initCurrentConvo`；`aiQ/aiSend/自動 autoQ` + response → `logToCurrentConvo('user'/'assistant')`；`go()` 離開 s6 → `endCurrentConvo`（空殼自動清掉）；進 s1 → `renderSavedConversations`
+    - s1 配額提示：< 3「免費版 N/3 則・升級看全部→」；= 3「免費版已達上限 3 則・新對話會覆蓋最舊的・升級看全部→」
+  - 驗證（localhost:5173 + 程式化 iframe reload）：
+    - demo 展開 / 收合 ✅
+    - 3 則 convos 全存 + 最新在最上 ✅
+    - 第 4 則 → FIFO 擠掉最舊（測試對手1 out）✅
+    - reload iframe → saved 3 則全 persist + 配額文案正確 ✅
+    - saved card 點擊展開內容 ✅
+    - 空殼 convo（沒 log 訊息）離開後自動清掉 ✅
+    - 配額文案：N=1 → 「免費版 1/3 則・」；N=3 → 「免費版已達上限 3 則・新對話會覆蓋最舊的・」
+    - tsc exit=0（未改 src）
+  - scope：純 iframe localStorage，不碰 Supabase（B 方案跨裝置另開 task）
+  - 等大腦 review + merge
 
 - [?] **T-046** | Pipeline | **seed --include-river row 估算（dry-run 完成）**
   - branch: `wip/T046-seed-river-estimate`

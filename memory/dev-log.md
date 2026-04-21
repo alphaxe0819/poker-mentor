@@ -5,6 +5,77 @@
 
 ---
 
+## 2026-04-21 v0.8.4 [ship]
+- 🚀 v0.8.3 → v0.8.4 正式
+- 內容（CHANGELOG.md v0.8.4）：
+  - T-070 新建對手 localStorage persist
+  - T-071 對話歷史 localStorage FIFO 3 則 + 假對話可展開
+  - T-072 流程 s5b → s5a（對手手牌提前到確認牌譜之前）
+  - T-073 老張 → standard GTO 對手
+  - T-074 既有 gtoData_*.ts 全標 TEST DATA（正式版 range 待 T-075/T-076）
+  - Edge Function prompt 中文化（縮保留英文 + 強制翻譯 30+ 術語）
+- ⚠ 需手動貼 Edge Function 整檔到**正式** Supabase（測試已部署驗證通過）
+
+## 2026-04-21 v0.8.4-dev.1 [dev][Edge Function 待部署]
+- 改 `supabase/functions/exploit-coach/index.ts` prompt「繁中術語校準」段
+- 大幅縮保留英文 list：只留 14 個（BTN/SB/BB/UTG/CO/HJ/LJ/IP/OOP/GTO/ICM/MDF/SPR/4-bet）
+- 擴展中文強制翻譯（30+ 詞）：c-bet → 持續下注 / nit → 緊弱 / check-raise → 過牌加注 / draw → 聽牌 / semi-bluff → 半詐唬 / thin value → 薄價值 等
+- 整體原則：回答盡量全中文，不混「持續下注 (c-bet)」
+- **需手動貼整檔到測試 + 正式 Supabase Edge Function**（分兩步）
+- 產品類（supabase/），bump v0.8.3-dev.6 → v0.8.4-dev.1
+
+## 2026-04-21 v0.8.3-dev.6 [dev]
+- merge wip/T073-villain-laozhang-standard：老張 calling_station → standard GTO
+- 單檔 `public/exploit-coach-mockup-v3.html`（L165/L167/L376，2 處 selectOpp + villainProfile 預設）
+- 保留 calling_station 分類規則 + dict（通用類型支援不拿掉）
+- 執行者 preview 3 項驗證 pass
+- 產品類（public/），bump v0.8.3-dev.5 → v0.8.3-dev.6
+
+## 2026-04-21 v0.8.3-dev.5 [dev]
+- merge wip/T074-mark-test-data：既有 `gtoData_*.ts` 全部標測試版
+- 150 個 .ts prepend 檔頭註解 `⚠️ TEST DATA — scenarios.mjs placeholder range`（指向 src/lib/gto/prod/）
+- `gtoData_hu_postflop_index.ts` 切 TEST / PROD 兩區 + T-075/T-076 TODO 註解
+- 方法 (a)：不動 import path / export 名 / DB 內容，app 零影響
+- tsc EXIT=0
+- 產品類（src/lib/gto/），bump v0.8.3-dev.4 → v0.8.3-dev.5
+
+## 2026-04-21 v0.8.3-dev.4 [dev]
+- merge wip/T071-chat-history-persist：exploit-coach 對話歷史 localStorage FIFO 3 則
+- 單檔 `public/exploit-coach-mockup-v3.html`（+172/-5）
+- demo hist-c → inline expandable + 「示範」badge；FIFO cap=3 + key `exploit-coach-conversations-v1`
+- 執行者 8 phase 驗證全 pass，tsc EXIT=0
+- 踩坑：執行者 commit 被 hook 偷切 HEAD 到 wip/T073，cherry-pick 救回（跨 session hook bug，執行者已存 memory）
+- 產品類（public/），bump v0.8.3-dev.3 → v0.8.3-dev.4
+
+## 2026-04-21 v0.8.3-dev.3 [dev]
+- merge wip/T072-villain-hand-before-review：exploit-coach flow reorder
+- 單檔 `public/exploit-coach-mockup-v3.html`
+- 新 flow：`s4 → s5a 對手手牌 → s5 確認牌譜（已知則顯示）→ s6 AI`
+- 改動：s5b → s5a rename + `gotoConfirmFlow()` helper + s5 renderConfirm 已知對手牌時顯示
+- 執行者 5 情境驗證全 pass
+- 產品類（public/），bump v0.8.3-dev.2 → v0.8.3-dev.3
+
+## 2026-04-21 v0.8.3-dev.2 [dev]
+- merge wip/T021-hu40bb-3bp：HU 40bb 3bp × 21 flops solver marathon
+- 21 個 `src/lib/gto/gtoData_hu_40bb_3bp_*.ts` + index `HU_40BB_3BP_DB` 21 entries
+- 刪 9 個 BOARDS_EXTENDED 溢出 input，保留 BOARDS_HU 21 完整集
+- Marathon 實跑：**3.2 min**（原估 3-5 hr，嚴重過估）；SPR 1.7 淺 stack 3bp 收斂極快 ~9-10s/flop
+- 教訓（執行者回報值得 wiki 化）：估 solver 時間看 **SPR** 比看 stack depth 準；未來 P3 6-max 100bb 4bp 若 SPR 1-2 也會很快，先跑 1 flop 實測再外推
+- tsc EXIT=0
+- 產品類（src/lib/gto/），bump v0.8.3-dev.1 → v0.8.3-dev.2
+
+## 2026-04-21 v0.8.3-dev.1 [dev]
+- merge wip/T070-villain-persist：新建對手 localStorage persist
+- 單檔 `public/exploit-coach-mockup-v3.html`（+53/-11）
+  - 新 helper：`loadSavedVillains` / `saveVillainsList` / `appendSavedVillain` / `renderSavedVillains`
+  - `saveOpp()` 改寫 localStorage 而非只 appendChild DOM
+  - key `exploit-coach-villains-v1`，保留硬編老張為 default
+  - init 呼叫 `renderSavedVillains()` 回填
+- 執行者驗證：append → persist → iframe reload → 回來 OK，無 dup，tsc exit=0
+- 產品類（public/），bump v0.8.3 → v0.8.3-dev.1
+
+---
+
 ## 2026-04-21 v0.8.3 [AI 教練文案修正][ship]
 - 用戶實機測 v0.8.2 回饋：AI 輸出「後街」不通順（e.g.「後街有任何改進跡象」）
 - 改 `supabase/functions/exploit-coach/index.ts` system prompt：新增「街別指稱」段

@@ -1,3 +1,4 @@
+// ⚠️ TEST DATA — scenarios.mjs placeholder range（或手寫 preflop range）產物。正式版改由 pokerdinosaur 匯入，見 src/lib/gto/prod/...（T-074 降級 2026-04-21）
 // =============================================================
 // GTO Preflop Range Data — HU Tournament 40BB
 // =============================================================
