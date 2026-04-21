@@ -81,37 +81,6 @@ updated: 2026-04-20
   - 建議 branch：`wip/T023-6max-shallow`
   - 待確認具體範圍
 
-- [ ] **T-064** | Pipeline | **HU 25bb SRP `_flop_` → 新命名（13 檔）** `(派工 2026-04-21 → 家裡電腦 wip1 執行者)`
-  - 建議 branch：`wip/T064-hu25bb-srp-rename`（從 `origin/dev` 切出）
-  - 背景：T-057 奠定新命名規範（無 `_flop_` 中綴），T-020 HU 40bb SRP 已 rename，HU 25bb SRP 留遺留
-  - 原 T-021 / T-057 計畫「順便」，改拆獨立 micro-task 避免牽連 solver marathon
-  - **範圍（純機械動作，無 solver）**：
-    1. 13 個檔 git mv：`gtoData_hu_25bb_srp_flop_<slug>.ts` → `gtoData_hu_25bb_srp_<slug>.ts`
-       - 7s7d2h / 9d5c2h / 9h8d7c / As7d2c / Jc7d2h / Js9c3h / JsTc9h / Kc8h3s / KcKd5h / KsQd4h / QsJh2h / Tc9c6d / Td8h4c
-    2. 各檔內 export：`HU_25BB_SRP_FLOP_<SLUG>` → `HU_25BB_SRP_<SLUG>`（13 個 rename）
-    3. `src/lib/gto/gtoData_hu_postflop_index.ts` import + entry 同步 rename
-    4. `memory/wiki/gto-pipeline-conventions.md` 遺留清單把 HU 25bb SRP 項標 ✅ 完成
-  - **完成條件**：
-    - `npx tsc -b --noEmit` EXIT=0
-    - `grep -r "HU_25BB_SRP_FLOP" src/` 零結果
-    - `grep -r "hu_25bb_srp_flop" src/` 零結果（檔名）
-  - **禁碰**：HU 13bb SRP（留給 T-065）/ solver pipeline / 其他 gto data
-  - 執行者紀律：不動 `src/version.ts` / `memory/dev-log.md`
-  - 預估：20-40min（純 rename + import 對齊）
-
-- [ ] **T-065** | Pipeline | **HU 13bb SRP `_flop_` → 新命名（13 檔）**
-  - 建議 branch：`wip/T065-hu13bb-srp-rename`（從 `origin/dev` 切出）
-  - 和 T-064 完全平行，套同一套步驟到 HU 13bb SRP
-  - 檔案清單 13 個（slug 與 25bb SRP 重疊）：7s7d2h / 9d5c2h / 9h8d7c / As7d2c / Jc7d2h / Js9c3h / JsTc9h / Kc8h3s / KcKd5h / KsQd4h / QsJh2h / Tc9c6d / Td8h4c
-  - Export rename：`HU_13BB_SRP_FLOP_<SLUG>` → `HU_13BB_SRP_<SLUG>`
-  - 任何空閒執行者都可接（建議在 T-064 merge 後接，避免 index 衝突）
-
-- [ ] **T-066** | Pipeline | **Downloads/GTO/ audit（scraping 原始檔盤點）**
-  - 建議 branch：無（純執行 script + 回填數字）
-  - 前置：T-013 (B) 產出 `scripts/gto-pipeline/audit-downloads.mjs`
-  - 範圍：在有 `Downloads/GTO/` 的機器跑 audit → 10 個 `_ranges.json` 對應 PNG 張數、S1-S4 實際進度 → 回填 `memory/wiki/range-collection-roadmap.md`
-  - 執行機器：待確認（士林 / 家裡 哪邊有 Downloads/GTO/）
-
 <!-- T-062 → In Review 2026-04-21 -->
 
 <details>
