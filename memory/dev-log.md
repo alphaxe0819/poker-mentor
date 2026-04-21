@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-04-21 v0.8.5-dev.2 [dev]
+- `.gitignore` 加 `.vercel`（vercel link 自動產的 `.vercel/` 目錄不進 repo）
+- context：為了繞過 Vercel webhook 斷線，嘗試 `npx vercel --prod` CLI 推正式機
+- CLI 散裝 upload 命中 free tier 5000 req/24h 上限 → 失敗；需等 24h 或改走 Deploy Hook
+- Vercel CLI 已登入 + link 到 `alphaxe-3842s-projects/poker-goal`（link 產物已 ignore）
+
 ## 2026-04-21 v0.8.5-dev.1 [dev]
 - merge wip/T075-mtt-preflop-from-pd @ 4d40f27：T-075 Phase 1（Course 205 tables → preflop range module）
 - 新檔 `scripts/gto-pipeline/mtt_9max_ranges.mjs`（40 KB，110 distinct entries）
