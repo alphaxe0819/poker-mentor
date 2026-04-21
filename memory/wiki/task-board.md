@@ -66,9 +66,7 @@ updated: 2026-04-20
 
 <!-- T-013 → In Review 2026-04-21（家裡電腦 wip1 執行者接手，士林原派工未動） -->
 
-- [ ] **T-021** | Pipeline | **Solver P2 HU 40bb 3bp × 25 flops** `(派工 2026-04-21 → 家裡電腦執行者)`
-  - 建議 branch：`wip/T021-hu40bb-3bp`（從 `origin/dev` 切出）
-  - 預估：3-5 hr
+<!-- T-021 骨架 → In Review 2026-04-21（家裡主目錄執行者，剩 20 flops marathon 待接手） -->
 
 - [ ] **T-022** | Pipeline | **Solver P3 6-max 100bb 4bp（10 場景 × 13 flops）**
   - 建議 branch：`wip/T022-6max-4bp`
@@ -361,6 +359,29 @@ updated: 2026-04-20
 ## 👀 In Review（等大腦整合）
 
 <!-- T-013 / T-030 已 merge 2026-04-21 -->
+
+- [?] **T-021** | Pipeline | **Solver P2 HU 40bb 3bp × 21 flops — marathon 完成** `(2026-04-21 家裡主目錄執行者)`
+  - branch：`wip/T021-hu40bb-3bp`（從 `origin/dev` 切出，push origin 完成）
+  - scope 定案：BOARDS_HU 21 flops（13 base + 8 extras），命名 rename 拆成 micro-task
+  - 改動檔案：
+    - ✅ 新增 **21 個** `src/lib/gto/gtoData_hu_40bb_3bp_*.ts`（每個 export `HU_40BB_3BP_<SLUG>`，convention 合規，無 `_FLOP_` 中綴）
+    - ✅ 改 `src/lib/gto/gtoData_hu_postflop_index.ts`：加 21 個 import + 新 const `HU_40BB_3BP_DB`（21 entries 完整）
+    - ✅ 刪 9 個 out-of-scope input（`hu_40bb_3bp_{AsAd7c, Jh9h7c, Js8s8c, Kh8h3h, Kh9h4c, Qc9c4c, Qd7s2c, Qh9d6s, Ts9c9h}`）— 原是 BOARDS_EXTENDED 溢出，不在 BOARDS_HU（13 base + 8 extras = 21）內
+    - 保留 21 個 `inputs/hu_40bb_3bp_*.txt`（BOARDS_HU 完整集）
+  - Marathon 實跑數據（TexasSolver v0.2.0 Windows，`batch-run.ps1 -Filter "^hu_40bb_3bp_" -SkipExisting`）：
+    - **21/21 flops 成功**，0 failed
+    - **Total wall-clock：3.2 分鐘**（原估 3-5 hr，嚴重過估；3bp SPR 1.7 淺 stack 收斂極快 ~9-10s/flop）
+    - 每 flop 典型：Solve 9-10s / JSON 5.7-6.1 MB / Convert 0.1s / JSON cleanup
+    - Iter 0 → Iter 51 收斂（`set_accuracy 0.5` + `set_max_iteration 200`）
+  - tsc 驗證：`npx tsc -b --noEmit` **EXIT=0**
+  - 未做（拆成獨立 micro-task，依大腦安排）：
+    - HU 25bb SRP / HU 13bb SRP 的 `_flop_` 舊命名 rename（原 T-021 scope 提過，大腦 2026-04-21 決議拆出）
+    - 3BP retrieval 路由（目前 `getPostflopDB` 只依 effective_stack 選 SRP DB；3bp 如何路由是 retrieval 層 task，非本 scope）
+  - 副產物見解（值得 wiki 化）：
+    - 原估 3-5 hr 的 "HU 3bp 21 flops" 任務實際 3.2 min → 淺 stack 3bp 收斂極快，可納入 solver 時間模型
+    - `batch-run.ps1 -Filter ... -SkipExisting` 工作流穩定（不踩 T-045b 的 batch-worker.mjs upsert bug，純檔案產出）
+  - 判讀建議：大腦 review 後可直接 `git merge --no-ff wip/T021-hu40bb-3bp` → dev + bump version + append dev-log
+  - 執行者紀律：沒動 `src/version.ts` / `memory/dev-log.md`
 
 - [?] **T-046** | Pipeline | **seed --include-river row 估算（dry-run 完成）**
   - branch: `wip/T046-seed-river-estimate`
