@@ -216,11 +216,7 @@ updated: 2026-04-20
   - 建議 branch：無
   - 動作：`ls .env`；無則 `powershell scripts/setup-env.ps1`
 
-- [ ] **T-070** | Product | **新建立的對手不會儲存** `(派工 2026-04-21 → 士林 或 家裡 wip1 執行者)`
-  - 建議 branch：`wip/T070-villain-persist`
-  - 問題：在 exploit-coach 建立新對手（自訂 villain profile）關掉 app 就消失，沒 persist
-  - 範圍：`public/exploit-coach-mockup-v3.html` villain 相關 + 可能需要 Supabase table `villain_profiles`（or localStorage）
-  - 建議修法：先用 localStorage 存（快），若要跨裝置再做 Supabase table
+<!-- T-070 → In Review 2026-04-21（士林主目錄執行者 localStorage 版） -->
 
 - [ ] **T-071** | Product | **對話歷史儲存 + 免費配額 3 則** `(派工 2026-04-21 → 士林 或 家裡 wip1 執行者)`
   - 建議 branch：`wip/T071-chat-history-persist`
@@ -361,6 +357,23 @@ updated: 2026-04-20
 ## 👀 In Review（等大腦整合）
 
 <!-- T-013 / T-030 已 merge 2026-04-21 -->
+
+- [?] **T-070** | Product | **exploit-coach 新建對手 localStorage persist**
+  - branch: `wip/T070-villain-persist`（從 origin/dev `3b786db` 切出）
+  - 最後 commit: `9bbfe7a`
+  - 機器：士林主目錄
+  - 改動：單檔 `public/exploit-coach-mockup-v3.html`（+53/-11）
+    - 新 helpers：`loadSavedVillains` / `saveVillainsList` / `appendSavedVillain` / `renderSavedVillains`，key `exploit-coach-villains-v1`
+    - `saveOpp()` 改寫 localStorage + `renderSavedVillains()`（取代原本 `list.appendChild`）
+    - init 階段加 `renderSavedVillains()` 讀回 saved villains
+    - 用 `data-saved-villain="1"` 標記 saved 項，render 前先清掉避免重複累積
+  - 驗證（localhost:5173 + 程式化 iframe reload）：
+    - append → localStorage 寫入 + 列表出現 ✅
+    - 重載新 iframe → 列表「老張 + 測試阿強」（persist 成功）✅
+    - 再 append 第 2 個 → 「老張 + 測試阿強 + 測試阿莎力」無 dup ✅
+    - tsc exit=0
+  - scope：純 iframe localStorage，不碰 Supabase / 不做跨裝置同步（另開 task 做 B 方案）
+  - 等大腦 review + merge
 
 - [?] **T-046** | Pipeline | **seed --include-river row 估算（dry-run 完成）**
   - branch: `wip/T046-seed-river-estimate`
