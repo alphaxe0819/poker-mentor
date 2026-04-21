@@ -295,11 +295,7 @@ updated: 2026-04-20
 
 </details>
 
-- [ ] **T-073** | Product | **villain 老張 → 標準 GTO 類型** `(派工 2026-04-21 → 士林 或 家裡 wip1 執行者)`
-  - 建議 branch：`wip/T073-villain-laozhang-standard`
-  - 問題：老張目前是「跟注站型」(calling_station)，要改成「標準 GTO 對手」(standard)
-  - 範圍：找 villain `老張` 定義處（可能在 `public/exploit-coach-mockup-v3.html` 或 `src/data/villains.ts` 類型檔）→ 改 `type: 'standard'`
-  - 驗證：進 exploit-coach 選老張 → AI 回覆段顯示對手類型為「標準 GTO 對手」
+<!-- T-073 → In Review 2026-04-21 -->
 
 <!-- T-055 → In Review 2026-04-20 -->
 
@@ -417,6 +413,23 @@ updated: 2026-04-20
 ---
 
 ## 👀 In Review（等大腦整合）
+
+- [?] **T-073** | Product | **villain 老張 → 標準 GTO 類型（calling_station → standard）**
+  - branch: `wip/T073-villain-laozhang-standard`
+  - 機器：這台主目錄
+  - 單檔改動：`public/exploit-coach-mockup-v3.html`（2 處）
+  - 改動摘要：
+    - L165 selectOpp 參數：`('老張','calling_station','跟注站型','#f59e0b')` → `('老張','standard','標準 GTO 對手','#6b7fa8')`（連帶 avatar 底色、3 個 tag 顏色）
+    - L167 三個 `.tp` badge 文字：`跟注站型 / 翻後愛跟到河 / 不會詐唬` → `標準 GTO 對手 / 均衡打法 / 無明顯弱點`
+    - L376 `villainProfile` 預設值：`{type:'calling_station', desc:'跟注站型', color:'#f59e0b'}` → `{type:'standard', desc:'標準 GTO 對手', color:'#6b7fa8'}`
+  - **保留**：L519 的 `calling_station` 分類規則（survey 結果判斷）、L531/757 `calling_station` 建議文字 dict — 這些是通用對手類型支援，不該因為 preset 老張換類型就拿掉
+  - 驗證（preview server 實跑，console 無 error）：
+    1. 首頁 s1 badges：`["標準 GTO 對手","均衡打法","無明顯弱點"]` ✅
+    2. 點老張後 `villainProfile = {type:'standard', desc:'標準 GTO 對手', color:'#6b7fa8'}` ✅
+    3. selectOpp onclick 參數正確 ✅
+  - 純 product 改動（`public/`），不影響 Vite build
+  - 不動 `src/version.ts` / `memory/dev-log.md`（執行者紀律）
+  - 等大腦 merge
 
 <!-- T-013 / T-030 已 merge 2026-04-21 -->
 
