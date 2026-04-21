@@ -270,11 +270,18 @@ updated: 2026-04-20
   - 完成條件：`gto_postflop` 表新增 N 筆 row（一個 turn 節點約 10 roles × 169 hand_class ≈ 1690 row），`gto_batch_progress` 該筆 status=done
   - 用：`node batch-worker.mjs --machine <機器名> --max 1`（不加 --dry-run）
 
+<!-- T-046 → In Review 2026-04-21 -->
+
+<details>
+<summary>📦 T-046 原任務（已 In Review，見下方）</summary>
+
 - [ ] **T-046** | Pipeline | **seed --include-river 前的 row 數估算** `(派工 2026-04-21 → 士林辦公室電腦執行者)`
   - 建議 branch：`wip/T046-seed-river-estimate`（從 `origin/dev` 切出）
   - 範圍：先**不**真的 seed，計算 include-river 會插入多少 row（`generateRiverCards` × 390 turn × river/turn 的 fan-out）
   - 評估：若 > 10k row 要考慮分批 seed 或 partitioned batch；若可接受再實 seed
   - 產出：實際數字 + 建議（full seed / phased seed / skip）
+
+</details>
 
 ---
 
@@ -326,7 +333,30 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-*（空）*
+- [?] **T-046** | Pipeline | **seed --include-river row 估算（dry-run 完成）**
+  - branch: `wip/T046-seed-river-estimate`
+  - 機器：這台主目錄
+  - 改動：單檔新增 `scripts/gto-pipeline/estimate-river-seed.mjs`（+75 行，純計算不碰 DB）
+  - **實測數字**（`node estimate-river-seed.mjs`）：
+    - Turn rows：**390**（13 flops × 10 turns × 3 stacks）— 與 T-043 實跑一致
+    - River rows：**3,120**（13 × 10 × 8 rivers/turn × 3 stacks；`generateRiverCards` 對 13 BOARDS 每 turn 穩定產 8 張）
+    - Grand total：**3,510** rows in `gto_batch_progress`
+    - 下游 `gto_postflop`：若全解完 ~5.93M rows（3510 × 1690 hands/batch）
+    - Solver wall-time：~878–1170 hr 單機（3510 × 15–20 min）
+  - **判讀（T-046 criterion）**：
+    - ✅ `gto_batch_progress` seed 量 3510 < 10k 門檻 → **seed 本身沒問題**
+    - ⚠️ 瓶頸不在 seed 而在 solver 吞吐：單機跑完 river 約 6–7 週 24/7；3 機並行約 2 週
+  - **建議（phased seed）**：
+    1. **seed 全量**（`--include-river` 一次下 3120 row）— 對 DB 無壓力，upsert 可重跑
+    2. **但 batch-worker 採分階段領取**：用 `stack_label` 或 `board_key` filter 先跑一個 slice（例：先做 13bb 全部 river = 1040 row），驗 pipeline 穩定再放另外兩個 stack
+    3. 或用 `--max N` 節流，搭配多機 claim 分散
+  - **不推薦**：
+    - ❌ full seed + 單機序列跑（878 hr 不現實）
+    - ❌ 完全 skip river（river 是訓練模式最後一街，沒補就代表河牌訓練永遠走 fallback）
+  - **追加發現**：`generateRiverCards` 實測每個 turn 穩定回 8 張（未觸發 <8 的邊界；13 BOARDS 的 flop+turn 組合都有 ≥8 個剩餘 rank），代表 river fan-out 可以當確定的 × 8 估算
+  - 驗證：script 純 import boards.mjs + 運算，無外部 side effect；多跑多次結果相同
+  - 純 flow 改動（scripts/，不影響 Vercel build），無 version bump
+  - 等大腦 review（要不要採納「phased by stack_label」策略 + 要不要真 seed）
 
 <!-- T-012 → Code Done 2026-04-21，migration 部署待 T-063 -->
 
