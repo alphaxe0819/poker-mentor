@@ -68,13 +68,63 @@ updated: 2026-04-20
 
 <!-- T-021 骨架 → In Review 2026-04-21（家裡主目錄執行者，剩 20 flops marathon 待接手） -->
 
-- [ ] **T-022** | Pipeline | **Solver P3 6-max 100bb 4bp（10 場景 × 13 flops）**
+- [ ] **T-022** | Pipeline | **Solver P3 6-max 100bb 4bp — 從 pokerdinosaur 抓 4B range（C 線對接）**
   - 建議 branch：`wip/T022-6max-4bp`
-  - 預估：3-5 hr
+  - scope 定案（2026-04-21，用戶選 D）：不手寫 range，走 converter 線
+  - 步驟：
+    1. `inspect-pd.mjs` 掃 pokerdinosaur **S0.8 4B / Cold Calling 3B**（26 PNG + 對應 JSON）+ `Course_ranges.json` / `Tournament_Ben_ranges.json` 看 4bp 場景結構
+    2. 挑 10 個適合跑 solver 的 matchup（opener × 3better × 4better 組合）
+    3. `pd-to-range.mjs` 產 TexasSolver range 字串
+    4. 加進 `scripts/gto-pipeline/scenarios.mjs` 作 6max 100bb 4bp 場景 + effective_stack/pot 估算（典型 100bb 4bp pot ~94bb / eff ~73bb）
+    5. 產 inputs → `batch-run.ps1 -Filter "^6max_100bb_4bp_"` marathon
+    6. 產 `src/lib/gto/gtoData_6max_100bb_4bp_*.ts` + index 更新
+  - 前置依賴：T-013 盤點完成（Downloads/ 檔案到位）
+  - 預估：converter 對接 1-2 hr + solver marathon（SPR 預估 1-2 淺，參考 T-021 教訓可能 5-10 min）
+  - 執行者紀律：不動 `src/version.ts` / `memory/dev-log.md`
 
 - [ ] **T-023** | Pipeline | **Solver P4 6-max 深度擴充（40bb/60bb SRP）**
   - 建議 branch：`wip/T023-6max-shallow`
   - 待確認具體範圍
+
+---
+
+### 🚨 正式版重建（用戶 2026-04-21 決策，以 pokerdinosaur 為 range 真相來源）
+
+- [ ] **T-074** | Pipeline | **既有 gtoData_*.ts 全部標測試版**
+  - 建議 branch：`wip/T074-mark-test-data`
+  - 背景：scenarios.mjs 的 range 原是手寫 placeholder（C 線當時未成熟），用戶 2026-04-21 決議以 pokerdinosaur 為正式版 range 來源，既有產出降級為測試版
+  - 範圍：
+    - `src/lib/gto/gtoData_*.ts`（HU 40bb SRP / 25bb SRP / 25bb 3bp / 13bb SRP / 40bb 3bp / 6max 100bb SRP）全部加 test 標記
+    - 方法建議：index 切兩區（TEST / PROD）+ 檔頭加 `// TEST DATA — 手寫 range，正式版請見 src/lib/gto/prod/...`
+    - 或 rename 進 `src/lib/gto/test/` 子資料夾（看哪個動 import 最少）
+  - 不動 app 使用邏輯（測試版仍可用）
+  - 完成條件：tsc EXIT=0，app 照常跑
+
+- [ ] **T-075** | Pipeline | **翻牌前 range 從 pokerdinosaur 建立（正式版基礎）**
+  - 建議 branch：`wip/T075-preflop-ranges-from-pd`
+  - 範圍：對每個 depth × scenario（HU 13bb/25bb/40bb SRP/3bp，6max 100bb SRP/3bp/4bp 等）從 pokerdinosaur 對應 project 抓 range
+  - 前置：T-013 audit 完成（Downloads 10 個 `_ranges.json` 已盤點）
+  - 產出：新 `scripts/gto-pipeline/scenarios-prod.mjs`（或擴充現有 scenarios.mjs 加 `_PROD_RANGES`）
+  - 依賴 converter C1/C1.5 / parse-pd-table-name（C2）
+  - 預估：2-5 hr（看 matchup 數 + pokerdinosaur 對應複雜度）
+
+- [ ] **T-076** | Pipeline | **Solver 全場景重跑（正式版）**
+  - 建議 branch：`wip/T076-solver-prod-rerun`
+  - 前置：T-074 + T-075 完成
+  - 範圍：用正式版 range 重跑所有既有場景 → 產正式版 `src/lib/gto/prod/gtoData_*.ts`（或不開子資料夾，index 切區）
+  - 重跑清單（依 T-021 經驗，SPR 淺的很快）：
+    - HU 13bb SRP × 21 flops
+    - HU 25bb SRP × 21 flops
+    - HU 25bb 3bp × 21 flops
+    - HU 40bb SRP × 21 flops
+    - HU 40bb 3bp × 21 flops（T-021 剛跑的測試版）
+    - 6max 100bb SRP × 13 flops × 25 scenarios
+    - 6max 100bb 3bp × 13 flops（場景數 TBD）
+    - 6max 100bb 4bp × 13 flops（原 T-022 scope → 合併進 T-076）
+  - 原 T-022（6max 100bb 4bp）scope 合併進來，當 T-076 的一個子場景跑
+
+<!-- T-022 合併進 T-076 → 標記暫停 -->
+<!-- T-022 執行者：若已開 wip/T022，可考慮把 6max 4bp 的 converter 研究結果帶進 T-075 -->
 
 <!-- T-062 → In Review 2026-04-21 -->
 
