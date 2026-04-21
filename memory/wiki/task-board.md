@@ -391,18 +391,7 @@ updated: 2026-04-20
   - 完成條件：`gto_postflop` 表新增 N 筆 row（一個 turn 節點約 10 roles × 169 hand_class ≈ 1690 row），`gto_batch_progress` 該筆 status=done
   - 用：`node batch-worker.mjs --machine <機器名> --max 1`（不加 --dry-run）
 
-<!-- T-046 → In Review 2026-04-21 -->
-
-<details>
-<summary>📦 T-046 原任務（已 In Review，見下方）</summary>
-
-- [ ] **T-046** | Pipeline | **seed --include-river 前的 row 數估算** `(派工 2026-04-21 → 士林辦公室電腦執行者)`
-  - 建議 branch：`wip/T046-seed-river-estimate`（從 `origin/dev` 切出）
-  - 範圍：先**不**真的 seed，計算 include-river 會插入多少 row（`generateRiverCards` × 390 turn × river/turn 的 fan-out）
-  - 評估：若 > 10k row 要考慮分批 seed 或 partitioned batch；若可接受再實 seed
-  - 產出：實際數字 + 建議（full seed / phased seed / skip）
-
-</details>
+<!-- T-046 → Done 2026-04-21（code merge @ 9ee0222 estimate-river-seed.mjs dry-run；實測 Turn 390 / River 3120 / Grand 3510 rows < 10k 門檻 → seed 本身 OK；瓶頸在 solver 吞吐 878-1170hr 單機；剩「phased by stack_label 策略 + 真 seed」屬戰略決策，留給用戶後續拍板；remote wip branch 已清） -->
 
 ---
 
