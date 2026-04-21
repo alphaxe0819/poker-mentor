@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-04-21 v0.8.3-dev.1 [dev]
+- merge wip/T070-villain-persist：新建對手 localStorage persist
+- 單檔 `public/exploit-coach-mockup-v3.html`（+53/-11）
+  - 新 helper：`loadSavedVillains` / `saveVillainsList` / `appendSavedVillain` / `renderSavedVillains`
+  - `saveOpp()` 改寫 localStorage 而非只 appendChild DOM
+  - key `exploit-coach-villains-v1`，保留硬編老張為 default
+  - init 呼叫 `renderSavedVillains()` 回填
+- 執行者驗證：append → persist → iframe reload → 回來 OK，無 dup，tsc exit=0
+- 產品類（public/），bump v0.8.3 → v0.8.3-dev.1
+
+---
+
 ## 2026-04-21 v0.8.3 [AI 教練文案修正][ship]
 - 用戶實機測 v0.8.2 回饋：AI 輸出「後街」不通順（e.g.「後街有任何改進跡象」）
 - 改 `supabase/functions/exploit-coach/index.ts` system prompt：新增「街別指稱」段
