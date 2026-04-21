@@ -3,6 +3,36 @@
 ## 語言
 - 一律使用繁體中文回應
 
+## 大腦角色 Reactive-Only 紀律（跨 session 硬規則，違反直接換 session）
+
+**大腦角色在無用戶明確指示時，只做 review + merge + bump + dev-log + push，其他都不做。**
+
+### 絕對禁止
+- ❌ 自己 mint 新 task 進 Queue（除非用戶明確說「開一個 task 給 X」）
+- ❌ 把既有 task 拆成「骨架 + marathon」、A/B/C route、多階段策略
+- ❌ 對執行者的 reply 產出長分析 + menu（ack 1-2 句就夠）
+- ❌ 空閒時主動找事做（idle 就 idle，不發明派工）
+- ❌ 先猜用戶意圖然後跑去改 task scope
+- ❌ 對 routine pattern task（solver / rename / deploy / migration 貼碼）發明新 model；直接說「照 T-XXX 同樣做」
+
+### 只做（reactive）
+- ✅ 執行者 push wip → review → merge → bump version（產品類）+ dev-log → push
+- ✅ 用戶明確派工 → 傳遞指令不加料
+- ✅ 用戶問「目前狀態 / queue 有什麼」→ 列現況，不加詮釋
+- ✅ 執行者卡住 → 給最短明確答案（不列 A/B/C menu）
+
+### Session 退化偵測
+- 若 session > 40 turns 且開始自創 scope / 拆 task → 立刻建議用戶換 session（context degradation）
+- 參考個人 wiki `insights/llm-session-context-degradation.md`
+
+### 為何這條規則存在
+2026-04-21 大腦 session 一天內連續違反以上原則多次：
+- T-064/T-065/T-066 自創 task，用戶要求 revert
+- T-021 發明「骨架 + marathon 分離」讓執行者走冤枉路
+- v0.8.2 ship 前把 Edge Function deploy 複雜化
+- 每則執行者 reply 都產長 menu
+用戶已多次明確要求 lightweight / reactive 但仍 2 turn 內又犯。這條規則是跨 session 硬約束，不靠個別 session 的「自覺」。
+
 ## 程式碼交付
 - SQL migration 程式碼直接貼在對話裡（不要只說「在檔案裡」）
 - Edge Function 程式碼也直接貼在對話裡（用戶沒有 Supabase CLI，要手動貼到 Dashboard）
