@@ -5,6 +5,15 @@
 
 ---
 
+## 2026-04-21 v0.8.3-dev.2 [dev]
+- merge wip/T021-hu40bb-3bp：HU 40bb 3bp × 21 flops solver marathon
+- 21 個 `src/lib/gto/gtoData_hu_40bb_3bp_*.ts` + index `HU_40BB_3BP_DB` 21 entries
+- 刪 9 個 BOARDS_EXTENDED 溢出 input，保留 BOARDS_HU 21 完整集
+- Marathon 實跑：**3.2 min**（原估 3-5 hr，嚴重過估）；SPR 1.7 淺 stack 3bp 收斂極快 ~9-10s/flop
+- 教訓（執行者回報值得 wiki 化）：估 solver 時間看 **SPR** 比看 stack depth 準；未來 P3 6-max 100bb 4bp 若 SPR 1-2 也會很快，先跑 1 flop 實測再外推
+- tsc EXIT=0
+- 產品類（src/lib/gto/），bump v0.8.3-dev.1 → v0.8.3-dev.2
+
 ## 2026-04-21 v0.8.3-dev.1 [dev]
 - merge wip/T070-villain-persist：新建對手 localStorage persist
 - 單檔 `public/exploit-coach-mockup-v3.html`（+53/-11）
