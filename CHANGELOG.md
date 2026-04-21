@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.8.1 — 2026-04-15
+## v0.8.1 — 2026-04-21
 
 ### 新功能
 - **HU 對決 V2 介面**：全面重建 HeadsUpMatchScreenV2，以第二代 UI 為基礎
@@ -13,17 +13,36 @@
   - 結果 banner（+BB / -BB、手數、違規數、AI 書籤數）
   - 全部手牌列表（展開顯示動作序列 + 4 街 GTO 評分 pending chip）
   - AI 書籤橫向捲動區，可對書籤手牌進行 AI 分析
+- **exploit-coach AI 教練品質大升級**：
+  - 繁中 poker 術語精準化：5 個高風險詞黑名單（dominate→壓制 / cooler→冤家牌 / bluff catcher→抓詐唬牌 / polarized→極化範圍 / merged→合併範圍），21 個保留英文清單，12 個推薦譯法，3 條使用規則
+  - 連續對話 context 一致性：AI 追問時固定引用本輪場景 + 手牌，不再公式化回覆
 
 ### UI 改善
 - 撲克牌樣式統一為 V2：數字上方大字 + 花色符號下方小字（移除角落雙花色）
 - PokerFeltV2 中央社群牌：rank 19px 置上 + suit 11px 置下，提升可讀性
 - HU 對決 layout 改用 `position: fixed; inset: 0`，修復 iOS 動作列被截斷問題
 - Felt 容器改用 `flex-1 min-h-0`，解決 PokerFeltV2 高度塌陷問題
+- exploit-coach S5b 對手手牌流程：點卡槽 → picker 浮出 → 選牌 → 卡槽填入
+- Turn all-in 時主按鈕變「All-in → 攤牌」，直接跳 S5 攤牌頁
+- Call 按鈕顯示金額 + 跟注 hint（`跟注需補 N BB`）
 
 ### 修復
 - heroPosition 統一使用 `BTN/SB`（修復 HU 英雄座位顯示錯誤）
 - isCorrect 改由 preflop violation flags 判斷（修復永遠顯示「正確」的問題）
 - spendPoints RPC guard：入場費 0 時跳過扣點（修復無法進入 HU 的問題）
+- S1 頁面「下一步」按鈕加 hero/對手手牌 guard（未選時不能進下一步）
+- S5b `#card-picker` DOM 搬移到 body 層級（修復 picker 在非 S3 screen 無法顯示）
+- iOS Safari 401 / Load failed：storage key 從 fuzzy match 改 exact match，加 parent-iframe postMessage token refresh 架構
+- raise 輸入框 `inputmode=decimal` + viewport 固定 + scrollIntoView（軟鍵盤體驗改善）
+
+### 後台基礎建設（使用者看不到，但為下一代功能準備）
+- **MTT postflop pipeline 打通**：scraping → converter (C0-C4) → solver → DB retrieval 完整鏈路
+  - 新 `solver_postflop_mtt` table（獨立於 6max，避免 query 衝突）
+  - Tier A 實機驗證：MTT scenario 精準命中 MTT table，非 6max fallback
+- **GTO postflop v2 pipeline**：`gto_postflop` + `gto_batch_progress` 雙機協調 schema，batch-worker 跨平台 Node worker
+- **bot decision chain async 化**：支援未來更複雜的 DB-driven GTO 查詢
+- **Supabase Edge Function 部署**：測試環境 JWT 驗證關閉，繁中術語 grounding 上線
+- **Scraping 盤點**：10 個 `_ranges.json` 到位（converter 可吃），S1 Live_MTT_Ben 1149 張已爬完
 
 ## v0.8.0 — 2026-04-11
 

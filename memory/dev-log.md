@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-04-21 v0.8.1 [ship]
+- 🚀 dev v0.8.1-dev.39 → 正式版 v0.8.1（移除 -dev 後綴）
+- 累積 33 個 dev 版本改動一次 ship 到正式機
+- 主要內容（見 CHANGELOG.md v0.8.1）：
+  - HU 對決 V2 完整重建 + ReviewScreenV2
+  - exploit-coach AI 教練繁中術語大升級 + 連續對話 context
+  - iOS Safari 401 / Load failed 修復
+  - MTT postflop pipeline 後台打通（使用者未體驗，為下一版 preparation）
+- T-030 實機驗收：3/5 pass，Bug 3 / Bug 5 partial（fix 在，edge case 未驗）
+- 預期正式機測試 Supabase Edge Function 繁中 grounding 同步部署到正式 Supabase（手動）
+- ship 品質：net positive vs main 舊版（dev.6）
+
 ## 2026-04-21 [flow] T-030 驗收：exploit-coach 5 bug 實機（部分 pass）
 - 執行者：主目錄 `wip/T030-exploit-coach-verify`（從 origin/dev `9ee0222` 切出）
 - 工具：Claude_in_Chrome（tabId 209575093）+ https://poker-goal-dev.vercel.app/（v0.8.1-dev.39，script `index.C5QDRci6.js`）
