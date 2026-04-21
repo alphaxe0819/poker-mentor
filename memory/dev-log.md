@@ -5,6 +5,16 @@
 
 ---
 
+## 2026-04-21 v0.8.4-dev.1 [dev][Edge Function 待部署]
+- merge wip/T080-quick-analysis-text：exploit-coach 快速分析（文字敘述 narrative mode）
+- 改動：
+  - `public/exploit-coach-mockup-v3.html` S1 加「🚀 快速分析」入口 + s_quick screen + callCoach 帶 mode
+  - `supabase/functions/exploit-coach/index.ts`：新 narrative mode + buildNarrativeSystemPrompt（教 Claude parse 賭場口語 + 4 街結構 output）+ max_tokens 1200 + NARRATIVE_COST=0 體驗期
+  - 新 `docs/supabase-migrations/20260421-T080-quick-analysis-narrative-deploy.md` 部署指引
+- Preview 5 情境全 pass，tsc EXIT=0
+- ⚠ **需手動貼 Edge Function 整檔到測試 Supabase**（驗證後再部署正式）
+- 產品類（public/ + supabase/），bump v0.8.4 → v0.8.4-dev.1
+
 ## 2026-04-21 v0.8.4 [ship]
 - 🚀 v0.8.3 → v0.8.4 正式
 - 內容（CHANGELOG.md v0.8.4）：
