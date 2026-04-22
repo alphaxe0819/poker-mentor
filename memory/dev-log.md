@@ -5,6 +5,19 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.20 [dev]
+- **T-086 merge**：執行者交付 `wip/T086-gtow-signing-flow` @ `342e3d1`（士林電腦 wip1，6 檔 +598/-9）
+  - 新 `supabase/functions/exploit-coach-gtow/gto_signing.ts`（271 行 Deno Web Crypto；generateKeypair / signRefreshRequest / refreshAccessToken / ensureFreshAccessToken + module-scope cache + server time sync）
+  - 改 `supabase/functions/exploit-coach-gtow/index.ts`（+25 行 / -9 行）：移除 `GTO_WIZARD_TOKEN`，改用 `GTOW_REFRESH_TOKEN` + 可選 `GTOW_KEYPAIR_JWK`；retrieveSolverNode 前 `await ensureFreshAccessToken()`
+  - 新 `scripts/dev-tools/test-gtow-flow.mjs`（226 行 Node 18+ E2E 驗證）+ README + .gitignore 加 `.gtow-refresh.local.txt`
+  - **關鍵發現**：Web Crypto ECDSA P-256 sign 已輸出 raw r||s（IEEE P1363），跟 Python `_sign_raw_b64()` decode_dss_signature 後手動 concat 同格式 → **不需 DER 轉換**（task scope 列的 raw vs DER 風險解除）
+  - SPKI export / JWK 格式都對齊 Python 版（base64url no-padding）
+  - **Cache 策略**：scope 方案 B（Edge Function Secret + module-scope in-memory cache，沒做 gtow_tokens migration 表）— cold start 重 refresh 一次是 MVP 可接受代價
+  - **Risk**：USER_AGENT / BUILD_VERSION / APP_UID 鎖定 GTOW 2026-03-23 版本，GTOW 改架構就壞 → log 會噴 HTTP 400 / invalid signature
+- 待用戶：① 取 `localStorage.user_refresh` token；② 跑 `test-gtow-flow.mjs` E2E；③ 設 Supabase Secret `GTOW_REFRESH_TOKEN`（+ 可選 `GTOW_KEYPAIR_JWK`）；④ 手貼 Edge Function 重部署
+- T-082 阻擋解除（待 T-086 部署 → 內測驗證）
+- bump v0.8.5-dev.19 → v0.8.5-dev.20
+
 ## 2026-04-22 v0.8.5-dev.19 [dev]
 - ✅ **T-085 真 Done**：用戶部署 `exploit-coach-villain-v2` Edge Function 到測試 Supabase + 驗 dev URL `exploit-coach-villain-v2-test.html` 通過；villain profile v2 21 range 內測上線
 - T-087 執行者開工依賴解除（T-085 Edge Function 已部署 → T-087 production 流程可接到 backend）

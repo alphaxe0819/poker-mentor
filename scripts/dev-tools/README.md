@@ -125,3 +125,70 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...（完整 token，stdout）
 - ❌ 不寫進 main `package.json`（刻意隔離）。
 - ❌ 不自動設 Supabase Secret（需要 service role key，風險太大；手動貼）。
 - ❌ 不自動 refresh token（過期時直接重跑即可）。
+
+---
+
+## `test-gtow-flow.mjs` — 驗證 T-086 簽名 + refresh + spot-solution E2E
+
+### 為什麼存在
+
+T-086 幫 Edge Function 補上 ECDSA P-256 簽名 + `/v1/token/refresh/` flow。這個 script 在 **Node 本機**跑一遍同樣流程，在 Edge Function 部署前先確認：
+1. Web Crypto API 簽名格式對（raw r||s vs DER）
+2. GTOW server 接受我們自生的 keypair
+3. 換到的 access token 能打 `spot-solution`
+
+### Prerequisites
+
+- Node 18+（需要 global `crypto.subtle` + `fetch`）
+- **refresh token**（JWT，從 Chrome DevTools 登入 GTO Wizard 後 `localStorage.getItem('user_refresh')` 取得）
+  - ⚠ 這跟 `grab-gtow-token.mjs` 抓的 **access** token 不同 — 這支要的是 **refresh** token（長命，幾個月）
+
+### 取得 refresh token
+
+1. Chrome 登入 gtowizard.com
+2. F12 → Console 貼：`copy(localStorage.getItem('user_refresh'))`
+3. 剪貼簿就有 refresh token（`eyJ...`）
+
+### 跑 script（三種給 token 方式擇一）
+
+```bash
+# A. 環境變數
+GTOW_REFRESH_TOKEN="eyJ..." node test-gtow-flow.mjs
+
+# B. 命令列參數
+node test-gtow-flow.mjs --token eyJ...
+
+# C. 本機檔案（gitignored）
+echo "eyJ..." > .gtow-refresh.local.txt
+node test-gtow-flow.mjs
+```
+
+### 預期輸出
+
+```
+🔑 Refresh token: eyJhbGci...aB12xYz9
+   exp = 2031-xx-xx... (2000+ days remaining)
+
+⚙  Step 1 — generate ECDSA P-256 keypair (ephemeral)
+⚙  Step 2 — sign /v1/token/refresh/ request
+🌐 Step 3 — POST /v1/token/refresh/
+   HTTP 200
+   ✅ access token = eyJ...
+🌐 Step 4 — call /v4/solutions/spot-solution/ with Bearer
+   HTTP 200
+   ✅ got N action_solutions
+
+✅ ALL STEPS PASSED
+```
+
+最後會印出一份 `keypair` JSON — **複製整段**貼到 Supabase Dashboard → Edge Functions → Secrets → `GTOW_KEYPAIR_JWK`，可讓 Edge Function 跨 cold start 保持同一把 keypair（不做也可以，Edge Function 會自動生 ephemeral 然後記在 log）。
+
+### Troubleshooting
+
+**Step 3 HTTP 401 / 403**：refresh token 無效或過期。重新從 `localStorage.user_refresh` 抓。
+
+**Step 3 HTTP 400 "invalid signature"**：Web Crypto 簽名格式 or payload 順序不對。對照 `supabase/functions/exploit-coach-gtow/gto_signing.ts` + 對方 `ai-poker-wizard/scripts/gto_signing.py` 檢查 USER_AGENT / BUILD_VERSION / payload 順序是否還吻合。GTOW 偶爾改版。
+
+**Step 4 HTTP 204**：access token 有效但場景無 solution（正常，auth 仍通過）。
+
+**Step 4 HTTP 403**：access token 被拒 → 簽名流程壞了。
