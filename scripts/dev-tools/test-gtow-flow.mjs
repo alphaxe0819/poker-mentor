@@ -202,7 +202,7 @@ const spotUrl = new URL(`${API_BASE}/v4/solutions/spot-solution/`)
 spotUrl.searchParams.set('gametype', 'Cash6mGeneral_6mNL25R25')
 spotUrl.searchParams.set('depth', '100')
 spotUrl.searchParams.set('stacks', '')
-spotUrl.searchParams.set('preflop_actions', 'F F F R2.5 F C F')
+spotUrl.searchParams.set('preflop_actions', 'F-F-F-R2.5-F-C-F')  // GTOW format: dash-separated (士林 2026-04-22 本機驗發現)
 const spotRes = await fetch(spotUrl.toString(), {
   headers: { 'Authorization': `Bearer ${accessToken}`, 'origin': ORIGIN },
 })

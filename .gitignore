@@ -54,4 +54,6 @@ tmp_log.txt
 # Dev tools 本機 token / 獨立依賴（T-084 / T-086）
 scripts/dev-tools/.gtow-token.local.txt
 scripts/dev-tools/.gtow-refresh.local.txt
+scripts/dev-tools/.gtow-*.local.*
+scripts/dev-tools/.merged-*.local.*
 scripts/dev-tools/node_modules/

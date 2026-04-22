@@ -5,6 +5,21 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.24 [dev]
+- T-086 followup（士林本機 E2E 驗證發現的 2 件小事）：
+  - **修 test-gtow-flow.mjs preflop_actions bug**：原本空格分隔 `F F F R2.5 F C F` → GTOW 要 dash 分隔 `F-F-F-R2.5-F-C-F`（士林執行者本機改了讓 E2E 全綠但沒 commit，現大腦補進 origin）
+  - **補 .gitignore**：加 `scripts/dev-tools/.gtow-*.local.*` + `scripts/dev-tools/.merged-*.local.*` 通配，未來執行者放 keypair / merged Edge Function 的本機檔自動忽略
+- T-086 本機驗證 ✅：
+  - Step 1 ECDSA P-256 keypair 生成
+  - Step 2 google-anal-id header 簽名（5 parts, 571 chars）
+  - Step 3 POST `/v1/token/refresh/` HTTP 200 + access token (exp +897s)
+  - Step 4 GET `/v4/solutions/spot-solution/` HTTP 204（auth 通過，場景無解）
+- 待用戶手動 3 步部署（chrome MCP 擋 supabase.com）：
+  - Step A: 設 Supabase Secrets `GTOW_REFRESH_TOKEN` + `GTOW_KEYPAIR_JWK`（值在士林本機 `.local.` 檔）
+  - Step B: 貼合併版 Edge Function（士林本機 `.merged-edge-function.local.ts`，905 行）→ Deploy
+  - Step C: 驗 `https://poker-goal-dev.vercel.app/exploit-coach-gtow-test.html` + 看 logs
+- bump v0.8.5-dev.23 → v0.8.5-dev.24
+
 ## 2026-04-22 v0.8.5-dev.23 [dev]
 - **派 T-088**：villain-v2-flow polish + 登入 bug 修（用戶 review T-087 ship 後找出 5 個 issue，全包一個 task）
 - 5 個 issue：
