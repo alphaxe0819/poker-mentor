@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.22 [dev]
+- T-087 villain-v2-flow.html 加 desktop wrapper：max-width 420px + margin auto + 陰影 → 直接開 dev URL desktop 上看像一支 phone mockup 居中
+- 不影響 React app iframe 嵌入（iframe 本身已限寬）
+- 不影響手機（手機 < 420px）
+- 純 CSS 1 行改動
+- 其他內測 URL（villain-v2-test.html / gtow-test.html）未改，等用戶決定要不要也加
+- bump v0.8.5-dev.21 → v0.8.5-dev.22
+
 ## 2026-04-22 v0.8.5-dev.21 [dev]
 - **T-087 merge**：執行者交付 `wip/T087-villain-v2-flow` @ `46d14b0`（家裡 wip1，1 新檔 3045 行）
   - 新 `public/exploit-coach-villain-v2-flow.html`（2800 行 production flow，fork from villain-v2-test.html）
