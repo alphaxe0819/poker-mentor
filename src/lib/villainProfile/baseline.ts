@@ -32,7 +32,7 @@ export function gridComboPct(grid: number[]): number {
   return (sum / TOTAL_COMBOS) * 100
 }
 
-type BaselineFilter = 'raise' | 'call'
+type BaselineFilter = 'open' | 'call_vs_open' | '3bet' | 'call_vs_3bet' | '4bet'
 
 interface BaselineSource {
   dbKey: string
@@ -40,43 +40,78 @@ interface BaselineSource {
 }
 
 export const RANGE_KEY_TO_BASELINE: Record<RangeKey, BaselineSource> = {
-  EP_RAISE: { dbKey: 'cash_6max_100bb_UTG_open', filter: 'raise' },
-  MP_RAISE: { dbKey: 'cash_6max_100bb_HJ_open', filter: 'raise' },
-  LP_RAISE: { dbKey: 'cash_6max_100bb_BTN_open', filter: 'raise' },
-  BL_RAISE: { dbKey: 'cash_6max_100bb_SB_open', filter: 'raise' },
+  EP_RAISE: { dbKey: 'cash_6max_100bb_UTG_open', filter: 'open' },
+  MP_RAISE: { dbKey: 'cash_6max_100bb_HJ_open', filter: 'open' },
+  LP_RAISE: { dbKey: 'cash_6max_100bb_BTN_open', filter: 'open' },
+  BL_RAISE: { dbKey: 'cash_6max_100bb_SB_open', filter: 'open' },
 
-  MP_CALL: { dbKey: 'cash_6max_100bb_HJ_vs_UTG', filter: 'call' },
-  LP_CALL: { dbKey: 'cash_6max_100bb_BTN_vs_CO', filter: 'call' },
-  BL_CALL: { dbKey: 'cash_6max_100bb_BB_vs_open', filter: 'call' },
+  MP_CALL: { dbKey: 'cash_6max_100bb_HJ_vs_UTG', filter: 'call_vs_open' },
+  LP_CALL: { dbKey: 'cash_6max_100bb_BTN_vs_CO', filter: 'call_vs_open' },
+  BL_CALL: { dbKey: 'cash_6max_100bb_BB_vs_open', filter: 'call_vs_open' },
 
-  MP_3BET: { dbKey: 'cash_6max_100bb_HJ_vs_UTG', filter: 'raise' },
-  LP_3BET: { dbKey: 'cash_6max_100bb_BTN_vs_CO', filter: 'raise' },
-  BL_3BET: { dbKey: 'cash_6max_100bb_SB_vs_BTN', filter: 'raise' },
+  MP_3BET: { dbKey: 'cash_6max_100bb_HJ_vs_UTG', filter: '3bet' },
+  LP_3BET: { dbKey: 'cash_6max_100bb_BTN_vs_CO', filter: '3bet' },
+  BL_3BET: { dbKey: 'cash_6max_100bb_SB_vs_BTN', filter: '3bet' },
 
-  EP_CALL_3BET: { dbKey: 'cash_6max_100bb_UTG_vs_3bet', filter: 'call' },
-  MP_CALL_3BET: { dbKey: 'cash_6max_100bb_HJ_vs_3bet', filter: 'call' },
-  LP_CALL_3BET: { dbKey: 'cash_6max_100bb_BTN_vs_3bet', filter: 'call' },
-  BL_CALL_3BET: { dbKey: 'cash_6max_100bb_SB_vs_3bet', filter: 'call' },
+  EP_CALL_3BET: { dbKey: 'cash_6max_100bb_UTG_vs_3bet', filter: 'call_vs_3bet' },
+  MP_CALL_3BET: { dbKey: 'cash_6max_100bb_HJ_vs_3bet', filter: 'call_vs_3bet' },
+  LP_CALL_3BET: { dbKey: 'cash_6max_100bb_BTN_vs_3bet', filter: 'call_vs_3bet' },
+  BL_CALL_3BET: { dbKey: 'cash_6max_100bb_SB_vs_3bet', filter: 'call_vs_3bet' },
 
-  EP_4BET: { dbKey: 'cash_6max_100bb_UTG_vs_3bet', filter: 'raise' },
-  MP_4BET: { dbKey: 'cash_6max_100bb_HJ_vs_3bet', filter: 'raise' },
-  LP_4BET: { dbKey: 'cash_6max_100bb_BTN_vs_3bet', filter: 'raise' },
-  BL_4BET: { dbKey: 'cash_6max_100bb_SB_vs_3bet', filter: 'raise' },
+  EP_4BET: { dbKey: 'cash_6max_100bb_UTG_vs_3bet', filter: '4bet' },
+  MP_4BET: { dbKey: 'cash_6max_100bb_HJ_vs_3bet', filter: '4bet' },
+  LP_4BET: { dbKey: 'cash_6max_100bb_BTN_vs_3bet', filter: '4bet' },
+  BL_4BET: { dbKey: 'cash_6max_100bb_SB_vs_3bet', filter: '4bet' },
 
-  MP_CALL_4BET: { dbKey: 'cash_6max_100bb_UTG_vs_3bet', filter: 'raise' },
-  LP_CALL_4BET: { dbKey: 'cash_6max_100bb_UTG_vs_3bet', filter: 'raise' },
-  BL_CALL_4BET: { dbKey: 'cash_6max_100bb_UTG_vs_3bet', filter: 'raise' },
+  MP_CALL_4BET: { dbKey: 'cash_6max_100bb_UTG_vs_3bet', filter: '4bet' },
+  LP_CALL_4BET: { dbKey: 'cash_6max_100bb_UTG_vs_3bet', filter: '4bet' },
+  BL_CALL_4BET: { dbKey: 'cash_6max_100bb_UTG_vs_3bet', filter: '4bet' },
+}
+
+function parseMixedWeight(marker: string): number | null {
+  const m = marker.match(/^m[rbc]:(\d+)/)
+  return m ? parseInt(m[1], 10) / 100 : null
 }
 
 function weightForMarker(marker: string, filter: BaselineFilter): number {
-  if (filter === 'raise') {
+  if (!marker) return 0
+  const mixed = parseMixedWeight(marker)
+
+  if (filter === 'open') {
     if (marker === 'r') return 1
-    if (marker.startsWith('mr:')) return (parseInt(marker.slice(3), 10) || 0) / 100
+    if (marker.startsWith('mr:') && !marker.includes('_3b') && !marker.includes('_4b')) return mixed ?? 0
     return 0
   }
-  if (marker === 'c') return 1
-  if (marker.startsWith('mc:')) return (parseInt(marker.slice(3), 10) || 0) / 100
-  if (marker.startsWith('mr:')) return 1 - (parseInt(marker.slice(3), 10) || 0) / 100
+
+  if (filter === 'call_vs_open') {
+    if (marker === 'c') return 1
+    if (marker.startsWith('mc:')) return mixed ?? 0
+    if (marker === '3b' || marker === '4b') return 0
+    if (marker.includes('_3b') || marker.includes('_4b')) {
+      return mixed !== null ? 1 - mixed : 0
+    }
+    return 0
+  }
+
+  if (filter === '3bet') {
+    if (marker === '3b') return 1
+    if (marker.includes('_3b')) return mixed ?? 0
+    return 0
+  }
+
+  if (filter === 'call_vs_3bet') {
+    if (marker === 'c') return 1
+    if (marker.startsWith('mc:')) return mixed ?? 0
+    if (marker.includes('_4b')) return mixed !== null ? 1 - mixed : 0
+    return 0
+  }
+
+  if (filter === '4bet') {
+    if (marker === '4b') return 1
+    if (marker.includes('_4b')) return mixed ?? 0
+    return 0
+  }
+
   return 0
 }
 
