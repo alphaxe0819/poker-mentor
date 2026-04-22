@@ -3,6 +3,20 @@
 # 失敗不中斷 session，讓 Claude 看到結果再處理。
 
 set +e
+
+# Auto-detect git repo subdirectory if cwd is not a git repo.
+# 場景：士林電腦 cwd = C:\Users\User\POKERNEW，但 git repo 在 poker-mentor/ 子目錄。
+# 注意：cd 只影響此 hook process，Claude 後續操作仍需自己 cd。
+if [[ -z $(git rev-parse --show-toplevel 2>/dev/null) ]]; then
+  for sub in poker-mentor gto-poker-trainer gto-poker-trainer-wip1; do
+    if [[ -d "$sub/.git" || -f "$sub/.git" ]]; then
+      cd "$sub"
+      echo "[session-sync] cwd 非 git repo，自動切到 $sub/（Claude 後續操作仍要自己 cd $sub）"
+      break
+    fi
+  done
+fi
+
 BRANCH=$(git branch --show-current 2>/dev/null)
 if [[ -z "$BRANCH" ]]; then
   echo "[session-sync] 非 git repo 或無分支，跳過 sync"
@@ -24,6 +38,16 @@ git fetch --all 2>&1 | tail -5
 AHEAD=$(git rev-list --count "origin/$BRANCH..HEAD" 2>/dev/null || echo 0)
 BEHIND=$(git rev-list --count "HEAD..origin/$BRANCH" 2>/dev/null || echo 0)
 echo "[session-sync] 分支 $BRANCH：本地 +$AHEAD / 落後 -$BEHIND"
+
+# wip/* branch：額外比對 dev 是否已更新（避免在老 wip 上看不到 dev 新進度）
+if [[ "$BRANCH" =~ ^wip/ ]]; then
+  DEV_AHEAD=$(git rev-list --count "HEAD..origin/dev" 2>/dev/null || echo 0)
+  if [[ "$DEV_AHEAD" -gt 0 ]]; then
+    echo "[session-sync] ⚠ origin/dev 比當前 wip 新 $DEV_AHEAD commits — wip branch 上的 task-board / dev-log 不是最新"
+    echo "[session-sync]   → 看最新狀態：git checkout dev && git pull"
+    echo "[session-sync]   → 接新 task：git checkout --detach origin/dev && git checkout -b wip/T0xx-..."
+  fi
+fi
 
 # 有 WIP 嗎？（tracked + untracked 分開看）
 TRACKED_DIRTY=$(git diff --name-only 2>/dev/null | wc -l)

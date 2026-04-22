@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.10 [dev]
+- 修 `scripts/session-sync.sh` 兩個常見坑：
+  - **自動偵測子目錄**：cwd 非 git repo 時自動找 `poker-mentor` / `gto-poker-trainer*` 子目錄並 cd 進去（解士林電腦 cwd `POKERNEW` 上層問題）
+  - **wip branch 提示 dev 已更新**：當前在 `wip/*` branch 且 origin/dev 比 wip 新時，明確告知「task-board / dev-log 不是最新」+ 給切 dev / 開新 wip 指令
+- 用戶 CLAUDE.md（user-level，不在 repo）加：各機器 cwd 對照表 + 士林電腦執行者 cwd `C:\Users\User\POKERNEW\poker-mentor` 快捷
+- 根因記錄：2026-04-22 士林電腦執行者在 POKERNEW 上層開 Claude → SessionStart hook 跳過 sync → cd 進子目錄後看到 wip/T080 老 branch 的 dev-log，誤以為 dev 還停在 v0.8.4
+- 純 flow 改動，不觸發測試機驗證
+
 ## 2026-04-22 v0.8.5-dev.9 [dev]
 - 派工 **T-084**：GTO Wizard Token Grabber Script（士林電腦執行者，優先序：先做 T-084 解 T-082 部署阻擋 → 再回 T-083）
 - 用 Playwright + Chrome remote debugging port 連已開的 Chrome → 抓 GTOW API 請求的 Authorization Bearer token → 印 console（用戶複製貼 Supabase Secret）
