@@ -18,6 +18,7 @@
 - [[poker-terminology-zh-tw]] — 繁中撲克術語對照表（台灣社群用法）：LLM 教練 system prompt 的術語 grounding，避免 `dominate`→「過度」類直翻
 - [[gto-pipeline-conventions]] — solver 產出與手寫 GTO data 的檔名 / export 命名規範
 - [[gto-pipeline-env-setup]] — `scripts/gto-pipeline/.env` + `node_modules` setup（setup-env.ps1 不涵蓋，service_role 要從 Dashboard 手貼）
+- [[prompt-cache-strategy]] — exploit-coach 省 LLM 錢策略：5min cache + keep-warm cron 達到 ~100% cache hit，省 80% input 成本（idea 階段，量達 1k+/月或升模型時優先做）
 
 ## Feedback & Rules
 

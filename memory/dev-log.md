@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.6 [dev]
+- 新 wiki [[prompt-cache-strategy]] — exploit-coach 省 LLM 錢策略記錄（5min cache + keep-warm cron → ~100% hit，省 80% input 成本）
+- idea 階段未實裝，量達 1k+/月或升 Sonnet/Opus 時優先做；分 Task A（cache 化）+ Task B（keep-warm cron）兩步
+- memory/index.md 加索引
+- 純 flow 改動，不觸發測試機驗證
+
 ## 2026-04-22 v0.8.5-dev.5 [dev]
 - 派工 **T-082**：exploit-coach 內測版（fork + retrieval 換 GTO Wizard API），驗證「資料源差別」對教練品質影響
 - A/B 對照玩法：A 邊 = 正式機原版（own retrieval），B 邊 = `poker-goal-dev` 獨立內測 URL（GTOW retrieval），**用戶手動兩邊各問同一問題 → 肉眼比答案差異**（不做同頁並排 UI，兩環境完全隔離）
