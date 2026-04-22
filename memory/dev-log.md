@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.14 [dev]
+- **救 T-082**：用戶質疑「別人能做為什麼我們不能」 → 大腦認真讀 ai-poker-wizard 完整 code（之前只讀 README + partial summary，沒看 chrome-extension/ + scripts/gto_signing.py + scripts/gto_token.py）→ 確認 server-side 整合**可行**：對方用「自生 ECDSA keypair → 註冊給 server」繞 non-extractable，只有 token refresh 要簽，spot-solution 用 Bearer + origin 即可
+- **執行者反爬分析有對有錯**：ECDSA 簽名是真的，但執行者結論「server-side 簽不了」錯 — 沒研究對方完整解法就斷言不行
+- **大腦失職記錄**：第一次看執行者結論直接接受，差點廢掉 T-082；用戶質疑後才回頭認真看對方 code
+- **派 T-086**：exploit-coach-gtow ECDSA P-256 signing + token refresh flow（Deno Web Crypto API + 對方 Python `gto_signing.py` 邏輯重寫），工時 12-22 hr
+- **改寫 wiki [[gtow-api-reverse-eng]]**：從「廢棄根因」改成「完整解法 + T-086 實作清單」+ 警告未來大腦先看對方解法再下結論
+- **task-board T-082 標記改**：從「Cancelled」→「Blocked 待 T-086」
+- **memory/index.md 更新** wiki 描述
+- 兩個 task 並行：T-085 villain v2 fork（已派 commit `80a13ce`）+ T-086（救 T-082）
+- bump v0.8.5-dev.13 → v0.8.5-dev.14
+
 ## 2026-04-22 v0.8.5-dev.13 [dev]
 - **⚠ T-083 partial revert**：用戶指出 T-083 違反「fork 獨立」原則 — 改了原版正式入口檔（mockup-v3.html 刪老張+改建立新對手按鈕為 v2 流程；exploit-coach Edge Function 加 villain_profile_summary）。原版 = Vercel dev 自動部署 = 影響測試機玩家。
 - **Revert 範圍**：

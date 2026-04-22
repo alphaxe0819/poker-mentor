@@ -382,6 +382,64 @@ updated: 2026-04-20
   - **工時估算**：6-10 hr（lib 已寫好，主要是 fork + scope 切換）
   - **相關 task**：T-083（partial revert 後 lib 留下供 reuse）
 
+- [ ] **T-086** | Product 內測 / 工程 | **exploit-coach-gtow ECDSA P-256 signing + token refresh flow（救 T-082）** `(派工 2026-04-22 → 任一執行者，跟 T-085 並行)`
+  - 建議 branch：`wip/T086-gtow-signing-flow`
+  - **目的**：T-082 既有 Edge Function `exploit-coach-gtow/index.ts` 缺 ECDSA signing + token refresh flow，導致用 access token 打 spot-solution 時可能撞 GTOW 簽名驗證 → access token 過期沒法 refresh → 整個 GTOW 整合廢。本 task 補完這部分，讓 T-082 內測真的能跑起來
+  - **必讀**：[[gtow-api-reverse-eng]]（執行者 + 大腦研究 ai-poker-wizard repo 後的完整理解）
+  - **參考實作**：a00012025/ai-poker-wizard repo
+    - `scripts/gto_signing.py` — ECDSA P-256 簽名邏輯（Python `cryptography` library）
+    - `scripts/gto_token.py` — refresh token flow + token cache
+    - `chrome-extension/background.js` — 抓 `localStorage.user_refresh`（我們可以複用既有 T-084 grabber）
+  - **核心理解（不要再走錯路）**：
+    - GTOW 用 ECDSA P-256 簽名，但**只有 token refresh endpoint 要簽名**，spot-solution 等 data endpoint 只要 Bearer + origin
+    - 對方繞 non-extractable 私鑰的方法：**自己生 keypair**，第一次 refresh 時把 publicKey 註冊給 server，之後就用自己的 private key 簽
+    - 對應到我們：Server-side 自生 keypair → 持久化在 Supabase（或 Secret）→ 每次 refresh 用同一把 keypair 簽
+  - **scope（嚴格 fork 模式 — 改既有 T-082 fork 內，不再 fork）**：
+    1. **Deno 版 `gto_signing.ts`**（新檔 `supabase/functions/exploit-coach-gtow/gto_signing.ts`，照抄 Python `gto_signing.py` 用 Web Crypto API）：
+       - `generateKeypair()`: 用 `crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign'])` 生 keypair，`exportKey('jwk', ...)` 拿 JWK
+       - `signRefreshRequest({ method, path, body, refreshToken, keypairJWK, origin, userAgent, appUid, buildVersion })`：
+         - 構造 pipe-delimited payload（method|path|timestamp|body|origin|user-agent|app-uid|build-version，照對方順序）
+         - 用 `crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, privateKey, payload)` 簽 → 拿 raw 64 bytes (r||s)
+         - 組 `google-anal-id` header（dot-separated: signature.publicKey.timestamp.version.headersBase64）
+       - `_syncServerTime()`：lazy fetch GTOW server time 確保 timestamp 同步
+       - 注意 Web Crypto API 的 ECDSA signature 默認 raw 格式（不是 DER），跟對方 Python `cryptography` 預設 DER 不一樣 — **需驗證簽名格式**（可能要轉換）
+    2. **Refresh token flow**（`refreshAccessToken(refreshToken, keypairJWK)`）：
+       - POST `/v1/token/refresh/` 帶 google-anal-id header + body `{ refresh: refreshToken }`
+       - 解析 response 拿 `access_token` (短命 JWT)
+       - decode JWT exp 算過期時間
+    3. **Token cache（Supabase）**：
+       - 新 migration `supabase/migrations/<date>_gtow_tokens.sql`：`gtow_tokens` 表 (id PK, refresh_token, access_token, access_token_exp, keypair_jwk, updated_at)
+       - 簡化：MVP 只支援 1 row（singleton config，不做 multi-user）
+       - 或退而求其次：keypair + refresh_token 放 Edge Function Secrets（`GTOW_REFRESH_TOKEN`、`GTOW_KEYPAIR_JWK`），access_token cache 放 in-memory（每次 cold start 重 refresh 一次，可接受）
+    4. **整合進 `exploit-coach-gtow/index.ts`**：
+       - `retrieveSolverNode` 之前加 `await ensureFreshAccessToken()`：
+         - 從 cache 讀 access_token + exp
+         - 如果過期（or < 5min remaining）→ 跑 refresh flow
+         - 拿到 access_token 後，覆蓋現有 hardcoded `GTO_WIZARD_TOKEN` 用法
+       - 原本 `GTO_WIZARD_TOKEN` secret **改名/廢除** → 改用 `GTOW_REFRESH_TOKEN` + `GTOW_KEYPAIR_JWK`
+    5. **驗證**：
+       - 寫 `scripts/dev-tools/test-gtow-flow.mjs`（Node script，import @supabase/supabase-js + Web Crypto polyfill）
+       - 跑：本地驗 keypair 生成 → 簽 mock refresh request → POST GTOW server → 拿 access_token → 用 access_token 打 spot-solution → 確認 200 回 GTO 答案
+       - 全 pass 才 push wip
+  - **out of scope**：
+    - ❌ 不做 multi-user 支援（singleton config，內測用）
+    - ❌ 不做 token 失效自動通知（人工監控）
+    - ❌ 不做 Chrome extension 自動更新 refresh_token（用戶手動更新 Secret 即可）
+    - ❌ 不改原版 `exploit-coach`（純改 fork 內）
+    - ❌ 不部署到正式 Supabase（永遠不要）
+  - **完成條件**：
+    - test script 端到端 pass：自生 keypair → refresh → spot-solution 200 → 拿到 GTO 答案
+    - `exploit-coach-gtow` Edge Function 整合 fresh access token flow
+    - tsc EXIT=0
+    - 重新部署 `exploit-coach-gtow` 到測試 Supabase（用戶手貼） + 內測 URL 跑通
+  - **工時估算**：12-22 hr（4-8 hr signing + 4-6 hr refresh flow + 2-4 hr 整合 + 2-4 hr test + debug）
+  - **依賴**：
+    - 用戶要先用 T-084 grabber 抓 `user_refresh`（執行者已驗 T-084 抓得到，這個是 valid refresh token）
+    - 用戶設 Supabase Secret `GTOW_REFRESH_TOKEN`
+  - **風險**：
+    - GTOW 改簽名邏輯就壞 — 維護成本（若 GTOW 改架構，重新研究 ai-poker-wizard 看他們怎麼 patch）
+    - Web Crypto API ECDSA raw format vs Python DER format 可能要轉換（如果 server 拒絕，先 debug 這個）
+
 <!-- T-083 → In Review 2026-04-22（家裡 wip1 執行者完成；wip/T083-villain-profile-v2-mvp；tsc EXIT=0；preview 端到端驗證 pass；⚠ 違反 fork 獨立原則改了原版正式入口檔，partial revert 後保留 lib，重派 T-085 做 fork 版） -->
 
 <details>
@@ -479,7 +537,7 @@ updated: 2026-04-20
 - 原 marker parser 只抓 `r` / `mr:N`，抓不到 `3b` / `4b` / `mr:N_3b` / `mr:N_4b` → MP_3BET 等 baseline 顯示 ~0.3% nonsense。改為 action-specific BaselineFilter union（open / call_vs_open / 3bet / call_vs_3bet / 4bet），每種 filter 有明確 marker 匹配規則。
 - 原實作用 hand-class count / 169 算 %，但實際 GTO 語義是 combo weight %（pair=6, suited=4, offsuit=12，total 1326）。改成 combo-weighted 後數字合理（EP_RAISE baseline 從 34.3% 降到 22.5%）。
 
-<!-- T-082 → In Review 2026-04-22（家裡 wip1 執行者完成 @ 4aa445d，code merged 2026-04-22；待用戶設 GTO_WIZARD_TOKEN secret + 貼 Edge Function 到測試 Supabase + 驗 dev URL） -->
+<!-- T-082 → ⚠ Blocked 2026-04-22（執行者反爬分析發現 GTOW 用 ECDSA P-256 簽名，但研究 ai-poker-wizard 完整 code 後確認可行：對方自生 keypair 註冊 server 繞過原本瀏覽器 keypair；只有 token refresh endpoint 要簽名，spot-solution 用 Bearer 即可；T-082 既有 Edge Function 缺 ECDSA signing + refresh flow → 派 T-086 補；詳見 [[gtow-api-reverse-eng]]）-->
 
 <details>
 <summary>📦 T-082 原任務描述（已 In Review，見下方）</summary>
