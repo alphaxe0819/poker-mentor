@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.5 [dev]
+- 派工 **T-082**：exploit-coach 內測版（fork + retrieval 換 GTO Wizard API），驗證「資料源差別」對教練品質影響
+- A/B 對照玩法：A 邊 = 正式機原版（own retrieval），B 邊 = `poker-goal-dev` 獨立內測 URL（GTOW retrieval），**用戶手動兩邊各問同一問題 → 肉眼比答案差異**（不做同頁並排 UI，兩環境完全隔離）
+- scope 嚴格：fork 不改原版、不寫 DB / 不 cache GTOW、不上線、不做 ICM、團隊 token 不貼對話、不部署正式 Supabase
+- 參考：研究 ai-poker-wizard repo（`gto_api.py` GTOW API 模式）
+- 純 flow 改動（task-board + version.ts），不觸發測試機驗證
+
 ## 2026-04-22 v0.8.5-dev.4 [dev]
 - T-071 task-board cleanup：In Review 區條目移除 + Queue placeholder 標 Done（code 早已 merge @ 937c07e + bump v0.8.3-dev.4 `d2b8c31`，隨 v0.8.4/v0.8.5 上線）
 - 刪 remote wip branch `wip/T071-chat-history-persist`

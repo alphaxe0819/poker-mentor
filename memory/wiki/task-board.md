@@ -311,6 +311,49 @@ updated: 2026-04-20
 
 </details>
 
+- [ ] **T-082** | Product 內測 | **exploit-coach 內測版：retrieval 換 GTO Wizard API（獨立環境，與正式機 A/B 對照）** `(派工 2026-04-22 → 家裡 wip1 執行者)`
+  - 建議 branch：`wip/T082-exploit-coach-gtow-test`
+  - **目的**：fork 一份 exploit-coach 內測版，**只換 retrieval 資料源**（我們的 `solver_postflop_6max` 表 → GTO Wizard API），prompt / Claude 模型 / 術語規則完全不動
+  - **A/B 對照玩法（用戶自己手動跑）**：
+    - **A 邊（正式機）**：用戶在 `poker-goal.vercel.app` 的原版 exploit-coach 問問題（用我們自己的 retrieval）
+    - **B 邊（獨立內測 URL）**：用戶在 `poker-goal-dev.vercel.app/exploit-coach-gtow-test.html` 問**同樣問題**（用 GTOW retrieval）
+    - 用戶肉眼比兩邊回答差異
+    - **不做同頁並排 UI**（環境完全隔離，內測壞掉不影響正式）
+  - **scope（嚴格遵守，不擴張）**：
+    - **後端**：
+      1. 複製 `supabase/functions/exploit-coach/` → `supabase/functions/exploit-coach-gtow/`
+      2. **只改** `retrieveSolverNode()` 內部實作：
+         - 移除：對 `solver_postflop_6max` 的 Tier A/B/C query
+         - 替換：呼叫 GTO Wizard API（`next-actions` + `spot-solution`，參考 ai-poker-wizard `gto_api.py` 模式）
+         - reshape GTOW response 成現有 `{ tier, row, nodeSummary }` 同 shape，下游 `summarizeNodeForPrompt()` 不用改
+      3. **不變動**：prompt builder、TERMINOLOGY_RULES、Claude call、auth、point spend、narrative mode
+      4. **絕對不寫 DB / 不 cache GTOW 回傳**（ToS 保護 + 不污染 own 資料）
+      5. **Token**：團隊自己的 GTOW 帳號，放 Edge Function Secrets `GTO_WIZARD_TOKEN`（內測者不需各自綁，**token 不貼對話**）
+    - **前端**（獨立 mockup，**只接 B 邊 endpoint**）：
+      6. 複製 `public/exploit-coach-mockup-v3.html` → `public/exploit-coach-gtow-test.html`
+      7. **只改 fetch endpoint**：原本打 `exploit-coach`，改成打 `exploit-coach-gtow`
+      8. 加明顯的「⚠ 內測版（GTO Wizard 後端）」橫幅，避免誤認為正式版
+      9. 不在主 nav / app 露出，只給知道內測 URL 的人用
+    - **Mapping 工程**（執行者要研究 GTOW API spec）：
+      - 籌碼深度格式：GTOW `bb + 0.125`（30bb → `"30.125"`）
+      - `ctx.scenario_slug` / `ctx.flop` / `ctx.path` → GTOW spot 參數對應
+      - bet sizing tree 對齊（我們 `b33/b50/b100` vs GTOW sizing；不一致就盡量挑最接近）
+      - **ICM 不做**，內測 v1 只跑 cash / Chip EV
+  - **完成條件**：
+    - 內測 URL：`https://poker-goal-dev.vercel.app/exploit-coach-gtow-test.html`
+    - 用戶在正式機 + 內測 URL 各問同一個問題 5 次 → 都正常出回答 → 肉眼能看出差異
+    - console 看得到 GTOW raw response（debug 用）
+    - `npx tsc -b --noEmit` EXIT=0
+  - **out of scope（明確排除）**：
+    - ❌ 不上線給一般玩家（純內測 URL，不掛主 nav）
+    - ❌ 不寫 DB / 不 cache GTOW 資料（ToS 保護）
+    - ❌ 不接玩家自己 GTOW token（只用團隊 token）
+    - ❌ 不做 ICM 模式
+    - ❌ 不改原版 exploit-coach（fork 出去獨立，原版繼續用 own retrieval）
+    - ❌ 不做同頁並排 UI（兩個環境完全隔離，用戶手動切瀏覽器分頁比）
+  - **部署**：執行者寫完 → 大腦產出 Edge Function 整檔貼碼指令（用戶手貼**測試** Supabase Dashboard） → 內測 URL 驗證 → task 結案；**不部署到正式 Supabase**
+  - 相關 wiki：[[supabase-edge-function-gotchas]]、ai-poker-wizard repo（gto_api.py / gto_formatter.py 參考）
+
 <!-- T-070 → In Review 2026-04-21（士林主目錄執行者 localStorage 版） -->
 
 <!-- T-071 → Done 2026-04-22（code merge @ 937c07e + bump v0.8.3-dev.4 d2b8c31，已隨 v0.8.4/v0.8.5 上線；單檔 public/exploit-coach-mockup-v3.html localStorage FIFO 3 則對話歷史；remote wip branch 已清） -->
