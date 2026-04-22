@@ -5,6 +5,19 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.17 [dev]
+- **派 T-087**：villain v2 新流程 HTML mockup（用戶要重新設計 villain v2 建立流程，取代 T-085 的 21 題傻問）
+- 新流程：B 選擇頁（3 入口：快速問答 / 設定比例 / 詳細範圍）→ C1/C2/C3（每個對應一種輸入方式）→ D 用戶檔案頁（風格摘要 + 21 range 表 + 範圍縮圖 + 編輯）
+- 設計決策（2026-04-22 與用戶 align 完成）：
+  - C2：4 頁，一頁一位置 6 動作 dropdown table
+  - C3：4 頁，一頁一位置 13×13 grid 純 0/1，先載 baseline 模板再改
+  - D：動作 tab 切換顯示 4 位置 mini grid 縮圖
+  - 風格摘要生成（決策 C 折中）：創建時靜態規則生成，D 頁可升級 AI 版（5 點）
+- T-087 = 純前端 wireframe（不接 Edge Function、純 localStorage、共存於 villain-v2-test.html，不取代）
+- 完成後派 T-088 實作 production 版
+- 工時 6-10 hr
+- bump v0.8.5-dev.16 → v0.8.5-dev.17
+
 ## 2026-04-22 v0.8.5-dev.16 [dev]
 - 改 CLAUDE.md「程式碼交付」段：大段 code（≥ 50 行 / Edge Function 整檔 / 大 migration）改用「檔案路徑模式」 — 大腦給絕對路徑，用戶自己開檔複製，不再對話貼整檔
 - 小段 (< 50 行) 維持直接貼對話

@@ -389,6 +389,69 @@ updated: 2026-04-20
 
 </details>
 
+- [ ] **T-087** | Product 內測 / 設計 | **villain v2 新流程 HTML mockup（B 選擇頁 / C1 快速問答 / C2 設定比例 / C3 詳細範圍 / D 用戶檔案頁）** `(派工 2026-04-22 → 任一執行者，純前端 wireframe，不接 Edge Function)`
+  - 建議 branch：`wip/T087-villain-v2-flow-mockup`
+  - **目的**：用戶要重新設計 villain v2 建立流程（取代現有 T-085 的「21 題傻問」）。本 task **只做 HTML mockup wireframe**，給用戶 dev URL 看視覺後，再派 T-088 實作 production 版（取代 villain-v2-test.html）
+  - **必讀**：[[villain-profile-design]]（schema + 21 range 定義 + summarizer 邏輯）
+  - **新流程設計（用戶 2026-04-22 拍板）**：
+    ```
+    A 剝削教練頁
+      ↓ 點「新建對手」
+    B 選擇頁（3 個入口）
+      ├─ 1. 快速問答 → C1
+      ├─ 2. 設定比例 → C2
+      └─ 3. 詳細範圍 → C3
+      ↓
+    C1 快速問答（5-7 題人話問答，類似 T-074 之前的 quiz）→ 推導 21 grid 比例 + 套 baseline → D
+    C2 設定比例（4 頁，每頁一個位置 6 動作）→ 21 grid 比例 + 套 baseline → D
+    C3 詳細範圍（4 頁，每頁一個位置 13×13 grid 純 0/1，先載 baseline 模板再改）→ D
+      ↓
+    D 用戶檔案頁
+      - 風格摘要（創建時靜態規則生成）
+      - 21 Range 一覽表（4×6 表格 + 鬆/緊顏色標註）
+      - 範圍縮圖（動作 tab 切換，4 位置並排顯示一個動作的 mini grid）
+      - AI 剝削策略（升級 5 點）
+      - 編輯按鈕 → 進 C3 編輯該 grid
+    ```
+  - **scope（嚴格 fork 模式 — 純 mockup 不取代既有檔）**：
+    1. **新檔** `public/exploit-coach-villain-v2-flow-mockup.html`（fork from `exploit-coach-villain-v2-test.html` 或 `mockup-v3.html`，純前端 wireframe）
+    2. **頂部加內測橫幅**：「⚠ Mockup 預覽（villain v2 新流程設計，非 production）」
+    3. **screens 實作**：
+       - **B 選擇頁**：3 個大按鈕卡片（快速問答 / 設定比例 / 詳細範圍），每個卡片含 icon + 短說明 + 預估時間
+       - **C1 快速問答**：5-7 題人話 quiz（採用 design doc § 3 骨架），每題 4 個語義化選項，逐題推進（progress bar），完成 → D
+       - **C2 設定比例**：4 頁（前/中/後/盲注），每頁一個位置 6 動作 dropdown table（含 GTO baseline 比較 + 偏離度 colored badge）+ 「載入預設」按鈕（GTO/LAG/TAG/Nit 4 個模板），存完進下一頁，第 4 頁存完 → 命名 → D
+       - **C3 詳細範圍**：4 頁（前/中/後/盲注），每頁顯示該位置 6 個動作 tab + 13×13 hand grid（純 0/1，點/拖拉切換）+ 載入 baseline 模板按鈕，6 動作切完進下一頁，第 4 頁完進 → 命名 → D
+       - **D 用戶檔案頁**：風格摘要區塊 + 21 range 4×6 表 + 動作 tab 切換顯示 4 位置 mini grid 縮圖 + AI 剝削策略 (預設靜態 + 「升級 AI 版 5 點」按鈕) + 編輯按鈕
+    4. **reuse 既有 lib**：
+       - `public/exploit-coach-villain-lib.js`（21 range schema + baseline 套用 + summarizer，T-083 寫過）
+       - 不改 lib code，只 import 用
+    5. **靜態規則生成 D 頁的「風格摘要 + AI 剝削策略」**（用戶 design 決策 C）：
+       - 用 villain-lib.js 的 summarizer 算各 range 偏離度
+       - 偏鬆 +N 個 range → 標「鬆型」；偏緊 +N → 標「緊型」；3-bet 偏鬆 → 「激進型」；對應動詞
+       - 剝削策略 3 條 = 從偏離度規則對應建議庫挑（例：偏鬆跟注 → 「大尺度 value」；偏緊 fold → 「多偷盲」）
+       - **不接 LLM API**（mockup 階段純規則）
+       - 「升級 AI 版」按鈕只是 UI placeholder（mockup 階段點下去顯示「需在 production 版實作」）
+    6. **所有 storage 用 localStorage**（mockup 不接 Supabase），key namespace `exploit-coach-villain-v2-flow-mockup-*`
+  - **out of scope（明確排除）**：
+    - ❌ 不接 Edge Function（純前端 wireframe）
+    - ❌ 不取代既有 `exploit-coach-villain-v2-test.html`（兩個共存，dev URL 並列）
+    - ❌ 不改 villain-lib.js
+    - ❌ 不做 mixed strategy（純 0/1）
+    - ❌ 不做跨裝置同步（純 localStorage）
+    - ❌ 不接真 LLM API for 風格摘要（純靜態規則）
+    - ❌ 不部署到正式環境（永遠不要）
+  - **完成條件**：
+    - 內測 mockup URL：`https://poker-goal-dev.vercel.app/exploit-coach-villain-v2-flow-mockup.html`
+    - 走完 B → 任一 C 路徑（C1 / C2 / C3）→ D，所有 screen 都能渲染 + 切換流暢
+    - 4 頁 C2 / 4 頁 C3 / 4 動作 tab D 都跑得通
+    - 載入 4 個 baseline 模板按鈕都 work
+    - localStorage 持久化驗證（reload 仍在）
+    - `npx tsc -b --noEmit` EXIT=0
+  - **部署**：執行者寫完 push wip → 大腦 merge → Vercel dev 自動部署 HTML → 用戶看 dev URL 視覺 review → 決定要不要派 T-088 實作 production
+  - **工時估算**：6-10 hr
+  - **後續 task**（T-087 完成後）：T-088 — 實作 production 版（取代 villain-v2-test.html，接真 Edge Function）
+  - **相關 task**：T-085（既有 villain-v2-test.html 不動，先共存）
+
 - [ ] **T-086** | Product 內測 / 工程 | **exploit-coach-gtow ECDSA P-256 signing + token refresh flow（救 T-082）** `(派工 2026-04-22 → 任一執行者，跟 T-085 並行)`
   - 建議 branch：`wip/T086-gtow-signing-flow`
   - **目的**：T-082 既有 Edge Function `exploit-coach-gtow/index.ts` 缺 ECDSA signing + token refresh flow，導致用 access token 打 spot-solution 時可能撞 GTOW 簽名驗證 → access token 過期沒法 refresh → 整個 GTOW 整合廢。本 task 補完這部分，讓 T-082 內測真的能跑起來
