@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.11 [dev]
+- **T-083 merge**：執行者交付 `wip/T083-villain-profile-v2-mvp` (5 commits, 12 files, +1561 行)
+  - design doc §11 v2 鎖定規格（補完 hand index、grid % 選項、baseline 套用、summarizer 規則）
+  - 新 `src/lib/villainProfile/` 7 個 TS 檔（types/ranges/storage/baseline/summarizer/builder/index）
+  - 新 `public/exploit-coach-villain-lib.js`（mockup 用 vanilla JS port，含 12 baseline ranges）
+  - 改 `public/exploit-coach-mockup-v3.html` — 加 sv2-intro / sv2-q（21 題動態渲染）/ sv2-name screens
+  - 改 `supabase/functions/exploit-coach/index.ts` (+18 行) — 加 `villain_profile_summary` + `villain_name`，buildSystemPrompt 優先用 v2 (backwards-compatible，舊 villain_type fallback 保留)
+  - tsc EXIT=0；preview 端到端驗證 pass：21 題 → save → v2 profile 持久化 → buildCoachContext 977 字 villain_profile_summary 含具體 GTO diff
+- **執行者誤刪 T-084 派工**：解 conflict 時恢復（執行者 wip 從 df0995c 切，沒帶 dcc5682 / b11117f 兩個後續 commit）
+- 待大腦：產 Edge Function 整檔貼碼指令給用戶部署到測試 Supabase
+- bump v0.8.5-dev.10 → v0.8.5-dev.11
+
 ## 2026-04-22 v0.8.5-dev.10 [dev]
 - 修 `scripts/session-sync.sh` 兩個常見坑：
   - **自動偵測子目錄**：cwd 非 git repo 時自動找 `poker-mentor` / `gto-poker-trainer*` 子目錄並 cd 進去（解士林電腦 cwd `POKERNEW` 上層問題）

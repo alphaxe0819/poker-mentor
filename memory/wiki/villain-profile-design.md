@@ -434,14 +434,293 @@ interface CoachContext {
 ## 9. 「答案組合表」完整化計畫（v2 todo）
 
 v1 是骨架，v2 要補：
-- [ ] 7 題問卷的完整題目用語（測試讓非技術用戶看懂）
-- [ ] 每題每選項對應的精準 % 數字（依 baseline 反推）
-- [ ] 21 個 grid 各自的選擇題完整 % 選項清單
-- [ ] 完整 169 hand index array（HAND_INDEX_ORDER）
-- [ ] baseline 套用函式偽碼 → 真實 implementation
-- [ ] LLM summarizer 整體畫像段的規則設計
-- [ ] 9 個典型 villain template（LAG / TAG / nit / fish 等）的完整 21 range 定義
-- [ ] Edge case 處理（用戶選了不可能組合，例如前位 30% open + 後位 5% open）
+- [x] 21 個 grid 各自的選擇題完整 % 選項清單 → 見 §11.1（T-083, 2026-04-22）
+- [x] 完整 169 hand index array（HAND_INDEX_ORDER）→ 直接 reuse `src/lib/gto/helpers.ts#ALL_HANDS`（§11.2）
+- [x] baseline 套用函式偽碼 → 真實 implementation → 見 §11.3（T-083, 2026-04-22）
+- [x] LLM summarizer v1 規則 → 見 §11.4（T-083, 2026-04-22）
+- [ ] 7 題問卷的完整題目用語（phase 2）
+- [ ] 每題每選項對應的精準 % 數字（phase 2）
+- [ ] LLM summarizer 整體畫像段的規則設計（phase 2）
+- [ ] 9 個典型 villain template（LAG / TAG / nit / fish 等）的完整 21 range 定義（phase 2）
+- [ ] Edge case 處理（用戶選了不可能組合，例如前位 30% open + 後位 5% open）（phase 2）
+
+---
+
+## 11. v2 MVP 鎖定規格（T-083，2026-04-22）
+
+> **狀態**：implementation-ready（§11.1-§11.4 鎖定，不再動，除非跑起來發現卡）
+> **對應 task**：T-083 MVP
+> **實作檔案**：
+> - types：`src/lib/villainProfile/types.ts`（新）
+> - baseline adapter：`src/lib/villainProfile/baseline.ts`（新）
+> - summarizer：`src/lib/villainProfile/summarizer.ts`（新）
+> - 前端 UI：`public/exploit-coach-mockup-v3.html`（新增 sv2 系列 screen）
+> - Edge Function：`supabase/functions/exploit-coach/index.ts`（改 CoachContext + buildSystemPrompt）
+
+### 11.1 21 Grid 的 % 選項（鎖定，每 grid 6 個離散選項）
+
+> 原則：每 grid 6 個選項對稱整齊；範圍依位置放寬 / 縮窄；選項覆蓋「很緊 / 緊 / 標準 / 鬆 / 很鬆 / 魚」5-6 個質感層次。
+
+| RangeKey | 選項（%） |
+|---|---|
+| EP_RAISE | 5 / 8 / 12 / 16 / 22 / 30 |
+| EP_CALL_3BET | 3 / 6 / 10 / 14 / 18 / 24 |
+| EP_4BET | 1 / 2 / 4 / 6 / 9 / 13 |
+| MP_RAISE | 10 / 14 / 18 / 24 / 30 / 38 |
+| MP_CALL | 4 / 8 / 12 / 18 / 25 / 32 |
+| MP_3BET | 3 / 5 / 8 / 11 / 14 / 18 |
+| MP_CALL_3BET | 3 / 6 / 10 / 14 / 18 / 24 |
+| MP_4BET | 1 / 2 / 4 / 6 / 9 / 13 |
+| MP_CALL_4BET | 1 / 2 / 3 / 5 / 7 / 10 |
+| LP_RAISE | 22 / 30 / 38 / 46 / 55 / 65 |
+| LP_CALL | 4 / 8 / 12 / 18 / 25 / 32 |
+| LP_3BET | 3 / 5 / 8 / 11 / 14 / 18 |
+| LP_CALL_3BET | 3 / 6 / 10 / 14 / 18 / 24 |
+| LP_4BET | 1 / 2 / 4 / 6 / 9 / 13 |
+| LP_CALL_4BET | 1 / 2 / 3 / 5 / 7 / 10 |
+| BL_RAISE | 15 / 22 / 30 / 40 / 50 / 60 |
+| BL_CALL | 8 / 15 / 25 / 35 / 48 / 60 |
+| BL_3BET | 3 / 5 / 8 / 11 / 14 / 18 |
+| BL_CALL_3BET | 3 / 6 / 10 / 14 / 18 / 24 |
+| BL_4BET | 1 / 2 / 4 / 6 / 9 / 13 |
+| BL_CALL_4BET | 1 / 2 / 3 / 5 / 7 / 10 |
+
+### 11.2 Hand Index 順序
+
+**直接 reuse** `src/lib/gto/helpers.ts` 匯出的 `ALL_HANDS`（13×13 雙迴圈 i/j over RANKS，pair 在對角 i===j，i<j 為 suited，i>j 為 offsuit）。`RANKS = ['A','K','Q','J','T','9','8','7','6','5','4','3','2']`。
+
+- index 0 = 'AA'
+- index 1 = 'AKs', index 2 = 'AQs', ..., index 12 = 'A2s'
+- index 13 = 'AKo', index 14 = 'KK', index 15 = 'KQs', ..., index 25 = 'K2s'
+- ...
+- index 168 = '22'
+
+`RangeData.grid` 為 169-element `number[]`（0 或 1），對應 `ALL_HANDS[i]` 的 hand 是否在 range 內。
+
+### 11.3 Baseline 套用函式
+
+#### 11.3.1 Position × Action → Baseline Range Key
+
+從 `src/lib/gto/gtoData_cash_6max_100bb.ts` 的 26 ranges 挑最接近語義的 baseline：
+
+| RangeKey | baseline DB key | baseline 用途 |
+|---|---|---|
+| EP_RAISE | `cash_6max_100bb_UTG_open` | 前位 open（最緊） |
+| MP_RAISE | `cash_6max_100bb_HJ_open` | 中位 open |
+| LP_RAISE | `cash_6max_100bb_BTN_open` | 後位 open（最寬） |
+| BL_RAISE | `cash_6max_100bb_SB_open` | 盲注位 open vs 限注 |
+| MP_CALL | `cash_6max_100bb_HJ_vs_UTG` | 中位 call vs open |
+| LP_CALL | `cash_6max_100bb_BTN_vs_CO` | 後位 call vs open |
+| BL_CALL | `cash_6max_100bb_BB_vs_open` | 盲注 defend vs open |
+| MP_3BET | `cash_6max_100bb_HJ_vs_UTG` | 3-bet 部分（取 'r' hands） |
+| LP_3BET | `cash_6max_100bb_BTN_vs_CO` | 同上 |
+| BL_3BET | `cash_6max_100bb_SB_vs_BTN` | SB 對 BTN 3-bet |
+| EP_CALL_3BET | `cash_6max_100bb_UTG_vs_3bet` | 取 'c' hands |
+| MP_CALL_3BET | `cash_6max_100bb_HJ_vs_3bet` | 取 'c' hands |
+| LP_CALL_3BET | `cash_6max_100bb_BTN_vs_3bet` | 取 'c' hands |
+| BL_CALL_3BET | `cash_6max_100bb_SB_vs_3bet` | 取 'c' hands |
+| EP_4BET | `cash_6max_100bb_UTG_vs_3bet` | 取 'r' hands |
+| MP_4BET | `cash_6max_100bb_HJ_vs_3bet` | 取 'r' hands |
+| LP_4BET | `cash_6max_100bb_BTN_vs_3bet` | 取 'r' hands |
+| BL_4BET | `cash_6max_100bb_SB_vs_3bet` | 取 'r' hands |
+| MP_CALL_4BET / LP_CALL_4BET / BL_CALL_4BET | `cash_6max_100bb_UTG_vs_3bet` 的 'r' hands 子集 | 4bet 後 call 是 polarized 範圍最緊端，取 4bet hands top-X |
+
+#### 11.3.2 Hand Power Ranking（trim / expand 依據）
+
+採用**合成分數**（score 越高越強，排序後可取 top-N hands 達 target %）：
+
+```typescript
+// helpers.ts 已有 RANKS；rankIdx: A=12, K=11, ..., 2=0
+function handScore(hand: string): number {
+  // 'AA' → pair, 'AKs' → suited, 'AKo' → offsuit
+  const r1 = rankIdx(hand[0])
+  const r2 = rankIdx(hand[1])
+  if (r1 === r2) return 200 + r1 * 2   // pair: AA=224, 22=200
+  if (hand.endsWith('s')) return 100 + Math.max(r1, r2) * 4 + Math.min(r1, r2)   // suited
+  return Math.max(r1, r2) * 4 + Math.min(r1, r2)                                 // offsuit
+}
+```
+
+驗證順序（前 5 強）：AA(224) > KK(222) > QQ(220) > JJ(218) > TT(216)；AA > AKs(149) > AKo(49)。合邏輯。
+
+#### 11.3.3 findBaselineRange 算法
+
+```typescript
+function findBaselineRange(rangeKey: RangeKey, targetPct: number): number[] {
+  // 1. 查 baseline DB key + 動作過濾條件（'r' / 'c' / 'r'+mix-r / 'c'+mix-c）
+  const { dbKey, action } = RANGE_KEY_TO_BASELINE[rangeKey]
+  const baseline = DB_CASH_6MAX_100BB[dbKey]  // Record<hand, 'r'|'c'|'mr:N'|...>
+
+  // 2. 抽出符合 action 的 hand 列表
+  //    action='raise': 'r' 全進；'mr:N' 按 N/100 機率進（MVP 直接全進）
+  //    action='call':  'c' 全進
+  const baseHands = Object.keys(baseline).filter(h => matchesAction(baseline[h], action))
+
+  // 3. baseline %
+  const baselinePct = baseHands.length / 169 * 100
+
+  // 4. 依 targetPct 調整
+  const grid = new Array(169).fill(0)
+  if (Math.abs(targetPct - baselinePct) < 1) {
+    // 直接用 baseline
+    baseHands.forEach(h => grid[ALL_HANDS.indexOf(h)] = 1)
+  } else if (targetPct > baselinePct) {
+    // 擴 range：加入不在 baseline 但分數最高的 hands 補足
+    const extras = ALL_HANDS
+      .filter(h => !baseHands.includes(h))
+      .sort((a, b) => handScore(b) - handScore(a))
+    const need = Math.round((targetPct - baselinePct) / 100 * 169)
+    const finalHands = [...baseHands, ...extras.slice(0, need)]
+    finalHands.forEach(h => grid[ALL_HANDS.indexOf(h)] = 1)
+  } else {
+    // 縮 range：baseline hands 依分數排序取 top-K
+    const sorted = [...baseHands].sort((a, b) => handScore(b) - handScore(a))
+    const keep = Math.round(targetPct / 100 * 169)
+    sorted.slice(0, keep).forEach(h => grid[ALL_HANDS.indexOf(h)] = 1)
+  }
+
+  return grid
+}
+```
+
+**MVP 簡化**：`matchesAction` 只看主 action，mixed（'mr:N'）全歸 raise，不做機率抽樣。phase 2 可精細化。
+
+### 11.4 Summarizer v1 規則
+
+#### 11.4.1 偏鬆 / 偏緊閾值
+
+給定 `diff = villainPct - gtoPct`：
+- `|diff| < 2` → `標準`
+- `2 ≤ diff < 6` → `偏鬆 +X%`
+- `diff ≥ 6` → `鬆 +X%`
+- `-6 < diff ≤ -2` → `偏緊 X%`
+- `diff ≤ -6` → `緊 X%`
+
+#### 11.4.2 代表手抽取邏輯
+
+對每個 RangeKey 的 villain grid vs baseline grid：
+- `extraHands` = villain grid=1 但 baseline grid=0 的 hands，依 `handScore` 降序取前 3
+- `missingHands` = baseline grid=1 但 villain grid=0 的 hands，依 `handScore` 降序取前 3
+
+若 diff 不到 ±2（標準），代表手段落可省略。
+
+#### 11.4.3 顯示名稱 map
+
+```typescript
+const POSITION_LABEL: Record<Position, string> = { EP: '前位', MP: '中位', LP: '後位', BL: '盲注位' }
+const ACTION_LABEL: Record<Action, string> = {
+  RAISE: 'open',
+  CALL: '跟注',
+  '3BET': '3-bet',
+  CALL_3BET: '跟 3-bet',
+  '4BET': '4-bet',
+  CALL_4BET: '跟 4-bet',
+}
+```
+
+#### 11.4.4 輸出格式（每 range 一行）
+
+```
+- {位置} {動作}: {villain%}%（GTO {gto%}%, {標準|偏鬆 +X%|偏緊 -X%|鬆|緊}{, 多開 {extra1/extra2/extra3}}{, 少開 {miss1/miss2/miss3}}）
+```
+
+範例：
+```
+- 後位 open: 35%（GTO 49%, 緊 -14%, 少開 J5s/T6s/65o）
+- 中位 3-bet: 4%（GTO 8%, 偏緊 -4%, 少開 A5s/KQs/54s）
+- 前位 open: 18%（GTO 12%, 鬆 +6%, 多開 A9s/KQo/98s）
+- 盲注位 跟注: 40%（GTO 42%, 標準）
+```
+
+#### 11.4.5 輸出整體結構
+
+```
+對手 villain profile（21 range summary）：
+
+【翻前 open】
+- 前位 open: ...
+- 中位 open: ...
+- 後位 open: ...
+- 盲注位 open: ...
+
+【跟注（vs open）】
+- 中位 跟注: ...
+- 後位 跟注: ...
+- 盲注位 跟注: ...
+
+【3-bet】
+- 中位 3-bet: ...
+- 後位 3-bet: ...
+- 盲注位 3-bet: ...
+
+【面對 3-bet】
+- 前位 跟 3-bet: ... / 前位 4-bet: ...
+- 中位 跟 3-bet: ... / 中位 4-bet: ...
+- 後位 跟 3-bet: ... / 後位 4-bet: ...
+- 盲注位 跟 3-bet: ... / 盲注位 4-bet: ...
+
+【面對 4-bet】
+- 中位 跟 4-bet: ...
+- 後位 跟 4-bet: ...
+- 盲注位 跟 4-bet: ...
+```
+
+MVP **不含**「整體玩家畫像」段（phase 2）。
+
+#### 11.4.6 Token 估算
+
+- 21 行 × ~70 token = ~1470 token
+- 加區塊標題 + 空行 ~100 token
+- **Total ~1570 token** ← 可接受，cache 化後便宜
+
+### 11.5 CoachContext schema（Edge Function 端）
+
+```typescript
+interface VillainProfile {
+  version: 'v2'
+  id: string
+  name: string
+  color: string
+  createdAt: string
+  updatedAt: string
+  ranges: Record<RangeKey, { totalPct: number; grid: number[] }>
+  metadata: {
+    createdMethod: 'percent_select'   // MVP only
+    percentChoices: Record<RangeKey, number>
+  }
+}
+
+interface CoachContext {
+  // ... 既有 fields（hero_hand / hero_pos / flop / ...）
+  villain_profile?: VillainProfile    // 新，取代 villain_type / villain_label / villain_leaks
+  // 舊 fields 保留（backward compat 一段時間；MVP 不送但不報錯）
+}
+```
+
+### 11.6 實作檔案地圖
+
+```
+src/lib/villainProfile/
+├── types.ts           # Position / Action / RangeKey / VillainProfile / 21 RANGE_KEYS 常數
+├── ranges.ts          # PERCENT_OPTIONS table（§11.1）、POSITION_LABEL、ACTION_LABEL
+├── baseline.ts        # RANGE_KEY_TO_BASELINE + handScore + findBaselineRange
+├── summarizer.ts      # summarizeVillainProfile + buildGtoBaseline
+└── storage.ts         # loadV2 / saveV2 / LS_KEY_V2 + 清 v1 key
+public/exploit-coach-mockup-v3.html
+  ├── 既有 sq / sq-name    # v1 問卷（暫留，但不從 s1 進入）
+  └── 新 sv2-intro / sv2-q[1..21] / sv2-name / sv2-summary   # v2 21 題 + 命名 + 摘要預覽
+supabase/functions/exploit-coach/index.ts
+  ├── CoachContext 加 villain_profile
+  └── buildSystemPrompt 替 VILLAIN_LABELS 段為 summarizer 輸出
+```
+
+⚠️ **不動** `supabase/functions/exploit-coach-gtow/index.ts`（T-082 內測版保持 baseline 對照）。
+
+### 11.7 舊 v1 清理策略
+
+- 用戶建任何 v2 villain 時，app init 呼叫一次 `localStorage.removeItem('exploit-coach-villains-v1')`
+- 硬編「老張」改成一個 v2 預設 profile（21 range 套 GTO baseline = 完美 GTO 對手），或暫時隱藏 s1 的老張卡改以「+ 新建 v2 對手」入口代替
+- MVP 採後者：s1 拿掉硬編老張 → 玩家必須先建一個 v2 villain 才能進 chat
 
 ---
 

@@ -340,7 +340,12 @@ updated: 2026-04-20
   - **工時估算**：4-8 hr
   - **完成後**：執行者切回 T-083 繼續 villain profile v2 MVP
 
-- [ ] **T-083** | Product | **villain profile v2：21 range grid 系統 MVP（數字比例輸入 + design v2 補完）** `(派工 2026-04-22 → 家裡 wip1 執行者，T-084 完成後士林也可接)`
+<!-- T-083 → In Review 2026-04-22（家裡 wip1 執行者完成；wip/T083-villain-profile-v2-mvp；tsc EXIT=0；preview 端到端驗證 pass；待大腦 produce Edge Function 整檔貼碼指令 → 用戶手貼測試 Supabase → dev URL 驗證 → 結案） -->
+
+<details>
+<summary>📦 T-083 原任務描述（已 In Review，見下方）</summary>
+
+- [ ] **T-083** | Product | **villain profile v2：21 range grid 系統 MVP（數字比例輸入 + design v2 補完）** `(派工 2026-04-22 → 家裡 wip1 執行者)`
   - 建議 branch：`wip/T083-villain-profile-v2-mvp`
   - **目的**：把現有「7 種抽象 villain type」升級成「21 個具體 range grid」（4 位置 group × 6 動作，前位砍 3 個邏輯不存在的）。先做最小 MVP 跑通端到端，後續 phase 再加問卷升級 / 13×13 grid 拉 UI / pokerdinosaur 16,750 baseline 升級
   - **必讀設計文件**：[[villain-profile-design]]（架構、schema、21 grid 定義、baseline 套用邏輯、LLM summarizer 全在這；v1 草案，需執行者邊做邊補完）
@@ -395,6 +400,42 @@ updated: 2026-04-20
   - **相關 task**：
     - T-082（exploit-coach GTOW 內測） — 已 merge，T-083 完成後的 villain_profile 也可以拿去 T-082 內測對比
     - 之前 villain 系統相關：T-070（v1 villain localStorage persist）/ T-073（laozhang → standard）
+
+</details>
+
+### 📦 T-083 完成摘要（2026-04-22 In Review）
+
+**Branch**：`wip/T083-villain-profile-v2-mvp`（家裡 wip1 執行者）
+
+**Commits**（5 個）：
+1. `77e05c2` docs: villain profile v2 design lock (§11)
+2. `0719afc` feat: villainProfile lib (types/ranges/storage/baseline/summarizer/builder)
+3. `2dbb2a6` fix: baseline marker parser — handle 3b/4b/mr:N_3b/_4b
+4. `1cf19e9` feat: v2 villain 21-range flow in exploit-coach mockup
+5. `63de804` feat: exploit-coach Edge Function accept villain_profile_summary
+
+**交付物**：
+- `memory/wiki/villain-profile-design.md` §11 v2 MVP 鎖定規格（% 選項、hand index、baseline algo、summarizer rules、file map、legacy clean）
+- `src/lib/villainProfile/` — TS lib（types / ranges / storage / baseline / summarizer / builder / index）
+- `public/exploit-coach-villain-lib.js` — 同邏輯 vanilla JS port（mockup 用），含 12 baseline ranges DB subset
+- `public/exploit-coach-mockup-v3.html` — sv2-intro / sv2-q（動態渲染 21 題）/ sv2-name 3 screens + startV2Flow 等函式
+- `supabase/functions/exploit-coach/index.ts` — CoachContext 加 `villain_profile_summary` / `villain_name`，buildSystemPrompt 優先用 v2 summary
+
+**完成條件檢查**：
+- [x] design doc v2 補完（§11）
+- [x] 數字比例建 1 個對手 → 21 grid 全填好（preview 驗證 LS_KEY_V2）
+- [x] AI ctx 看得到「前位 open: 12%（GTO 22.5%, 緊 -10%, 少開 87s/86s/76s）」具體 grounding
+- [x] `npx tsc -b --noEmit` EXIT=0
+- [ ] 內測 URL：待用戶貼 Edge Function 到測試 Supabase + 確認 dev 部署
+
+**未做（留給大腦 / 用戶）**：
+- `src/lib/villainProfile/` TS lib 雖寫好但目前**只被 node sanity script 用到**，mockup 用 vanilla JS 副本。未來若 React app 要整合可直接 import。
+- Edge Function **未部署**（需大腦 produce 貼碼指令給用戶手貼到測試 Supabase `btiqmckyjyswzrarmfxa`）
+- **未動** `supabase/functions/exploit-coach-gtow/index.ts`（遵照用戶指示，T-082 內測版保持 baseline 對照）
+
+**踩坑記錄**：
+- 原 marker parser 只抓 `r` / `mr:N`，抓不到 `3b` / `4b` / `mr:N_3b` / `mr:N_4b` → MP_3BET 等 baseline 顯示 ~0.3% nonsense。改為 action-specific BaselineFilter union（open / call_vs_open / 3bet / call_vs_3bet / 4bet），每種 filter 有明確 marker 匹配規則。
+- 原實作用 hand-class count / 169 算 %，但實際 GTO 語義是 combo weight %（pair=6, suited=4, offsuit=12，total 1326）。改成 combo-weighted 後數字合理（EP_RAISE baseline 從 34.3% 降到 22.5%）。
 
 <!-- T-082 → In Review 2026-04-22（家裡 wip1 執行者完成 @ 4aa445d，code merged 2026-04-22；待用戶設 GTO_WIZARD_TOKEN secret + 貼 Edge Function 到測試 Supabase + 驗 dev URL） -->
 
