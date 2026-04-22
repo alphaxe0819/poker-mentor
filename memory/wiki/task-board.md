@@ -382,6 +382,11 @@ updated: 2026-04-20
   - **工時估算**：6-10 hr（lib 已寫好，主要是 fork + scope 切換）
   - **相關 task**：T-083（partial revert 後 lib 留下供 reuse）
 
+<!-- T-086 → In Review 2026-04-22（士林電腦執行者完成於 wip/T086-gtow-signing-flow；待用戶跑 test-gtow-flow.mjs E2E 驗證 + 大腦 merge + 重部署 exploit-coach-gtow 到測試 Supabase） -->
+
+<details>
+<summary>📦 T-086 原任務描述（已 In Review，見下方）</summary>
+
 - [ ] **T-086** | Product 內測 / 工程 | **exploit-coach-gtow ECDSA P-256 signing + token refresh flow（救 T-082）** `(派工 2026-04-22 → 任一執行者，跟 T-085 並行)`
   - 建議 branch：`wip/T086-gtow-signing-flow`
   - **目的**：T-082 既有 Edge Function `exploit-coach-gtow/index.ts` 缺 ECDSA signing + token refresh flow，導致用 access token 打 spot-solution 時可能撞 GTOW 簽名驗證 → access token 過期沒法 refresh → 整個 GTOW 整合廢。本 task 補完這部分，讓 T-082 內測真的能跑起來
@@ -439,6 +444,16 @@ updated: 2026-04-20
   - **風險**：
     - GTOW 改簽名邏輯就壞 — 維護成本（若 GTOW 改架構，重新研究 ai-poker-wizard 看他們怎麼 patch）
     - Web Crypto API ECDSA raw format vs Python DER format 可能要轉換（如果 server 拒絕，先 debug 這個）
+  - **執行者交付摘要**（2026-04-22 士林）：
+    - 新 `supabase/functions/exploit-coach-gtow/gto_signing.ts`（Deno Web Crypto；generateKeypair / signRefreshRequest / refreshAccessToken / ensureFreshAccessToken + module-scope cache + server time sync + `GTOW_KEYPAIR_JWK` 持久化機制）
+    - 改 `supabase/functions/exploit-coach-gtow/index.ts`：移除 `GTO_WIZARD_TOKEN`，改用 `GTOW_REFRESH_TOKEN`；`retrieveSolverNode` 前 `await ensureFreshAccessToken(...)` 拿 access token → 傳進 `callGTOWSpotSolution(params, accessToken)`
+    - 新 `scripts/dev-tools/test-gtow-flow.mjs`（Node 18+，E2E 驗證：generateKeypair → refresh → spot-solution 200）+ README 段落 + `.gitignore` 加 `.gtow-refresh.local.txt`
+    - **ECDSA raw format**：Web Crypto ECDSA sign 已輸出 raw r||s（跟 Python `_sign_raw_b64` 手動轉的同格式），**不需轉 DER**（已寫 comment 標註）
+    - `npx tsc -b --noEmit` EXIT=0；main 專案無影響（Edge Function 不在 tsconfig include）
+    - **未做**：Supabase `gtow_tokens` 表 migration（走 Secret-based MVP，cold start 重 refresh 一次，scope 允許）
+    - **等用戶做**：① 從瀏覽器 `localStorage.user_refresh` 取 token；② 跑 test-gtow-flow.mjs 驗 E2E；③ 設 Supabase Secret `GTOW_REFRESH_TOKEN`（+ 可選 `GTOW_KEYPAIR_JWK`）；④ 手貼 Edge Function 到測試 Supabase Dashboard
+
+</details>
 
 <!-- T-083 → In Review 2026-04-22（家裡 wip1 執行者完成；wip/T083-villain-profile-v2-mvp；tsc EXIT=0；preview 端到端驗證 pass；⚠ 違反 fork 獨立原則改了原版正式入口檔，partial revert 後保留 lib，重派 T-085 做 fork 版） -->
 
