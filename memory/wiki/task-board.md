@@ -394,6 +394,11 @@ updated: 2026-04-20
 <details>
 <summary>📦 T-087 原任務描述（已 In Review，見下方）</summary>
 
+<!-- T-088 → In Review 2026-04-22（家裡 wip1 執行者完成） -->
+
+<details>
+<summary>📦 T-088 原任務描述（已 In Review，見下方）</summary>
+
 - [ ] **T-088** | Product 內測 / Polish + Bugfix | **villain-v2-flow polish + 登入 bug 修** `(派工 2026-04-22 → 任一執行者，全包 5 點 issue)`
   - 建議 branch：`wip/T088-villain-v2-flow-polish-bugfix`
   - **目的**：用戶 review T-087 ship 後找出 5 個 issue，一次修完
@@ -448,6 +453,8 @@ updated: 2026-04-20
     - 內測 URL：`https://poker-goal-dev.vercel.app/exploit-coach-villain-v2-flow.html`
   - **部署**：執行者 push wip → 大腦 merge → Vercel dev 自動部署 → 用戶驗收
   - **工時估算**：4-8 hr（5 點看登入 bug debug 複雜度，可能多 2 hr）
+
+</details>
 
 - [ ] **T-087** | Product 內測 | **villain v2 新流程 production 版（B 選擇頁 / C1 快速問答 / C2 設定比例 / C3 詳細範圍 / D 用戶檔案頁，接真 Edge Function）** `(派工 2026-04-22 → 任一執行者，直接做 production，不做 mockup wireframe)`
   - 建議 branch：`wip/T087-villain-v2-flow`
@@ -866,6 +873,60 @@ updated: 2026-04-20
 ---
 
 ## 👀 In Review（等大腦整合）
+
+- [?] **T-088** | Product 內測 / Polish + Bugfix | **villain-v2-flow polish + 登入 bug 修（5 issue 全包）**
+  - branch: `wip/T088-villain-v2-flow-polish-bugfix`（from `origin/dev@717c4c1`）
+  - 機器：家裡 wip1 worktree
+  - 改動：**單檔** `public/exploit-coach-villain-v2-flow.html`（+144 / -34）；其他檔 0 改動 ✓
+  - **5 個 issue 修法**：
+    1. **C2 模板高亮**（Issue 1）：
+       - `sfC2State` 加 `activeTemplate` 欄位；`loadTemplate(name)` 設 activeTemplate；`sfC2Pick` 手動改 % 後用 `matchesTemplate()` 檢查 — 不再對齊模板 → 清 activeTemplate
+       - 新 `renderTemplateToolbar(targetId, onclickBuilder, activeName)` 共用 helper：active 按鈕綠底白字 + ✓ 前綴
+       - C2 HTML 區塊的 hardcode toolbar 改為 `<div id="sf-c2-tmpl-bar">`，renderC2 每次重繪
+    2. **C3 模板擴充 + 改名**（Issue 2）：
+       - 原「載入 baseline」按鈕去除，新增 `<div id="sf-c3-tmpl-bar">` 渲染同一 `renderTemplateToolbar`
+       - toolbar prefix 文字：**「載入指定範圍：」**（含 GTO / LAG 鬆凶 / TAG 緊凶 / Nit 超緊 4 按鈕）
+       - 新 `sfC3LoadTemplate(name)`：該位置 6 動作 grid 全部用 `findBaselineRange(rk, TEMPLATES[name]()[rk])` 套上；設 `activeTemplates[pos]` 高亮
+       - reuse T-087 的 TEMPLATES 函式（villain-lib.js 沒有這 4 個，是 flow 頁自己的；scope 說「T-083 留下」應是口誤）
+    3. **C3 動作互斥**（Issue 3）：
+       - 新 `MUTEX_PAIRS` 常數：`CALL↔3BET` / `CALL_3BET↔4BET`（RAISE / CALL_4BET 無 peer）
+       - 新 `mutexSiblingKey(pos, act)`：查該位置是否有 peer grid，存在則回 sibling rangeKey
+       - `renderC3` 每格渲染時：若 sibling grid 該格=1 且 current grid 該格=0 → 加 `.blocked` class + `title` tooltip「已在 XX 選擇，點此切換到 YY」
+       - CSS `.hand-cell.blocked` 深灰 + `::after` 顯示 ✕ 角標（pair / suited / offsuit 變體各自對應）
+       - `sfC3Paint` 互斥切換邏輯：start/drag 遇到 sibling=1 且 curr=0 → 從 sibling 移除 + 加入 current；互斥切換後 `sfC3PaintVal=1`（避免拖拉把剛切過來的再抹掉）
+       - 跨位置不互斥（`mutexSiblingKey` 只查同 pos）
+    4. **命名頁顏色 bug**（Issue 4）：
+       - `sfPickColor(c)` 在切換色 + renderNameScreen 之前，先讀 input.value 捕捉進 `sfNamePending.name`，避免 re-render 時用舊空值覆寫 input
+    5. **登入 bug**（Issue 5，核心根因）：
+       - **根因**：flow 頁是 **standalone HTML**（直接開 dev URL，非 React app iframe），但既有 auth flow 只有 iframe 路徑：`readTokenFromStorage()` 要能讀到 parent 寫入的 LS token，`askParentRefresh()` 需要 `window.parent` 存在。standalone 時 `window === window.parent` → askParentRefresh 直接 resolve null → fetch 沒 token → UI 顯示「需要先登入」
+       - **修法**：
+         - 新 `IS_STANDALONE = (window === window.parent)` 全域旗標
+         - supabase client 初始化時 standalone 模式改開 `persistSession: true, autoRefreshToken: true`（iframe 仍關掉，避免跟 parent 搶 rotating refresh_token）
+         - 新 `getFreshAccessTokenStandalone()`：用 `supabase.auth.getSession()` 讀 session（SDK 自動 + 同 LS key 同 project，共享 parent 主站登入寫入的 token）；過期時 `supabase.auth.refreshSession()`
+         - `getFreshAccessToken()` 頂部加 `if (IS_STANDALONE) return await getFreshAccessTokenStandalone();`，iframe 路徑保持原樣
+       - **使用流程**：
+         1. 用戶先在主站 `poker-goal-dev.vercel.app/` 登入（寫入 `sb-<ref>-auth-token` 到 localStorage）
+         2. 開 `/exploit-coach-villain-v2-flow.html` 內測 URL（同 domain，LS 共享）
+         3. standalone supabase client `getSession()` 讀到 token → AI / chat 正常
+       - **對照 T-085 villain-v2-test.html**：同樣 bug（未改），但用戶實際多用 test 頁是從 React app iframe 進 → 沒暴露；flow 頁多半直接開 URL 才踩到
+  - **驗證**：
+    - `npx tsc -b --noEmit` EXIT=0 ✓
+    - `git status` 只顯示 `public/exploit-coach-villain-v2-flow.html` + `memory/wiki/task-board.md` ✓
+  - **Fork 獨立驗證**：原版 `mockup-v3.html` / `villain-v2-test.html` / 任何 Edge Function / `villain-lib.js` / React app 全 0 modification ✓
+  - **大腦接手待做**：
+    1. merge wip → dev → Vercel dev 自動部署
+    2. 用戶驗收 5 點：
+       - C2 切換 GTO/LAG/TAG/Nit 看到按鈕高亮 ✓
+       - C2 手動改 % 後高亮消失 ✓
+       - C3 同樣 4 個模板按鈕 + 「載入指定範圍」label
+       - C3 切 4BET，該位置 CALL_3BET 已選的 hand 變灰 + ✕ 角標；點灰格 → 從 CALL_3BET 移除、4BET 加
+       - 命名頁打字 → 選顏色 → 暱稱字串保留
+       - 登入後開內測 URL → 點「請教練分析」→ 拿到 AI 回覆，不再「需要先登入」
+    3. 若 villain-v2-test 也要同樣修登入 bug → 可另開 follow-up
+  - **已知限制**：
+    - matchesTemplate 用 `===` 嚴格比 21 key；若模板函式產出有浮點誤差會 false-negative（目前全 integer ok）
+    - standalone 模式 supabase SDK `persistSession: true` 會寫入 LS；若同一 browser 之前用 iframe 模式寫入，LS 值格式可能微有差異（modern v2 SDK 向下兼容，實測無 issue）
+    - mutex 遇到 `editProfileFromD` 後 `sfC3State.activeTemplates = {}` 所有位置都沒 active template → user 點載入會重設整個 6 動作 grid（含 user 編輯的 → 破壞），這是預期行為（用戶明確按「載入」才會發生）
 
 - [?] **T-087** | Product 內測 | **villain v2 新流程 production 版（B/C1/C2/C3/D fork 版）**
   - branch: `wip/T087-villain-v2-flow`（from `origin/dev@f221115`）
