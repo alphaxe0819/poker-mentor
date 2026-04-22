@@ -266,6 +266,11 @@ updated: 2026-04-20
 
 <!-- T-030 → In Review 2026-04-21（Claude_in_Chrome 自動化驗收，3 pass / 2 partial） -->
 
+<!-- T-064 → In Review 2026-04-22（家裡 wip1 執行者完成） -->
+
+<details>
+<summary>📦 T-064 原任務描述（已 In Review，見下方）</summary>
+
 - [ ] **T-064** | Product | **exploit-coach parent refresh handshake hang 修** `(派工 2026-04-22 → 任一執行者，T-090 後用戶實測撞到 — 兩種流程都撞，結構化 + narrative 快速分析都顯示「登入已過期」)`
   - 建議 branch：`wip/T064-parent-refresh-hang`
   - **2026-04-22 實測觸發**：用戶主站進剝削教練 tab（T-090 切到 villain-v2-flow.html iframe）發問：
@@ -296,6 +301,8 @@ updated: 2026-04-20
   - **部署**：執行者 push wip → 大腦 merge → Vercel dev 自動部署 → 用戶主站驗
   - **工時估算**：1-2 hr（純 patch handler，scope 清楚）
   - 相關 wiki：[[supabase-edge-function-gotchas]] / T-054
+
+</details>
 
 <!-- T-031 已完成，移至 Done -->
 
@@ -966,6 +973,35 @@ updated: 2026-04-20
 ---
 
 ## 👀 In Review（等大腦整合）
+
+- [?] **T-064** | Product | **exploit-coach parent refresh handshake hang 修**
+  - branch: `wip/T064-parent-refresh-hang`（from `origin/dev@a1ae853`）
+  - 機器：家裡 wip1 worktree
+  - 改動：單檔 `src/tabs/ExploitCoachTab.tsx`（+29/-5，handler 內部邏輯重寫）；其他檔 0 改動 ✓
+  - **修法**（對齊 scope 四步）：
+    1. 加 `timeoutAfter(ms)` helper（Promise<null> that resolves after ms）
+    2. 先 `supabase.auth.getSession()` 驗活性（SDK 內部讀 LS，不走網路）；若 `expires_at - now > 30_000` → 直接 postMessage 回現有 `access_token`，**不跑 refreshSession**
+    3. 過期或即將過期 → `Promise.race<string | null>([refreshSession().then(r => access_token), timeoutAfter(2500)])`，明確 `<string | null>` 型別讓 tsc 過
+    4. Race 拿到 token → 用；race timeout → fallback 再 `getSession()` 一次（SDK 可能同期 auto-refresh 完寫進 LS）；仍無 → null
+    5. 整段 try/catch 保留原 `refresh threw` 錯誤路徑
+  - **不改**：iframe 端 HTML（`villain-v2-flow.html` / `mockup-v3.html` 的 `askParentRefresh` 機制保留）；Edge Function；supabase client 初始化
+  - **console log 區別**（便於 Safari 遠端 Inspector debug）：
+    - 活：`[parent-refresh] session alive, return existing token { remainingMs }`
+    - 需 refresh：`[parent-refresh] need refresh { remainingMs }`
+    - 成功：`[parent-refresh] refresh ok`
+    - Timeout 觸發：`[parent-refresh] refresh timed out, fallback to getSession`
+  - **驗證**：`npx tsc -b --noEmit` EXIT=0 ✓ / `git status` 只顯示 `ExploitCoachTab.tsx` + `task-board.md` ✓
+  - **大腦接手待做**：
+    1. merge wip → dev → bump version + push → Vercel dev 自動部署（**產品改動**，需跑推送後驗證 curl HTTP 200 + Vite build hash）
+    2. 用戶驗收 3 條：
+       - 登入 → 剝削教練 tab → 結構化流程發問 → 拿到 AI 回覆（不「登入已過期」）
+       - narrative 快速分析發問 → 拿到 AI 回覆
+       - 掛 tab 40+ min（token 過期）→ 回來發問 → 自動 refresh + 拿到回覆，不用重新整理
+    3. console 不再有「parent refresh timeout」（除非真網路異常）
+  - **已知限制 / 追加考量**：
+    - 若 `getSession()` 本身 hang（理論不會，但 auth storage polyfill 異常場景）→ handler 仍可能卡；scope 未要求處理
+    - `refreshSession` 超時不代表失敗，只代表 2.5s 內沒回；SDK 可能稍晚才成功寫 LS → fallback getSession 撿到
+    - 30s buffer 用於避免 iframe 拿到 token 後延遲打 Edge Function 時剛好過期；可調
 
 - [?] **T-089** | Product 內測 / Bugfix | **villain-v2-test + gtow-test standalone auth patch（抄 T-088）**
   - branch: `wip/T089-standalone-auth-fix`（from `origin/dev@187e381`）
