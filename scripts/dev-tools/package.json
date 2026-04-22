@@ -1,0 +1,13 @@
+{
+  "name": "poker-mentor-dev-tools",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Dev-only tools; intentionally isolated from root package.json",
+  "scripts": {
+    "grab-token": "node grab-gtow-token.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "^1.48.0"
+  }
+}

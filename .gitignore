@@ -50,3 +50,7 @@ RYE Rangeviewer 2021 Updated with ICM Ranges/
 tmp_log.txt
 **/tmp_log.txt
 .vercel
+
+# Dev tools 本機 token / 獨立依賴（T-084）
+scripts/dev-tools/.gtow-token.local.txt
+scripts/dev-tools/node_modules/
