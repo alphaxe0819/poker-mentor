@@ -19,6 +19,7 @@
 - [[gto-pipeline-conventions]] — solver 產出與手寫 GTO data 的檔名 / export 命名規範
 - [[gto-pipeline-env-setup]] — `scripts/gto-pipeline/.env` + `node_modules` setup（setup-env.ps1 不涵蓋，service_role 要從 Dashboard 手貼）
 - [[prompt-cache-strategy]] — exploit-coach 省 LLM 錢策略：5min cache + keep-warm cron 達到 ~100% cache hit，省 80% input 成本（idea 階段，量達 1k+/月或升模型時優先做）
+- [[villain-profile-design]] — villain profile v2 系統設計（4 位置 group × 6 動作 = 21 range grid + 三種輸入方式 + LLM summarizer + MVP scope）
 
 ## Feedback & Rules
 

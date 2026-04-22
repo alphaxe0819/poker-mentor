@@ -311,6 +311,55 @@ updated: 2026-04-20
 
 </details>
 
+- [ ] **T-083** | Product | **villain profile v2：21 range grid 系統 MVP（數字比例輸入）** `(派工 2026-04-22 → 家裡 wip1 執行者)`
+  - 建議 branch：`wip/T083-villain-profile-v2-mvp`
+  - **目的**：把現有「7 種抽象 villain type」升級成「21 個具體 range grid」（4 位置 group × 6 動作，前位砍 3 個邏輯不存在的）。先做最小 MVP 跑通端到端，後續 phase 再加問卷升級 / 13×13 grid 拉 UI / pokerdinosaur 16,750 baseline 升級
+  - **必讀設計文件**：[[villain-profile-design]]（架構、schema、21 grid 定義、baseline 套用邏輯、LLM summarizer 全在這）
+  - **scope（嚴格遵守 MVP，不擴張）**：
+    1. **Schema + localStorage**（key: `exploit-coach-villains-v2`）
+       - `VillainProfile` interface 21 個 range（EP/MP/LP/BL × 6 動作，前位只 3 個）
+       - 直接清光舊 v1 `exploit-coach-villains-v1`（用戶決議：不 migration）
+    2. **數字比例輸入 UI**（前端 `public/exploit-coach-mockup-v3.html` 或新檔）
+       - 21 個 grid 各一題選擇題，每題 6-8 個 % 離散選項（範圍見 design doc 4.2）
+       - 流程：建立對手 → 答 21 題 → 命名 → 存
+       - **不做 13×13 grid 拉 UI**（phase 2）
+       - **不做問卷模式**（v1 7 題版可繼續用、或暫時 disable）
+    3. **baseline 套用函式**
+       - 從 `src/lib/gto/gtoData_cash_6max_100bb.ts` 26 個手寫 ranges 抽 baseline
+       - `findBaselineRange(position, action, targetPct)` → 回傳 169-element grid (0/1)
+       - 給定每個 grid 的 % → 套對應 baseline 填 hand
+    4. **LLM summarizer v1**
+       - `summarizeVillainProfile(profile, gtoBaseline)` → 21 行人話 summary
+       - 每行格式：「位置 動作: X% (GTO Y%, 偏鬆/緊 Z%)」
+       - **不做整體畫像段**（phase 2）
+    5. **Edge Function 改造**（`supabase/functions/exploit-coach/index.ts`）
+       - 接收新 field `ctx.villain_profile`（取代 `villain_type / villain_label`）
+       - 用 summarizer 結果取代現有 VILLAIN_LABELS 段落
+       - 保留 narrative mode 不動（沒 villain context）
+    6. **整合到既有流程**
+       - S1 對手卡片改顯示新版 v2 villain（名字 + 整體 stats summary）
+       - 選對手 → 進 chat → 把 villain_profile 整包送 Edge Function
+  - **out of scope（明確排除）**：
+    - ❌ 13×13 hand grid 拉 UI（最複雜的 30+ hr，留 phase 2）
+    - ❌ 問卷模式升級
+    - ❌ pokerdinosaur 16,750 baseline 升級（先用手寫 26 個）
+    - ❌ 9 個典型 villain template 預設庫
+    - ❌ 跨裝置同步 Supabase
+    - ❌ 對話中動態更新 villain
+    - ❌ summarizer「整體玩家畫像」段
+    - ❌ villain 編輯模式（先做新建，編輯 phase 2）
+  - **完成條件**：
+    - 用「數字比例」建立 1 個對手 → 21 grid 全填好（檢查 localStorage）
+    - 進 chat 問同一場景 → 對比「舊 villain_type='lag'」vs「新 villain_profile 21 range」回答差異
+    - AI 回答中能看到「後位 35% open（偏緊 -14%）」這種具體 grounding
+    - `npx tsc -b --noEmit` EXIT=0
+    - 內測 URL：`https://poker-goal-dev.vercel.app/exploit-coach-mockup-v3.html`
+  - **部署**：執行者寫完 → 大腦 produce Edge Function 整檔貼碼指令（用戶手貼測試 Supabase Dashboard）→ 內測驗證 → task 結案
+  - **工時估算**：26-32 hr（3-4 工作天，見 design doc 8.5.3）
+  - **相關 task**：
+    - T-082（exploit-coach GTOW 內測） — **獨立**，但 T-083 完成後的 villain_profile 也可以拿去 T-082 內測對比
+    - 之前 villain 系統相關：T-070（v1 villain localStorage persist）/ T-073（laozhang → standard）
+
 - [ ] **T-082** | Product 內測 | **exploit-coach 內測版：retrieval 換 GTO Wizard API（獨立環境，與正式機 A/B 對照）** `(派工 2026-04-22 → 家裡 wip1 執行者)`
   - 建議 branch：`wip/T082-exploit-coach-gtow-test`
   - **目的**：fork 一份 exploit-coach 內測版，**只換 retrieval 資料源**（我們的 `solver_postflop_6max` 表 → GTO Wizard API），prompt / Claude 模型 / 術語規則完全不動

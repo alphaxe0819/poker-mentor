@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.7 [dev]
+- 新 wiki [[villain-profile-design]] — villain profile v2 系統設計（v1 草案）
+  - 4 位置 group（前/中/後/盲注）× 6 動作（RAISE/跟注/3BET/跟3BET/4BET/跟4BET），前位砍 3 個邏輯不存在的 = **21 grid**
+  - 三種輸入：問卷（升級版）/ 數字比例（21 grid 各一題選擇題）/ 13×13 grid 拉
+  - schema、baseline 套用、LLM summarizer 設計完成；完整題目+選項 v2 補完
+- 派工 **T-083**：villain profile v2 MVP（最小範圍跑通端到端）
+  - scope：21 grid schema + localStorage + **數字比例輸入** + baseline 套用（手寫 26 ranges）+ summarizer v1 + Edge Function 改造
+  - 不做：13×13 grid 拉 / 問卷升級 / pd 16k baseline / template 庫 / 雲端同步 / 編輯模式
+  - 工時 26-32 hr（3-4 工作天）
+- memory/index.md 加索引
+- 純 flow 改動，不觸發測試機驗證
+
 ## 2026-04-22 v0.8.5-dev.6 [dev]
 - 新 wiki [[prompt-cache-strategy]] — exploit-coach 省 LLM 錢策略記錄（5min cache + keep-warm cron → ~100% hit，省 80% input 成本）
 - idea 階段未實裝，量達 1k+/月或升 Sonnet/Opus 時優先做；分 Task A（cache 化）+ Task B（keep-warm cron）兩步
