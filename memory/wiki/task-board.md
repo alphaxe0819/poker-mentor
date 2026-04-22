@@ -266,7 +266,7 @@ updated: 2026-04-20
 
 <!-- T-030 → In Review 2026-04-21（Claude_in_Chrome 自動化驗收，3 pass / 2 partial） -->
 
-<!-- T-064 → In Review 2026-04-22（家裡 wip1 執行者完成） -->
+<!-- T-064 → Done 2026-04-22（家裡 wip1 執行者 wip/T064-parent-refresh-hang @ be39e45；大腦 merge + bump dev.31；getSession 優先 + race timeout 2500ms + fallback；作為 defensive fix 有效，實際阻擋玩家的根因是 ES256 verify_jwt 沒關不是 refresh hang，但此 patch 仍有防禦價值） -->
 
 <details>
 <summary>📦 T-064 原任務描述（已 In Review，見下方）</summary>
@@ -415,12 +415,12 @@ updated: 2026-04-20
 
 </details>
 
-<!-- T-087 → In Review 2026-04-22（家裡 wip1 執行者完成） -->
+<!-- T-087 → Done 2026-04-22（家裡 wip1 執行者 wip/T087-villain-v2-flow @ 46d14b0；大腦 merge @ c6aa9be；B 選擇頁 + C1/C2/C3 + 命名 + D 用戶檔案頁 6 screens production；接真 Edge Function exploit-coach-villain-v2；villain profile v2 新流程 ship 測試機內測 URL） -->
 
 <details>
 <summary>📦 T-087 原任務描述（已 In Review，見下方）</summary>
 
-<!-- T-090 → In Review 2026-04-22（士林電腦執行者 wip/T090-exploit-coach-tab-iframe-switch；1 行 iframe src 改動；tsc EXIT=0；preview E2E 需用戶登入驗 C2/C3/D 路徑 + chat token 傳遞） -->
+<!-- T-090 → Done 2026-04-22（士林電腦執行者 wip/T090-exploit-coach-tab-iframe-switch @ 3571830；大腦 merge @ dd72f65；改 ExploitCoachTab.tsx iframe src mockup-v3 → villain-v2-flow；測試機主站玩家看到 villain v2 新流程；正式機保持舊流程未 push main） -->
 
 <details>
 <summary>📦 T-090 原任務描述（已 In Review，見下方）</summary>
@@ -462,7 +462,7 @@ updated: 2026-04-20
 
 </details>
 
-<!-- T-089 → In Review 2026-04-22（家裡 wip1 執行者完成；wip/T089-standalone-auth-fix @ 76ae9c6；抄 T-088 standalone auth patch 到 gtow-test + villain-v2-test；tsc EXIT=0；待大腦 merge + 用戶重驗 T-082/T-085） -->
+<!-- T-089 → Done 2026-04-22（家裡 wip1 執行者 wip/T089-standalone-auth-fix @ 76ae9c6；大腦 merge @ 7682972；抄 T-088 standalone auth patch 到 gtow-test.html + villain-v2-test.html；實際 bug 根因是 ES256 verify_jwt 沒關，此 patch 仍有 defensive 價值） -->
 
 <details>
 <summary>📦 T-089 原任務描述（已 In Review，見下方）</summary>
@@ -494,7 +494,7 @@ updated: 2026-04-20
 
 </details>
 
-<!-- T-088 → In Review 2026-04-22（家裡 wip1 執行者完成） -->
+<!-- T-088 → Done 2026-04-22（家裡 wip1 執行者 wip/T088-villain-v2-flow-polish-bugfix @ e573edf；大腦 merge @ 3a30925；5 issue 全修：C2 模板高亮 + C3 加 LAG/TAG/Nit + 互斥邏輯 + 命名顏色 bug + standalone auth bug（核心根因 IS_STANDALONE 旗標）） -->
 
 <details>
 <summary>📦 T-088 原任務描述（已 In Review，見下方）</summary>
@@ -622,7 +622,7 @@ updated: 2026-04-20
 
 </details>
 
-<!-- T-086 → In Review 2026-04-22（士林電腦執行者完成於 wip/T086-gtow-signing-flow；待用戶跑 test-gtow-flow.mjs E2E 驗證 + 設 Supabase Secret + 重部署 exploit-coach-gtow 到測試 Supabase） -->
+<!-- T-086 → Done 2026-04-22（士林電腦執行者 wip/T086-gtow-signing-flow @ 342e3d1；大腦 merge @ 37e37fe；本機 E2E 驗通過（keypair + refresh + spot-solution 204）；用戶部署合併版 Edge Function 到測試 Supabase btiqmckyjyswzrarmfxa + 關 Verify JWT 後 work；GTOW ECDSA signing + token refresh flow 完整 ship） -->
 
 <details>
 <summary>📦 T-086 原任務描述（已 In Review，見下方）</summary>
@@ -792,7 +792,7 @@ updated: 2026-04-20
 - 原 marker parser 只抓 `r` / `mr:N`，抓不到 `3b` / `4b` / `mr:N_3b` / `mr:N_4b` → MP_3BET 等 baseline 顯示 ~0.3% nonsense。改為 action-specific BaselineFilter union（open / call_vs_open / 3bet / call_vs_3bet / 4bet），每種 filter 有明確 marker 匹配規則。
 - 原實作用 hand-class count / 169 算 %，但實際 GTO 語義是 combo weight %（pair=6, suited=4, offsuit=12，total 1326）。改成 combo-weighted 後數字合理（EP_RAISE baseline 從 34.3% 降到 22.5%）。
 
-<!-- T-082 → ⚠ Blocked 2026-04-22（執行者反爬分析發現 GTOW 用 ECDSA P-256 簽名，但研究 ai-poker-wizard 完整 code 後確認可行：對方自生 keypair 註冊 server 繞過原本瀏覽器 keypair；只有 token refresh endpoint 要簽名，spot-solution 用 Bearer 即可；T-082 既有 Edge Function 缺 ECDSA signing + refresh flow → 派 T-086 補；詳見 [[gtow-api-reverse-eng]]）-->
+<!-- T-082 → Done 2026-04-22（wip/T082-exploit-coach-gtow-test @ 4aa445d；大腦 merge @ df0995c；GTOW 反爬研究 + 救 T-082 路線 + T-086 補 ECDSA signing + 用戶部署 exploit-coach-gtow Edge Function 到測試 Supabase + 關 Verify JWT；GTOW 內測版 URL ship：/exploit-coach-gtow-test.html；詳見 [[gtow-api-reverse-eng]]） -->
 
 <details>
 <summary>📦 T-082 原任務描述（已 In Review，見下方）</summary>

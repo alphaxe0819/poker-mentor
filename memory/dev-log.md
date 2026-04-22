@@ -5,6 +5,21 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.32 [dev] — 收工
+- **ES256 JWT verify_jwt 坑（根因）**：用戶部署 T-082 exploit-coach-gtow + T-085 exploit-coach-villain-v2 兩個新 Edge Function 後撞「登入已過期」→ 大腦誤派 T-064 修 client side parent refresh hang → 沒解 → 查 wiki supabase-edge-function-gotchas 坑 1 發現根因是 ES256 verify_jwt 沒關
+- **修法**：Supabase Dashboard → Edge Functions → 該 function → Details/Settings → 關 Verify JWT switch（ES256 project 新 function 默認開著會擋 token）
+- **預防**：wiki supabase-edge-function-gotchas.md 首屏加「新 Edge Function 部署 SOP checklist」，下次部署 new function 前必讀
+- **整批 task 標 Done**（T-082 / T-086 / T-087 / T-088 / T-089 / T-090 / T-064）：
+  - T-082 GTO Wizard 內測上線（需 ECDSA signing + refresh flow 路線確定可行）
+  - T-086 GTOW signing 實作
+  - T-087 villain v2 新流程 production（B/C1/C2/C3/D 6 screens）
+  - T-088 5 issue polish + standalone auth
+  - T-089 standalone auth patch 抄到 gtow-test + villain-v2-test
+  - T-090 測試機主站 iframe 切換到 villain v2 新流程
+  - T-064 parent refresh hang defensive fix（非根因但有防禦價值）
+- **當前測試機主站狀態**：poker-goal-dev.vercel.app/ 進剝削教練 tab = villain v2 新流程（3 入口 B 選擇頁）；正式機未動
+- bump v0.8.5-dev.31 → v0.8.5-dev.32
+
 ## 2026-04-22 v0.8.5-dev.31 [dev]
 - **T-064 merge**：執行者交付 `wip/T064-parent-refresh-hang` @ `be39e45`（家裡 wip1，1 檔 +29/-5）
   - 修法 4 步：
