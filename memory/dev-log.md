@@ -5,6 +5,16 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.15 [dev]
+- **T-085 merge**：執行者交付 `wip/T085-villain-v2-fork` @ `ebbdc85` (2 新檔, +2,720 行 fork code)
+  - 新 `supabase/functions/exploit-coach-villain-v2/index.ts` (437 行) — fork from exploit-coach 加 villain_profile_summary + villain_name 處理
+  - 新 `public/exploit-coach-villain-v2-test.html` (2,283 行) — fork from mockup-v3 加 sv2-intro/sv2-q/sv2-name screens + 改 endpoint + LS namespace
+  - reuse `src/lib/villainProfile/` + `public/exploit-coach-villain-lib.js` (T-083 留下的)
+  - **Fork 獨立原則 catch-net 通過**：原版 `exploit-coach/index.ts` + `mockup-v3.html` + `exploit-coach-gtow/` 全 0 改動
+  - tsc EXIT=0
+- 待大腦：產 Edge Function 整檔貼碼指令給用戶部署 `exploit-coach-villain-v2` 到測試 Supabase
+- bump v0.8.5-dev.14 → v0.8.5-dev.15
+
 ## 2026-04-22 v0.8.5-dev.14 [dev]
 - **救 T-082**：用戶質疑「別人能做為什麼我們不能」 → 大腦認真讀 ai-poker-wizard 完整 code（之前只讀 README + partial summary，沒看 chrome-extension/ + scripts/gto_signing.py + scripts/gto_token.py）→ 確認 server-side 整合**可行**：對方用「自生 ECDSA keypair → 註冊給 server」繞 non-extractable，只有 token refresh 要簽，spot-solution 用 Bearer + origin 即可
 - **執行者反爬分析有對有錯**：ECDSA 簽名是真的，但執行者結論「server-side 簽不了」錯 — 沒研究對方完整解法就斷言不行
