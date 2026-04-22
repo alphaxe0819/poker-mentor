@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.13 [dev]
+- **⚠ T-083 partial revert**：用戶指出 T-083 違反「fork 獨立」原則 — 改了原版正式入口檔（mockup-v3.html 刪老張+改建立新對手按鈕為 v2 流程；exploit-coach Edge Function 加 villain_profile_summary）。原版 = Vercel dev 自動部署 = 影響測試機玩家。
+- **Revert 範圍**：
+  - 還原 `public/exploit-coach-mockup-v3.html` 為 T-083 merge 前狀態（從 b11117f 撈）
+  - 還原 `supabase/functions/exploit-coach/index.ts` 為 T-083 merge 前狀態
+  - **保留** `src/lib/villainProfile/` 7 個 TS 檔 + `public/exploit-coach-villain-lib.js`（給 T-085 reuse）
+  - **保留** `memory/wiki/villain-profile-design.md` §11 v2 鎖定規格
+- **新規則進專案 CLAUDE.md**：「內測 / 實驗性改動：fork 獨立原則」(跨 session 硬規則) — 強制所有實驗性改動 fork 獨立 endpoint，原版不動 + 大腦 merge 前 catch-net + push dev 是大腦獨佔權限
+- **派工 T-085**：villain v2 fork 版（獨立 mockup `exploit-coach-villain-v2-test.html` + 獨立 Edge Function `exploit-coach-villain-v2`），lib reuse T-083 留下的，工時 6-10 hr
+- 教訓記錄：大腦寫 T-083 派工 scope 時用「取代現有」「整合到既有流程」字眼，沒套 T-082 已確立的 fork 模式 — 「換資料源」直覺套 fork，「升級功能」直覺當 production patch，下次大腦要把所有實驗性改動都當 fork
+- bump v0.8.5-dev.12 → v0.8.5-dev.13
+
 ## 2026-04-22 v0.8.5-dev.12 [dev]
 - **T-084 merge**：執行者交付 `wip/T084-gtow-token-grabber` (3cbdfa6, 5 檔, +308 行)，士林電腦 worktree poker-mentor-wip1
   - 新 `scripts/dev-tools/grab-gtow-token.mjs` — Playwright CDP 連 port 9222 監聽 api.gtowizard.com 抓 Bearer token，stdout only（--save flag opt-in 寫檔）
