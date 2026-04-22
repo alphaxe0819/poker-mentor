@@ -394,6 +394,61 @@ updated: 2026-04-20
 <details>
 <summary>📦 T-087 原任務描述（已 In Review，見下方）</summary>
 
+- [ ] **T-088** | Product 內測 / Polish + Bugfix | **villain-v2-flow polish + 登入 bug 修** `(派工 2026-04-22 → 任一執行者，全包 5 點 issue)`
+  - 建議 branch：`wip/T088-villain-v2-flow-polish-bugfix`
+  - **目的**：用戶 review T-087 ship 後找出 5 個 issue，一次修完
+  - **必讀**：[[villain-profile-design]]
+  - **scope（嚴格 fork 獨立 — 只改 villain-v2-flow.html，不動其他檔）**：
+    1. **C2 設定比例 — 模板選中高亮**：
+       - 當前載入的模板按鈕（GTO/LAG/TAG/Nit）顯示 active 狀態（顏色不同 + ✓ icon）
+       - 用戶調整 % 後（與該模板的 % 不一致）→ 移除 active 狀態（顯示「已自訂」或單純清掉高亮）
+    2. **C3 詳細範圍 — 模板擴充 + 改名**：
+       - 「載入 baseline」按鈕改名 → **「載入指定範圍」**
+       - 除既有 GTO 外，加三個快速預設範圍按鈕：**LAG（鬆兇）** / **TAG（緊兇）** / **Nit（緊弱）**
+       - 預設範圍 % 從 villain-lib.js 既有 4 個模板取（已寫好，T-083 留下）
+       - 模板按鈕點選後同 #1 高亮顯示
+    3. **C3 動作互斥檢查（同位置內）**：
+       ```
+       面對前手 open 時:   CALL ⊥ 3BET   (跟注 vs 3-bet 同手只能選一個)
+       面對 3-bet 時:      CALL_3BET ⊥ 4BET   (跟 3-bet vs 4-bet 同手只能選一個)
+       面對 4-bet 時:      CALL_4BET ⊥ 5BET   (我們沒做 5BET，CALL_4BET 自由)
+       ```
+       - **UI 表現**：切到「4BET」grid 時，把該位置「CALL_3BET」已選的 hand 顯示**灰色不可點**
+       - hover 灰格顯示 tooltip「已在 跟3-bet 選擇，點此切換到 4-bet」
+       - 強制點下去 → **從 CALL_3BET 移除 + 加進 4BET**（互斥切換）
+       - 反之亦然（CALL_3BET grid 切到時，4BET 已選 hand 灰掉）
+       - **跨位置 / RAISE 不互斥**（不同 phase）
+    4. **命名頁顏色選擇 bug**：
+       - 8 色卡片 onclick 不要 reset 暱稱 input（保留用戶已輸入的字串）
+       - 純 bug fix（onclick 邏輯多餘的 reset 拿掉）
+    5. **登入 bug 修**：
+       - 症狀：villain-v2-flow.html「請教練分析」（chat fetch Edge Function）出現「要前往登入」
+       - 可能根因（執行者要 debug 確認）：
+         - (a) Supabase session 過期 / refresh failed
+         - (b) Edge Function 401 → 前端 callCoach catch 顯示登入錯誤訊息
+         - (c) standalone HTML 沒接好 supabase auth flow（與 React app iframe 環境差異）
+       - **debug 順序**：
+         - 1. 開 dev URL → F12 → Network tab 看 fetch exploit-coach-villain-v2 的 status code
+         - 2. 看 request header 的 Authorization 是不是有 Bearer token
+         - 3. 看 Edge Function logs（Supabase Dashboard）— 401 還是其他
+       - 修法依根因而定（可能是 supabase session 初始化、或 token refresh 邏輯、或 fetch retry）
+       - 對照 T-085 villain-v2-test.html（同樣 standalone HTML，理論上同 auth flow），看 test 頁有沒有同 bug
+  - **out of scope（明確排除）**：
+    - ❌ 不改原版 mockup-v3.html / villain-v2-test.html / 任何 Edge Function
+    - ❌ 不改 villain-lib.js
+    - ❌ 不改 React app（ExploitCoachTab.tsx）
+    - ❌ 不做新功能（純修既有 5 個 issue）
+  - **完成條件**：
+    - C2 切換模板看得出當前用哪個（顏色 / icon）
+    - C3 4 個模板按鈕都 work（GTO/LAG/TAG/Nit）+ 改名「載入指定範圍」
+    - C3 互斥邏輯：選 CALL_3BET[AA] → 切 4BET → AA 灰掉；強制點 → 從 CALL_3BET 移除 + 4BET 加
+    - 命名頁打字後選顏色，暱稱字串不消失
+    - 「請教練分析」能正常拿到 AI 回覆，不再撞登入錯誤
+    - `npx tsc -b --noEmit` EXIT=0
+    - 內測 URL：`https://poker-goal-dev.vercel.app/exploit-coach-villain-v2-flow.html`
+  - **部署**：執行者 push wip → 大腦 merge → Vercel dev 自動部署 → 用戶驗收
+  - **工時估算**：4-8 hr（5 點看登入 bug debug 複雜度，可能多 2 hr）
+
 - [ ] **T-087** | Product 內測 | **villain v2 新流程 production 版（B 選擇頁 / C1 快速問答 / C2 設定比例 / C3 詳細範圍 / D 用戶檔案頁，接真 Edge Function）** `(派工 2026-04-22 → 任一執行者，直接做 production，不做 mockup wireframe)`
   - 建議 branch：`wip/T087-villain-v2-flow`
   - **目的**：用戶要重新設計 villain v2 建立流程（取代現有 T-085 的「21 題傻問」）。**直接做 production 版**（接真 Edge Function `exploit-coach-villain-v2` + 真 ship 測試機 dev URL）

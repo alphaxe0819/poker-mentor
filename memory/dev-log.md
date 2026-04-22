@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.23 [dev]
+- **派 T-088**：villain-v2-flow polish + 登入 bug 修（用戶 review T-087 ship 後找出 5 個 issue，全包一個 task）
+- 5 個 issue：
+  - C2 模板選中沒高亮（不知道用哪個）
+  - C3 模板只有 GTO 沒鬆/緊預設範圍 + 「載入 baseline」改名「載入指定範圍」
+  - C3 動作互斥沒擋（同位置 CALL ⊥ 3BET、CALL_3BET ⊥ 4BET）
+  - 命名頁選顏色清空暱稱
+  - 「請教練分析」出現「要前往登入」（debug + 修）
+- scope 嚴格：純改 villain-v2-flow.html，不動其他檔
+- 工時 4-8 hr（5 點看 debug 複雜度）
+- bump v0.8.5-dev.22 → v0.8.5-dev.23
+
 ## 2026-04-22 v0.8.5-dev.22 [dev]
 - T-087 villain-v2-flow.html 加 desktop wrapper：max-width 420px + margin auto + 陰影 → 直接開 dev URL desktop 上看像一支 phone mockup 居中
 - 不影響 React app iframe 嵌入（iframe 本身已限寬）
