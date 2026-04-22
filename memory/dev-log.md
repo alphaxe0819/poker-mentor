@@ -5,6 +5,15 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.18 [dev]
+- **T-087 scope 升級**：從「純 mockup wireframe」→「production 版接真 Edge Function + ship 測試機」
+  - 新檔 `public/exploit-coach-villain-v2-flow.html`（去 -mockup 後綴）
+  - 接既有 `exploit-coach-villain-v2` Edge Function（T-085 已寫，待用戶部署）
+  - D 頁「升級 AI 版」按鈕真的 fetch Edge Function（內測階段免費，未來改 5 點）
+  - 工時 6-10 hr → 12-18 hr（多了 Edge Function 整合 + AI 升級邏輯）
+  - 取消後續 T-088（不用再做 production 版，T-087 直接是 production）
+- bump v0.8.5-dev.17 → v0.8.5-dev.18
+
 ## 2026-04-22 v0.8.5-dev.17 [dev]
 - **派 T-087**：villain v2 新流程 HTML mockup（用戶要重新設計 villain v2 建立流程，取代 T-085 的 21 題傻問）
 - 新流程：B 選擇頁（3 入口：快速問答 / 設定比例 / 詳細範圍）→ C1/C2/C3（每個對應一種輸入方式）→ D 用戶檔案頁（風格摘要 + 21 range 表 + 範圍縮圖 + 編輯）
