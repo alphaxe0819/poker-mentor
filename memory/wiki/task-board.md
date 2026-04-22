@@ -311,32 +311,38 @@ updated: 2026-04-20
 
 </details>
 
-- [ ] **T-083** | Product | **villain profile v2：21 range grid 系統 MVP（數字比例輸入）** `(派工 2026-04-22 → 家裡 wip1 執行者)`
+- [ ] **T-083** | Product | **villain profile v2：21 range grid 系統 MVP（數字比例輸入 + design v2 補完）** `(派工 2026-04-22 → 家裡 wip1 執行者)`
   - 建議 branch：`wip/T083-villain-profile-v2-mvp`
   - **目的**：把現有「7 種抽象 villain type」升級成「21 個具體 range grid」（4 位置 group × 6 動作，前位砍 3 個邏輯不存在的）。先做最小 MVP 跑通端到端，後續 phase 再加問卷升級 / 13×13 grid 拉 UI / pokerdinosaur 16,750 baseline 升級
-  - **必讀設計文件**：[[villain-profile-design]]（架構、schema、21 grid 定義、baseline 套用邏輯、LLM summarizer 全在這）
+  - **必讀設計文件**：[[villain-profile-design]]（架構、schema、21 grid 定義、baseline 套用邏輯、LLM summarizer 全在這；v1 草案，需執行者邊做邊補完）
   - **scope（嚴格遵守 MVP，不擴張）**：
-    1. **Schema + localStorage**（key: `exploit-coach-villains-v2`）
+    1. **Design v2 補完**（implement 前先寫，產出進 wiki design doc 第 9 段所列）：
+       - 21 grid 完整 % 選項清單（依 design 4.2 範例 + 對齊各位置合理區間）
+       - 完整 169 hand index array（HAND_INDEX_ORDER）
+       - baseline 套用函式偽碼 → 真實 implementation 細節
+       - summarizer v1 完整規則（偏鬆/緊閾值、代表手抽取邏輯、輸出格式範本）
+       - **9 個典型 villain template / 完整題目用語 / Edge case 處理 → 留 phase 2，MVP 不做**
+    2. **Schema + localStorage**（key: `exploit-coach-villains-v2`）
        - `VillainProfile` interface 21 個 range（EP/MP/LP/BL × 6 動作，前位只 3 個）
        - 直接清光舊 v1 `exploit-coach-villains-v1`（用戶決議：不 migration）
-    2. **數字比例輸入 UI**（前端 `public/exploit-coach-mockup-v3.html` 或新檔）
-       - 21 個 grid 各一題選擇題，每題 6-8 個 % 離散選項（範圍見 design doc 4.2）
+    3. **數字比例輸入 UI**（前端 `public/exploit-coach-mockup-v3.html` 或新檔）
+       - 21 個 grid 各一題選擇題，每題 6-8 個 % 離散選項
        - 流程：建立對手 → 答 21 題 → 命名 → 存
        - **不做 13×13 grid 拉 UI**（phase 2）
        - **不做問卷模式**（v1 7 題版可繼續用、或暫時 disable）
-    3. **baseline 套用函式**
+    4. **baseline 套用函式**
        - 從 `src/lib/gto/gtoData_cash_6max_100bb.ts` 26 個手寫 ranges 抽 baseline
        - `findBaselineRange(position, action, targetPct)` → 回傳 169-element grid (0/1)
        - 給定每個 grid 的 % → 套對應 baseline 填 hand
-    4. **LLM summarizer v1**
+    5. **LLM summarizer v1**
        - `summarizeVillainProfile(profile, gtoBaseline)` → 21 行人話 summary
        - 每行格式：「位置 動作: X% (GTO Y%, 偏鬆/緊 Z%)」
        - **不做整體畫像段**（phase 2）
-    5. **Edge Function 改造**（`supabase/functions/exploit-coach/index.ts`）
+    6. **Edge Function 改造**（`supabase/functions/exploit-coach/index.ts`）
        - 接收新 field `ctx.villain_profile`（取代 `villain_type / villain_label`）
        - 用 summarizer 結果取代現有 VILLAIN_LABELS 段落
        - 保留 narrative mode 不動（沒 villain context）
-    6. **整合到既有流程**
+    7. **整合到既有流程**
        - S1 對手卡片改顯示新版 v2 villain（名字 + 整體 stats summary）
        - 選對手 → 進 chat → 把 villain_profile 整包送 Edge Function
   - **out of scope（明確排除）**：
@@ -349,16 +355,22 @@ updated: 2026-04-20
     - ❌ summarizer「整體玩家畫像」段
     - ❌ villain 編輯模式（先做新建，編輯 phase 2）
   - **完成條件**：
+    - design doc v2 補完段落寫入 `memory/wiki/villain-profile-design.md`
     - 用「數字比例」建立 1 個對手 → 21 grid 全填好（檢查 localStorage）
     - 進 chat 問同一場景 → 對比「舊 villain_type='lag'」vs「新 villain_profile 21 range」回答差異
     - AI 回答中能看到「後位 35% open（偏緊 -14%）」這種具體 grounding
     - `npx tsc -b --noEmit` EXIT=0
     - 內測 URL：`https://poker-goal-dev.vercel.app/exploit-coach-mockup-v3.html`
   - **部署**：執行者寫完 → 大腦 produce Edge Function 整檔貼碼指令（用戶手貼測試 Supabase Dashboard）→ 內測驗證 → task 結案
-  - **工時估算**：26-32 hr（3-4 工作天，見 design doc 8.5.3）
+  - **工時估算**：30-38 hr（4-5 工作天；含 design v2 補完 3.5-6 hr + MVP 26-32 hr）
   - **相關 task**：
-    - T-082（exploit-coach GTOW 內測） — **獨立**，但 T-083 完成後的 villain_profile 也可以拿去 T-082 內測對比
+    - T-082（exploit-coach GTOW 內測） — 已 merge，T-083 完成後的 villain_profile 也可以拿去 T-082 內測對比
     - 之前 villain 系統相關：T-070（v1 villain localStorage persist）/ T-073（laozhang → standard）
+
+<!-- T-082 → In Review 2026-04-22（家裡 wip1 執行者完成 @ 4aa445d，code merged 2026-04-22；待用戶設 GTO_WIZARD_TOKEN secret + 貼 Edge Function 到測試 Supabase + 驗 dev URL） -->
+
+<details>
+<summary>📦 T-082 原任務描述（已 In Review，見下方）</summary>
 
 - [ ] **T-082** | Product 內測 | **exploit-coach 內測版：retrieval 換 GTO Wizard API（獨立環境，與正式機 A/B 對照）** `(派工 2026-04-22 → 家裡 wip1 執行者)`
   - 建議 branch：`wip/T082-exploit-coach-gtow-test`
@@ -402,6 +414,8 @@ updated: 2026-04-20
     - ❌ 不做同頁並排 UI（兩個環境完全隔離，用戶手動切瀏覽器分頁比）
   - **部署**：執行者寫完 → 大腦產出 Edge Function 整檔貼碼指令（用戶手貼**測試** Supabase Dashboard） → 內測 URL 驗證 → task 結案；**不部署到正式 Supabase**
   - 相關 wiki：[[supabase-edge-function-gotchas]]、ai-poker-wizard repo（gto_api.py / gto_formatter.py 參考）
+
+</details>
 
 <!-- T-070 → In Review 2026-04-21（士林主目錄執行者 localStorage 版） -->
 
@@ -534,6 +548,36 @@ updated: 2026-04-20
 ---
 
 ## 👀 In Review（等大腦整合）
+
+- [?] **T-082** | Product 內測 | **exploit-coach 內測版：retrieval 換 GTO Wizard API**
+  - branch: `wip/T082-exploit-coach-gtow-test`（from `origin/dev@f958aab`）
+  - 機器：家裡 wip1 worktree
+  - 改動（2 新檔，0 改原檔）：
+    - 新 `supabase/functions/exploit-coach-gtow/index.ts`（fork 自 exploit-coach；只換 `retrieveSolverNode` 為 GTOW API call；保留 prompt / TERMINOLOGY_RULES / Claude / auth / log 原封不動）
+    - 新 `public/exploit-coach-gtow-test.html`（fork 自 mockup-v3；5 處 diff：title、內測橫幅、LS_VILLAINS_KEY namespace、LS_CONVO_KEY namespace、fetch endpoint `/exploit-coach` → `/exploit-coach-gtow`）
+  - **GTOW 整合細節**（參考 ai-poker-wizard `scripts/gto_api.py`）：
+    - Endpoint: `GET https://api.gtowizard.com/v4/solutions/spot-solution/`
+    - Auth: `Authorization: Bearer <GTO_WIZARD_TOKEN>` + `origin: https://app.gtowizard.com`
+    - Params: `gametype` / `depth` / `stacks` / `preflop_actions` / `board` / `flop_actions`
+    - Slug → gametype: `6max_100bb_*` → `Cash6mGeneral_6mNL100R2`; `mtt_*` / `9max_*` / `hu_*` → `MTTGeneral`
+    - Depth: nearest from GTOW available list + `.125` (MTT) / `.0` (cash)
+    - Preflop 合成：依 scenario_slug 的 `<opener>_open_<caller>_call` 或 `<opener>_open_<3bettor>_3b` 展開 `F-F-F-F-R2.5-F-C` 序列
+    - Path → flop_actions: `CHECK`→`X` / `CALL`→`C` / `FOLD`→`F` / `BET_<n>`→`B<n>` / `ALLIN`→`RAI`
+    - 204/403 → 視為 miss → `nodeSummary=null` → Claude 自己答（不崩）
+    - console.log GTOW raw response (truncated 3000 chars) 供 debug
+  - **不寫 DB / 不 cache GTOW 回傳**（ToS 保護）；`coach_queries` log 保留，context 內加 `_backend: 'gtow'` 標記
+  - 驗證：`npx tsc -b --noEmit` EXIT=0 ✓
+  - **大腦接手待做**：
+    1. 設測試 Supabase Secret `GTO_WIZARD_TOKEN`（用戶操作，token 不貼對話）
+    2. 產 Edge Function 整檔貼碼指令 → 用戶手貼測試 Supabase Dashboard → Functions → `exploit-coach-gtow` (Create new) → Deploy
+    3. Vercel dev 會自動部署新 HTML（`public/` 靜態檔）→ 內測 URL: `https://poker-goal-dev.vercel.app/exploit-coach-gtow-test.html`
+    4. 驗：用戶問 5 題同 A/B，肉眼比回答差異
+    5. **不部署到正式 Supabase**
+  - **已知限制（v1 預期）**：
+    - Preflop raise size 用標準值（MTT R2.2 / Cash R2.5 / 3bet R6.5/R8.0）；若 GTOW 期待別的 size 可能 204 — v2 可加 `next_actions` probe 找最近 legal
+    - Postflop combo-level signature hands 沒做（1326-array index 較複雜；範圍平均頻率仍正確）
+    - Preflop 169-array hand order 用標準 pair-first → suited → offsuit（若 GTOW 用不同 order，key-hand 對應會錯，但 aggregate freq 不受影響）
+    - HU slug 用 9-max positions 近似；`hu_*_3bp/4bp` 先用保守預設 size
 
 <!-- T-013 / T-030 / T-021 / T-074 / T-073 / T-071 / T-072 / T-070 / T-075 Phase 0 / T-075 Phase 1 / T-080 已 merge 2026-04-21 -->
 <!-- T-080 真 Done 2026-04-22：正式 Supabase Edge Function 已部署 + v0.8.5 正式機已上（繞過 Vercel webhook silent drop，改用 CLI prebuilt+tgz；詳見 [[vercel-deployment-troubleshooting]]） -->

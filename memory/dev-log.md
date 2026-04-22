@@ -5,6 +5,16 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.8 [dev]
+- **T-082 merge**：執行者交付 `wip/T082-exploit-coach-gtow-test` @ `4aa445d`（2 新檔，0 改原檔）
+  - 新 `supabase/functions/exploit-coach-gtow/index.ts`（619 行 fork）— 只換 `retrieveSolverNode` 為 GTOW API call，prompt / TERMINOLOGY_RULES / Claude / auth / log 完整保留
+  - 新 `public/exploit-coach-gtow-test.html`（2047 行 fork）— 5 處 diff（title / 內測橫幅 / 2 LS namespace / fetch endpoint）
+  - GTOW 整合：Bearer token + origin header、204/403 graceful、raw response truncated 3000 chars
+  - tsc EXIT=0
+  - **待用戶**：設測試 Supabase Secret `GTO_WIZARD_TOKEN` + 貼 Edge Function 到 Dashboard + 驗 dev URL
+- T-083 scope 更新：design v2 補完併入執行者 scope（用戶決定不大腦自做），工時 26-32 hr → 30-38 hr
+- bump v0.8.5-dev.7 → v0.8.5-dev.8
+
 ## 2026-04-22 v0.8.5-dev.7 [dev]
 - 新 wiki [[villain-profile-design]] — villain profile v2 系統設計（v1 草案）
   - 4 位置 group（前/中/後/盲注）× 6 動作（RAISE/跟注/3BET/跟3BET/4BET/跟4BET），前位砍 3 個邏輯不存在的 = **21 grid**
