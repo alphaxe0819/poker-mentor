@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.26 [dev]
+- T-082 + T-086 部署完成（用戶手動設 Supabase Secrets + 貼合併 Edge Function）
+- 但驗證撞到「需要先登入才能呼叫 AI 教練」 — 跟 T-088 修的 villain-v2-flow.html 同根因（standalone HTML auth code 假設 iframe + parent，window === window.parent → 永遠沒 token）
+- **派 T-089**：抄 T-088 的 IS_STANDALONE + getFreshAccessTokenStandalone patch 到 `exploit-coach-gtow-test.html` (T-082) + `exploit-coach-villain-v2-test.html` (T-085)
+- 工時 1-2 hr（純 copy-paste）
+- bump v0.8.5-dev.25 → v0.8.5-dev.26
+
 ## 2026-04-22 v0.8.5-dev.25 [dev]
 - **T-088 merge**：執行者交付 `wip/T088-villain-v2-flow-polish-bugfix` @ `e573edf`（家裡 wip1，1 檔 +178/-34）
   - **Issue 1 — C2 模板選中高亮**：`sfC2State.activeTemplate` 追蹤，`matchesTemplate()` 偵測 21 key 全吻合才算 active；手動改 % 即清掉；新 `renderTemplateToolbar` helper 共用高亮 UI（✓ + 綠底）

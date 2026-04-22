@@ -394,6 +394,31 @@ updated: 2026-04-20
 <details>
 <summary>📦 T-087 原任務描述（已 In Review，見下方）</summary>
 
+- [ ] **T-089** | Product 內測 / Bugfix | **villain-v2-test + gtow-test standalone auth bug 修（抄 T-088 patch）** `(派工 2026-04-22 → 任一執行者)`
+  - 建議 branch：`wip/T089-standalone-auth-fix`
+  - **目的**：T-082 部署完成後驗證撞到「需要先登入才能呼叫 AI 教練」 — 跟 T-088 修的 villain-v2-flow.html 同根因（standalone HTML，auth code 假設 iframe + parent，window === window.parent → 永遠沒 token）。本 task 把 T-088 的修法照抄到剩下兩個 standalone HTML
+  - **必讀**：T-088 commit（merged 2026-04-22）— 看 `public/exploit-coach-villain-v2-flow.html` 的 `IS_STANDALONE` + `getFreshAccessTokenStandalone()` 實作
+  - **scope（純 bugfix，不擴張）**：
+    1. 改 `public/exploit-coach-gtow-test.html`（T-082 fork 的內測 HTML）
+       - 抄 T-088 的 `IS_STANDALONE` 旗標 + standalone supabase client（`persistSession: true` + `autoRefreshToken: true`）+ `getFreshAccessTokenStandalone()` 用 SDK `auth.getSession()` / `refreshSession()`
+       - `getFreshAccessToken` 頂部分流（IS_STANDALONE → 走新 SDK path；iframe → 原邏輯）
+    2. 改 `public/exploit-coach-villain-v2-test.html`（T-085 fork 的內測 HTML）
+       - 同 #1 patch
+    3. **不改** `public/exploit-coach-villain-v2-flow.html`（T-088 已修）
+    4. **不改原版** `public/exploit-coach-mockup-v3.html`（玩家走 React app iframe，不需 standalone path）
+    5. **不改任何 Edge Function**
+  - **out of scope**：
+    - ❌ 不重構 supabase client 抽 lib（每個 HTML 自己一份）
+    - ❌ 不改 React app（ExploitCoachTab.tsx）
+    - ❌ 不部署到正式環境
+  - **完成條件**：
+    - 用戶先在主站 `poker-goal-dev.vercel.app` 登入
+    - 開 `gtow-test.html` 問教練 → 拿到 GTOW 後端 AI 回覆 → T-082 內測通關
+    - 開 `villain-v2-test.html` 問教練 → 拿到 v1 21 題後端 AI 回覆 → T-085 補完
+    - `npx tsc -b --noEmit` EXIT=0
+  - **部署**：純 HTML，Vercel dev 自動部署
+  - **工時估算**：1-2 hr（純 copy-paste T-088 patch + 兩個檔測試）
+
 <!-- T-088 → In Review 2026-04-22（家裡 wip1 執行者完成） -->
 
 <details>
