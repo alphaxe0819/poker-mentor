@@ -422,6 +422,11 @@ updated: 2026-04-20
     - **不要 push main**
   - **工時估算**：1-2 hr
 
+<!-- T-089 → In Review 2026-04-22（家裡 wip1 執行者完成；wip/T089-standalone-auth-fix @ 76ae9c6；抄 T-088 standalone auth patch 到 gtow-test + villain-v2-test；tsc EXIT=0；待大腦 merge + 用戶重驗 T-082/T-085） -->
+
+<details>
+<summary>📦 T-089 原任務描述（已 In Review，見下方）</summary>
+
 - [ ] **T-089** | Product 內測 / Bugfix | **villain-v2-test + gtow-test standalone auth bug 修（抄 T-088 patch）** `(派工 2026-04-22 → 任一執行者)`
   - 建議 branch：`wip/T089-standalone-auth-fix`
   - **目的**：T-082 部署完成後驗證撞到「需要先登入才能呼叫 AI 教練」 — 跟 T-088 修的 villain-v2-flow.html 同根因（standalone HTML，auth code 假設 iframe + parent，window === window.parent → 永遠沒 token）。本 task 把 T-088 的修法照抄到剩下兩個 standalone HTML
@@ -446,6 +451,8 @@ updated: 2026-04-20
     - `npx tsc -b --noEmit` EXIT=0
   - **部署**：純 HTML，Vercel dev 自動部署
   - **工時估算**：1-2 hr（純 copy-paste T-088 patch + 兩個檔測試）
+
+</details>
 
 <!-- T-088 → In Review 2026-04-22（家裡 wip1 執行者完成） -->
 
@@ -926,6 +933,29 @@ updated: 2026-04-20
 ---
 
 ## 👀 In Review（等大腦整合）
+
+- [?] **T-089** | Product 內測 / Bugfix | **villain-v2-test + gtow-test standalone auth patch（抄 T-088）**
+  - branch: `wip/T089-standalone-auth-fix`（from `origin/dev@187e381`）
+  - 機器：家裡 wip1 worktree
+  - 改動：2 檔（純 auth patch 照抄 T-088）
+    - `public/exploit-coach-gtow-test.html`
+    - `public/exploit-coach-villain-v2-test.html`
+  - **Patch 內容**（三段，對齊 T-088 在 villain-v2-flow.html 的實作）：
+    1. 新 `IS_STANDALONE = (window === window.parent)` 全域旗標
+    2. supabase client 初始化改 `persistSession: IS_STANDALONE, autoRefreshToken: IS_STANDALONE`（iframe 仍關掉避免跟 parent 搶 rotating refresh_token；standalone 開啟讓 SDK 自己管 session）
+    3. 新 `getFreshAccessTokenStandalone()`：用 `supabaseClient.auth.getSession()` 讀 LS session（過期 30s 門檻），過期則 `refreshSession()`
+    4. `getFreshAccessToken()` 頂部加 `if (IS_STANDALONE) return await getFreshAccessTokenStandalone();`，iframe 路徑原封不動
+  - **fork 獨立驗證**：原版 `mockup-v3.html` 未動 / `villain-v2-flow.html` 未動（T-088 已修） / 任何 Edge Function / `villain-lib.js` / React app 全 0 modification ✓
+  - **驗證**：
+    - `npx tsc -b --noEmit` EXIT=0 ✓
+    - `git status` 只顯示 2 個目標 HTML + task-board.md ✓
+  - **大腦接手待做**：
+    1. merge wip → dev → Vercel dev 自動部署
+    2. 用戶驗收：主站登入後開兩個內測 URL 問教練，應拿到 AI 回覆（不再「需要先登入」）
+       - `/exploit-coach-gtow-test.html` → T-082 內測通關
+       - `/exploit-coach-villain-v2-test.html` → T-085 補完
+    3. 不部署正式機
+  - **已知限制**：三份 HTML 各持一份 auth patch 副本（scope 禁抽 lib）；未來可合併 `exploit-coach-standalone-auth.js` 共用 lib
 
 - [?] **T-088** | Product 內測 / Polish + Bugfix | **villain-v2-flow polish + 登入 bug 修（5 issue 全包）**
   - branch: `wip/T088-villain-v2-flow-polish-bugfix`（from `origin/dev@717c4c1`）

@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.28 [dev]
+- **T-089 merge**：執行者交付 `wip/T089-standalone-auth-fix` @ `76ae9c6`（家裡 wip1，2 檔各 +22/-6 + task-board）
+  - 抄 T-088 三段 patch（IS_STANDALONE 旗標 + supabase client 條件式 persistSession/autoRefreshToken + getFreshAccessTokenStandalone）到：
+    - `public/exploit-coach-gtow-test.html` (T-082)
+    - `public/exploit-coach-villain-v2-test.html` (T-085)
+  - getFreshAccessToken 頂部分流，iframe 路徑原封不動
+  - tsc EXIT=0
+- **Fork 獨立 catch-net 通過**：0 改原版 / Edge Function / lib / React app
+- 解 T-082 + T-085 部署後驗證撞登入 bug
+- bump v0.8.5-dev.27 → v0.8.5-dev.28
+
 ## 2026-04-22 v0.8.5-dev.27 [dev]
 - **派 T-090**：ExploitCoachTab iframe src 改載 villain-v2-flow.html，讓測試機主站玩家直接看到新流程
 - ⚠ **違反 fork 獨立原則明確授權**：用戶 2026-04-22 說「做 T-090 直接可以在測試機看到內容」 → production-level 取代決策
