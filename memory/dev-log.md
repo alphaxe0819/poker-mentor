@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.12 [dev]
+- **T-084 merge**：執行者交付 `wip/T084-gtow-token-grabber` (3cbdfa6, 5 檔, +308 行)，士林電腦 worktree poker-mentor-wip1
+  - 新 `scripts/dev-tools/grab-gtow-token.mjs` — Playwright CDP 連 port 9222 監聽 api.gtowizard.com 抓 Bearer token，stdout only（--save flag opt-in 寫檔）
+  - 新 `scripts/dev-tools/package.json` — 獨立 playwright-core，**不污染 main deps**
+  - 新 `scripts/dev-tools/README.md` — Windows/Mac/Linux Chrome 啟動指令 + troubleshooting
+  - 改 `.gitignore` — 加 `.gtow-token.local.txt` + `scripts/dev-tools/node_modules/`
+  - 未動 src / supabase（純 dev tooling）
+- 待用戶實機驗 token grabber：`cd scripts/dev-tools && npm install` → 開 Chrome 帶 `--remote-debugging-port=9222` → 登 GTOW → `node grab-gtow-token.mjs`
+- 解開 T-084 部署阻擋後，T-082 Edge Function 可以正式驗證
+- bump v0.8.5-dev.11 → v0.8.5-dev.12
+
 ## 2026-04-22 v0.8.5-dev.11 [dev]
 - **T-083 merge**：執行者交付 `wip/T083-villain-profile-v2-mvp` (5 commits, 12 files, +1561 行)
   - design doc §11 v2 鎖定規格（補完 hand index、grid % 選項、baseline 套用、summarizer 規則）

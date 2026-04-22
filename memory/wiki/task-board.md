@@ -311,6 +311,11 @@ updated: 2026-04-20
 
 </details>
 
+<!-- T-084 → In Review 2026-04-22（士林電腦執行者完成於 wip/T084-gtow-token-grabber；待大腦 merge + 用戶實機驗 token 抓取） -->
+
+<details>
+<summary>📦 T-084 原任務描述（已 In Review，見下方）</summary>
+
 - [ ] **T-084** | 工具 / 開發流程 | **GTO Wizard Token Grabber Script（解 T-082 部署阻擋）** `(派工 2026-04-22 → 士林電腦執行者，優先序：先做 T-084 → 再回 T-083)`
   - 建議 branch：`wip/T084-gtow-token-grabber`
   - **目的**：寫個自動化 script，從本地已開啟並登入的 GTO Wizard 抓 Bearer token，避免每次手動翻 DevTools Network tab。**T-082 部署阻擋在用戶找不到 token，這個 script 一勞永逸解決**
@@ -339,6 +344,8 @@ updated: 2026-04-20
     - 用戶實機驗證：能抓到 token → 貼進 Supabase Secret → T-082 Edge Function 跑起來不再「GTO_WIZARD_TOKEN secret missing」
   - **工時估算**：4-8 hr
   - **完成後**：執行者切回 T-083 繼續 villain profile v2 MVP
+
+</details>
 
 <!-- T-083 → In Review 2026-04-22（家裡 wip1 執行者完成；wip/T083-villain-profile-v2-mvp；tsc EXIT=0；preview 端到端驗證 pass；待大腦 produce Edge Function 整檔貼碼指令 → 用戶手貼測試 Supabase → dev URL 驗證 → 結案） -->
 
