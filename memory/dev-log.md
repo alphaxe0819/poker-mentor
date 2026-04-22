@@ -5,6 +5,20 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.21 [dev]
+- **T-087 merge**：執行者交付 `wip/T087-villain-v2-flow` @ `46d14b0`（家裡 wip1，1 新檔 3045 行）
+  - 新 `public/exploit-coach-villain-v2-flow.html`（2800 行 production flow，fork from villain-v2-test.html）
+  - 6 screens：B 選擇頁 / C1 快速問答 7 題 / C2 設定比例（4 頁 × dropdown + 4 模板 GTO/LAG/TAG/Nit）/ C3 詳細範圍（4 頁 × 6 動作 tab × 13×13 grid 0/1）/ 命名 / D 用戶檔案頁（風格摘要 + 21 range 4×6 表 + 動作 tab mini grid + AI 策略 + 編輯/開始分析）
+  - AI 升級按鈕：fetch `exploit-coach-villain-v2` Edge Function（「4 句摘要 + 5 條策略」prompt），用 **深度剝削策略** 標題 split 塞 aiSummary/aiStrategy 並持久化；MVP 免費
+  - 編輯流程：D 「編輯範圍」→ 塞 grids 進 sfC3State → C3 edit → 回 D（AI 結果清空強制重算）
+  - LS namespace 完全隔離：`exploit-coach-villain-v2-flow-villains` + `-conversations`
+  - **Fork 獨立原則 catch-net 通過**：原版 mockup-v3.html / villain-v2-test.html / 所有 Edge Functions / villain-lib.js / src/lib/villainProfile/ 全 0 改動
+  - tsc EXIT=0
+- 依賴：T-085 `exploit-coach-villain-v2` Edge Function 已部署（✅ 2026-04-22 用戶已部署）
+- 內測 URL：`https://poker-goal-dev.vercel.app/exploit-coach-villain-v2-flow.html`（Vercel dev 自動部署）
+- **已知限制**：C3 touch 只支援 tap 無 touchmove；LAG/TAG/Nit 模板用簡單偏移規則；AI 回覆 parser 依賴 **深度剝削策略** 標題 split；grid 變更會清空 AI 結果強制重算
+- bump v0.8.5-dev.20 → v0.8.5-dev.21
+
 ## 2026-04-22 v0.8.5-dev.20 [dev]
 - **T-086 merge**：執行者交付 `wip/T086-gtow-signing-flow` @ `342e3d1`（士林電腦 wip1，6 檔 +598/-9）
   - 新 `supabase/functions/exploit-coach-gtow/gto_signing.ts`（271 行 Deno Web Crypto；generateKeypair / signRefreshRequest / refreshAccessToken / ensureFreshAccessToken + module-scope cache + server time sync）
