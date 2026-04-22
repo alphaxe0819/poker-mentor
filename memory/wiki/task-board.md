@@ -349,7 +349,7 @@ updated: 2026-04-20
 
 <!-- T-083 → ⚠ 部分 revert 2026-04-22（mockup-v3.html + exploit-coach Edge Function 還原為 pre-T-083；保留 src/lib/villainProfile/ + public/exploit-coach-villain-lib.js 給 T-085 用；原因：T-083 違反「fork 獨立」原則改了原版正式入口檔，見專案 CLAUDE.md「內測 / 實驗性改動：fork 獨立原則」section）→ 重派 T-085 做 fork 版 -->
 
-<!-- T-085 → In Review 2026-04-22（家裡 wip1 執行者完成） -->
+<!-- T-085 → Done 2026-04-22（家裡 wip1 執行者完成 wip/T085-villain-v2-fork @ ebbdc85；大腦 merge @ f6f5fbf；用戶部署 exploit-coach-villain-v2 Edge Function 到測試 Supabase btiqmckyjyswzrarmfxa + 驗 dev URL https://poker-goal-dev.vercel.app/exploit-coach-villain-v2-test.html 通過；villain profile v2 21 range 內測上線） -->
 
 <details>
 <summary>📦 T-085 原任務描述（已 In Review，見下方）</summary>

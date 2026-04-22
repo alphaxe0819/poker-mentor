@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.19 [dev]
+- ✅ **T-085 真 Done**：用戶部署 `exploit-coach-villain-v2` Edge Function 到測試 Supabase + 驗 dev URL `exploit-coach-villain-v2-test.html` 通過；villain profile v2 21 range 內測上線
+- T-087 執行者開工依賴解除（T-085 Edge Function 已部署 → T-087 production 流程可接到 backend）
+- 純 flow 改動，不觸發測試機驗證
+- bump v0.8.5-dev.18 → v0.8.5-dev.19
+
 ## 2026-04-22 v0.8.5-dev.18 [dev]
 - **T-087 scope 升級**：從「純 mockup wireframe」→「production 版接真 Edge Function + ship 測試機」
   - 新檔 `public/exploit-coach-villain-v2-flow.html`（去 -mockup 後綴）
