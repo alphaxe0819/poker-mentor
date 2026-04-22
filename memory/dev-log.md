@@ -5,6 +5,20 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.31 [dev]
+- **T-064 merge**：執行者交付 `wip/T064-parent-refresh-hang` @ `be39e45`（家裡 wip1，1 檔 +29/-5）
+  - 修法 4 步：
+    1. 新 `timeoutAfter(ms)` helper
+    2. 先 `getSession()` 驗活性（LS 讀，不走網路）；remainingMs > 30_000 → 直接回現有 token 不 refresh
+    3. 過期/即將過期 → `Promise.race<string | null>([refreshSession(), timeoutAfter(2500)])`
+    4. Timeout → fallback 再 `getSession()`（SDK 可能同期已寫入 LS）；仍無 → null
+  - 新 console log：session alive / need refresh / refresh ok / refresh timed out, fallback to getSession
+  - tsc EXIT=0
+- **Fork 獨立 catch-net**：0 改 iframe HTML / Edge Function / supabase client 初始化
+- 解 T-090 ship 後玩家撞「登入已過期」阻擋
+- 整批 task 可結案（T-082/T-085/T-086/T-087/T-088/T-089/T-090 + T-064）
+- bump v0.8.5-dev.30 → v0.8.5-dev.31
+
 ## 2026-04-22 v0.8.5-dev.30 [dev]
 - **T-064 派工升級**：T-090 ship 後用戶主站實測撞到 parent refresh hang（結構化 + narrative 快速分析兩邊都「⚠ 登入已過期」）→ 阻擋玩家使用
 - T-064 scope 本來就有（2026-04-21 T-030 衍生），現在加派工日期 + 實測觸發記錄 + 更精細的 scope（先 getSession 驗活性，只有真過期才 refreshSession + race timeout 2500ms）
