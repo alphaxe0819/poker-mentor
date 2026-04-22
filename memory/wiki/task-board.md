@@ -394,6 +394,11 @@ updated: 2026-04-20
 <details>
 <summary>📦 T-087 原任務描述（已 In Review，見下方）</summary>
 
+<!-- T-090 → In Review 2026-04-22（士林電腦執行者 wip/T090-exploit-coach-tab-iframe-switch；1 行 iframe src 改動；tsc EXIT=0；preview E2E 需用戶登入驗 C2/C3/D 路徑 + chat token 傳遞） -->
+
+<details>
+<summary>📦 T-090 原任務描述（已 In Review，見下方）</summary>
+
 - [ ] **T-090** | Product / 玩家入口整合 | **ExploitCoachTab iframe src 改載 villain-v2-flow.html（測試機主站玩家看到新流程）** `(派工 2026-04-22 → 任一執行者)`
   - 建議 branch：`wip/T090-exploit-coach-tab-iframe-switch`
   - **目的**：T-087/T-088 已 ship 新流程到內測 URL `/exploit-coach-villain-v2-flow.html`，但玩家進主站還是看到舊 quiz（因為 ExploitCoachTab.tsx iframe 寫死載 `mockup-v3.html`）。本 task 改 iframe src 讓測試機主站玩家直接看新流程
@@ -421,6 +426,15 @@ updated: 2026-04-20
     - chat 能拿到 AI 回覆（驗證 iframe-parent token 傳遞 work）
     - **不要 push main**
   - **工時估算**：1-2 hr
+  - **執行者交付摘要**（2026-04-22 士林）：
+    - `src/tabs/ExploitCoachTab.tsx:68` 單行改動：`base = '/exploit-coach-mockup-v3.html'` → `'/exploit-coach-villain-v2-flow.html'`
+    - 原 `request-supabase-refresh` postMessage listener（line 24 起）完整保留，不需動
+    - `public/exploit-coach-villain-v2-flow.html` 存在且有內容（153,366 bytes）
+    - `npx tsc -b --noEmit` EXIT=0
+    - **未驗 E2E**：本 worktree 無 dev server（另 session 佔 5173 且跑不同 worktree）；C2/C3/D 路徑走完 + chat AI 回覆需用戶登入主站手動驗
+    - **等用戶**：大腦 merge 到 dev → 推測試機 → 主站進剝削教練 tab → 驗 B 選擇頁 + 走完任一路徑拿到 AI 回覆
+
+</details>
 
 - [ ] **T-089** | Product 內測 / Bugfix | **villain-v2-test + gtow-test standalone auth bug 修（抄 T-088 patch）** `(派工 2026-04-22 → 任一執行者)`
   - 建議 branch：`wip/T089-standalone-auth-fix`
