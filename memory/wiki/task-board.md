@@ -311,7 +311,36 @@ updated: 2026-04-20
 
 </details>
 
-- [ ] **T-083** | Product | **villain profile v2：21 range grid 系統 MVP（數字比例輸入 + design v2 補完）** `(派工 2026-04-22 → 家裡 wip1 執行者)`
+- [ ] **T-084** | 工具 / 開發流程 | **GTO Wizard Token Grabber Script（解 T-082 部署阻擋）** `(派工 2026-04-22 → 士林電腦執行者，優先序：先做 T-084 → 再回 T-083)`
+  - 建議 branch：`wip/T084-gtow-token-grabber`
+  - **目的**：寫個自動化 script，從本地已開啟並登入的 GTO Wizard 抓 Bearer token，避免每次手動翻 DevTools Network tab。**T-082 部署阻擋在用戶找不到 token，這個 script 一勞永逸解決**
+  - **方法**：Playwright connect to existing Chrome（CDP，remote debugging port 9222），listen `api.gtowizard.com` 請求的 `Authorization` header
+  - **scope（嚴格）**：
+    1. **新檔** `scripts/dev-tools/grab-gtow-token.mjs`（Node script，純 dev 工具）
+    2. **新檔** `scripts/dev-tools/README.md`（用法說明）
+    3. **流程**（用戶手動 + script 自動）：
+       - 用戶**手動**關閉所有 Chrome → 用 `chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\temp\chrome-gtow"` 啟動（避免污染 main profile）
+       - 用戶**手動**登入 GTO Wizard
+       - 跑 `node scripts/dev-tools/grab-gtow-token.mjs`
+       - script connect Chrome via CDP → 找 GTO Wizard tab → 觸發或 listen API call → 抓 `Authorization: Bearer <token>`
+       - script print token 到 console（也可選擇寫到 `scripts/dev-tools/.gtow-token.local.txt`，需先 gitignore）
+       - 用戶複製 token → 貼 Supabase Dashboard → Edge Functions → Secrets → `GTO_WIZARD_TOKEN`
+    4. **gitignore 加** `scripts/dev-tools/.gtow-token.local.txt` 和 `scripts/dev-tools/node_modules/`
+    5. **依賴**：`playwright` 或 `playwright-core`（npm install 在 `scripts/dev-tools/` 或 root，看你怎麼設計，但**不要污染 main package.json** — 建議獨立 `scripts/dev-tools/package.json`）
+  - **out of scope**：
+    - ❌ 不自動 set Supabase Secret（需要 Supabase service role key + 額外 risk）
+    - ❌ 不做 Chrome Extension（更大工程，留 phase 2）
+    - ❌ 不做 token 自動 refresh（JWT 過期重抓即可）
+    - ❌ 不做大量自動 API 抓取（避免 GTO Wizard ToS 風險，**只抓 token 不批次撈資料**）
+    - ❌ 不寫進 main package.json dependencies
+  - **完成條件**：
+    - script 跑起來能印出 token（格式 `eyJhbGciOi...`）
+    - README 寫清楚 Chrome 啟動參數 + script 執行步驟
+    - 用戶實機驗證：能抓到 token → 貼進 Supabase Secret → T-082 Edge Function 跑起來不再「GTO_WIZARD_TOKEN secret missing」
+  - **工時估算**：4-8 hr
+  - **完成後**：執行者切回 T-083 繼續 villain profile v2 MVP
+
+- [ ] **T-083** | Product | **villain profile v2：21 range grid 系統 MVP（數字比例輸入 + design v2 補完）** `(派工 2026-04-22 → 家裡 wip1 執行者，T-084 完成後士林也可接)`
   - 建議 branch：`wip/T083-villain-profile-v2-mvp`
   - **目的**：把現有「7 種抽象 villain type」升級成「21 個具體 range grid」（4 位置 group × 6 動作，前位砍 3 個邏輯不存在的）。先做最小 MVP 跑通端到端，後續 phase 再加問卷升級 / 13×13 grid 拉 UI / pokerdinosaur 16,750 baseline 升級
   - **必讀設計文件**：[[villain-profile-design]]（架構、schema、21 grid 定義、baseline 套用邏輯、LLM summarizer 全在這；v1 草案，需執行者邊做邊補完）

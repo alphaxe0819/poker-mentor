@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.9 [dev]
+- 派工 **T-084**：GTO Wizard Token Grabber Script（士林電腦執行者，優先序：先做 T-084 解 T-082 部署阻擋 → 再回 T-083）
+- 用 Playwright + Chrome remote debugging port 連已開的 Chrome → 抓 GTOW API 請求的 Authorization Bearer token → 印 console（用戶複製貼 Supabase Secret）
+- scope 嚴格：純 dev tooling、不污染 main package.json、不自動 set Supabase secret、不做 Chrome Extension（留 phase 2）、不批次撈 GTOW 資料（ToS）
+- 工時 4-8 hr
+- bump v0.8.5-dev.8 → v0.8.5-dev.9
+
 ## 2026-04-22 v0.8.5-dev.8 [dev]
 - **T-082 merge**：執行者交付 `wip/T082-exploit-coach-gtow-test` @ `4aa445d`（2 新檔，0 改原檔）
   - 新 `supabase/functions/exploit-coach-gtow/index.ts`（619 行 fork）— 只換 `retrieveSolverNode` 為 GTOW API call，prompt / TERMINOLOGY_RULES / Claude / auth / log 完整保留
