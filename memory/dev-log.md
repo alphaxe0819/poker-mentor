@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.30 [dev]
+- **T-064 派工升級**：T-090 ship 後用戶主站實測撞到 parent refresh hang（結構化 + narrative 快速分析兩邊都「⚠ 登入已過期」）→ 阻擋玩家使用
+- T-064 scope 本來就有（2026-04-21 T-030 衍生），現在加派工日期 + 實測觸發記錄 + 更精細的 scope（先 getSession 驗活性，只有真過期才 refreshSession + race timeout 2500ms）
+- 工時 1-2 hr（小 patch，scope 清楚）
+- 修完 T-082/T-085/T-086/T-087/T-088/T-089/T-090 全批 task 都可以真正驗完結案
+- bump v0.8.5-dev.29 → v0.8.5-dev.30
+
 ## 2026-04-22 v0.8.5-dev.29 [dev]
 - **T-090 merge**：執行者交付 `wip/T090-exploit-coach-tab-iframe-switch` @ `3571830`（家裡 wip1，2 檔 +15/-1）
   - `src/tabs/ExploitCoachTab.tsx:68` 改 iframe src：`/exploit-coach-mockup-v3.html` → `/exploit-coach-villain-v2-flow.html`

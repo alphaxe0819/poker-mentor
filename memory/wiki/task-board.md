@@ -266,17 +266,36 @@ updated: 2026-04-20
 
 <!-- T-030 → In Review 2026-04-21（Claude_in_Chrome 自動化驗收，3 pass / 2 partial） -->
 
-- [ ] **T-064** | Product | **exploit-coach parent refresh handshake hang follow-up**（T-030 衍生）
+- [ ] **T-064** | Product | **exploit-coach parent refresh handshake hang 修** `(派工 2026-04-22 → 任一執行者，T-090 後用戶實測撞到 — 兩種流程都撞，結構化 + narrative 快速分析都顯示「登入已過期」)`
   - 建議 branch：`wip/T064-parent-refresh-hang`
-  - 背景：T-030 驗 Bug 5 時，iframe → parent `postMessage({type:'request-supabase-refresh'})` 到達，parent `ExploitCoachTab.tsx:23-59` 的 handler 有 log `[parent-refresh] got request`，但 `await supabase.auth.refreshSession()` 30s 內沒回覆 → 沒看到 `[parent-refresh] replied` → iframe 3s timeout 後 token=null
-  - 現場狀態 token 仍新鮮（expires 40min 後），**正常使用流程不會觸發 401 path**，但若 token 真過期 → 401 → askParentRefresh → parent 同樣 hang → `登入已過期`
-  - 範圍：`src/tabs/ExploitCoachTab.tsx:23-59`
-  - 建議修法：
-    - 加 race timeout：`Promise.race([supabase.auth.refreshSession(), timeoutPromise(2500)])`
-    - timeout → fallback 讀 localStorage 現有 token（若還沒過期）
-    - 或先 `getSession()` 驗活性，真過期才 `refreshSession()`
-  - 實測驗證方式：掛 tab 不動 40+ min 讓 token 過期 → 回來發問 → 看 console log + 能否順利發送（不用重新整理頁面）
-  - 相關：T-054 wiki `supabase-edge-function-gotchas`
+  - **2026-04-22 實測觸發**：用戶主站進剝削教練 tab（T-090 切到 villain-v2-flow.html iframe）發問：
+    - 結構化流程：「你在 BTN 拿 A♠K♥，對手 老漁（v2 villain (flow)）在 CO，手牌 Q♥J♥」→ 「⚠ 登入已過期」
+    - narrative 快速分析：貼長段手牌敘述 → 「⚠ 登入已過期」
+    - 兩邊都過不了，T-090 ship 新流程後玩家**無法使用**
+  - **背景**：T-030 驗 Bug 5 時，iframe → parent `postMessage({type:'request-supabase-refresh'})` 到達，parent `ExploitCoachTab.tsx:23-59` 的 handler 有 log `[parent-refresh] got request`，但 `await supabase.auth.refreshSession()` 30s 內沒回覆 → 沒看到 `[parent-refresh] replied` → iframe 3s timeout 後 token=null → iframe callCoach 降級為 null token → Edge Function 401 → 前端 catch 顯示「登入已過期」
+  - **範圍**：`src/tabs/ExploitCoachTab.tsx:23-59`（parent refresh handler）
+  - **scope（嚴格，小 patch）**：
+    1. parent handler 優先改邏輯：
+       - 先 `supabase.auth.getSession()` 驗活性（不會網路 call）
+       - 如果 session 還存在 + access_token 還沒過期（留 30s buffer）→ 直接 postMessage 回 iframe 現有 token，不跑 refreshSession
+       - 如果過期 → 才跑 `Promise.race([supabase.auth.refreshSession(), timeoutPromise(2500)])`
+       - timeout → fallback 讀 LS 現有 token（如果還在也回給 iframe）；真的都拿不到再回 null
+    2. 不改 iframe 端邏輯（villain-v2-flow.html / mockup-v3.html 內部 askParentRefresh 機制保留）
+    3. 不改任何 Edge Function
+    4. 不改 supabase client 初始化
+  - **out of scope**：
+    - ❌ 不重構 auth flow
+    - ❌ 不改 iframe 端
+    - ❌ 不改 Edge Function
+  - **完成條件**：
+    - tsc EXIT=0
+    - 主站 `poker-goal-dev.vercel.app` 登入 → 進剝削教練 tab → 結構化流程發問 → 拿到 AI 回覆（不再「登入已過期」）
+    - narrative 快速分析發問 → 拿到 AI 回覆
+    - 掛 tab 不動 40+ min 讓 token 過期 → 回來發問 → 應該自動 refresh + 拿到回覆（不需重新整理頁面）
+    - console log 不再有「parent refresh timeout」
+  - **部署**：執行者 push wip → 大腦 merge → Vercel dev 自動部署 → 用戶主站驗
+  - **工時估算**：1-2 hr（純 patch handler，scope 清楚）
+  - 相關 wiki：[[supabase-edge-function-gotchas]] / T-054
 
 <!-- T-031 已完成，移至 Done -->
 
