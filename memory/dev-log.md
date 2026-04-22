@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.29 [dev]
+- **T-090 merge**：執行者交付 `wip/T090-exploit-coach-tab-iframe-switch` @ `3571830`（家裡 wip1，2 檔 +15/-1）
+  - `src/tabs/ExploitCoachTab.tsx:68` 改 iframe src：`/exploit-coach-mockup-v3.html` → `/exploit-coach-villain-v2-flow.html`
+  - 原 request-supabase-refresh postMessage listener 保留（villain-v2-flow IS_STANDALONE=false 走 askParentRefresh path，同 mockup-v3 機制）
+  - tsc EXIT=0
+- **測試機主站玩家進剝削教練 tab 直接看到新流程**（push dev 後 Vercel 自動部署）
+- mockup-v3.html 保留作 fallback / rollback 用
+- **正式機保持舊流程**（main branch 未 push，正式玩家不受影響）
+- 執行者備忘：T-086 test-gtow-flow.mjs preflop_actions 修正 stash 是 stale（大腦已 commit `e072c05`），不用 cherry-pick
+- bump v0.8.5-dev.28 → v0.8.5-dev.29
+
 ## 2026-04-22 v0.8.5-dev.28 [dev]
 - **T-089 merge**：執行者交付 `wip/T089-standalone-auth-fix` @ `76ae9c6`（家裡 wip1，2 檔各 +22/-6 + task-board）
   - 抄 T-088 三段 patch（IS_STANDALONE 旗標 + supabase client 條件式 persistSession/autoRefreshToken + getFreshAccessTokenStandalone）到：
