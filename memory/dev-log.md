@@ -5,6 +5,23 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.25 [dev]
+- **T-088 merge**：執行者交付 `wip/T088-villain-v2-flow-polish-bugfix` @ `e573edf`（家裡 wip1，1 檔 +178/-34）
+  - **Issue 1 — C2 模板選中高亮**：`sfC2State.activeTemplate` 追蹤，`matchesTemplate()` 偵測 21 key 全吻合才算 active；手動改 % 即清掉；新 `renderTemplateToolbar` helper 共用高亮 UI（✓ + 綠底）
+  - **Issue 2 — C3 4 模板 + 改名**：「載入 baseline」→「載入指定範圍」prefix；GTO / LAG 鬆凶 / TAG 緊凶 / Nit 超緊；新 `sfC3LoadTemplate(name)` 該位置 6 動作一次全套
+  - **Issue 3 — C3 動作互斥**：新 `MUTEX_PAIRS`（CALL↔3BET / CALL_3BET↔4BET）+ `mutexSiblingKey()`；blocked grid 加 ✕ 角標 + tooltip；點灰格 = 從 sibling 移除 + 加 current（搶 hand）；RAISE / CALL_4BET 無 peer 不互斥；跨位置不互斥
+  - **Issue 4 — 命名頁顏色 bug**：`sfPickColor(c)` 切色前先讀 `input.value` 存回 `sfNamePending.name`，避免 renderNameScreen 用舊空值覆寫
+  - **Issue 5 — 登入 bug 核心根因**：flow 是 standalone HTML，但 auth code 假設 iframe + parent；`window === window.parent` → askParentRefresh 秒 resolve null → 永遠沒 token
+    - 修法：`IS_STANDALONE` 旗標；standalone 模式 supabase client 開 `persistSession: true` + `autoRefreshToken: true`；新 `getFreshAccessTokenStandalone()` 用 SDK `auth.getSession()` / `refreshSession()`；iframe 路徑原封不動
+    - 用戶流程：先在主站登入（同 domain）→ 開內測 URL → SDK 自動讀 LS token
+  - tsc EXIT=0
+- **Fork 獨立 catch-net**：純改 villain-v2-flow.html + task-board，0 改原版 / 0 改其他 fork / 0 改 lib
+- **已知限制**：
+  - matchesTemplate 用 === 嚴格比（任一 % 不同就不算 active）
+  - edit mode 後 activeTemplates = {} 按載入會重設整組（預期行為）
+  - villain-v2-test.html (T-085) 同樣 standalone auth bug 沒修，scope 不涵蓋 → 可另開 follow-up T-089 修
+- bump v0.8.5-dev.24 → v0.8.5-dev.25
+
 ## 2026-04-22 v0.8.5-dev.24 [dev]
 - T-086 followup（士林本機 E2E 驗證發現的 2 件小事）：
   - **修 test-gtow-flow.mjs preflop_actions bug**：原本空格分隔 `F F F R2.5 F C F` → GTOW 要 dash 分隔 `F-F-F-R2.5-F-C-F`（士林執行者本機改了讓 E2E 全綠但沒 commit，現大腦補進 origin）
