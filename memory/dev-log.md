@@ -5,6 +5,11 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.4 [dev]
+- T-071 task-board cleanup：In Review 區條目移除 + Queue placeholder 標 Done（code 早已 merge @ 937c07e + bump v0.8.3-dev.4 `d2b8c31`，隨 v0.8.4/v0.8.5 上線）
+- 刪 remote wip branch `wip/T071-chat-history-persist`
+- 純 flow 改動（memory/ + version.ts），不觸發測試機驗證
+
 ## 2026-04-22 v0.8.5-dev.3 [dev]
 - ✅ **v0.8.5 正式機部署完成**：繞過 Vercel webhook silent drop，用 CLI prebuilt+tgz 推上 `dpl_2mrSemknaAJz3Y6iZPJQxiF6vcJc`
 - ✅ **T-080 真 Done**：正式 Supabase `qaiwsocjwkjrmyzawabt` Edge Function 已部署（用戶手貼 Dashboard）
