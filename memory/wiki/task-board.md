@@ -394,6 +394,34 @@ updated: 2026-04-20
 <details>
 <summary>📦 T-087 原任務描述（已 In Review，見下方）</summary>
 
+- [ ] **T-090** | Product / 玩家入口整合 | **ExploitCoachTab iframe src 改載 villain-v2-flow.html（測試機主站玩家看到新流程）** `(派工 2026-04-22 → 任一執行者)`
+  - 建議 branch：`wip/T090-exploit-coach-tab-iframe-switch`
+  - **目的**：T-087/T-088 已 ship 新流程到內測 URL `/exploit-coach-villain-v2-flow.html`，但玩家進主站還是看到舊 quiz（因為 ExploitCoachTab.tsx iframe 寫死載 `mockup-v3.html`）。本 task 改 iframe src 讓測試機主站玩家直接看新流程
+  - **⚠ 違反「fork 獨立原則」明確授權**：用戶 2026-04-22 明確說「做 T-090 直接可以在測試機看到內容」 → 這是 production-level 取代決策（不是內測 fork）。允許動原版正式入口檔
+  - **scope（極簡，1-2 hr）**：
+    1. 改 `src/tabs/ExploitCoachTab.tsx` 的 iframe src：
+       - 從 `/exploit-coach-mockup-v3.html` → `/exploit-coach-villain-v2-flow.html`
+       - 應該只是改一個 string literal（grep `mockup-v3.html` 找位置）
+    2. 確認 React app ↔ iframe 之間的 postMessage / supabase token 傳遞還能 work：
+       - villain-v2-flow.html 的 IS_STANDALONE = false 時走 askParentRefresh path（T-088 保留原 iframe path）
+       - ExploitCoachTab.tsx 既有 `request-supabase-refresh` listener 應該已經 handle（mockup-v3.html 同樣機制）
+    3. **不改** `public/exploit-coach-mockup-v3.html`（保留，未來 fallback / rollback 用）
+    4. **不改** villain-v2-flow.html（已 production-ready）
+    5. **不改任何 Edge Function**
+  - **out of scope**：
+    - ❌ 不刪 mockup-v3.html（保留 backup）
+    - ❌ 不改 React app 其他邏輯（只動 iframe src 一行）
+    - ❌ 不部署到正式 Supabase（不需要，Edge Function 已部署）
+    - ❌ **絕對不 push main**（push dev 即可，正式機保持舊流程直到用戶明確授權上線）
+  - **完成條件**：
+    - 改 1 行 iframe src
+    - tsc EXIT=0
+    - 開 `https://poker-goal-dev.vercel.app` 主站 → 進剝削教練 tab → 看到 villain v2 新流程（B 選擇頁，3 個入口）
+    - 走完 C2 / C3 / D 任一路徑驗證
+    - chat 能拿到 AI 回覆（驗證 iframe-parent token 傳遞 work）
+    - **不要 push main**
+  - **工時估算**：1-2 hr
+
 - [ ] **T-089** | Product 內測 / Bugfix | **villain-v2-test + gtow-test standalone auth bug 修（抄 T-088 patch）** `(派工 2026-04-22 → 任一執行者)`
   - 建議 branch：`wip/T089-standalone-auth-fix`
   - **目的**：T-082 部署完成後驗證撞到「需要先登入才能呼叫 AI 教練」 — 跟 T-088 修的 villain-v2-flow.html 同根因（standalone HTML，auth code 假設 iframe + parent，window === window.parent → 永遠沒 token）。本 task 把 T-088 的修法照抄到剩下兩個 standalone HTML

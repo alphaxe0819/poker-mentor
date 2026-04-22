@@ -5,6 +5,15 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.27 [dev]
+- **派 T-090**：ExploitCoachTab iframe src 改載 villain-v2-flow.html，讓測試機主站玩家直接看到新流程
+- ⚠ **違反 fork 獨立原則明確授權**：用戶 2026-04-22 說「做 T-090 直接可以在測試機看到內容」 → production-level 取代決策
+- scope 極簡：改 src/tabs/ExploitCoachTab.tsx 1 行 iframe src（從 mockup-v3 → villain-v2-flow）
+- mockup-v3.html 保留作 fallback，不刪
+- **絕不 push main**（正式機玩家保持舊流程直到明確授權）
+- 工時 1-2 hr
+- bump v0.8.5-dev.26 → v0.8.5-dev.27
+
 ## 2026-04-22 v0.8.5-dev.26 [dev]
 - T-082 + T-086 部署完成（用戶手動設 Supabase Secrets + 貼合併 Edge Function）
 - 但驗證撞到「需要先登入才能呼叫 AI 教練」 — 跟 T-088 修的 villain-v2-flow.html 同根因（standalone HTML auth code 假設 iframe + parent，window === window.parent → 永遠沒 token）
