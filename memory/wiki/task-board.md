@@ -349,6 +349,11 @@ updated: 2026-04-20
 
 <!-- T-083 → ⚠ 部分 revert 2026-04-22（mockup-v3.html + exploit-coach Edge Function 還原為 pre-T-083；保留 src/lib/villainProfile/ + public/exploit-coach-villain-lib.js 給 T-085 用；原因：T-083 違反「fork 獨立」原則改了原版正式入口檔，見專案 CLAUDE.md「內測 / 實驗性改動：fork 獨立原則」section）→ 重派 T-085 做 fork 版 -->
 
+<!-- T-085 → In Review 2026-04-22（家裡 wip1 執行者完成） -->
+
+<details>
+<summary>📦 T-085 原任務描述（已 In Review，見下方）</summary>
+
 - [ ] **T-085** | Product 內測 | **villain profile v2 fork 版（獨立 mockup + 獨立 Edge Function，原版不動）** `(派工 2026-04-22 → 家裡 wip1 執行者，T-083 partial revert 補做)`
   - 建議 branch：`wip/T085-villain-v2-fork`
   - **目的**：T-083 改錯方式（改原版），現在 fork 獨立做 — 跟 T-082（exploit-coach-gtow）同模式
@@ -381,6 +386,8 @@ updated: 2026-04-20
   - **部署**：執行者寫完 → 大腦 produce **新** Edge Function 整檔貼碼指令（用戶手貼測試 Supabase Dashboard 新建 `exploit-coach-villain-v2`）→ 內測 URL 驗證 → task 結案
   - **工時估算**：6-10 hr（lib 已寫好，主要是 fork + scope 切換）
   - **相關 task**：T-083（partial revert 後 lib 留下供 reuse）
+
+</details>
 
 <!-- T-083 → In Review 2026-04-22（家裡 wip1 執行者完成；wip/T083-villain-profile-v2-mvp；tsc EXIT=0；preview 端到端驗證 pass；⚠ 違反 fork 獨立原則改了原版正式入口檔，partial revert 後保留 lib，重派 T-085 做 fork 版） -->
 
@@ -660,6 +667,36 @@ updated: 2026-04-20
 ---
 
 ## 👀 In Review（等大腦整合）
+
+- [?] **T-085** | Product 內測 | **villain profile v2 fork 版（獨立 mockup + Edge Function）**
+  - branch: `wip/T085-villain-v2-fork`（from `origin/dev@80a13ce`）
+  - 機器：家裡 wip1 worktree
+  - 改動（2 新檔，**0 改原檔**，嚴格遵守 fork 獨立原則）：
+    - 新 `supabase/functions/exploit-coach-villain-v2/index.ts`（fork 自 exploit-coach；18 行 T-083 diff 照抄：CoachContext 加 `villain_profile_summary` + `villain_name`，buildSystemPrompt 優先 v2 summary else fallback v1 `villain_type`，log context 加 `_backend: 'villain-v2'`）
+    - 新 `public/exploit-coach-villain-v2-test.html`（fork 自 mockup-v3；照抄 T-083 所有 UI diff + 內測橫幅 + namespace 改動）
+  - **Fork 獨立驗證**：`git status` 確認 `supabase/functions/exploit-coach/index.ts` + `public/exploit-coach-mockup-v3.html` 完全沒動（兩檔均非 modified）
+  - **HTML fork 細節**（13 diff 塊）：
+    - title：「剝削教練 v3 — Mockup」→「剝削教練 — villain v2 內測版」
+    - 引入 `<script src="./exploit-coach-villain-lib.js"></script>`
+    - `<body>` 後加紫色內測橫幅「⚠ 內測版（villain v2 21 range）」
+    - S1 老張 hardcoded card → 空 placeholder（`#opp-empty`）
+    - S1「+ 建立新對手」按鈕 `newOpp()` → `startV2Flow()`
+    - 插入 3 個 screen：`sv2-intro` / `sv2-q`（21 題進度）/ `sv2-name`（命名 + 顏色 + summary preview）
+    - `LS_VILLAINS_KEY` → `exploit-coach-villain-v2-villains`
+    - `LS_CONVO_KEY` → `exploit-coach-villain-v2-conversations`
+    - fetch endpoint `/exploit-coach` → `/exploit-coach-villain-v2`
+    - `buildCoachContext` 優先 `sv2CurrentProfile` 送 `villain_profile_summary` + `villain_name`，legacy v1 fallback 保留
+    - 加 `sv2*` 流程函式（state / begin / render / pick / back / next / name / color / save / select / renderV2Villains）
+    - init 區 `renderSavedVillains()` → `VP.clearLegacyV1()` + `renderV2Villains()`
+  - **共用 lib**：`src/lib/villainProfile/` + `public/exploit-coach-villain-lib.js` reuse，**lib code 完全不動**
+  - 驗證：`npx tsc -b --noEmit` EXIT=0 ✓
+  - **已知 LS 微妙點（記錄，非 bug）**：lib 內部 `LS_KEY_V2 = 'exploit-coach-villains-v2'` 沒改（scope 禁改 lib）。當前沒有其他頁使用 VP lib（T-083 revert 後原版不引入），fork 獨佔。未來若原版引入 VP lib，與 fork 會共用此 LS key — 屆時大腦決定策略。
+  - **大腦接手待做**：
+    1. 產 Edge Function 整檔貼碼指令 → 用戶手貼測試 Supabase Dashboard Create new `exploit-coach-villain-v2` → Deploy（Secrets 照抄 `ANTHROPIC_API_KEY`，無新增）
+    2. Vercel dev 自動部署 HTML → 內測 URL: `https://poker-goal-dev.vercel.app/exploit-coach-villain-v2-test.html`
+    3. 驗：走完 21 題 → save → chat 看到「後位 35% open（偏緊 -14%）」grounding
+    4. 回驗原版 `/exploit-coach-mockup-v3.html` 仍是老張 + 舊 quiz（T-083 partial revert 還原的狀態，fork 無污染）
+    5. **不部署到正式 Supabase**
 
 - [?] **T-082** | Product 內測 | **exploit-coach 內測版：retrieval 換 GTO Wizard API**
   - branch: `wip/T082-exploit-coach-gtow-test`（from `origin/dev@f958aab`）
