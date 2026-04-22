@@ -311,6 +311,11 @@ updated: 2026-04-20
 
 </details>
 
+<!-- T-082 → In Review 2026-04-22（家裡 wip1 執行者完成） -->
+
+<details>
+<summary>📦 T-082 原任務描述（已 In Review，見下方）</summary>
+
 - [ ] **T-082** | Product 內測 | **exploit-coach 內測版：retrieval 換 GTO Wizard API（獨立環境，與正式機 A/B 對照）** `(派工 2026-04-22 → 家裡 wip1 執行者)`
   - 建議 branch：`wip/T082-exploit-coach-gtow-test`
   - **目的**：fork 一份 exploit-coach 內測版，**只換 retrieval 資料源**（我們的 `solver_postflop_6max` 表 → GTO Wizard API），prompt / Claude 模型 / 術語規則完全不動
@@ -353,6 +358,8 @@ updated: 2026-04-20
     - ❌ 不做同頁並排 UI（兩個環境完全隔離，用戶手動切瀏覽器分頁比）
   - **部署**：執行者寫完 → 大腦產出 Edge Function 整檔貼碼指令（用戶手貼**測試** Supabase Dashboard） → 內測 URL 驗證 → task 結案；**不部署到正式 Supabase**
   - 相關 wiki：[[supabase-edge-function-gotchas]]、ai-poker-wizard repo（gto_api.py / gto_formatter.py 參考）
+
+</details>
 
 <!-- T-070 → In Review 2026-04-21（士林主目錄執行者 localStorage 版） -->
 
@@ -485,6 +492,36 @@ updated: 2026-04-20
 ---
 
 ## 👀 In Review（等大腦整合）
+
+- [?] **T-082** | Product 內測 | **exploit-coach 內測版：retrieval 換 GTO Wizard API**
+  - branch: `wip/T082-exploit-coach-gtow-test`（from `origin/dev@f958aab`）
+  - 機器：家裡 wip1 worktree
+  - 改動（2 新檔，0 改原檔）：
+    - 新 `supabase/functions/exploit-coach-gtow/index.ts`（fork 自 exploit-coach；只換 `retrieveSolverNode` 為 GTOW API call；保留 prompt / TERMINOLOGY_RULES / Claude / auth / log 原封不動）
+    - 新 `public/exploit-coach-gtow-test.html`（fork 自 mockup-v3；5 處 diff：title、內測橫幅、LS_VILLAINS_KEY namespace、LS_CONVO_KEY namespace、fetch endpoint `/exploit-coach` → `/exploit-coach-gtow`）
+  - **GTOW 整合細節**（參考 ai-poker-wizard `scripts/gto_api.py`）：
+    - Endpoint: `GET https://api.gtowizard.com/v4/solutions/spot-solution/`
+    - Auth: `Authorization: Bearer <GTO_WIZARD_TOKEN>` + `origin: https://app.gtowizard.com`
+    - Params: `gametype` / `depth` / `stacks` / `preflop_actions` / `board` / `flop_actions`
+    - Slug → gametype: `6max_100bb_*` → `Cash6mGeneral_6mNL100R2`; `mtt_*` / `9max_*` / `hu_*` → `MTTGeneral`
+    - Depth: nearest from GTOW available list + `.125` (MTT) / `.0` (cash)
+    - Preflop 合成：依 scenario_slug 的 `<opener>_open_<caller>_call` 或 `<opener>_open_<3bettor>_3b` 展開 `F-F-F-F-R2.5-F-C` 序列
+    - Path → flop_actions: `CHECK`→`X` / `CALL`→`C` / `FOLD`→`F` / `BET_<n>`→`B<n>` / `ALLIN`→`RAI`
+    - 204/403 → 視為 miss → `nodeSummary=null` → Claude 自己答（不崩）
+    - console.log GTOW raw response (truncated 3000 chars) 供 debug
+  - **不寫 DB / 不 cache GTOW 回傳**（ToS 保護）；`coach_queries` log 保留，context 內加 `_backend: 'gtow'` 標記
+  - 驗證：`npx tsc -b --noEmit` EXIT=0 ✓
+  - **大腦接手待做**：
+    1. 設測試 Supabase Secret `GTO_WIZARD_TOKEN`（用戶操作，token 不貼對話）
+    2. 產 Edge Function 整檔貼碼指令 → 用戶手貼測試 Supabase Dashboard → Functions → `exploit-coach-gtow` (Create new) → Deploy
+    3. Vercel dev 會自動部署新 HTML（`public/` 靜態檔）→ 內測 URL: `https://poker-goal-dev.vercel.app/exploit-coach-gtow-test.html`
+    4. 驗：用戶問 5 題同 A/B，肉眼比回答差異
+    5. **不部署到正式 Supabase**
+  - **已知限制（v1 預期）**：
+    - Preflop raise size 用標準值（MTT R2.2 / Cash R2.5 / 3bet R6.5/R8.0）；若 GTOW 期待別的 size 可能 204 — v2 可加 `next_actions` probe 找最近 legal
+    - Postflop combo-level signature hands 沒做（1326-array index 較複雜；範圍平均頻率仍正確）
+    - Preflop 169-array hand order 用標準 pair-first → suited → offsuit（若 GTOW 用不同 order，key-hand 對應會錯，但 aggregate freq 不受影響）
+    - HU slug 用 9-max positions 近似；`hu_*_3bp/4bp` 先用保守預設 size
 
 <!-- T-013 / T-030 / T-021 / T-074 / T-073 / T-071 / T-072 / T-070 / T-075 Phase 0 / T-075 Phase 1 / T-080 已 merge 2026-04-21 -->
 <!-- T-080 真 Done 2026-04-22：正式 Supabase Edge Function 已部署 + v0.8.5 正式機已上（繞過 Vercel webhook silent drop，改用 CLI prebuilt+tgz；詳見 [[vercel-deployment-troubleshooting]]） -->
