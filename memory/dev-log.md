@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-04-22 v0.8.5-dev.16 [dev]
+- 改 CLAUDE.md「程式碼交付」段：大段 code（≥ 50 行 / Edge Function 整檔 / 大 migration）改用「檔案路徑模式」 — 大腦給絕對路徑，用戶自己開檔複製，不再對話貼整檔
+- 小段 (< 50 行) 維持直接貼對話
+- 用戶決議：T-082 + T-085 兩次貼 600+ 行整檔太慢，本地檔案複製比較快
+- bump v0.8.5-dev.15 → v0.8.5-dev.16
+
 ## 2026-04-22 v0.8.5-dev.15 [dev]
 - **T-085 merge**：執行者交付 `wip/T085-villain-v2-fork` @ `ebbdc85` (2 新檔, +2,720 行 fork code)
   - 新 `supabase/functions/exploit-coach-villain-v2/index.ts` (437 行) — fork from exploit-coach 加 villain_profile_summary + villain_name 處理

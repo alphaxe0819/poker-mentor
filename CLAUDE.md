@@ -65,10 +65,16 @@
 2026-04-22 T-082（GTOW 內測）大腦正確套 fork 模式 — 新建 `exploit-coach-gtow` Edge Function + `exploit-coach-gtow-test.html` mockup，原版完全不動。但同一天 T-083（villain profile v2）大腦寫派工 scope 時忘了套 fork 模式，第 6/7 步直接寫「Edge Function 改造 supabase/functions/exploit-coach/index.ts — **取代**現有 VILLAIN_LABELS 段落」「**整合到既有流程** — S1 對手卡片改顯示新版 v2 villain」。執行者照 scope 改了原版 mockup-v3.html（刪老張、改建立新對手按鈕為 v2 流程）+ 原版 exploit-coach Edge Function。大腦 merge 後才發現 → revert mockup + Edge Function（保留 src/lib/villainProfile/ + public/exploit-coach-villain-lib.js）→ 重派 T-085 做 fork 版。教訓：「換資料源」直覺套 fork 模式，但「升級功能」直覺當 production feature 規劃 — 兩者都應該套 fork。**所有實驗性改動 = fork**，例外才是 production patch。
 
 ## 程式碼交付
-- SQL migration 程式碼直接貼在對話裡（不要只說「在檔案裡」）
-- Edge Function 程式碼也直接貼在對話裡（用戶沒有 Supabase CLI，要手動貼到 Dashboard）
+- **小段（< 50 行）**：直接貼在對話裡（短 SQL migration / 一兩個函式 patch / 設定值等）
+- **大段（≥ 50 行 / Edge Function 整檔 / 大型 migration）**：**給檔案路徑**，用戶自己從本地 repo 複製貼 Dashboard
+  - 格式：「請打開 `<absolute path>`（例 `C:\Users\User\Desktop\gto-poker-trainer\supabase\functions\exploit-coach-villain-v2\index.ts`）→ 全選複製 → 貼到 Supabase Dashboard → ...」
+  - 前提：用戶當前 cwd 在 git repo 內（家裡這台 / 士林 poker-mentor），所以本地一定有最新檔案
+  - 若是新 commit 的檔案，提醒用戶 `git pull origin dev` 先拿到最新
 - 描述 bug/feature 直接分析修復，不要反覆確認
 - 不要膨脹時間估算
+
+### 為何小段 vs 大段分開
+2026-04-22 T-082 + T-085 兩次 Edge Function 部署，大腦在對話貼 600+ 行 + 437 行整檔，用戶反映「之後改成檔案給我開的模式可以 我自己複製就好 省時間」。對話貼大段 code 浪費 token + 用戶複製對話 vs 複製本地檔案的速度差，都偏好「檔案路徑模式」。但短 patch 直接貼還是比較順（不用切視窗）。
 
 ## 使用者手動執行的程式碼：乾淨可複製規則（最重要）
 **任何需要使用者複製貼到 Supabase SQL Editor / Edge Function Editor / Terminal 的程式碼塊，必須符合以下全部條件：**
