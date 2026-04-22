@@ -389,6 +389,11 @@ updated: 2026-04-20
 
 </details>
 
+<!-- T-087 → In Review 2026-04-22（家裡 wip1 執行者完成） -->
+
+<details>
+<summary>📦 T-087 原任務描述（已 In Review，見下方）</summary>
+
 - [ ] **T-087** | Product 內測 | **villain v2 新流程 production 版（B 選擇頁 / C1 快速問答 / C2 設定比例 / C3 詳細範圍 / D 用戶檔案頁，接真 Edge Function）** `(派工 2026-04-22 → 任一執行者，直接做 production，不做 mockup wireframe)`
   - 建議 branch：`wip/T087-villain-v2-flow`
   - **目的**：用戶要重新設計 villain v2 建立流程（取代現有 T-085 的「21 題傻問」）。**直接做 production 版**（接真 Edge Function `exploit-coach-villain-v2` + 真 ship 測試機 dev URL）
@@ -452,6 +457,8 @@ updated: 2026-04-20
   - **部署**：執行者寫完 push wip → 大腦 merge → Vercel dev 自動部署 HTML → 用戶內測（前提：T-085 Edge Function 已部署）
   - **工時估算**：12-18 hr（比純 mockup 多 6-8 hr，因為要接 Edge Function + AI 升級按鈕邏輯）
   - **相關 task**：T-085（既有 villain-v2-test.html 不動，先共存；新流程驗 OK 後可決定取代）
+
+</details>
 
 - [ ] **T-086** | Product 內測 / 工程 | **exploit-coach-gtow ECDSA P-256 signing + token refresh flow（救 T-082）** `(派工 2026-04-22 → 任一執行者，跟 T-085 並行)`
   - 建議 branch：`wip/T086-gtow-signing-flow`
@@ -789,6 +796,41 @@ updated: 2026-04-20
 ---
 
 ## 👀 In Review（等大腦整合）
+
+- [?] **T-087** | Product 內測 | **villain v2 新流程 production 版（B/C1/C2/C3/D fork 版）**
+  - branch: `wip/T087-villain-v2-flow`（from `origin/dev@f221115`）
+  - 機器：家裡 wip1 worktree
+  - 改動（**1 新檔，0 改原檔**，嚴格 fork 獨立）：
+    - 新 `public/exploit-coach-villain-v2-flow.html`（fork 自 `exploit-coach-villain-v2-test.html`）
+    - 單檔 ~2800 行，內含完整 B/C1/C2/C3/命名/D 六個 screen 的 HTML + JS flow
+  - **fork 獨立驗證**：`git status` 只顯示單一新檔；原版 `mockup-v3.html` / `villain-v2-test.html` / `exploit-coach*` Edge Functions / `exploit-coach-villain-lib.js` / `src/lib/villainProfile/` 全 0 modification
+  - **畫面/功能實作**：
+    - **B 選擇頁** `#sf-b`：3 個 flow-card（快速問答 / 設定比例 / 詳細範圍），icon + 說明 + 預估時間
+    - **C1 快速問答** `#sf-c1`：7 題 hardcode quiz（依 design doc §3.2 骨架：前位 open / 中位 open / 後位 open / SB open / 3-bet 頻率 / face 3-bet / face 4-bet），每題 3-4 個語義化選項；progress bar + 上一題/下一題；`sfC1Next()` 收斂成 21 個 percentChoices（snapToOption 對齊 PERCENT_OPTIONS），CALL 三 key 用 q3 後位 open 寬度 `deriveCallFromC1` 推導
+    - **C2 設定比例** `#sf-c2`：4 頁（EP 3 row / MP/LP/BL 6 row），每 row 顯示動作名 + GTO baseline + 偏離度 badge（標準/鬆/緊）+ 6 個 % chip 選項（PERCENT_OPTIONS）；頂部「載入模板」4 按鈕（GTO/LAG/TAG/Nit）
+    - **C3 詳細範圍** `#sf-c3`：4 頁 × 6 動作 tab × 13×13 hand grid；初始預填 baseline；點擊 toggle 0/1；按住拖拉批次（onmousedown + onmouseenter）；右上角即時顯示當前 % + 偏離度；「載入 baseline」/「清空」按鈕
+    - **命名 screen** `#sf-name`：名稱輸入 + 顏色選擇（8 色）+ summary 預覽（即時呼叫 `VP.summarizeVillainProfile`）
+    - **D 用戶檔案頁** `#sf-d`：header + 風格摘要（`computeStyleSummary` 靜態規則：LAG / Nit / TAG / 被動 / 標準）+ 21 range 4×6 table（鬆/緊著色）+ 動作 tab 切換 4 位置 mini grid + AI 剝削策略（`computeStaticStrategy` 靜態 5 條 or AI 覆蓋）+ 「升級 AI 版（免費）」/「編輯範圍」/「開始分析」按鈕
+  - **AI 升級按鈕**（task 核心要求）：`upgradeAIStrategy()` 呼叫 `exploit-coach-villain-v2` Edge Function，messages[0] 為「給 4 句風格摘要 + 5 條深度剝削策略」prompt，context 帶 `villain_profile_summary` + `villain_name` + `_t087_ai_upgrade: true` flag；回覆用 `**深度剝削策略**` 標題切兩段塞 aiSummary/aiStrategy；updateFlowVillain 覆蓋持久化
+  - **編輯流程**：D「編輯範圍」塞現 grids 進 sfC3State → 進 C3；`sfC3Next` wrap（sfEditMode flag），編輯完 Last Next 覆蓋 working profile + 回 D（aiSummary/aiStrategy 設 null 強制重新升級）
+  - **storage**：
+    - `LS_VILLAINS_KEY = 'exploit-coach-villain-v2-flow-villains'`（自前 `loadFlowVillains` / `saveFlowVillains` / `appendFlowVillain` / `updateFlowVillain`，不用 lib 的 `LS_KEY_V2`，與 T-085 LS 完全隔離）
+    - `LS_CONVO_KEY = 'exploit-coach-villain-v2-flow-conversations'`
+  - **共用 lib（不改）**：`VP.RANGE_KEYS` / `VP.PERCENT_OPTIONS` / `VP.POSITION_LABEL` / `VP.ACTION_LABEL` / `VP.findBaselineRange` / `VP.baselinePctFor` / `VP.buildVillainProfile` / `VP.summarizeVillainProfile` / `VP.clearLegacyV1`
+  - **chat flow**：D「開始分析」→ `enterChatFromD()` 設 `sv2CurrentProfile = working`（buildCoachContext 會送 `villain_profile_summary` + `villain_name` 給 Edge Function）→ go('s2')
+  - 驗證：`npx tsc -b --noEmit` EXIT=0 ✓
+  - **大腦接手待做**：
+    1. merge wip → dev → Vercel dev 自動部署 HTML
+    2. **依賴**：`exploit-coach-villain-v2` Edge Function（T-085）必須已部署到測試 Supabase（用戶應已貼完）— 若尚未貼，本頁所有 chat + AI 升級都會 401/404
+    3. 用戶內測 URL: `https://poker-goal-dev.vercel.app/exploit-coach-villain-v2-flow.html`
+    4. 驗收條件：B→C1/C2/C3 三路徑都跑通 / 4 模板按鈕 OK / 命名 save / D 風格摘要 + 4×6 表 + mini grid tab / AI 升級按鈕真 fetch / 編輯範圍 → 回 D 更新 / reload villain 還在 / 原版 mockup-v3.html / villain-v2-test.html 都沒變化
+    5. **不部署到正式 Supabase**
+  - **已知限制 / 設計決策**：
+    - C3 touch drag 只支援 tap（沒做 touchmove + elementFromPoint），桌面 mouse drag 完整支援
+    - LAG / TAG / Nit 模板用簡單偏移規則產生（非真實 villain 統計），dev 用 good-enough
+    - AI prompt 切 parser 用 `**深度剝削策略**` 標題；若 LLM 不照格式，會全塞 aiSummary、aiStrategy 空
+    - 編輯範圍後 aiSummary/aiStrategy 設 null 強制重新升級，避免 stale
+    - MVP 免費（代碼註解標 `TODO: production 上線時改 5 點，需 service role key 過 RLS spend_points`）
 
 - [?] **T-085** | Product 內測 | **villain profile v2 fork 版（獨立 mockup + Edge Function）**
   - branch: `wip/T085-villain-v2-fork`（from `origin/dev@80a13ce`）
