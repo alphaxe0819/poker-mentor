@@ -5,6 +5,20 @@
 
 ---
 
+## 2026-04-23 v0.8.5-dev.38 [dev] — T-097 code merge（pipeline v2 完整改造，待 migration 貼 Dashboard）
+- **T-097 code merge**：執行者家裡 wip1 `wip/T097-pipeline-v2` @ `4ae0a35`（4 commit 拆分乾淨）
+  - `supabase/migrations/20260425-gto-batch-progress-v2.sql`（+212）— DROP 舊 RPC + DROP 舊 progress 表 + 重建 v2 schema + 新 RPC（3 參數）
+  - `scripts/gto-pipeline/scenarios.mjs`（+36/-6）— 加 gametype / depth_bb / preflop_actions
+  - `scripts/gto-pipeline/seed-batches.mjs`（+18/-5）— 產出 gametype-based seed
+  - `scripts/gto-pipeline/batch-worker.mjs`（+220/-114）— pathToRole 4 桶 → encodeAction + advancePot GTOW 編碼完整 path（X/B33/C/R75/F/RAI）；extractSpots 1 row/spot；uploadSpots upsert gto_solutions；CLI 新增 `--gametype-filter` / `--depth-filter`
+- **合併衝突解決**：task-board In Review section 兩邊都保留（T-096 + T-097 各自 details block）
+- ⚠ **T-097 F 驗證階段 BLOCKED**：migration 20260425 未部署（執行者紀律不自己貼 Dashboard）
+  - 大腦本次 commit 不 DROP 舊表（T-098 retrieval fallback 需要 2 週）
+  - 用戶貼 migration SQL 到測試 Supabase Dashboard 後才能解 block
+  - 驗證通過 → 執行者重 seed + 跑 1 個 HU 25bb SRP batch 驗端到端 → T-097 真正 Done
+- **EV 限制記錄**：TexasSolver v0.2.0 無 EV dump（CLI 無 set_dump_ev，JSON 無 ev/equity/value 欄位）→ `node_data.hands` items 只有 `[{action, freq}]`，`solver_config.ev_available: false` 顯式標示，schema jsonb 彈性保留未來 GTOW fill
+- bump v0.8.5-dev.37 → v0.8.5-dev.38
+
 ## 2026-04-23 v0.8.5-dev.37 [dev] — T-096 Done + 產品願景 v2 draft + D4 門檻突破
 - **T-096 merge**：執行者士林 `wip/T096-extract-old-to-v2` @ `9192300`
   - 新 scripts：`migrate-gto-postflop-to-v2.mjs` (+277) + `migrate-solver-postflop-to-v2.mjs` (+452)
