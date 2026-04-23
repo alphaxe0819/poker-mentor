@@ -324,10 +324,25 @@ function pathToRole(path, player) {
 
 async function uploadRows(rows, batch) {
   const CHUNK_SIZE = 500  // Supabase upsert 一次最多建議 500 rows
+
+  // Dedup by (role, hand_class) — first-write-wins
+  // pathToRole collapses multiple solver tree nodes to the same role bucket,
+  // so within a single batch the conflict key (role, hand_class) is not unique.
+  // See T-045 investigation @ b59ef4a. Long-term fix (path-aware role) tracked in T-092.
+  const seen = new Set()
+  const deduped = []
+  for (const r of rows) {
+    const key = `${r.role}|${r.handClass}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    deduped.push(r)
+  }
+  console.log(`  Dedup: ${rows.length} → ${deduped.length} rows (first-write-wins on role|hand_class)`)
+
   let uploaded = 0
 
-  for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
-    const chunk = rows.slice(i, i + CHUNK_SIZE).map(r => ({
+  for (let i = 0; i < deduped.length; i += CHUNK_SIZE) {
+    const chunk = deduped.slice(i, i + CHUNK_SIZE).map(r => ({
       board_key: batch.board_key,
       turn_card: batch.turn_card,
       river_card: batch.river_card || '',

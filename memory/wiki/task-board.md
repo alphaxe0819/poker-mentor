@@ -897,6 +897,11 @@ updated: 2026-04-23
 <!-- T-043 → Done 2026-04-20 -->
 <!-- T-044 → Done 2026-04-20 -->
 
+<!-- T-045 → In Review 2026-04-23（家裡 wip1 執行者 wip/T045-first-real-batch；dedup fix C 實作 + 真跑 25bb turn batch 成功；594 rows 進 gto_postflop + status=done） -->
+
+<details>
+<summary>📦 T-045 原任務描述（已 In Review，見下方）</summary>
+
 - [ ] **T-045** | Pipeline | **真跑 1 個 batch（去掉 --dry-run，含 dedup fix）** `(2026-04-23 大腦派工更新 → 家裡電腦執行者，需 TexasSolver binary)`
   - 建議 branch：`wip/T045-first-real-batch`（從 `origin/dev@cca59f9` 切新，舊 remote branch 已清）
   - **派工背景（2026-04-23）**：用戶拍板 T-046 phased seed 策略（全量 seed river + 先跑 13bb slice 1040 row warm-up）；T-045 先驗 pipeline 端到端，過了大腦派 T-091 做 phased 執行
@@ -918,6 +923,8 @@ updated: 2026-04-23
   - 前置：TexasSolver 已解壓到 `scripts/gto-pipeline/TexasSolver-v0.2.0-Windows/`
   - 預估：20-40 min（dedup patch 5 min + solver 7-15 min + upload/verify）
   - 執行者紀律：不動 `src/version.ts` / `memory/dev-log.md`
+
+</details>
 
 - [ ] **T-092** | Pipeline | **role 分桶根因解（schema + convert-to-db + retrieval 連動改）** `(blocker，等 T-091 phased 跑完有真實 retrieval 資料後評估)`
   - 建議 branch：`wip/T092-role-path-fidelity`
@@ -997,6 +1004,30 @@ updated: 2026-04-23
 <!-- 2026-04-23 task-board cleanup：In Review 區 6 個已 merge task 移到 Done + 刪 remote 殘留 wip branch 10 個（T013/T021/T030/T045/T045b/T070/T072/T073/T074/T080） -->
 
 <!-- T-046 → Done 2026-04-23：用戶拍板採納 phased seed 策略（全量 seed river + 13bb slice warm-up）→ 派 T-045 驗 pipeline 端到端，過了再派 T-091 做 phased 執行 -->
+
+- [?] **T-045** | Pipeline | **真跑 1 個 batch + dedup fix 方案 C 實作 — pipeline 端到端通過**
+  - branch：`wip/T045-first-real-batch`（from `origin/dev@5479b3d`）
+  - 機器：家裡 wip1 worktree（`--machine home-main`）
+  - 改動：**2 檔**
+    - `scripts/gto-pipeline/batch-worker.mjs` — `uploadRows()` 進 Supabase chunk loop 前加 Map dedup（+13/-1）：`const seen = new Set()` + `const key = ${role}|${handClass}` + first-write-wins（同 key 後續 row 丟棄）+ console.log 印 dedup 前後 count
+    - `scripts/gto-pipeline/verify-t045.mjs` — **新檔** +60 行，純讀 `gto_batch_progress` 最近 5 + `gto_postflop` count/sample，給 In Review 驗證用（future T-091 phased 跑也能重用）
+  - **實跑證據**（`node batch-worker.mjs --machine home-main --max 1`）：
+    - ✅ `claim_gto_batch` RPC：領到 `turn | 7s7d2h + 3c | 25bb`（不是前人 13bb 那個，走另一個 pending batch）
+    - ✅ TexasSolver 17.5s（Iter 151，exploitability 0.34%）
+    - ✅ JSON parse：1878 rows
+    - ✅ **Dedup：1878 → 594 rows (first-write-wins on role|hand_class)** ← 新 console log 證明生效
+    - ✅ Upsert 594 rows 到 `gto_postflop`（無 42601 錯誤）
+    - ✅ `gto_batch_progress` status=done，`row_count=594`
+  - **DB 驗證**（`node verify-t045.mjs`）：
+    - `gto_batch_progress` 最近 5 筆第一筆 `done | turn 7s7d2h+3c 25bb | machine=home-main rows=594`
+    - `gto_postflop` 該 batch 594 rows
+    - sample row：`btn_bet 55 c` / `btn_bet 66 c` / `btn_bet 65s f` 等，role + action_code 格式合理
+  - **前人 `diagnose-dup.mjs` 狀態**：在 `b59ef4a` 投資中 commit，但該 commit 從未 merge 進 dev，remote wip branch 已清 → 本地不存在。console log 已證明 dedup 生效（1878 → 594），功能等價
+  - **T-092 長期 A 方案的空間**：本次 25bb 原始 1878 rows 壓到 594（~3.2x dup ratio），即每個 (role, hand_class) 平均 3.2 個 solver tree 節點。dedup 丟掉 1284 rows 的節點語義資訊（flop path context），T-091 phased 跑完 13bb/25bb/40bb 有真實 retrieval 資料後，由大腦評估 role 爆量對 query 效能影響再決定是否啟動 T-092
+  - 驗證：code 改動 node `--check` 通過；無 side effect（dedup 是純 in-memory filter）；工具 script verify-t045.mjs 只讀不寫
+  - 純 flow 改動（scripts/，不影響 Vercel build），無 version bump
+  - 執行者紀律：不動 `src/version.ts` / `memory/dev-log.md`
+  - 等大腦 review → merge → 可視為 T-091 phased 執行 precondition 通過
 
 <!-- T-012 → Code Done 2026-04-21，migration 部署待 T-063 -->
 
