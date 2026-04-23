@@ -1,12 +1,13 @@
 ---
 name: Database Schema v2 規格書（B 方向重整）
-description: 統一 GTO 資料櫃 schema 比照 GTO Wizard 設計模式；flat by path + jsonb hand frequencies；Draft 狀態等用戶拍板
-type: proposal
-status: draft
+description: 統一 GTO 資料櫃 schema 比照 GTO Wizard 設計模式；flat by path + jsonb hand frequencies；2026-04-23 用戶拍板 D1-D5 升級 approved
+type: spec
+status: approved
+approved_at: 2026-04-23
 updated: 2026-04-23
 ---
 
-> **這份文件的狀態**：草案，等用戶確認 5 個決策點後升級成 spec → migration → 實作。不要當成已定案。
+> **狀態**：已拍板。5 個決策（D1-D5）用戶已決定（見 §9），spec 鎖定可開 T-095 ~ T-099 實作。
 
 ---
 
@@ -372,46 +373,31 @@ await supabase.from('gto_solutions').insert({
 
 ---
 
-## 9. 待拍板決策點（請用戶選）
+## 9. 決策點（2026-04-23 用戶已拍板）
 
-### 🔴 D1：node_data 是否包含 EV/equity？
-- **包含**（A）：多 ~30% jsonb 大小，但 AI 教練可講「這決策 EV +2.45bb」；學習功能更強
-- **不包含**（B）：純 freq，更小更快；EV 由前端算（需要 equity calculator）
-- **大腦推薦 A**：多花 30% 空間換產品深度，值得
-
-### 🟡 D2：preflop spots 與 postflop 同表還是分表？
-- **同表**（board='' 表示 preflop）：統一 query 邏輯
-- **分表**（`gto_preflop` + `gto_postflop_v2`）：表更專注，但雙 query 邏輯
-- **大腦推薦同表**：簡化最大化
-
-### 🟡 D3：`solver_postflop_6max` / `solver_postflop_mtt` 舊表留多久？
-- **立即 DROP**：極端，風險高
-- **留 2 週 fallback**：穩妥，推薦
-- **永久留作 backup**：浪費 DB 空間
-- **大腦推薦 2 週 fallback**
-
-### 🟢 D4：正式 Supabase 何時部署新表？
-- **測試 2K+ rows 穩定後**（推薦）：確認 schema 可行才動正式
-- **立即建空表**：正式玩家先享受 null 查詢
-- **等 10K+ rows**：保守
-- **大腦推薦「測試 2K+ rows 後」**：約 1 週後（多機 T-094 marathon 跑起來）
-
-### 🟢 D5：gametype 命名細節
-- `cash_6max_100bb` vs `cash6m100`（短）vs `cash-6max-100bb`（dash）
-- **大腦推薦 snake_case 長名**（最可讀）
+| # | 決策 | 結果 | 說明 |
+|---|---|---|---|
+| **D1** | `node_data` 含 EV/equity？ | ✅ **A 含** | 多 30% jsonb 空間換精準 AI 教練 + Leak Finder 基礎；solver 原生已算 EV，extract 時多抓一欄 |
+| **D2** | preflop / postflop 同表？ | ✅ **同表** | 單一 `gto_solutions`，preflop 時 `board=''` + `flop_actions=''`；一套 retrieval code |
+| **D3** | 舊 `solver_postflop_6max/mtt` 留多久？ | ✅ **2 週 fallback** | 新表部署後 retrieval 先查新表 miss 則查舊表，2 週後 DROP |
+| **D4** | 正式 Supabase 何時部署新表？ | ✅ **測試 2K+ rows 穩定後** | 等 T-094 marathon 跑出 ~2K rows（約 1 週）先確認 schema 可行再動正式 |
+| **D5** | `gametype` 命名風格 | ✅ **snake_case 長名** | `cash_6max_100bb` / `mtt_9max_40bb` / `hu_25bb_srp` 等 |
 
 ---
 
 ## 10. 接下來流程
 
-1. **用戶拍板 D1-D5** → 本檔 status 改 `approved`
-2. 大腦開正式 task：
-   - **T-095** schema migration（建表 + RPC 升級）
-   - **T-096** extract scripts（舊資料搬新表）
-   - **T-097** batch-worker 改造
-   - **T-098** retrieval lib 改造 + fallback
-   - **T-099** 正式環境部署（等 D4 條件達成）
-3. 每個 task 派給執行者（多 session 並行，獨立 branch）
+✅ 用戶 2026-04-23 已拍板 → spec 鎖定。大腦開 5 個正式 task（見 task-board Queue）：
+
+| Task | 內容 | 前置 | 並行性 |
+|---|---|---|---|
+| **T-095** | schema migration（建 `gto_solutions` 表 + RPC 升級）| 無 | 先做，後續依賴 |
+| **T-096** | extract scripts（舊 `gto_postflop` + `solver_postflop_*` → 新表）| T-095 | T-095 完才能跑 |
+| **T-097** | `batch-worker.mjs` 改造（產出對齊新 schema，含 EV 欄位）| T-095 | 可與 T-096 並行（不同 session）|
+| **T-098** | retrieval lib 改造 + 2 週 fallback（getGTOPostflopFromDB + postflopRetrieval 統一）| T-095、T-096 | T-096 完後做 |
+| **T-099** | 正式環境部署（等 D4 條件達成）| T-098 + 測試 2K+ rows | 等資料累積 |
+
+多 session 可並行：T-096 + T-097（不同 scope 不衝突），T-098 依賴兩者完成。
 
 ---
 

@@ -945,21 +945,102 @@ updated: 2026-04-23
 
 </details>
 
-- [ ] **T-092** | Pipeline | **role 分桶根因解（schema + convert-to-db + retrieval 連動改）** `(blocker，等 T-091 phased 跑完有真實 retrieval 資料後評估)`
-  - 建議 branch：`wip/T092-role-path-fidelity`
-  - **背景**：T-045 當前用 C first-write-wins dedup 短期 unblock，但丟了 solver game tree 裡不同語義節點的資訊（例：同 `bb_facing_bet_mid` 可能對應 flop-checked-turn 和 flop-raised-turn 兩條不同路徑）
-  - **修法（方案 A）**：role 納入 path 成分，例：`btn_facing_bet_mid_after_flop_check` / `btn_facing_bet_mid_after_flop_raise`
-  - **連動改**：
-    1. `pathToRole` 改成回傳完整 path + bucket 合成
-    2. `gto_postflop` schema `role` 欄位爆量（估 10x → 幾十種）
-    3. `convert-to-db.mjs` 產出對齊
-    4. client retrieval（`getGTOPostflopFromDB.ts`）要能從 heroHistory 推出正確 path
-    5. `huHeuristics.ts` PostflopRole enum 擴充
-  - **前置**：T-091 phased 執行完成（13bb / 25bb / 40bb 有真實資料），才能評估 role 爆量對 retrieval query 效能的影響
-  - 預估：3-5 hr（schema 改 + backfill 既有 batch + retrieval 對齊）
-  - 執行者紀律：大 scope，跨 pipeline + client，派工前大腦要 brainstorm 細 scope
+<!-- T-092 → Superseded by T-095~T-099（2026-04-23 用戶拍板 B 方向 Schema v2，role 納入 path 的修法合併進 T-097 batch-worker 改造；詳見 [[database-schema-v2-spec]]） -->
 
 <!-- T-046 → Done 2026-04-21（code merge @ 9ee0222 estimate-river-seed.mjs dry-run；實測 Turn 390 / River 3120 / Grand 3510 rows < 10k 門檻 → seed 本身 OK；瓶頸在 solver 吞吐 878-1170hr 單機；剩「phased by stack_label 策略 + 真 seed」屬戰略決策，留給用戶後續拍板；remote wip branch 已清） -->
+
+---
+
+### 🔧 Schema v2 重整（2026-04-23 用戶拍板 B 方向 — 詳見 [[database-schema-v2-spec]]）
+
+**決策摘要**：建立統一 `gto_solutions` 表（flat by path + jsonb hand frequencies，比照 GTO Wizard 設計），取代現有 `gto_postflop` + `solver_postflop_6max` + `solver_postflop_mtt` 三套。含 EV 欄位。preflop/postflop 同表。snake_case 命名。
+
+**並行性**：T-095 完成後 T-096 + T-097 可並行（不同 session）；T-098 依賴兩者；T-099 等資料 2K+ rows。
+
+- [ ] **T-095** | Pipeline + DB | **建 `gto_solutions` 表 + 升級 `claim_gto_batch` RPC** `(2026-04-23 派工)`
+  - 建議 branch：`wip/T095-schema-v2-migration`
+  - 前置：無（spec 已 approved）
+  - 範圍：
+    1. 寫 migration `supabase/migrations/20260424-gto-solutions-v2.sql`（見 spec §1 SQL）
+       - `CREATE TABLE gto_solutions`（含 source / EV 支援的 node_data jsonb）
+       - CHECK constraint + RLS + 兩個 index
+       - 升級 `claim_gto_batch(p_machine_id, p_gametype_filter, p_depth_filter)` RPC（見 spec §2）
+    2. 產出貼碼指令（供用戶貼測試 Supabase Dashboard）
+    3. 驗證：SQL Editor 確認表 / policy / constraint 建立；RPC 舊呼叫方式仍可用（backward-compat）
+  - 預估：30 min migration + 30 min Dashboard 部署 + 驗證 = 1 hr
+  - **不在 scope**：部署正式 Supabase（留給 T-099）；extract 舊資料（T-096）；改 batch-worker（T-097）
+
+- [ ] **T-096** | Pipeline | **Extract 舊 DB 資料搬進 `gto_solutions`** `(前置 T-095)`
+  - 建議 branch：`wip/T096-extract-old-to-v2`
+  - 範圍：
+    1. 寫 `scripts/migrations/migrate-gto-postflop-to-v2.mjs`
+       - 讀 `gto_postflop` 594 rows
+       - 按 (board, turn, river, street, stack_label) group → 每 group 一 spot row
+       - 推算 `preflop_actions`（從 stack_label + scenario 對照表，寫死即可，資料量小）
+       - 推算 `flop_actions` / `turn_actions`（從舊 `role` 欄位反推）
+       - 組 `node_data.hands` jsonb（169 hands × action/freq，EV 暫 null 因舊資料沒抓）
+    2. 寫 `scripts/migrations/migrate-solver-postflop-to-v2.mjs`
+       - 讀 `solver_postflop_6max` + `solver_postflop_mtt`
+       - 從 `tree` jsonb 遞迴 extract 所有節點
+       - 每節點轉成 `gto_solutions` 一 row（對齊 path encoding）
+    3. dry-run：印出會搬多少 rows，驗證對應關係
+    4. 實搬 + 驗證（count 對得上）
+  - 預估：3-4 hr（推算邏輯 + jsonb tree 遞迴）
+  - **不在 scope**：跑新 batch（T-097 做）；DROP 舊表（D3 決策：2 週 fallback 期後才 DROP）
+
+- [ ] **T-097** | Pipeline | **`batch-worker.mjs` 改造對齊 Schema v2** `(前置 T-095，可與 T-096 並行)`
+  - 建議 branch：`wip/T097-batch-worker-v2`
+  - 範圍：
+    1. `pathToRole()` → 改 `pathToActionSeq()` 產出 GTOW 格式的 `flop_actions` / `turn_actions` 字串（X / B33 / C / R75 / F / RAI）
+    2. `extractTurnRiverNodes()` 多抓 EV 欄位（D1-A 決策）
+    3. `uploadRows()` 改 upsert 到 `gto_solutions`（每 spot 一 row，169 hands 壓 jsonb）
+    4. 原有 dedup 邏輯重新評估：新 schema 下 path-aware role 應大幅降低 dup（3.2x 可能掉到 <1.1x）
+    5. 跑 1 個 batch 驗證新 schema 正確（挑 T-045 已跑過的 batch 比對）
+  - 預估：2-3 hr
+  - **不在 scope**：retrieval lib 改（T-098）
+
+- [ ] **T-098** | Pipeline + Frontend | **Retrieval 兩個 lib 統一 + 2 週 fallback** `(前置 T-095 + T-096)`
+  - 建議 branch：`wip/T098-retrieval-v2-unified`
+  - 範圍：
+    1. 新 `src/lib/gto/queryGtoSolution.ts`：統一 query helper `(gametype, depth, pathParts) → node_data`
+    2. 改 `getGTOPostflopFromDB.ts`：走新 helper（turn/river 查詢）
+    3. 改 `src/lib/exploit/postflopRetrieval.ts`（exploit-coach）：走新 helper
+    4. 雙查 fallback 邏輯：新表 miss 則 fallback 查舊表 `solver_postflop_*` 或 `gto_postflop`，console.log 記錄 miss 情形供監控（2 週後 DROP 舊表 → 移除 fallback）
+    5. smoke test：教練隨機 spot 問題 + HU 模擬器隨機決策，兩邊 retrieval hit rate > 95%
+  - 預估：2-3 hr lib 改造 + 1 hr fallback + 2-4 hr smoke test = 5-8 hr
+  - **不在 scope**：DROP 舊表（T-099 結束 2 週後做）
+
+- [ ] **T-099** | DB | **Schema v2 正式 Supabase 部署** `(前置：測試環境 gto_solutions 累積 2K+ rows 且 T-098 smoke test 全通過)`
+  - 建議 branch：`wip/T099-schema-v2-prod-deploy`
+  - 前置條件（D4）：
+    - 測試 Supabase `gto_solutions` 至少 2K+ rows
+    - T-098 retrieval smoke test 無 regression（hit rate > 95%）
+    - 用戶明確授權部署正式
+  - 範圍：
+    1. 產出 migration SQL（複製 T-095 的 `20260424-gto-solutions-v2.sql`）
+    2. 用戶貼正式 Supabase Dashboard
+    3. 驗證：表 / RPC / RLS 全部建立
+    4. （選配）extract script 跑一次把測試環境 data pull 到正式（建議暫不做，等 T-094 marathon 資料直接 ship 正式）
+  - 預估：30 min SQL + 用戶手貼 Dashboard + 驗證 = 1 hr
+  - **⚠ 正式環境部署需用戶明確授權**（CLAUDE.md no-unauthorized-push 規則）
+
+- [ ] **T-094** | Pipeline | **13bb stack 1040 batch marathon（多機並行）** `(前置 T-091 完成 + T-097 完成，直接寫入新 schema)`
+  - 建議 branch：`wip/T094-13bb-marathon`
+  - 前置：
+    - T-091 完成（stack filter 驗證通過）
+    - T-097 完成（batch-worker 已對齊 v2 schema）→ marathon 資料直接進 `gto_solutions`，免 migrate
+  - 範圍：
+    1. 多機 claim `--stack-filter 13bb`（家裡主目錄 + 家裡 wip1 + 士林 = 3 機並行）
+    2. 每機持續跑 `node batch-worker.mjs --machine <x> --stack-filter 13bb --max 100`（batches 做完自然停）
+    3. 目標：13bb 的 1040 river batches 全 done
+    4. 中途 checkpoint：每 250 batches 用 `verify-t045.mjs` 檢查 DB 狀態
+  - 預估：單機 ~17 天 24/7 / 3 機並行 ~5-7 天
+  - 完成條件：
+    - `gto_batch_progress` 13bb rows 全 status=done
+    - `gto_solutions` 13bb 對應 rows ~20K+（滿足 D4 2K 門檻）
+  - 衍生：T-094 完成 → 評估 T-099 正式部署時機 + 開 T-100 25bb marathon / T-101 40bb marathon
+
+---
 
 ---
 
