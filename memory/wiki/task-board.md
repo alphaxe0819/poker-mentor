@@ -899,7 +899,12 @@ updated: 2026-04-23
 
 <!-- T-045 → Done 2026-04-23（見 Done 區）；執行者完成後，下一步派 T-091 phased 執行 -->
 
-- [ ] **T-091** | Pipeline | **T-046 phased 執行：seed --include-river 全量 + 13bb slice warm-up** `(2026-04-23 派工 → 家裡電腦執行者 / 可選多機協作)`
+⛔ **Pipeline 工作凍結公告（2026-04-23 用戶決策）**：
+所有 Pipeline 類 task 暫停，集中火力完成 Schema v2 重整（T-095 → T-099）再追加。
+凍結原因：舊 schema 跑出的資料都要 migrate 搬新表，現在繼續做 T-091 / T-094 等於白工。
+Schema v2 完成後重新評估並追加（marathon / 9MAX-MTT 線 / 其他）。
+
+- [⏸ ON HOLD] **T-091** | Pipeline | **T-046 phased 執行：seed --include-river 全量 + 13bb slice warm-up** `(2026-04-23 原派工，同日用戶決策凍結 → 等 Schema v2 完成再用新 schema 重派)`
   - 建議 branch：`wip/T091-phased-13bb-slice`（從 `origin/dev` 最新切出）
   - 前置：T-045 merge @ `cf66d4b`（pipeline 端到端 + dedup fix 通過）
   - **scope（單 phase，不含 25bb/40bb marathon，後續另開 task）**：
@@ -957,18 +962,19 @@ updated: 2026-04-23
 
 **並行性**：T-095 完成後 T-096 + T-097 可並行（不同 session）；T-098 依賴兩者；T-099 等資料 2K+ rows。
 
-- [ ] **T-095** | Pipeline + DB | **建 `gto_solutions` 表 + 升級 `claim_gto_batch` RPC** `(2026-04-23 派工)`
-  - 建議 branch：`wip/T095-schema-v2-migration`
-  - 前置：無（spec 已 approved）
-  - 範圍：
-    1. 寫 migration `supabase/migrations/20260424-gto-solutions-v2.sql`（見 spec §1 SQL）
-       - `CREATE TABLE gto_solutions`（含 source / EV 支援的 node_data jsonb）
-       - CHECK constraint + RLS + 兩個 index
-       - 升級 `claim_gto_batch(p_machine_id, p_gametype_filter, p_depth_filter)` RPC（見 spec §2）
-    2. 產出貼碼指令（供用戶貼測試 Supabase Dashboard）
-    3. 驗證：SQL Editor 確認表 / policy / constraint 建立；RPC 舊呼叫方式仍可用（backward-compat）
-  - 預估：30 min migration + 30 min Dashboard 部署 + 驗證 = 1 hr
-  - **不在 scope**：部署正式 Supabase（留給 T-099）；extract 舊資料（T-096）；改 batch-worker（T-097）
+- [⏳ IN PROGRESS] **T-095** | Pipeline + DB | **建 `gto_solutions` 表** `(2026-04-23 大腦自做，等用戶貼 Dashboard)`
+  - 狀態：migration SQL 已產出（本次 commit 加入）
+  - Migration 檔：`supabase/migrations/20260424-gto-solutions-v2.sql`（108 行）
+  - 範圍（簡化 — 不動 gto_batch_progress/舊 RPC，那些併到 T-097 seed+worker 改造時一起做）：
+    - `CREATE TABLE gto_solutions`（D1-A 含 EV / D2 同表 / D5 snake_case 命名）
+    - CHECK constraint (source in self_solver/gtow_api/test_data)
+    - 2 個 index（by_scenario + by_source）
+    - RLS + authenticated SELECT policy
+    - 舊表 `gto_postflop` / `solver_postflop_*` 保留（D3 2 週 fallback）
+  - **用戶需手動**：貼 SQL 到測試 Supabase Dashboard → SQL Editor → Run → 跑 5 條驗證查詢（檔尾）
+  - 驗證全通過 → T-095 Done → 派 T-096（extract 舊資料）+ T-097（pipeline 改造）
+  - 預估：大腦 30 min SQL 已完成 + 用戶 15 min 貼 Dashboard = 45 min
+  - **不在 scope**：部署正式 Supabase（留 T-099）；extract 舊資料（T-096）；改 batch-worker / seed-batches（T-097）；改 retrieval（T-098）
 
 - [ ] **T-096** | Pipeline | **Extract 舊 DB 資料搬進 `gto_solutions`** `(前置 T-095)`
   - 建議 branch：`wip/T096-extract-old-to-v2`
@@ -988,16 +994,25 @@ updated: 2026-04-23
   - 預估：3-4 hr（推算邏輯 + jsonb tree 遞迴）
   - **不在 scope**：跑新 batch（T-097 做）；DROP 舊表（D3 決策：2 週 fallback 期後才 DROP）
 
-- [ ] **T-097** | Pipeline | **`batch-worker.mjs` 改造對齊 Schema v2** `(前置 T-095，可與 T-096 並行)`
-  - 建議 branch：`wip/T097-batch-worker-v2`
-  - 範圍：
-    1. `pathToRole()` → 改 `pathToActionSeq()` 產出 GTOW 格式的 `flop_actions` / `turn_actions` 字串（X / B33 / C / R75 / F / RAI）
-    2. `extractTurnRiverNodes()` 多抓 EV 欄位（D1-A 決策）
-    3. `uploadRows()` 改 upsert 到 `gto_solutions`（每 spot 一 row，169 hands 壓 jsonb）
-    4. 原有 dedup 邏輯重新評估：新 schema 下 path-aware role 應大幅降低 dup（3.2x 可能掉到 <1.1x）
-    5. 跑 1 個 batch 驗證新 schema 正確（挑 T-045 已跑過的 batch 比對）
-  - 預估：2-3 hr
-  - **不在 scope**：retrieval lib 改（T-098）
+- [ ] **T-097** | Pipeline | **`seed-batches.mjs` + `batch-worker.mjs` + `gto_batch_progress` 升級 對齊 Schema v2** `(前置 T-095，可與 T-096 並行)`
+  - 建議 branch：`wip/T097-pipeline-v2`
+  - 範圍（整組 pipeline 改造 + progress table schema）：
+    1. **升級 `gto_batch_progress` schema**（migration `20260425-gto-batch-progress-v2.sql`）
+       - 加 `gametype` / `depth_bb` / `preflop_actions` 欄位（對齊 gto_solutions 場景鍵）
+       - 或 rebuild table：DROP + CREATE（舊 390 pending + 1 done 可丟，反正要重 seed）
+       - 升級 `claim_gto_batch` RPC 接 `p_gametype_filter` / `p_depth_filter` 參數
+    2. **改 `seed-batches.mjs`**：產出 gametype-based seed（不再用 STACK_RATIOS 隱含）
+       - `scenarios.mjs` 每個 scenario 明確標 gametype + depth_bb + preflop_actions（snake_case）
+       - 適配 HU 25bb / HU 40bb / MTT / cash 6max 等既有場景
+    3. **改 `batch-worker.mjs`**：
+       - `pathToRole()` → 改 `pathToActionSeq()` 產出 GTOW 格式（X / B33 / C / R75 / F / RAI）
+       - `extractTurnRiverNodes()` 多抓 EV 欄位（D1-A 決策）
+       - `uploadRows()` 改 upsert 到 `gto_solutions`（每 spot 一 row，169 hands 壓 jsonb）
+       - 原 dedup 邏輯重新評估（新 schema path-aware 下 3.2x dup 應大幅下降）
+    4. **重 seed** 測試 Supabase gto_batch_progress（新 schema + gametype-based）
+    5. 跑 1 個 batch 驗證新 pipeline（挑 T-045 已跑過的 HU 25bb SRP 比對結果）
+  - 預估：3-4 hr（progress schema 升級 + seed + worker 三段）+ 1 hr 驗證 = 4-5 hr
+  - **不在 scope**：retrieval lib 改（T-098）；marathon（T-094）
 
 - [ ] **T-098** | Pipeline + Frontend | **Retrieval 兩個 lib 統一 + 2 週 fallback** `(前置 T-095 + T-096)`
   - 建議 branch：`wip/T098-retrieval-v2-unified`

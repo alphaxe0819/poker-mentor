@@ -5,6 +5,22 @@
 
 ---
 
+## 2026-04-23 v0.8.5-dev.35 [dev] — Pipeline 凍結 + T-095 schema v2 migration 產出
+- **用戶決策**：Pipeline 所有工作暫停（T-091 / T-094 / 9MAX-MTT 線 / 等），集中火力完成 Schema v2 重整再追加
+  - 理由：舊 schema 跑出的資料都要 migrate 搬新表，現在跑 T-091 marathon 等於白工
+  - 執行者 T-091 切 ON HOLD，回 detached HEAD 等 Schema v2 完成
+- **T-095 產出**：`supabase/migrations/20260424-gto-solutions-v2.sql`（108 行）
+  - `gto_solutions` 主表（9 欄 composite PK + node_data jsonb 含 EV + source metadata）
+  - CHECK constraint + 2 index + RLS（authenticated SELECT）
+  - 舊表 `gto_postflop` / `solver_postflop_6max` / `solver_postflop_mtt` 保留 2 週 fallback（D3）
+- **task-board**：
+  - 加 Pipeline 凍結公告
+  - T-091 狀態 → ⏸ ON HOLD
+  - T-095 狀態 → ⏳ IN PROGRESS（等用戶貼測試 Supabase Dashboard）
+  - T-097 scope 擴充（併入 seed-batches / gto_batch_progress schema 升級 / claim_gto_batch RPC 升級，整組 pipeline 一起改）
+- **下一步**：用戶貼 T-095 SQL 到測試 Supabase Dashboard → 驗證通過 → 派 T-096（extract 舊資料）+ T-097（pipeline 改造）可並行
+- bump v0.8.5-dev.34 → v0.8.5-dev.35
+
 ## 2026-04-23 v0.8.5-dev.34 [dev] — T-045 pipeline 端到端通過 + dedup fix + 派 T-091
 - **T-045 merge**：執行者 `wip/T045-first-real-batch` @ `cf66d4b`
   - `batch-worker.mjs` uploadRows 進 Supabase chunk loop 前加 Map dedup（first-write-wins on `role|handClass`）+ console log 印 dedup 前後 count

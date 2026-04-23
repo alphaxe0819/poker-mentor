@@ -1,2 +1,2 @@
-export const VERSION = 'v0.8.5-dev.34'
+export const VERSION = 'v0.8.5-dev.35'
 export const APP_NAME = 'Poker Goal'
