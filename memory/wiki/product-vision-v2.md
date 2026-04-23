@@ -111,18 +111,29 @@ updated: 2026-04-23
 
 **P0 工作量估計**：11-18 個工作日（全職），實際 2-3 週
 
-### 🔥 P1（閉環才完整）
+### 🔥 P1（閉環才完整 — 2026-04-23 設計升級）
 
-**目標**：牌譜輸入 → range 自動更新 → 剝削建議基於最新資料
+**核心洞察**：`coach_queries` 表已經半結構化儲存每次教練問答的 spot context，不需要另開「牌譜輸入頁」。用戶拍板 Q1-Q5：3 入口殊途同歸 + 教練 chat 合併 + hybrid 透明化 + 新 gto_solutions baseline + Bayesian 加權 refine。詳見 [[exploit-coach-closed-loop-design]]。
+
+**設計核心**：
+```
+新建 villain（3 入口：🚀 直接開始 / 📝 快速問答 / 🎯 精準設定）
+   殊途同歸 → 統一教練 chat
+      → 每次問教練背景抽 villain 動作（Confidence 分級 high/medium/low）
+      → Bayesian 加權 refine current_range
+      → 默默更新 + 「更新歷史」tab 可看
+```
 
 | # | 功能 | 當前狀態 | 工作量 |
 |---|---|---|---|
-| P1.1 | 牌譜輸入 MVP（手動填寫一手）| ❌ | 3-5 天 |
-| P1.2 | 牌譜 → villain range update 演算法 | ❌ 要 brainstorm 設計 | 5-10 天 |
-| P1.3 | exploit-coach 升級吃結構化 profile + 牌譜 context | ⚠ 目前只吃 villain profile summary 文字 | 3-5 天 |
-| P1.4 | Villain 檔案的「進化歷史」視覺化（showing range 怎麼變）| ❌ 選配 | 3-5 天 |
+| P1.1 | `villain_profiles` 表上雲（取代 localStorage）+ 3 入口 UI 整合 React app | ⚠ villain-v2-flow standalone 有 localStorage 版 | 3-5 天 |
+| P1.2 | `villain_observations` 表 + `coach_queries.villain_id` FK + migration | ❌ | 2-3 天 |
+| P1.3 | Extract pipeline（coach_queries → LLM 抽 villain 動作 + confidence 分級）| ❌ | 3-5 天 |
+| P1.4 | Bayesian refine 演算法（confidence-weighted update）| ❌ 要 brainstorm | 5-8 天 |
+| P1.5 | `exploit-coach` Edge Function 升級吃 `current_range`（而非 summary 文字）| ⚠ | 2-3 天 |
+| P1.6 | Villain 頁「更新歷史」tab（hybrid 設計 Q3）| ❌ | 3-5 天 |
 
-**P1 工作量估計**：14-25 個工作日，實際 3-5 週
+**P1 工作量估計**：18-29 個工作日，實際 4-6 週
 
 ### 🚀 P2（對外測試後）
 

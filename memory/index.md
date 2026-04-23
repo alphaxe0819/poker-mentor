@@ -23,6 +23,7 @@
 - [[gto-pipeline-env-setup]] — `scripts/gto-pipeline/.env` + `node_modules` setup（setup-env.ps1 不涵蓋，service_role 要從 Dashboard 手貼）
 - [[prompt-cache-strategy]] — exploit-coach 省 LLM 錢策略：5min cache + keep-warm cron 達到 ~100% cache hit，省 80% input 成本（idea 階段，量達 1k+/月或升模型時優先做）
 - [[villain-profile-design]] — villain profile v2 系統設計（4 位置 group × 6 動作 = 21 range grid + 三種輸入方式 + LLM summarizer + MVP scope）
+- [[exploit-coach-closed-loop-design]] — 🔥 **2026-04-23 閉環設計 approved**：3 入口殊途同歸 + 教練 chat 自動 refine + villain_profiles/villain_observations schema + Bayesian 加權演算法 + Extract pipeline + 更新歷史 UI
 - [[gtow-api-reverse-eng]] — GTOW server-side 整合完整解法（對方 ai-poker-wizard 用「自生 keypair 註冊 server」繞 non-extractable；只有 token refresh 要簽，spot-solution 用 Bearer 即可）；T-086 補完 signing flow 後 T-082 可跑通
 - [[gto-wizard-pricing-analysis]] — GTO Wizard 5-tier 月費/功能完整對照（2026-04-23 截圖）+ 「買資料 vs 自產」戰略選項評估（對 T-075/T-076/T-091 的採購替代方案）；尚未拍板
 
