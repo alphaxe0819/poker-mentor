@@ -897,7 +897,26 @@ updated: 2026-04-23
 <!-- T-043 → Done 2026-04-20 -->
 <!-- T-044 → Done 2026-04-20 -->
 
-<!-- T-045 → In Review 2026-04-23（家裡 wip1 執行者 wip/T045-first-real-batch；dedup fix C 實作 + 真跑 25bb turn batch 成功；594 rows 進 gto_postflop + status=done） -->
+<!-- T-045 → Done 2026-04-23（見 Done 區）；執行者完成後，下一步派 T-091 phased 執行 -->
+
+- [ ] **T-091** | Pipeline | **T-046 phased 執行：seed --include-river 全量 + 13bb slice warm-up** `(2026-04-23 派工 → 家裡電腦執行者 / 可選多機協作)`
+  - 建議 branch：`wip/T091-phased-13bb-slice`（從 `origin/dev` 最新切出）
+  - 前置：T-045 merge @ `cf66d4b`（pipeline 端到端 + dedup fix 通過）
+  - **scope（單 phase，不含 25bb/40bb marathon，後續另開 task）**：
+    1. 驗 `seed-batches.mjs` 支援 `--include-river`（T-043 寫預設不含；若已支援跳過，否則加 flag）
+    2. `batch-worker.mjs` 加 `--stack-filter <label>` CLI flag
+       - transmit 到 `claim_gto_batch` RPC；若 RPC 不接 stack filter 參數 → 開 follow-up task 加 migration（本 task 先用 SQL `UPDATE gto_batch_progress SET status='claimed' WHERE stack_label='13bb' ...` 手動 mark，或改走 SQL function wrap）
+    3. `node seed-batches.mjs --include-river` seed 3120 river row → `gto_batch_progress` 應 3510 total（390 turn + 3120 river）
+    4. 跑 `node batch-worker.mjs --machine <x> --stack-filter 13bb --max 1` 驗 stack filter 生效（claim 到的 batch `stack_label='13bb'`）
+    5. **不** 跑 13bb 1040 batch marathon（scope 外，等大腦看完 warm-up 驗證再派 T-094 marathon）
+  - 完成條件：
+    - `gto_batch_progress` 3510 total row（select count(*) 確認）
+    - `--stack-filter 13bb` 領到的 batch 確實 `stack_label='13bb'`
+    - 單 batch upload + dedup 成功（reuse T-045 dedup）
+    - `verify-t045.mjs`（或新 verify-t091.mjs）讀取驗證通過
+  - 預估：1-2 hr（seed + feature flag + 1 batch 驗證）
+  - 不在 scope：13bb 1040 batch marathon（後續 T-094，可能跨機器並行）
+  - 執行者紀律：不動 `src/version.ts` / `memory/dev-log.md`；若需 migration 則另開 follow-up task 走正常 DB deploy SOP
 
 <details>
 <summary>📦 T-045 原任務描述（已 In Review，見下方）</summary>
@@ -1005,29 +1024,7 @@ updated: 2026-04-23
 
 <!-- T-046 → Done 2026-04-23：用戶拍板採納 phased seed 策略（全量 seed river + 13bb slice warm-up）→ 派 T-045 驗 pipeline 端到端，過了再派 T-091 做 phased 執行 -->
 
-- [?] **T-045** | Pipeline | **真跑 1 個 batch + dedup fix 方案 C 實作 — pipeline 端到端通過**
-  - branch：`wip/T045-first-real-batch`（from `origin/dev@5479b3d`）
-  - 機器：家裡 wip1 worktree（`--machine home-main`）
-  - 改動：**2 檔**
-    - `scripts/gto-pipeline/batch-worker.mjs` — `uploadRows()` 進 Supabase chunk loop 前加 Map dedup（+13/-1）：`const seen = new Set()` + `const key = ${role}|${handClass}` + first-write-wins（同 key 後續 row 丟棄）+ console.log 印 dedup 前後 count
-    - `scripts/gto-pipeline/verify-t045.mjs` — **新檔** +60 行，純讀 `gto_batch_progress` 最近 5 + `gto_postflop` count/sample，給 In Review 驗證用（future T-091 phased 跑也能重用）
-  - **實跑證據**（`node batch-worker.mjs --machine home-main --max 1`）：
-    - ✅ `claim_gto_batch` RPC：領到 `turn | 7s7d2h + 3c | 25bb`（不是前人 13bb 那個，走另一個 pending batch）
-    - ✅ TexasSolver 17.5s（Iter 151，exploitability 0.34%）
-    - ✅ JSON parse：1878 rows
-    - ✅ **Dedup：1878 → 594 rows (first-write-wins on role|hand_class)** ← 新 console log 證明生效
-    - ✅ Upsert 594 rows 到 `gto_postflop`（無 42601 錯誤）
-    - ✅ `gto_batch_progress` status=done，`row_count=594`
-  - **DB 驗證**（`node verify-t045.mjs`）：
-    - `gto_batch_progress` 最近 5 筆第一筆 `done | turn 7s7d2h+3c 25bb | machine=home-main rows=594`
-    - `gto_postflop` 該 batch 594 rows
-    - sample row：`btn_bet 55 c` / `btn_bet 66 c` / `btn_bet 65s f` 等，role + action_code 格式合理
-  - **前人 `diagnose-dup.mjs` 狀態**：在 `b59ef4a` 投資中 commit，但該 commit 從未 merge 進 dev，remote wip branch 已清 → 本地不存在。console log 已證明 dedup 生效（1878 → 594），功能等價
-  - **T-092 長期 A 方案的空間**：本次 25bb 原始 1878 rows 壓到 594（~3.2x dup ratio），即每個 (role, hand_class) 平均 3.2 個 solver tree 節點。dedup 丟掉 1284 rows 的節點語義資訊（flop path context），T-091 phased 跑完 13bb/25bb/40bb 有真實 retrieval 資料後，由大腦評估 role 爆量對 query 效能影響再決定是否啟動 T-092
-  - 驗證：code 改動 node `--check` 通過；無 side effect（dedup 是純 in-memory filter）；工具 script verify-t045.mjs 只讀不寫
-  - 純 flow 改動（scripts/，不影響 Vercel build），無 version bump
-  - 執行者紀律：不動 `src/version.ts` / `memory/dev-log.md`
-  - 等大腦 review → merge → 可視為 T-091 phased 執行 precondition 通過
+<!-- T-045 → Done 2026-04-23：執行者 wip/T045-first-real-batch @ cf66d4b merged；batch-worker.mjs uploadRows 加 first-write-wins dedup + 真跑 25bb batch 成功（1878→594 rows，無 42601） -->
 
 <!-- T-012 → Code Done 2026-04-21，migration 部署待 T-063 -->
 
@@ -1330,6 +1327,15 @@ updated: 2026-04-23
   - 執行路徑：先派 T-045（15-30min 驗單 batch 鏈路），過了大腦派 T-091 做 phased 執行
   - script：`scripts/gto-pipeline/estimate-river-seed.mjs`（+75 行純計算，不碰 DB）
   - 追加發現：`generateRiverCards` 13 BOARDS × 10 turns 穩定產 8 rivers/turn，river fan-out 可當確定 × 8
+- [x] **T-045** | Pipeline + 大腦 | **真跑 1 個 batch + dedup fix 方案 C 實作 — pipeline 端到端通過** | 2026-04-23 merge `cf66d4b`
+  - 執行者：家裡 wip1（`wip/T045-first-real-batch`）
+  - 改動 2 檔：
+    - `scripts/gto-pipeline/batch-worker.mjs`（+19/-2）uploadRows Map dedup first-write-wins on `role|handClass` + console log
+    - `scripts/gto-pipeline/verify-t045.mjs`（+65 新檔）純讀驗證工具（可重用於 T-091 phased）
+  - **實跑證據**：claim 25bb turn batch / solver 17.5s (iter 151, expl 0.34%) / 1878 rows → dedup 594 / upsert 成功 / `gto_batch_progress` status=done row_count=594
+  - **T-092 評估依據**：25bb 單 batch 1878→594 ≈ **3.2x dup ratio**，每個 (role, hand_class) 平均 3.2 個 solver tree 節點；dedup 丟 1284 rows flop path 語義資訊；T-091 phased 跑完後大腦評估 role 爆量對 retrieval query 效能再決定 T-092 啟動時機
+  - **前人 `diagnose-dup.mjs` 狀態**：`b59ef4a` commit 從未 merge，本地不存在（執行者 console log 等價驗證）
+  - 踩坑揭露：大腦 session 2026-04-23 派 T-045 時漏看 `b59ef4a` diagnose → 執行者接單才發現 dedup blocker → 後續派 pipeline 類 task 要先 `git log --oneline --all | grep T-xxx` 看歷史 diagnose commits
 
 ---
 

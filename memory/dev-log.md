@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-04-23 v0.8.5-dev.34 [dev] — T-045 pipeline 端到端通過 + dedup fix + 派 T-091
+- **T-045 merge**：執行者 `wip/T045-first-real-batch` @ `cf66d4b`
+  - `batch-worker.mjs` uploadRows 進 Supabase chunk loop 前加 Map dedup（first-write-wins on `role|handClass`）+ console log 印 dedup 前後 count
+  - 新 `verify-t045.mjs`（純讀驗證工具）
+  - 實跑：claim 25bb turn batch / solver 17.5s (iter 151, expl 0.34%) / 1878 rows → dedup 594 / upsert 成功 / `gto_batch_progress` status=done row_count=594
+  - 修 2026-04-21 前人發現的 Postgres 42601 `ON CONFLICT DO UPDATE affect row twice` blocker（根因：`pathToRole` 把 solver game tree 多節點 collapse 到同 role bucket → 單 batch `(role, hand_class)` 非 unique）
+- **T-092 長期 A 方案評估依據**：25bb 單 batch 1878→594 ≈ **3.2x dup ratio**，每個 (role, hand_class) 平均 3.2 個 solver tree 節點，dedup 丟 1284 rows flop path 語義資訊；T-091 phased 跑完後大腦評估 role 爆量對 retrieval query 效能再決定 T-092 啟動
+- **T-091 派工**：phased 執行 scope — seed --include-river 全量 + `--stack-filter 13bb` 驗 1 batch；13bb 1040 marathon 另開 T-094
+- **大腦 session 踩坑**：2026-04-23 派 T-045 時漏看 `b59ef4a` diagnose commit → 執行者接單才發現 dedup blocker；以後派 pipeline 類 task 要先 `git log --oneline --all | grep T-xxx` 看歷史 diagnose commits
+- 合併：GTO Wizard 定價 + 戰略評估 wiki（`gto-wizard-pricing-analysis.md`，尚未拍板 [待討論]）
+- bump v0.8.5-dev.33 → v0.8.5-dev.34
+
 ## 2026-04-23 v0.8.5-dev.33 [dev] — task-board cleanup
 - **task-board In Review 區整理**：昨日 dev-log 已標 Done 但 task-board In Review 區未清 → 把 T-064 / T-082 / T-085 / T-087 / T-088 / T-089 六個已 merge task 從 In Review 區移到 Done 區，保留 T-046（真正還在 In Review 等決策）
 - **刪 remote 殘留 wip branch 10 個**：`T013-scraping-audit` / `T021-hu40bb-3bp` / `T030-exploit-coach-verify` / `T045-first-real-batch` / `T045b-real-batch` / `T070-villain-persist` / `T072-villain-hand-before-review` / `T073-villain-laozhang-standard` / `T074-mark-test-data` / `T080-quick-analysis-text`（dev-log 都標 Done，branch 是歷史殘留）
