@@ -1035,7 +1035,7 @@ updated: 2026-04-23
 
 </details>
 
-<!-- T-096b 階段 1-4 → In Review 2026-04-23（士林執行者 wip/T096b-unify-encoder @ 26eec4b；code 改完；等大腦產 DELETE SQL，之後再跑 --live） -->
+<!-- T-096b → Done 2026-04-23（全部階段 1-5 完成：5 commits merged @ 34d5cd1；DELETE 3102 舊 rows + INSERT 3102 新格式；最終 gto_solutions 7154 rows 單格式 4 gametype；見 Done 區 + dev-log v1.0.0） -->
 
 <details>
 <summary>📦 T-096b 原任務描述（code 階段已 In Review，DELETE + live 待大腦觸發）</summary>
@@ -1519,6 +1519,27 @@ updated: 2026-04-23
   - 執行路徑：先派 T-045（15-30min 驗單 batch 鏈路），過了大腦派 T-091 做 phased 執行
   - script：`scripts/gto-pipeline/estimate-river-seed.mjs`（+75 行純計算，不碰 DB）
   - 追加發現：`generateRiverCards` 13 BOARDS × 10 turns 穩定產 8 rivers/turn，river fan-out 可當確定 × 8
+- [x] **T-096b** | Pipeline + 大腦 | **重跑 T-096 extract 統一 DB 單格式（B 方案收尾）🎯 最後技術交付** | 2026-04-23 merge `34d5cd1` + DELETE + --live
+  - 執行者：🏙 士林（`wip/T096b-unify-encoder`，5 commits 乾淨拆分）
+  - 階段 1-4 code：
+    - 新 lib：`scripts/gto-pipeline/lib/action-encoder.mjs`（export encodeAction + advancePot）
+    - `batch-worker.mjs` import lib（byte-identical）
+    - `migrate-gto-postflop-to-v2.mjs`：LEGACY_CODE_MAP 對齊 + `hu_25bb` → `hu_25bb_srp`
+    - `migrate-solver-postflop-to-v2.mjs`：gametype _srp/_3bp/_4bp 後綴 + 改 libAdvancePot（betFacing 追蹤取代 pot*1.5 heuristic）
+  - 階段 5 執行：
+    - 用戶貼 DELETE 測試 Supabase：3102 rows 舊格式刪除
+    - 執行者跑 --live：INSERT 6 + 3096 = 3102 rows 新格式，0 error / 0 warning
+  - **最終 gto_solutions 狀態**（測試 Supabase 7154 rows，全 4 gametype 單格式）：
+    ```
+    cash_6max_100bb_3bp      960
+    cash_6max_100bb_srp     2124
+    hu_25bb_srp             4058  (T-097 4052 + T-096b 6)
+    mtt_9max_40bb_srp         12
+    ─────────────────────────────
+    合計                    7154
+    ```
+  - **scope 修正**：原派工寫抽 3 個 function（encodeAction/advancePot/pathToActionSeq），實際只有 2 個。執行者正確判斷 pathToActionSeq 跟 solver tree 耦合深不抽，保留 T-097 4052 spots 0 dup 驗過結果
+  - 🎯 **本專案最後技術交付** → 進入 ship sequence（7 步，見 dev-log v1.0.0）
 - [x] **T-096** | Pipeline + 大腦 | **Extract 舊 DB 資料搬進 `gto_solutions`** | 2026-04-23 merge `9192300`
   - 執行者：士林（`wip/T096-extract-old-to-v2`）
   - 產出 2 scripts（都支援 dry-run 預設 / `--live`）：
