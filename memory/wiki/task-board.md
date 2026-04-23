@@ -100,25 +100,9 @@ updated: 2026-04-23
 <!-- T-074 → Done 2026-04-21（既有 gtoData_*.ts 全標 TEST DATA） -->
 <!-- T-075 Phase 0 盤點 → Done 2026-04-21，見 [[pd-mtt-scenario-coverage-2026-04-21]] -->
 <!-- 關鍵發現：auto-parse 率僅 1.2%（205/16750）；只 Course 可直接用；HU/6max cash pd 沒資料 → 維持 TEST DATA -->
-<!-- 用戶 2026-04-21 決策：走路徑 A（只做 Course 205 tables），Phase 1 派工中 -->
+<!-- T-075 Phase 1 → Done 2026-04-21（Course 205 tables → mtt_9max_ranges.mjs 110 distinct entries，merge @ 4d40f27 + a3dd7ee；scenarios.mjs re-export COURSE_RANGES，等 T-076 消化） -->
 
-- [ ] **T-075 Phase 1** | Pipeline | **9MAX-MTT preflop range 只做 Course（205 tables）**
-  - 建議 branch：同 `wip/T075-mtt-preflop-from-pd`（Phase 0 已 push 完成，切新 commit 繼續做）
-  - scope：只處理 Course project 的 205 個 auto-parseable tables，其他 9 project 不動
-  - 範圍：
-    1. 從 Course_ranges.json 抽 205 auto-parseable entries（Phase 0 已確認可解）
-    2. 用 parse-pd-table-name + pd-to-range.mjs 產 TexasSolver range 字串
-    3. 寫入新 `scripts/gto-pipeline/mtt_9max_ranges.mjs`（或 scenarios-prod.mjs），每個 depth × matchup 一個 entry
-    4. scenarios.mjs 加對接（MTT 正式版區塊）
-  - 不動：HU / 6max cash 既有 TEST DATA
-  - 產出：205 entry preflop range 可直接用於 T-076 solver marathon
-  - 預估：1-2 hr
-  - 後續（T-075 Phase 2，非本 scope，待 sid metadata 方案拍板）：
-    - Ben 系 876 sid 的 metadata 解鎖路徑 — 先做**技術偵察**（pokerdinosaur UI 是否能自動抓 scenario label）
-    - 若可自動 → 重爬解鎖；若需人工 → user 花 ~7-8 hr 標
-    - ICM 12833 table 太大，暫不處理
-
-
+<!-- ⚠ 下方 T-075「正式版」block Phase 1 部分已由 Phase 1 路徑 A 實現；現 blocker 僅剩 Phase 2 sid metadata（Ben 876 + ICM 12833），等用戶拍板重爬 or 人工標 -->
 - [ ] **T-075** | Pipeline | **9MAX-MTT preflop range 從 pokerdinosaur 構建（正式版 Phase 1）**
   - 建議 branch：`wip/T075-mtt-preflop-from-pd`
   - scope 收斂（2026-04-21 v2）：**只做 9max MTT**，不碰 HU / cash（PD 本來就沒這兩塊資料）
@@ -913,9 +897,10 @@ updated: 2026-04-23
 <!-- T-043 → Done 2026-04-20 -->
 <!-- T-044 → Done 2026-04-20 -->
 
-- [ ] **T-045** | Pipeline | **真跑 1 個 batch（去掉 --dry-run，完整鏈路）** `(派工 2026-04-21 → 家裡電腦執行者，需 TexasSolver binary)`
-  - 建議 branch：`wip/T045-first-real-batch`（從 `origin/dev` 切出）
-  - **建議順序**：先跑 T-045（15-30min 驗 pipeline 通），再開 T-021 長跑（3-5hr）
+- [ ] **T-045** | Pipeline | **真跑 1 個 batch（去掉 --dry-run，完整鏈路）** `(2026-04-23 大腦派工更新 → 家裡電腦執行者，需 TexasSolver binary)`
+  - 建議 branch：`wip/T045-first-real-batch`（從 `origin/dev@cca59f9` 切新，舊 remote branch 已清）
+  - **派工背景（2026-04-23）**：用戶拍板 T-046 phased seed 策略（全量 seed river + 先跑 13bb slice 1040 row warm-up）；T-045 先驗 pipeline 端到端，過了大腦派 T-091 做 phased 執行
+  - **建議順序**：先跑 T-045（15-30min 驗 pipeline 通），過了再升級 T-091
   - 範圍：從 T-043 已 seed 的 390 turn batches 挑 1 個 → TexasSolver 實解 → JSON parse → upload 到 `gto_postflop` → mark done
   - 前置：TexasSolver 已解壓到 `scripts/gto-pipeline/TexasSolver-v0.2.0-Windows/`（batch-worker 會自動偵測 nested/flat 路徑）
   - 預估：15-30 min（solver ~10-20 min + upload/verify）
@@ -985,30 +970,7 @@ updated: 2026-04-23
 <!-- T-082 / T-085 / T-087 / T-088 / T-089 / T-064 已 merge 2026-04-22（dev.31/dev.32 批次結案，見 Done 區） -->
 <!-- 2026-04-23 task-board cleanup：In Review 區 6 個已 merge task 移到 Done + 刪 remote 殘留 wip branch 10 個（T013/T021/T030/T045/T045b/T070/T072/T073/T074/T080） -->
 
-- [?] **T-046** | Pipeline | **seed --include-river row 估算（dry-run 完成）**
-  - branch: `wip/T046-seed-river-estimate`
-  - 機器：這台主目錄
-  - 改動：單檔新增 `scripts/gto-pipeline/estimate-river-seed.mjs`（+75 行，純計算不碰 DB）
-  - **實測數字**（`node estimate-river-seed.mjs`）：
-    - Turn rows：**390**（13 flops × 10 turns × 3 stacks）— 與 T-043 實跑一致
-    - River rows：**3,120**（13 × 10 × 8 rivers/turn × 3 stacks；`generateRiverCards` 對 13 BOARDS 每 turn 穩定產 8 張）
-    - Grand total：**3,510** rows in `gto_batch_progress`
-    - 下游 `gto_postflop`：若全解完 ~5.93M rows（3510 × 1690 hands/batch）
-    - Solver wall-time：~878–1170 hr 單機（3510 × 15–20 min）
-  - **判讀（T-046 criterion）**：
-    - ✅ `gto_batch_progress` seed 量 3510 < 10k 門檻 → **seed 本身沒問題**
-    - ⚠️ 瓶頸不在 seed 而在 solver 吞吐：單機跑完 river 約 6–7 週 24/7；3 機並行約 2 週
-  - **建議（phased seed）**：
-    1. **seed 全量**（`--include-river` 一次下 3120 row）— 對 DB 無壓力，upsert 可重跑
-    2. **但 batch-worker 採分階段領取**：用 `stack_label` 或 `board_key` filter 先跑一個 slice（例：先做 13bb 全部 river = 1040 row），驗 pipeline 穩定再放另外兩個 stack
-    3. 或用 `--max N` 節流，搭配多機 claim 分散
-  - **不推薦**：
-    - ❌ full seed + 單機序列跑（878 hr 不現實）
-    - ❌ 完全 skip river（river 是訓練模式最後一街，沒補就代表河牌訓練永遠走 fallback）
-  - **追加發現**：`generateRiverCards` 實測每個 turn 穩定回 8 張（未觸發 <8 的邊界；13 BOARDS 的 flop+turn 組合都有 ≥8 個剩餘 rank），代表 river fan-out 可以當確定的 × 8 估算
-  - 驗證：script 純 import boards.mjs + 運算，無外部 side effect；多跑多次結果相同
-  - 純 flow 改動（scripts/，不影響 Vercel build），無 version bump
-  - 等大腦 review（要不要採納「phased by stack_label」策略 + 要不要真 seed）
+<!-- T-046 → Done 2026-04-23：用戶拍板採納 phased seed 策略（全量 seed river + 13bb slice warm-up）→ 派 T-045 驗 pipeline 端到端，過了再派 T-091 做 phased 執行 -->
 
 <!-- T-012 → Code Done 2026-04-21，migration 部署待 T-063 -->
 
@@ -1305,6 +1267,12 @@ updated: 2026-04-23
     - `public/exploit-coach-villain-v2-test.html`
   - 0 改原版 / 0 改 lib / 0 改 Edge Function
   - 已知限制：三份 HTML 各持一份 auth patch 副本（未來可合併共用 lib）
+- [x] **T-046** | Pipeline + 大腦 | **seed --include-river row 估算 + phased 策略決策** | 2026-04-21 estimate merge `0c1fb0b` + 2026-04-23 決策
+  - 執行者 dry-run 實測：Turn 390 + River 3120 = 3510 rows（< 10k 門檻，seed 本身 OK）；solver wall-time 878-1170 hr 單機（瓶頸在吞吐非 seed）
+  - 用戶 2026-04-23 拍板採納方案 1：**全量 seed river + batch-worker 用 `stack_label` filter 先跑 13bb slice 1040 row warm-up，驗 pipeline 穩定再放另外兩個 stack**
+  - 執行路徑：先派 T-045（15-30min 驗單 batch 鏈路），過了大腦派 T-091 做 phased 執行
+  - script：`scripts/gto-pipeline/estimate-river-seed.mjs`（+75 行純計算，不碰 DB）
+  - 追加發現：`generateRiverCards` 13 BOARDS × 10 turns 穩定產 8 rivers/turn，river fan-out 可當確定 × 8
 
 ---
 
