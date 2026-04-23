@@ -115,53 +115,83 @@ const HU_40BB_4BP_RANGES = {
   oop: 'ATs,KQs,KJs,KTs,QJs,AJo,KQo,KJo',
 }
 
+// T-097 Schema v2：每個 scenario 明確標 gametype + depth_bb + preflop_actions（snake_case）
+// gametype 直接沿用 slug（已是 snake_case，對齊 gto_solutions PK）。
+// preflop_actions 用 GTOW 編碼（F=fold / C=call / R<size>=raise to X bb）。
+// HU 位置順序：BTN(IP) → BB(OOP)，所以 preflop_actions 第一 token 是 BTN，第二 token 是 BB。
 export const HU_SCENARIOS = [
   // ── SRP ──
   {
     format: 'hu', matchup: { ip: 'BTN', oop: 'BB' },
-    slug: 'hu_40bb_srp', label: 'HU 40BB SRP', depth_bb: 40,
+    slug: 'hu_40bb_srp', gametype: 'hu_40bb_srp',
+    label: 'HU 40BB SRP', depth_bb: 40,
     pot_type: 'srp', pot_bb: 5, effective_stack_bb: 37.5,
+    preflop_actions: 'R2.5-C',
     description: 'BTN open 2.5 → BB call → pot 5, eff 37.5',
     ranges: HU_40BB_RANGES,
   },
   {
     format: 'hu', matchup: { ip: 'BTN', oop: 'BB' },
-    slug: 'hu_25bb_srp', label: 'HU 25BB SRP', depth_bb: 25,
+    slug: 'hu_25bb_srp', gametype: 'hu_25bb_srp',
+    label: 'HU 25BB SRP', depth_bb: 25,
     pot_type: 'srp', pot_bb: 5, effective_stack_bb: 22.5,
+    preflop_actions: 'R2.5-C',
     description: 'BTN open 2.5 → BB call → pot 5, eff 22.5',
     ranges: HU_25BB_RANGES,
   },
   {
     format: 'hu', matchup: { ip: 'BTN', oop: 'BB' },
-    slug: 'hu_13bb_srp', label: 'HU 13BB SRP', depth_bb: 13,
+    slug: 'hu_13bb_srp', gametype: 'hu_13bb_srp',
+    label: 'HU 13BB SRP', depth_bb: 13,
     pot_type: 'srp', pot_bb: 5, effective_stack_bb: 10.5,
+    preflop_actions: 'R2.5-C',
     description: 'BTN open 2.5 → BB call → pot 5, eff 10.5',
     ranges: HU_13BB_RANGES,
   },
   // ── 3BP ──
   {
     format: 'hu', matchup: { ip: 'BTN', oop: 'BB' },
-    slug: 'hu_40bb_3bp', label: 'HU 40BB 3BP', depth_bb: 40,
+    slug: 'hu_40bb_3bp', gametype: 'hu_40bb_3bp',
+    label: 'HU 40BB 3BP', depth_bb: 40,
     pot_type: '3bp', pot_bb: 18, effective_stack_bb: 31,
+    preflop_actions: 'R2.5-R9-C',
     description: 'BTN open 2.5 → BB 3b to 9 → BTN call → pot 18, eff 31',
     ranges: HU_40BB_3BP_RANGES,
   },
   {
     format: 'hu', matchup: { ip: 'BTN', oop: 'BB' },
-    slug: 'hu_25bb_3bp', label: 'HU 25BB 3BP', depth_bb: 25,
+    slug: 'hu_25bb_3bp', gametype: 'hu_25bb_3bp',
+    label: 'HU 25BB 3BP', depth_bb: 25,
     pot_type: '3bp', pot_bb: 16, effective_stack_bb: 17,
+    preflop_actions: 'R2.5-R8-C',
     description: 'BTN open 2.5 → BB 3b to 8 → BTN call → pot 16, eff 17',
     ranges: HU_25BB_3BP_RANGES,
   },
   // ── 4BP ──
   {
     format: 'hu', matchup: { ip: 'BTN', oop: 'BB' },
-    slug: 'hu_40bb_4bp', label: 'HU 40BB 4BP', depth_bb: 40,
+    slug: 'hu_40bb_4bp', gametype: 'hu_40bb_4bp',
+    label: 'HU 40BB 4BP', depth_bb: 40,
     pot_type: '4bp', pot_bb: 44, effective_stack_bb: 18,
+    preflop_actions: 'R2.5-R9-R22-C',
     description: 'BTN open 2.5 → BB 3b to 9 → BTN 4b to 22 → BB call → pot 44, eff 18',
     ranges: HU_40BB_4BP_RANGES,
   },
 ]
+
+// HU SRP 快速查表：stack slug → v2 scenario 鍵（seed-batches / batch-worker 用）
+// 當前 pipeline 只跑 HU SRP，這層 helper 給 seed-batches 把 STACK_RATIOS.slug 直接映射
+// 到 v2 鍵結構，避免 seed 時每筆查 HU_SCENARIOS 陣列。
+export const HU_SRP_BY_STACK = {
+  '13bb': HU_SCENARIOS.find(s => s.slug === 'hu_13bb_srp'),
+  '25bb': HU_SCENARIOS.find(s => s.slug === 'hu_25bb_srp'),
+  '40bb': HU_SCENARIOS.find(s => s.slug === 'hu_40bb_srp'),
+}
+
+// Batch-worker 用：依 gametype 反查完整 scenario（含 ranges / pot / stack）
+export function getScenarioByGametype(gametype) {
+  return HU_SCENARIOS.find(s => s.gametype === gametype) || null
+}
 
 // ════════════════════════════════════════════════════════════
 // Phase 2: 6-max Cash — 100BB
