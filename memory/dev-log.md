@@ -5,6 +5,15 @@
 
 ---
 
+## 2026-04-23 v0.8.5-dev.36 [dev] — T-095 Done（Schema v2 表建立測試 Supabase）+ 派 T-096/T-097
+- **T-095 Done**：用戶手動貼 `supabase/migrations/20260424-gto-solutions-v2.sql` 到測試 Supabase SQL Editor Run 成功；4 條驗證查詢全通過
+  - `gto_solutions` 表（9 欄 composite PK + node_data jsonb 含 EV + source metadata）建立
+  - CHECK constraint / RLS authenticated SELECT / 3 個 index（PK + by_scenario + by_source）全建立
+- **解鎖**：T-096（extract 舊資料搬新表）+ T-097（seed-batches + batch-worker + gto_batch_progress schema 升級 + claim_gto_batch RPC 升級，整組 pipeline 升級）可並行派工
+- **下一步**：執行者 session 接單（可多台機器並行 T-096 + T-097，不同 scope 不衝突）
+- 正式 Supabase 部署繼續等 T-099（D4 門檻：測試 2K+ rows + 用戶授權）
+- bump v0.8.5-dev.35 → v0.8.5-dev.36
+
 ## 2026-04-23 v0.8.5-dev.35 [dev] — Pipeline 凍結 + T-095 schema v2 migration 產出
 - **用戶決策**：Pipeline 所有工作暫停（T-091 / T-094 / 9MAX-MTT 線 / 等），集中火力完成 Schema v2 重整再追加
   - 理由：舊 schema 跑出的資料都要 migrate 搬新表，現在跑 T-091 marathon 等於白工
