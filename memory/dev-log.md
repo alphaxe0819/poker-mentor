@@ -5,6 +5,26 @@
 
 ---
 
+## 2026-04-23 v0.8.5-dev.40 [dev] — T-096b 階段 1-4 code merged（等 DELETE + --live）
+- **T-096b code merged**：`wip/T096b-unify-encoder` @ `34d5cd1`（5 commits 乾淨拆分）
+  - 抽 encoder lib：`scripts/gto-pipeline/lib/action-encoder.mjs`（encodeAction + advancePot）
+  - batch-worker.mjs refactor：import lib（byte-identical 行為）
+  - migrate-gto-postflop-to-v2：LEGACY_CODE_MAP（x/c/f/b33/allin/r/rbig → X/C/F/B33/RAI/R/RBIG）+ gametype `hu_25bb` → `hu_25bb_srp`
+  - migrate-solver-postflop-to-v2：gametype 加 _srp/_3bp/_4bp 後綴 + 改用 libAdvancePot（betFacing 追蹤取代 pot*1.5 heuristic）
+- **Scope 修正**：原派工寫抽 3 個 function（encodeAction/advancePot/pathToActionSeq）— 實際 codebase 只有 2 個。執行者正確判斷 pathToActionSeq 邏輯內嵌 extractSpots 跟 solver tree 耦合深，抽出會破壞 T-097 F-stage 4052 spots 0 dup 驗過結果，不動
+- **Dry-run 預估 3102 rows**（對上舊 T-096 數）：
+  - `hu_25bb_srp`: 6 spots
+  - `cash_6max_100bb_srp`: 2124 nodes（從 3084 拆出）
+  - `cash_6max_100bb_3bp`: 960 nodes（新拆出）
+  - `mtt_9max_40bb_srp`: 12 nodes
+- **為何 DELETE + re-extract 而非 UPDATE**（執行者分析採納）：
+  1. 6max 從單桶 → srp/3bp 雙桶（scenario_slug 重解）
+  2. action code 大小寫改（jsonb 內逐值改超髒）
+  3. pot 追蹤演算法換（betFacing），影響 B{pct} 值 = 影響 PK
+  4. UPDATE 等同 SQL 裡重做 extract — 不如讓 Node script 跑一次乾淨
+- **下一步**：大腦產 DELETE SQL 給用戶貼測試 Dashboard → 通知執行者跑 --live → 驗證單格式 → T-096b 真 Done
+- bump v0.8.5-dev.39 → v0.8.5-dev.40
+
 ## 2026-04-23 v0.8.5-dev.39 [dev] — T-097 F-stage PASS + 閉環設計 approved + T-098 可派
 - **T-097 真正 Done**：F-stage 驗證通過 + 2 bug fix merged（`wip/T097-f-stage-fixes` @ `8c19a1c`）
   - F 驗證跑 1 batch HU 25bb SRP：claim river spot / solver 14.8s / **extract 4052 spots / 0 dup（path-aware PK working）/ upload 成功 / status=done row_count=4052**
