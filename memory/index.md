@@ -5,7 +5,8 @@
 
 ## Product
 
-- [[product-pivot-2026-04]] — 董事長會議後的產品方向：牌譜分析+對手剝削+AI教練、大華人市場、Phase 0-3 路線圖
+- [[product-vision-v2]] — 🔥 **2026-04-23 產品願景 v2 + MVP 規格（draft）**：一句話願景 / 核心閉環 / 砍淡化保留清單 / P0-P1-P2 功能 / 10 條非目標 / 商業模式 / 里程碑
+- [[product-pivot-2026-04]] — 舊版產品路線圖（product-vision-v2 升級取代）
 - [[partnership-strategy]] — 月榜代幣兌換賽事資格：台灣 WinWin、海外平台
 
 ## Development
