@@ -5,7 +5,12 @@
 
 ---
 
-## 2026-04-23 v0.8.5-dev.38 [dev] — T-097 code merge（pipeline v2 完整改造，待 migration 貼 Dashboard）
+## 2026-04-23 v0.8.5-dev.38 [dev] — T-097 code merge + migration 20260425 已部署測試 Supabase
+- 👉 **2026-04-23 update**：migration `20260425-gto-batch-progress-v2.sql` 用戶手動貼測試 Supabase Dashboard 完成，5 條驗證 (a)-(e) 全通過。T-097 F 驗證階段 unblock，家裡 wip1 執行者可繼續：
+  1. 跑 `node seed-batches.mjs --include-river`（新 schema 重 seed）
+  2. 跑 `node batch-worker.mjs --machine home-main --gametype-filter hu_25bb_srp --max 1`（驗端到端）
+  3. 回報 gto_batch_progress seed count + gto_solutions 新 batch rows
+
 - **T-097 code merge**：執行者家裡 wip1 `wip/T097-pipeline-v2` @ `4ae0a35`（4 commit 拆分乾淨）
   - `supabase/migrations/20260425-gto-batch-progress-v2.sql`（+212）— DROP 舊 RPC + DROP 舊 progress 表 + 重建 v2 schema + 新 RPC（3 參數）
   - `scripts/gto-pipeline/scenarios.mjs`（+36/-6）— 加 gametype / depth_bb / preflop_actions
