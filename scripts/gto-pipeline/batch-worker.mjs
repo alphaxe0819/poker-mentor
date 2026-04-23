@@ -99,6 +99,7 @@ if (SOLVER_EXE_DIR) {
 
 import { BOARDS } from './boards.mjs'
 import { getScenarioByGametype } from './scenarios.mjs'
+import { encodeAction, advancePot } from './lib/action-encoder.mjs'
 
 function getBoardConfig(boardKey) {
   return BOARDS.find(b => b.slug === boardKey)
@@ -199,54 +200,7 @@ function aggregateToClasses(comboStrategy, actions) {
   return result
 }
 
-/**
- * Encode a TexasSolver action key into GTOW-style code.
- *   CHECK      → X
- *   CALL       → C
- *   FOLD       → F
- *   BET X      → B<pct>   (pct = X / pot_before_bet * 100)
- *   RAISE Y    → R<pct>   (pct = Y / pot_before_raise * 100)
- *   all-in     → RAI      (bet/raise amount ≥ eff_stack * 0.95)
- *
- * `potBefore` = pot size *before* this action; for RAISE it's the pot including
- * the opponent's bet (i.e., pot at the decision node).
- */
-function encodeAction(actKey, potBefore, effStack) {
-  if (actKey === 'CHECK') return 'X'
-  if (actKey === 'CALL') return 'C'
-  if (actKey === 'FOLD') return 'F'
-  const m = actKey.match(/^(BET|RAISE)\s+([\d.]+)/)
-  if (!m) return '?'
-  const amt = parseFloat(m[2])
-  if (amt >= effStack * 0.95) return 'RAI'
-  const pct = Math.round((amt / potBefore) * 100)
-  return m[1] === 'BET' ? `B${pct}` : `R${pct}`
-}
-
-/**
- * Advance pot/betFacing state after consuming one action.
- * Returns new {pot, betFacing} pair for the child node.
- *
- * Pot accounting model (HU):
- *   - BET X: one player commits X this street. pot += X, next player faces X.
- *   - CALL: current player matches betFacing. pot += betFacing, facing reset to 0.
- *   - RAISE Y: raiser's total this street = Y. pot += Y (raiser adds Y).
- *     Opponent now faces Y - (what they already put in this street).
- *     Simplification: we track betFacing from the *caller's* perspective, so
- *     after RAISE Y, opposite player faces (Y - previous betFacing) to match.
- *   - CHECK / FOLD: no chips added.
- */
-function advancePot(pot, betFacing, actKey) {
-  if (actKey === 'CHECK') return { pot, betFacing: 0 }
-  if (actKey === 'CALL') return { pot: pot + betFacing, betFacing: 0 }
-  if (actKey === 'FOLD') return { pot, betFacing }
-  const m = actKey.match(/^(BET|RAISE)\s+([\d.]+)/)
-  if (!m) return { pot, betFacing }
-  const amt = parseFloat(m[2])
-  if (m[1] === 'BET') return { pot: pot + amt, betFacing: amt }
-  // RAISE: raiser contributes amt; opponent now faces (amt - their prior put-in)
-  return { pot: pot + amt, betFacing: amt - betFacing }
-}
+// encodeAction / advancePot 已搬到 lib/action-encoder.mjs（T-096b 共用 lib）
 
 /**
  * Build per-hand-class aggregation node for one spot's strategy.
