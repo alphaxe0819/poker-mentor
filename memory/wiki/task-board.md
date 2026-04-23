@@ -1035,6 +1035,11 @@ updated: 2026-04-23
 
 </details>
 
+<!-- T-096b 階段 1-4 → In Review 2026-04-23（士林執行者 wip/T096b-unify-encoder @ 26eec4b；code 改完；等大腦產 DELETE SQL，之後再跑 --live） -->
+
+<details>
+<summary>📦 T-096b 原任務描述（code 階段已 In Review，DELETE + live 待大腦觸發）</summary>
+
 - [ ] **T-096b** | Pipeline | **重跑 T-096 extract 統一 DB 單格式（B 方案收尾）** `(2026-04-23 派工 → 🏙 士林執行者；收尾唯一 task)`
   - 建議 branch：`wip/T096b-unify-encoder`（從 `origin/dev` 切）
   - 背景：測試 DB 7154 rows 雙格式 co-exist（T-096 舊 3102 + T-097 新 4052）。用戶決策 B 方案收尾：重跑 T-096 extract 對齊 T-097 encoder，單格式後封存。
@@ -1048,6 +1053,16 @@ updated: 2026-04-23
     7. **驗證單格式**：`SELECT gametype, count(*) FROM gto_solutions GROUP BY gametype;` 應無 lowercase gametype
   - **不在 scope**：marathon / retrieval / 正式部署 / product（全凍結到新專案）
   - 執行者紀律：不動 `src/version.ts` / `memory/dev-log.md`；DELETE SQL 交大腦轉用戶貼
+
+  **交付摘要（commits `ad960fa` → `26eec4b`，步驟 1-4 完成）**：
+  - `refactor(T-096b): extract action-encoder lib` @ `ad960fa` — 新 `scripts/gto-pipeline/lib/action-encoder.mjs`（export `encodeAction` / `advancePot`；`pathToActionSeq` 原碼庫不存在，邏輯內嵌 `extractSpots` walk 不抽）
+  - `refactor(T-096b): batch-worker import encoder from lib` @ `d0034a3` — 行為 byte-identical
+  - `fix(T-096b): migrate-gto-postflop 對齊 T-097 格式` @ `44fe8cf` — `hu_25bb` → `hu_25bb_srp`；新 `LEGACY_CODE_MAP` 把 lowercase `x/c/f/b33/allin/r/rbig` → UPPERCASE `X/C/F/B33/RAI/R/RBIG`；dry-run 6 spots OK
+  - `fix(T-096b): migrate-solver-postflop 對齊 T-097 格式` @ `26eec4b` — `cash_6max_100bb` → `cash_6max_100bb_{srp|3bp}`、`mtt_9max_40bb` → `mtt_9max_40bb_srp`、`hu_*` → `hu_*_{srp|3bp|4bp}`；改用 `libEncodeAction` + `libAdvancePot`（過去 CALL 用 pot*1.5 heuristic 改成正確 betFacing 追蹤）；dry-run 3096 nodes OK
+  - Dry-run 預估新 row 數：**6 (hu_25bb_srp) + 2124 (cash_6max_100bb_srp) + 960 (cash_6max_100bb_3bp) + 12 (mtt_9max_40bb_srp) = 3102 rows**（與 T-096 一致；split 比較準：原先 3084 全塞 `cash_6max_100bb` 現在分 srp/3bp）
+  - **下一步**：大腦 review → 產 DELETE SQL 給用戶貼 Dashboard → 通知執行者跑 `--live`
+
+</details>
 
 - [❌ 凍結] **T-098** | Pipeline + Frontend | **Retrieval 兩個 lib 統一 + 2 週 fallback** `(前置 T-095 + T-096)` [新專案重建]
   - 建議 branch：`wip/T098-retrieval-v2-unified`
