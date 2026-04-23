@@ -5,6 +5,28 @@
 
 ---
 
+## 2026-04-23 v0.8.5-dev.39 [dev] — T-097 F-stage PASS + 閉環設計 approved + T-098 可派
+- **T-097 真正 Done**：F-stage 驗證通過 + 2 bug fix merged（`wip/T097-f-stage-fixes` @ `8c19a1c`）
+  - F 驗證跑 1 batch HU 25bb SRP：claim river spot / solver 14.8s / **extract 4052 spots / 0 dup（path-aware PK working）/ upload 成功 / status=done row_count=4052**
+  - 修的 2 bug（都在 T-097 Phase 1 merged code 裡）：
+    - extract ctx street 錯配
+    - encoding 不一致（path string 跟 node_data.aggregated 用不同格式）→ 統一 GTOW UPPERCASE spec（X / B60 / B80 / RAI）
+  - 新 verify helpers：`scripts/gto-pipeline/verify-t097.mjs` + `verify-t097-sample.mjs`（測試 RPC + sample row 格式）
+- **歷史對比（里程碑）**：
+  - T-045 之前：594 rows（role 桶 collapse 丟資訊）
+  - T-097 Phase 1：1544 rows（2.6x dup，encoding 不一致）
+  - T-097 Phase 2：**4052 rows（0 dup，UPPERCASE GTOW spec 對齊）** ← 新基準
+- ⚠ **雙格式 co-exist 警告**（待 T-098 處理 / T-099 前統一）：
+  - 測試 Supabase `gto_solutions` 現 **7154 rows**
+  - T-096 migrate 來：gametype=`hu_25bb` (lowercase) + lowercase action + ev:null
+  - T-097 新跑：gametype=`hu_25bb_srp` (snake_case 加 srp 後綴) + UPPERCASE action + 無 ev 欄位
+  - PK 不撞因 gametype 不同，但 retrieval 邏輯要能查雙格式 or 重跑 T-096 extract 統一
+- **閉環設計 approved**（本次 commit 含）：用戶拍板 Q1-Q5 → 3 入口 + chat 合併 + hybrid + gto_solutions baseline + Bayesian 加權
+  - 新 wiki `exploit-coach-closed-loop-design.md`（spec, approved）
+  - `product-vision-v2.md` P1 區塊升級（6 task 18-29 工作日）
+- **下一步**：可派 T-098 retrieval 改造（含雙格式處理邏輯或建議執行者重跑 T-096 統一）
+- bump v0.8.5-dev.38 → v0.8.5-dev.39
+
 ## 2026-04-23 v0.8.5-dev.38 [dev] — T-097 code merge + migration 20260425 已部署測試 Supabase
 - 👉 **2026-04-23 update**：migration `20260425-gto-batch-progress-v2.sql` 用戶手動貼測試 Supabase Dashboard 完成，5 條驗證 (a)-(e) 全通過。T-097 F 驗證階段 unblock，家裡 wip1 執行者可繼續：
   1. 跑 `node seed-batches.mjs --include-river`（新 schema 重 seed）
