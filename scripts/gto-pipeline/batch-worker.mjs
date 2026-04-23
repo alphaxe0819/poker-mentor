@@ -199,43 +199,6 @@ function aggregateToClasses(comboStrategy, actions) {
   return result
 }
 
-function buildActionCodeMap(actions, effectiveStack) {
-  const map = {}
-  const bets = []
-  const raises = []
-  for (const a of actions) {
-    if (a === 'CHECK') map[a] = 'x'
-    else if (a === 'CALL') map[a] = 'c'
-    else if (a === 'FOLD') map[a] = 'f'
-    else if (a.startsWith('BET ')) bets.push(a)
-    else if (a.startsWith('RAISE ')) raises.push(a)
-  }
-  bets.sort((a, b) => parseFloat(a.split(' ')[1]) - parseFloat(b.split(' ')[1]))
-  raises.sort((a, b) => parseFloat(a.split(' ')[1]) - parseFloat(b.split(' ')[1]))
-
-  const betBuckets = ['b33', 'b50', 'b100']
-  let bi = 0
-  for (const b of bets) {
-    const amt = parseFloat(b.split(' ')[1])
-    map[b] = amt >= effectiveStack * 0.95 ? 'allin' : (betBuckets[bi++] || `b${Math.round((amt / 5) * 100)}`)
-  }
-  for (let i = 0; i < raises.length; i++) {
-    const amt = parseFloat(raises[i].split(' ')[1])
-    map[raises[i]] = amt >= effectiveStack * 0.95 ? 'allin' : (i === 0 ? 'r' : 'rbig')
-  }
-  return map
-}
-
-function pickAction(actions, freqs, codeMap) {
-  const pairs = actions.map((a, i) => ({ action: a, freq: freqs[i] })).sort((a, b) => b.freq - a.freq)
-  const top = pairs[0]
-  const second = pairs[1]
-  const topCode = codeMap[top.action] ?? '?'
-  if (top.freq >= 0.7 || !second || second.freq < 0.25) return topCode
-  const secondCode = codeMap[second.action] ?? '?'
-  return `mix:${topCode}@${Math.round(top.freq * 100)},${secondCode}`
-}
-
 /**
  * Encode a TexasSolver action key into GTOW-style code.
  *   CHECK      → X
@@ -344,7 +307,11 @@ function extractSpots(data, batch, scenario) {
     if (!node || ctx.depth > 10) return
 
     if (node.strategy?.strategy && node.actions) {
-      const codeMap = buildActionCodeMap(node.actions, effStack)
+      // Use encodeAction (GTOW-spec %) for node_data action codes so they align
+      // with turn_actions/river_actions path encoding. ctx.pot is the pot facing
+      // this decision node (correct denominator for % bet sizing).
+      const codeMap = {}
+      for (const a of node.actions) codeMap[a] = encodeAction(a, ctx.pot, effStack)
       const nodeData = buildNodeData(node, codeMap, effStack)
       spots.push({
         street: ctx.street,
@@ -391,10 +358,16 @@ function extractSpots(data, batch, scenario) {
     }
   }
 
+  // T-097 F-stage bug fix: solver always runs turn-first (buildTurnInput gives
+  // 4-card board regardless of batch.street), so root = turn decision. Starting
+  // ctx.street='river' for a river batch would wrongly tag turn-level decisions
+  // as river + lose turn context on dealcard reset → multiple turn paths collapse
+  // to same (river_card, river_actions) key. Always start 'turn'; dealcards
+  // transition preserves turn_actions history via spread.
   const initialCtx = {
-    street: batch.street === 'river' ? 'river' : 'turn',
+    street: 'turn',
     turn_actions: [],
-    river_card: batch.river_card || '',
+    river_card: '',
     river_actions: [],
     pot: potStart,
     betFacing: 0,
