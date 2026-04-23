@@ -18,14 +18,22 @@
  *   - 舊 gto_postflop 沒存 EV → node_data.hands[].ev 全 null（T-097 新 batch 會抓）
  *   - 舊 role 欄位 collapse 了 flop path 資訊 → flop_actions / turn_actions 只能粗估
  *     (role → action 對照表見下方 ROLE_TO_ACTIONS)
- *   - 舊表都是 HU（stack_label ∈ '13bb'/'25bb'/'40bb'）→ gametype='hu_{depth}bb'，
+ *   - 舊表都是 HU（stack_label ∈ '13bb'/'25bb'/'40bb'）→ gametype='hu_{depth}bb_srp'
+ *     （T-096b：加 _srp 後綴對齊 T-097 seed-batches gametype 風格）
  *     preflop_actions 固定 'R2.5-C'（HU SRP BTN open + BB call）
+ *   - T-096b：action_code 全部轉 UPPERCASE GTOW spec（x→X, b33→B33, allin→RAI）
  */
 
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+
+// T-096b：共用 encoder lib（雖然舊 action_code 是 pre-encoded 字串不是
+// raw solver "CHECK"/"BET X" 無法直接用 encodeAction，但 import 留著讓未來
+// 一致使用，也提醒新舊格式同一來源）
+// eslint-disable-next-line no-unused-vars
+import { encodeAction, advancePot } from '../gto-pipeline/lib/action-encoder.mjs'
 
 // ── .env loader（抄 batch-worker.mjs 模式）────────────
 
@@ -105,29 +113,43 @@ function roleToActions(role, street) {
   return { flop_actions: seq, turn_actions: '', river_actions: '' }
 }
 
+// ── legacy action_code → GTOW UPPERCASE 對照（T-096b）────
+// 舊 pickAction 產 lowercase 字面：'x' / 'c' / 'f' / 'b33' / 'b50' / 'b100' /
+// 'allin' / 'r' / 'rbig'。GTOW spec §4 要 UPPERCASE：
+const LEGACY_CODE_MAP = {
+  x: 'X', c: 'C', f: 'F',
+  b33: 'B33', b50: 'B50', b100: 'B100',
+  allin: 'RAI',
+  r: 'R', rbig: 'RBIG',
+}
+function normalizeLegacyCode(code) {
+  if (LEGACY_CODE_MAP[code]) return LEGACY_CODE_MAP[code]
+  // 未列舉的 lowercase 單 token → 直接 toUpperCase（b{pct} 等）
+  return typeof code === 'string' ? code.toUpperCase() : code
+}
+
 // ── action_code 解碼（'b33' / 'mix:b33@60,x' / 'x' / 'c' / 'f' / 'allin' / 'r'）────
-// 回傳 [{action, freq, ev: null}]（ev 舊表沒存）
+// 回傳 [{action, freq, ev: null}]，action 一律 UPPERCASE GTOW（T-096b）
 function decodeActionCode(code) {
   if (!code) return []
   if (code.startsWith('mix:')) {
-    // 'mix:b33@60,x' → [{b33, 0.6}, {x, 0.4}]
+    // 'mix:b33@60,x' → [{B33, 0.6}, {X, 0.4}]
     const body = code.slice(4)
     const parts = body.split(',')
     const first = parts[0]
     const atIdx = first.indexOf('@')
     if (atIdx < 0) {
-      // 格式異常：退化為單動作
-      return [{ action: first, freq: 1.0, ev: null }]
+      return [{ action: normalizeLegacyCode(first), freq: 1.0, ev: null }]
     }
     const firstAction = first.slice(0, atIdx)
     const firstFreq = parseInt(first.slice(atIdx + 1), 10) / 100
     const secondAction = parts[1] || 'x'
     return [
-      { action: firstAction, freq: Math.round(firstFreq * 10000) / 10000, ev: null },
-      { action: secondAction, freq: Math.round((1 - firstFreq) * 10000) / 10000, ev: null },
+      { action: normalizeLegacyCode(firstAction), freq: Math.round(firstFreq * 10000) / 10000, ev: null },
+      { action: normalizeLegacyCode(secondAction), freq: Math.round((1 - firstFreq) * 10000) / 10000, ev: null },
     ]
   }
-  return [{ action: code, freq: 1.0, ev: null }]
+  return [{ action: normalizeLegacyCode(code), freq: 1.0, ev: null }]
 }
 
 // ── Main ────────────────────────────────────────────
@@ -194,8 +216,11 @@ async function main() {
   // 4. 組 gto_solutions rows
   const solutions = []
   for (const g of groups.values()) {
-    const depth_bb = parseInt(g.stack_label, 10)          // '25bb' → 25
-    const gametype = `hu_${g.stack_label}`                // 'hu_25bb'
+    const depth_bb = parseInt(g.stack_label, 10)                 // '25bb' → 25
+    // T-096b：gametype 加 _srp 後綴對齊 T-097 (`hu_25bb_srp` 等)
+    // 舊 gto_postflop 資料都是 T-045 HU SRP 跑出來的（BTN open + BB call SRP pot），
+    // 沒有其他 pot_type 資料，所以固定 _srp。
+    const gametype = `hu_${g.stack_label}_srp`                   // 'hu_25bb_srp'
     const { flop_actions, turn_actions, river_actions } = roleToActions(g.role, g.street)
 
     solutions.push({
@@ -259,11 +284,11 @@ async function main() {
     .from('gto_solutions')
     .select('*', { count: 'exact', head: true })
     .eq('source', 'self_solver')
-    .like('gametype', 'hu_%')
+    .like('gametype', 'hu_%_srp')
   if (cntErr) {
     console.warn('Count verify failed:', cntErr.message)
   } else {
-    console.log(`\nVerify: gto_solutions WHERE gametype LIKE 'hu_%' AND source='self_solver' count = ${count}`)
+    console.log(`\nVerify: gto_solutions WHERE gametype LIKE 'hu_%_srp' AND source='self_solver' count = ${count}`)
     console.log(`Expected: >= ${solutions.length}`)
     if (count < solutions.length) console.warn('⚠ count 少於預期，可能有 upsert 失敗或被 conflict 合併')
   }
