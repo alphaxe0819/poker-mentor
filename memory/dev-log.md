@@ -5,6 +5,49 @@
 
 ---
 
+## 2026-04-23 **v1.0.0** [dev] — 🎯 專案 code 凍結 + T-096b 真 Done + 進入 ship sequence
+
+> **這是本專案 dev branch 的最終版本號。**
+> v1.0.0 代表 code 凍結。之後只做 ship sequence（貼正式 Supabase migration / Edge Function → merge main → push → monitor → 真凍結）。不再 bump。
+
+### T-096b 真 Done（最後技術交付）
+- **階段 5 PASS**（2026-04-23 晚）：
+  - `migrate-gto-postflop-to-v2.mjs --live` → INSERT 6 rows (`hu_25bb_srp`)
+  - `migrate-solver-postflop-to-v2.mjs --live` → INSERT 3096 rows（`cash_6max_100bb_srp` 2124 + `cash_6max_100bb_3bp` 960 + `mtt_9max_40bb_srp` 12）
+  - 0 error / 0 warning
+- **測試 Supabase gto_solutions 最終狀態**（7154 rows，4 gametype 全單格式）：
+  ```
+  cash_6max_100bb_3bp      960
+  cash_6max_100bb_srp     2124
+  hu_25bb_srp             4058  (T-097 4052 + T-096b 6)
+  mtt_9max_40bb_srp         12
+  ─────────────────────────────
+  合計                    7154
+  ```
+- ✅ 無 lowercase 殘留，全部 `_srp` / `_3bp` 後綴對齊 T-097 編碼規格
+
+### 進入 Ship Sequence（dev → main → monitor → 凍結）
+用戶決策 C 方案（完整 ship + monitor + 真凍結），版號 v1.0.0。
+
+**後續 ship sequence TODO（按順序）**：
+1. ⏳ **正式 Supabase migration 部署**（用戶手貼 Dashboard）：
+   - `20260424-gto-solutions-v2.sql`
+   - `20260425-gto-batch-progress-v2.sql`
+   - （驗證：gto_solutions / gto_batch_progress 表 + claim_gto_batch RPC）
+2. ⏳ **正式 Supabase Edge Function 部署**（用戶手貼 Editor）：
+   - `exploit-coach-gtow/index.ts` + `gto_signing.ts`
+   - `exploit-coach-villain-v2/index.ts`
+   - ⚠ 每個新 function 關 Verify JWT（ES256 坑）
+   - 設 `GTO_WIZARD_TOKEN` secret
+3. ⏳ **merge dev → main**（用戶明確授權）
+4. ⏳ **git push origin main** → Vercel 自動部署正式機
+5. ⏳ **curl 驗證正式機** HTTP 200 + script hash
+6. ⏳ **3-5 天 monitor**（catch 玩家 bug）
+7. ⏳ **確認穩定 → 真凍結**（task-board 全封存，memory/wiki snapshot final check）
+
+### 最後 bump v0.8.5-dev.40 → **v1.0.0**
+此後 dev branch code **不再修改**。所有 ship 工作都是「部署」動作，不 bump 版號（除非 ship 後發現 bug 需要 hotfix，另開 v1.0.1）。
+
 ## 2026-04-23 v0.8.5-dev.40 [dev] — T-096b 階段 1-4 code merged（等 DELETE + --live）
 - **T-096b code merged**：`wip/T096b-unify-encoder` @ `34d5cd1`（5 commits 乾淨拆分）
   - 抽 encoder lib：`scripts/gto-pipeline/lib/action-encoder.mjs`（encodeAction + advancePot）
