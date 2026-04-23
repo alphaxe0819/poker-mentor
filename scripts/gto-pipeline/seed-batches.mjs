@@ -16,6 +16,7 @@ import { readFileSync, existsSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { BOARDS, STACK_RATIOS, generateRiverCards } from './boards.mjs'
+import { HU_SRP_BY_STACK } from './scenarios.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -52,14 +53,27 @@ async function main() {
     }
 
     for (const stack of STACK_RATIOS) {
+      // T-097 Schema v2: 把 stack slug 映射到 {gametype, depth_bb, preflop_actions}
+      const scenario = HU_SRP_BY_STACK[stack.slug]
+      if (!scenario) {
+        console.warn(`SKIP: stack ${stack.slug} has no HU SRP scenario mapping`)
+        continue
+      }
+
+      const v2Keys = {
+        gametype: scenario.gametype,
+        depth_bb: scenario.depth_bb,
+        preflop_actions: scenario.preflop_actions,
+        board: board.slug,
+      }
+
       // Turn batches
       for (const turnCard of board.turnCards) {
         rows.push({
-          board_key: board.slug,
+          ...v2Keys,
           turn_card: turnCard,
           river_card: '',
           street: 'turn',
-          stack_label: stack.slug,
           status: 'pending',
         })
       }
@@ -70,11 +84,10 @@ async function main() {
           const riverCards = generateRiverCards(board.cards, turnCard)
           for (const riverCard of riverCards) {
             rows.push({
-              board_key: board.slug,
+              ...v2Keys,
               turn_card: turnCard,
               river_card: riverCard,
               street: 'river',
-              stack_label: stack.slug,
               status: 'pending',
             })
           }
@@ -95,7 +108,7 @@ async function main() {
     const { error } = await supabase
       .from('gto_batch_progress')
       .upsert(chunk, {
-        onConflict: 'board_key,turn_card,river_card,street,stack_label',
+        onConflict: 'gametype,depth_bb,preflop_actions,board,turn_card,river_card,street',
         ignoreDuplicates: true,
       })
     if (error) {

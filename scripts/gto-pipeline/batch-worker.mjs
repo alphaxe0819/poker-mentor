@@ -65,6 +65,10 @@ const machineId = getArg('--machine') || `WORKER-${Date.now()}`
 const dryRun = args.includes('--dry-run')
 const keepJson = args.includes('--keep-json')
 const maxBatches = parseInt(getArg('--max') || '0', 10) || Infinity
+// T-097 Schema v2: optional filters passed to claim_gto_batch RPC
+const gametypeFilter = getArg('--gametype-filter') || null
+const depthFilterStr = getArg('--depth-filter')
+const depthFilter = depthFilterStr !== null ? parseFloat(depthFilterStr) : null
 
 function getArg(name) {
   const idx = args.indexOf(name)
@@ -93,17 +97,9 @@ if (SOLVER_EXE_DIR) {
 
 // ── Board + Range data ─────────────────────────────────
 
-import { BOARDS, STACK_RATIOS, HU_40BB_RANGES, HU_25BB_RANGES, HU_13BB_RANGES } from './boards.mjs'
-
-function getRanges(slug) {
-  if (slug === '13bb') return HU_13BB_RANGES
-  if (slug === '25bb') return HU_25BB_RANGES
-  return HU_40BB_RANGES
-}
-
-function getStackConfig(stackLabel) {
-  return STACK_RATIOS.find(s => s.slug === stackLabel)
-}
+import { BOARDS } from './boards.mjs'
+import { getScenarioByGametype } from './scenarios.mjs'
+import { encodeAction, advancePot } from './lib/action-encoder.mjs'
 
 function getBoardConfig(boardKey) {
   return BOARDS.find(b => b.slug === boardKey)
@@ -111,16 +107,15 @@ function getBoardConfig(boardKey) {
 
 // ── TexasSolver input generation ───────────────────────
 
-function buildTurnInput(board, turnCard, stack) {
-  const ranges = getRanges(stack.slug)
+function buildTurnInput(board, turnCard, scenario) {
   const boardCards = `${board.cards},${turnCard}`  // e.g. 'As,7d,2c,Kh'
 
   const lines = [
-    `set_pot ${stack.pot_bb}`,
-    `set_effective_stack ${stack.effective_stack_bb}`,
+    `set_pot ${scenario.pot_bb}`,
+    `set_effective_stack ${scenario.effective_stack_bb}`,
     `set_board ${boardCards}`,
-    `set_range_ip ${ranges.ip}`,
-    `set_range_oop ${ranges.oop}`,
+    `set_range_ip ${scenario.ranges.ip}`,
+    `set_range_oop ${scenario.ranges.oop}`,
   ]
 
   // Turn bet sizes (same as generate-input.mjs turn section)
@@ -205,143 +200,182 @@ function aggregateToClasses(comboStrategy, actions) {
   return result
 }
 
-function buildActionCodeMap(actions, effectiveStack) {
-  const map = {}
-  const bets = []
-  const raises = []
-  for (const a of actions) {
-    if (a === 'CHECK') map[a] = 'x'
-    else if (a === 'CALL') map[a] = 'c'
-    else if (a === 'FOLD') map[a] = 'f'
-    else if (a.startsWith('BET ')) bets.push(a)
-    else if (a.startsWith('RAISE ')) raises.push(a)
-  }
-  bets.sort((a, b) => parseFloat(a.split(' ')[1]) - parseFloat(b.split(' ')[1]))
-  raises.sort((a, b) => parseFloat(a.split(' ')[1]) - parseFloat(b.split(' ')[1]))
-
-  const betBuckets = ['b33', 'b50', 'b100']
-  let bi = 0
-  for (const b of bets) {
-    const amt = parseFloat(b.split(' ')[1])
-    map[b] = amt >= effectiveStack * 0.95 ? 'allin' : (betBuckets[bi++] || `b${Math.round((amt / 5) * 100)}`)
-  }
-  for (let i = 0; i < raises.length; i++) {
-    const amt = parseFloat(raises[i].split(' ')[1])
-    map[raises[i]] = amt >= effectiveStack * 0.95 ? 'allin' : (i === 0 ? 'r' : 'rbig')
-  }
-  return map
-}
-
-function pickAction(actions, freqs, codeMap) {
-  const pairs = actions.map((a, i) => ({ action: a, freq: freqs[i] })).sort((a, b) => b.freq - a.freq)
-  const top = pairs[0]
-  const second = pairs[1]
-  const topCode = codeMap[top.action] ?? '?'
-  if (top.freq >= 0.7 || !second || second.freq < 0.25) return topCode
-  const secondCode = codeMap[second.action] ?? '?'
-  return `mix:${topCode}@${Math.round(top.freq * 100)},${secondCode}`
-}
+// encodeAction / advancePot 已搬到 lib/action-encoder.mjs（T-096b 共用 lib）
 
 /**
- * 從 solver JSON 的 game tree 中提取 turn/river 節點的策略。
- * 回傳: Array<{ role, handClass, actionCode }>
- */
-function extractTurnRiverNodes(data, effectiveStack, street) {
-  const rows = []
-
-  function walkNode(node, path, depth) {
-    if (!node || depth > 6) return  // 限制深度避免無限遞迴
-
-    // 如果此節點有 strategy，提取
-    if (node.strategy?.strategy && node.actions) {
-      const role = pathToRole(path, node.player)
-      if (role) {
-        const codeMap = buildActionCodeMap(node.actions, effectiveStack)
-        const classAvg = aggregateToClasses(node.strategy.strategy, node.actions)
-        for (const [hand, freqs] of Object.entries(classAvg)) {
-          const actionCode = pickAction(node.actions, freqs, codeMap)
-          rows.push({ role, handClass: hand, actionCode })
-        }
-      }
-    }
-
-    // 遞迴子節點
-    if (node.childrens) {
-      for (const [actionKey, childNode] of Object.entries(node.childrens)) {
-        walkNode(childNode, [...path, actionKey], depth + 1)
-      }
-    }
-  }
-
-  // TexasSolver JSON 結構：
-  // root → CHECK/BET children (flop 第一層)
-  //   → ... (flop 後續)
-  //     → deal_card children (turn)
-  //       → CHECK/BET children (turn 決策)
-  //         → deal_card children (river)
-  //           → CHECK/BET children (river 決策)
-  // 我們只需要 turn 和 river 層的 strategy 節點
-
-  walkNode(data, ['root'], 0)
-  return rows
-}
-
-/**
- * 根據 action path 和 player ID 推斷 role 名稱。
- * player 0 = IP (BTN), player 1 = OOP (BB)
+ * Build per-hand-class aggregation node for one spot's strategy.
+ * Returns { hands: {...}, aggregated: {...}, node_type }.
  *
- * 這個函式需要根據實際的 TexasSolver JSON 結構調整。
- * 初版：從 path 中判斷是主動出擊還是面對 bet。
+ * Note: EV not included — TexasSolver v0.2.0 JSON does not expose EV per
+ * (hand, action). Future work (T-098+) may pull EV from GTOW API or patch
+ * solver source. Schema stays jsonb-flexible for later EV addition.
  */
-function pathToRole(path, player) {
-  const playerName = player === 0 ? 'btn' : 'bb'
-
-  // 找最近的 non-root action
-  const actions = path.filter(p => p !== 'root')
-  if (actions.length === 0) return null
-
-  const lastAction = actions[actions.length - 1]
-  const prevAction = actions.length >= 2 ? actions[actions.length - 2] : null
-
-  // 面對 check → 自己的 bet/check 決策
-  if (lastAction === 'CHECK' || !prevAction) {
-    return `${playerName}_bet`  // 可以 bet 或 check
+function buildNodeData(node, codeMap, effStack) {
+  const classAvg = aggregateToClasses(node.strategy.strategy, node.actions)
+  const hands = {}
+  for (const [handClass, freqs] of Object.entries(classAvg)) {
+    hands[handClass] = node.actions
+      .map((a, i) => ({ action: codeMap[a] ?? '?', freq: Number(freqs[i].toFixed(6)) }))
+      .filter(x => x.freq > 0.0001)
   }
 
-  // 面對 bet
-  if (lastAction.startsWith('BET ') || lastAction.startsWith('RAISE ')) {
-    const amt = parseFloat(lastAction.split(' ')[1])
-    // 粗略分桶
-    if (amt >= 20) return `${playerName}_facing_bet_large`
-    if (amt >= 5) return `${playerName}_facing_bet_mid`
-    return `${playerName}_facing_bet_small`
+  // Aggregated freqs (combo-weighted, uniform: 1/169 weight per class).
+  const classKeys = Object.keys(classAvg)
+  const aggregated = {}
+  if (classKeys.length > 0) {
+    for (let i = 0; i < node.actions.length; i++) {
+      let sum = 0
+      for (const k of classKeys) sum += classAvg[k][i]
+      aggregated[codeMap[node.actions[i]] ?? '?'] = Number((sum / classKeys.length).toFixed(6))
+    }
   }
 
-  return `${playerName}_bet`
+  return {
+    hands,
+    aggregated,
+    node_type: node.player === 1 ? 'oop_decision' : 'ip_decision',
+  }
 }
 
-// ── Supabase upload ────────────────────────────────────
+/**
+ * Extract solver tree into gto_solutions-shaped spot rows.
+ *
+ * Output row shape (aligns with schema v2 gto_solutions PK):
+ *   { street, flop_actions, turn_actions, river_card, river_actions, node_data, _stats }
+ *
+ * Caller adds gametype/depth_bb/preflop_actions/board/turn_card from batch.
+ *
+ * Street handling:
+ *   - Turn-solve (batch.street='turn'): root is turn decision; dealcards transition to river.
+ *   - River-solve (batch.street='river'): root is river decision; dealcards unexpected.
+ *
+ * flop_actions is always '' — solver pipeline starts at turn/river; pre-turn play
+ * is baked into ranges, not explicitly modeled. Matches schema default.
+ */
+function extractSpots(data, batch, scenario) {
+  const spots = []
+  const effStack = scenario.effective_stack_bb
+  const potStart = scenario.pot_bb
 
-async function uploadRows(rows, batch) {
-  const CHUNK_SIZE = 500  // Supabase upsert 一次最多建議 500 rows
+  function walk(node, ctx) {
+    if (!node || ctx.depth > 10) return
+
+    if (node.strategy?.strategy && node.actions) {
+      // Use encodeAction (GTOW-spec %) for node_data action codes so they align
+      // with turn_actions/river_actions path encoding. ctx.pot is the pot facing
+      // this decision node (correct denominator for % bet sizing).
+      const codeMap = {}
+      for (const a of node.actions) codeMap[a] = encodeAction(a, ctx.pot, effStack)
+      const nodeData = buildNodeData(node, codeMap, effStack)
+      spots.push({
+        street: ctx.street,
+        flop_actions: '',
+        turn_actions: ctx.turn_actions.join('-'),
+        river_card: ctx.river_card,
+        river_actions: ctx.river_actions.join('-'),
+        node_data: nodeData,
+        _stats: {
+          hand_count: Object.keys(nodeData.hands).length,
+          action_count: node.actions.length,
+        },
+      })
+    }
+
+    if (node.childrens) {
+      for (const [actKey, child] of Object.entries(node.childrens)) {
+        const encoded = encodeAction(actKey, ctx.pot, effStack)
+        const { pot: newPot, betFacing: newBetFacing } = advancePot(ctx.pot, ctx.betFacing, actKey)
+        const streetKey = ctx.street === 'river' ? 'river_actions' : 'turn_actions'
+        walk(child, {
+          ...ctx,
+          [streetKey]: [...ctx[streetKey], encoded],
+          pot: newPot,
+          betFacing: newBetFacing,
+          depth: ctx.depth + 1,
+        })
+      }
+    }
+
+    if (node.dealcards) {
+      // Street transition: turn → river (for turn-solve batches only)
+      for (const [card, child] of Object.entries(node.dealcards)) {
+        walk(child, {
+          ...ctx,
+          street: 'river',
+          river_card: card,
+          river_actions: [],
+          betFacing: 0,
+          depth: ctx.depth + 1,
+          // pot carries over (turn action already committed both players' chips)
+        })
+      }
+    }
+  }
+
+  // T-097 F-stage bug fix: solver always runs turn-first (buildTurnInput gives
+  // 4-card board regardless of batch.street), so root = turn decision. Starting
+  // ctx.street='river' for a river batch would wrongly tag turn-level decisions
+  // as river + lose turn context on dealcard reset → multiple turn paths collapse
+  // to same (river_card, river_actions) key. Always start 'turn'; dealcards
+  // transition preserves turn_actions history via spread.
+  const initialCtx = {
+    street: 'turn',
+    turn_actions: [],
+    river_card: '',
+    river_actions: [],
+    pot: potStart,
+    betFacing: 0,
+    depth: 0,
+  }
+  walk(data, initialCtx)
+  return spots
+}
+
+// ── Supabase upload (gto_solutions schema v2) ──────────
+
+async function uploadSpots(spots, batch, solverMeta) {
+  const CHUNK_SIZE = 100  // jsonb rows ~5-8 KB each → smaller chunks to stay under request size cap
+
+  // Dedup by full path key (defensive — path-aware PK should make this rare,
+  // but if solver walk emits duplicate (flop, turn, river, river_actions) tuples
+  // we keep first-write-wins to avoid Postgres 42601 upsert-conflict error).
+  const seen = new Set()
+  const deduped = []
+  for (const s of spots) {
+    const key = `${s.street}|${s.flop_actions}|${s.turn_actions}|${s.river_card}|${s.river_actions}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    deduped.push(s)
+  }
+  if (deduped.length < spots.length) {
+    console.log(`  Dedup: ${spots.length} → ${deduped.length} spots (defensive filter on full path)`)
+  } else {
+    console.log(`  Spots: ${spots.length} (no dup — path-aware PK working)`)
+  }
+
   let uploaded = 0
 
-  for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
-    const chunk = rows.slice(i, i + CHUNK_SIZE).map(r => ({
-      board_key: batch.board_key,
+  for (let i = 0; i < deduped.length; i += CHUNK_SIZE) {
+    const chunk = deduped.slice(i, i + CHUNK_SIZE).map(s => ({
+      gametype: batch.gametype,
+      depth_bb: batch.depth_bb,
+      preflop_actions: batch.preflop_actions,
+      board: batch.board,
+      flop_actions: s.flop_actions,
       turn_card: batch.turn_card,
-      river_card: batch.river_card || '',
-      street: batch.street,
-      stack_label: batch.stack_label,
-      role: r.role,
-      hand_class: r.handClass,
-      action_code: r.actionCode,
+      turn_actions: s.turn_actions,
+      river_card: s.river_card,
+      river_actions: s.river_actions,
+      node_data: s.node_data,
+      source: 'self_solver',
+      solver_config: solverMeta,
+      updated_at: new Date().toISOString(),
     }))
 
     const { error } = await supabase
-      .from('gto_postflop')
+      .from('gto_solutions')
       .upsert(chunk, {
-        onConflict: 'board_key,turn_card,river_card,street,stack_label,role,hand_class',
+        onConflict: 'gametype,depth_bb,preflop_actions,board,flop_actions,turn_card,turn_actions,river_card,river_actions',
       })
 
     if (error) throw new Error(`Upsert failed at chunk ${i}: ${error.message}`)
@@ -365,15 +399,19 @@ async function main() {
   console.log('===========================================')
   console.log(` GTO Batch Worker — ${machineId}`)
   console.log(` Mode: ${dryRun ? 'DRY RUN' : 'LIVE'}`)
+  if (gametypeFilter) console.log(` Gametype filter: ${gametypeFilter}`)
+  if (depthFilter !== null) console.log(` Depth filter: ${depthFilter}bb`)
   console.log('===========================================\n')
 
   let completed = 0
 
   while (completed < maxBatches) {
-    // 1. 領取任務
-    const { data: claimed, error: claimError } = await supabase.rpc('claim_gto_batch', {
-      p_machine_id: machineId,
-    })
+    // 1. 領取任務（v2 RPC 接 gametype / depth filter，無傳 → 走預設全領）
+    const rpcArgs = { p_machine_id: machineId }
+    if (gametypeFilter) rpcArgs.p_gametype_filter = gametypeFilter
+    if (depthFilter !== null) rpcArgs.p_depth_filter = depthFilter
+
+    const { data: claimed, error: claimError } = await supabase.rpc('claim_gto_batch', rpcArgs)
 
     if (claimError) {
       console.error('Claim RPC error:', claimError.message)
@@ -386,7 +424,7 @@ async function main() {
     }
 
     const batch = claimed[0]
-    console.log(`\n[${completed + 1}] Claimed: ${batch.street} | ${batch.board_key} + ${batch.turn_card}${batch.river_card ? ' + ' + batch.river_card : ''} | ${batch.stack_label}`)
+    console.log(`\n[${completed + 1}] Claimed: ${batch.street} | ${batch.gametype} | ${batch.board}+${batch.turn_card}${batch.river_card ? '+' + batch.river_card : ''} | preflop=${batch.preflop_actions}`)
 
     if (dryRun) {
       console.log('  (dry run — skipping solver)')
@@ -396,34 +434,44 @@ async function main() {
     }
 
     try {
-      // 2. 產生 input
-      const boardConfig = getBoardConfig(batch.board_key)
-      const stackConfig = getStackConfig(batch.stack_label)
-      if (!boardConfig || !stackConfig) throw new Error(`Unknown board/stack: ${batch.board_key}/${batch.stack_label}`)
+      // 2. 產生 input（v2 batch：gametype 查 scenario 拿 ranges/pot/stack）
+      const scenario = getScenarioByGametype(batch.gametype)
+      const boardConfig = getBoardConfig(batch.board)
+      if (!scenario) throw new Error(`Unknown gametype: ${batch.gametype} (check scenarios.mjs HU_SCENARIOS)`)
+      if (!boardConfig) throw new Error(`Unknown board: ${batch.board} (check boards.mjs BOARDS)`)
 
-      const inputContent = buildTurnInput(boardConfig, batch.turn_card, stackConfig)
+      const inputContent = buildTurnInput(boardConfig, batch.turn_card, scenario)
       console.log('  Input generated')
 
       // 3. 跑 solver
       await markBatchStatus(batch.id, 'claimed')
+      const solverStart = Date.now()
       const jsonPath = runSolver(inputContent)
+      const solverSec = ((Date.now() - solverStart) / 1000).toFixed(1)
 
-      // 4. 解析 JSON
+      // 4. 解析 JSON + 提取 spots
       console.log('  Parsing JSON...')
       const data = JSON.parse(readFileSync(jsonPath, 'utf8'))
-      const rows = extractTurnRiverNodes(data, stackConfig.effective_stack_bb, batch.street)
-      console.log(`  Extracted ${rows.length} rows`)
+      const spots = extractSpots(data, batch, scenario)
+      console.log(`  Extracted ${spots.length} spots`)
 
-      if (rows.length === 0) {
-        console.warn('  WARNING: no rows extracted, marking failed')
-        await markBatchStatus(batch.id, 'failed', { error_msg: 'No rows extracted from solver output' })
+      if (spots.length === 0) {
+        console.warn('  WARNING: no spots extracted, marking failed')
+        await markBatchStatus(batch.id, 'failed', { error_msg: 'No spots extracted from solver output' })
         continue
       }
 
-      // 5. 上傳
+      // 5. 上傳 gto_solutions
       await markBatchStatus(batch.id, 'uploading')
-      const uploaded = await uploadRows(rows, batch)
-      console.log(`  Uploaded ${uploaded} rows`)
+      const solverMeta = {
+        solver_version: 'texas_0.2.0',
+        solver_seconds: Number(solverSec),
+        // EV limitation: TexasSolver v0.2.0 JSON 無 ev 欄位，node_data.hands items 只含
+        // {action, freq}。未來 GTOW API fill 或 solver patch 可補，schema jsonb 彈性保留。
+        ev_available: false,
+      }
+      const uploaded = await uploadSpots(spots, batch, solverMeta)
+      console.log(`  Uploaded ${uploaded} spots`)
 
       // 6. 完成
       await markBatchStatus(batch.id, 'done', {

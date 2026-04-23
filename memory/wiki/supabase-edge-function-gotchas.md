@@ -9,6 +9,44 @@ updated: 2026-04-20
 
 2026-04-20 追 exploit-coach「登入已過期」→「抱歉，暫時無法回答」bug 撞出的平台級坑。
 
+---
+
+## 🚨 新 Edge Function 部署 SOP（必做，避免踩坑）
+
+**每次在 Supabase Dashboard 新建或重新部署 Edge Function 後，立刻做這個 checklist：**
+
+```
+部署後 checklist（30 秒，但漏做會卡整個功能）：
+
+□ 1. Deploy 成功（Editor 綠色確認）
+□ 2. ⚠ Details / Settings tab → 關 「Verify JWT」 switch
+     （新 function 默認開啟，ES256 project 開著會擋所有 token）
+□ 3. 確認 Secrets 該有的都有（ANTHROPIC_API_KEY / 業務需要的自訂 secret）
+□ 4. 測試機 dev URL fetch function → 看 Logs
+     - ✅ 看到 function 自己的 console.log → Verify JWT 關對了
+     - ❌ 看不到 function log + response header `sb_error_code: UNAUTHORIZED_UNSUPPORTED_TOKEN_ALGORITHM` → 回去 step 2 關
+```
+
+### 為什麼這麼重要
+2026-04-22 部署 `exploit-coach-villain-v2` + `exploit-coach-gtow` 兩個新 function，**兩個都漏關 Verify JWT**。用戶撞「登入已過期」，大腦誤派 T-064 修 client side parent refresh hang，但根因完全是 platform 層。查了一整輪 wiki 才發現 2026-04-20 已經踩過同樣坑（見下方「坑 1」）。
+
+此 checklist 寫進 wiki 首屏，下次部署 new function 前**不讀完這段不部署**。
+
+### Function 驗證範本（Bash 跑測試機）
+```bash
+# 看 function 是否 respond 200 + 有 function-side log
+curl -s -H "Authorization: Bearer $TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{"messages":[{"role":"user","content":"test"}]}' \
+     https://<PROJECT-REF>.supabase.co/functions/v1/<FUNC-NAME>
+# 401 + sb_error_code = UNAUTHORIZED_UNSUPPORTED_TOKEN_ALGORITHM → Verify JWT 沒關
+# 200 + 有回覆 → OK
+```
+
+---
+
+
+
 ## 坑 1：ES256 JWT 在 Edge Function runtime 不支援
 
 ### 症狀

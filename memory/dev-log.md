@@ -5,6 +5,531 @@
 
 ---
 
+## 2026-04-23 **v1.0.0** [dev] — 🎯 專案 code 凍結 + T-096b 真 Done + 進入 ship sequence
+
+> **這是本專案 dev branch 的最終版本號。**
+> v1.0.0 代表 code 凍結。之後只做 ship sequence（貼正式 Supabase migration / Edge Function → merge main → push → monitor → 真凍結）。不再 bump。
+
+### T-096b 真 Done（最後技術交付）
+- **階段 5 PASS**（2026-04-23 晚）：
+  - `migrate-gto-postflop-to-v2.mjs --live` → INSERT 6 rows (`hu_25bb_srp`)
+  - `migrate-solver-postflop-to-v2.mjs --live` → INSERT 3096 rows（`cash_6max_100bb_srp` 2124 + `cash_6max_100bb_3bp` 960 + `mtt_9max_40bb_srp` 12）
+  - 0 error / 0 warning
+- **測試 Supabase gto_solutions 最終狀態**（7154 rows，4 gametype 全單格式）：
+  ```
+  cash_6max_100bb_3bp      960
+  cash_6max_100bb_srp     2124
+  hu_25bb_srp             4058  (T-097 4052 + T-096b 6)
+  mtt_9max_40bb_srp         12
+  ─────────────────────────────
+  合計                    7154
+  ```
+- ✅ 無 lowercase 殘留，全部 `_srp` / `_3bp` 後綴對齊 T-097 編碼規格
+
+### 進入 Ship Sequence（dev → main → monitor → 凍結）
+用戶決策 C 方案（完整 ship + monitor + 真凍結），版號 v1.0.0。
+
+**後續 ship sequence TODO（按順序）**：
+1. ⏳ **正式 Supabase migration 部署**（用戶手貼 Dashboard）：
+   - `20260424-gto-solutions-v2.sql`
+   - `20260425-gto-batch-progress-v2.sql`
+   - （驗證：gto_solutions / gto_batch_progress 表 + claim_gto_batch RPC）
+2. ⏳ **正式 Supabase Edge Function 部署**（用戶手貼 Editor）：
+   - `exploit-coach-gtow/index.ts` + `gto_signing.ts`
+   - `exploit-coach-villain-v2/index.ts`
+   - ⚠ 每個新 function 關 Verify JWT（ES256 坑）
+   - 設 `GTO_WIZARD_TOKEN` secret
+3. ⏳ **merge dev → main**（用戶明確授權）
+4. ⏳ **git push origin main** → Vercel 自動部署正式機
+5. ⏳ **curl 驗證正式機** HTTP 200 + script hash
+6. ⏳ **3-5 天 monitor**（catch 玩家 bug）
+7. ⏳ **確認穩定 → 真凍結**（task-board 全封存，memory/wiki snapshot final check）
+
+### 最後 bump v0.8.5-dev.40 → **v1.0.0**
+此後 dev branch code **不再修改**。所有 ship 工作都是「部署」動作，不 bump 版號（除非 ship 後發現 bug 需要 hotfix，另開 v1.0.1）。
+
+## 2026-04-23 v0.8.5-dev.40 [dev] — T-096b 階段 1-4 code merged（等 DELETE + --live）
+- **T-096b code merged**：`wip/T096b-unify-encoder` @ `34d5cd1`（5 commits 乾淨拆分）
+  - 抽 encoder lib：`scripts/gto-pipeline/lib/action-encoder.mjs`（encodeAction + advancePot）
+  - batch-worker.mjs refactor：import lib（byte-identical 行為）
+  - migrate-gto-postflop-to-v2：LEGACY_CODE_MAP（x/c/f/b33/allin/r/rbig → X/C/F/B33/RAI/R/RBIG）+ gametype `hu_25bb` → `hu_25bb_srp`
+  - migrate-solver-postflop-to-v2：gametype 加 _srp/_3bp/_4bp 後綴 + 改用 libAdvancePot（betFacing 追蹤取代 pot*1.5 heuristic）
+- **Scope 修正**：原派工寫抽 3 個 function（encodeAction/advancePot/pathToActionSeq）— 實際 codebase 只有 2 個。執行者正確判斷 pathToActionSeq 邏輯內嵌 extractSpots 跟 solver tree 耦合深，抽出會破壞 T-097 F-stage 4052 spots 0 dup 驗過結果，不動
+- **Dry-run 預估 3102 rows**（對上舊 T-096 數）：
+  - `hu_25bb_srp`: 6 spots
+  - `cash_6max_100bb_srp`: 2124 nodes（從 3084 拆出）
+  - `cash_6max_100bb_3bp`: 960 nodes（新拆出）
+  - `mtt_9max_40bb_srp`: 12 nodes
+- **為何 DELETE + re-extract 而非 UPDATE**（執行者分析採納）：
+  1. 6max 從單桶 → srp/3bp 雙桶（scenario_slug 重解）
+  2. action code 大小寫改（jsonb 內逐值改超髒）
+  3. pot 追蹤演算法換（betFacing），影響 B{pct} 值 = 影響 PK
+  4. UPDATE 等同 SQL 裡重做 extract — 不如讓 Node script 跑一次乾淨
+- **下一步**：大腦產 DELETE SQL 給用戶貼測試 Dashboard → 通知執行者跑 --live → 驗證單格式 → T-096b 真 Done
+- bump v0.8.5-dev.39 → v0.8.5-dev.40
+
+## 2026-04-23 v0.8.5-dev.39 [dev] — T-097 F-stage PASS + 閉環設計 approved + T-098 可派
+- **T-097 真正 Done**：F-stage 驗證通過 + 2 bug fix merged（`wip/T097-f-stage-fixes` @ `8c19a1c`）
+  - F 驗證跑 1 batch HU 25bb SRP：claim river spot / solver 14.8s / **extract 4052 spots / 0 dup（path-aware PK working）/ upload 成功 / status=done row_count=4052**
+  - 修的 2 bug（都在 T-097 Phase 1 merged code 裡）：
+    - extract ctx street 錯配
+    - encoding 不一致（path string 跟 node_data.aggregated 用不同格式）→ 統一 GTOW UPPERCASE spec（X / B60 / B80 / RAI）
+  - 新 verify helpers：`scripts/gto-pipeline/verify-t097.mjs` + `verify-t097-sample.mjs`（測試 RPC + sample row 格式）
+- **歷史對比（里程碑）**：
+  - T-045 之前：594 rows（role 桶 collapse 丟資訊）
+  - T-097 Phase 1：1544 rows（2.6x dup，encoding 不一致）
+  - T-097 Phase 2：**4052 rows（0 dup，UPPERCASE GTOW spec 對齊）** ← 新基準
+- ⚠ **雙格式 co-exist 警告**（待 T-098 處理 / T-099 前統一）：
+  - 測試 Supabase `gto_solutions` 現 **7154 rows**
+  - T-096 migrate 來：gametype=`hu_25bb` (lowercase) + lowercase action + ev:null
+  - T-097 新跑：gametype=`hu_25bb_srp` (snake_case 加 srp 後綴) + UPPERCASE action + 無 ev 欄位
+  - PK 不撞因 gametype 不同，但 retrieval 邏輯要能查雙格式 or 重跑 T-096 extract 統一
+- **閉環設計 approved**（本次 commit 含）：用戶拍板 Q1-Q5 → 3 入口 + chat 合併 + hybrid + gto_solutions baseline + Bayesian 加權
+  - 新 wiki `exploit-coach-closed-loop-design.md`（spec, approved）
+  - `product-vision-v2.md` P1 區塊升級（6 task 18-29 工作日）
+- **下一步**：可派 T-098 retrieval 改造（含雙格式處理邏輯或建議執行者重跑 T-096 統一）
+- bump v0.8.5-dev.38 → v0.8.5-dev.39
+
+## 2026-04-23 v0.8.5-dev.38 [dev] — T-097 code merge + migration 20260425 已部署測試 Supabase
+- 👉 **2026-04-23 update**：migration `20260425-gto-batch-progress-v2.sql` 用戶手動貼測試 Supabase Dashboard 完成，5 條驗證 (a)-(e) 全通過。T-097 F 驗證階段 unblock，家裡 wip1 執行者可繼續：
+  1. 跑 `node seed-batches.mjs --include-river`（新 schema 重 seed）
+  2. 跑 `node batch-worker.mjs --machine home-main --gametype-filter hu_25bb_srp --max 1`（驗端到端）
+  3. 回報 gto_batch_progress seed count + gto_solutions 新 batch rows
+
+- **T-097 code merge**：執行者家裡 wip1 `wip/T097-pipeline-v2` @ `4ae0a35`（4 commit 拆分乾淨）
+  - `supabase/migrations/20260425-gto-batch-progress-v2.sql`（+212）— DROP 舊 RPC + DROP 舊 progress 表 + 重建 v2 schema + 新 RPC（3 參數）
+  - `scripts/gto-pipeline/scenarios.mjs`（+36/-6）— 加 gametype / depth_bb / preflop_actions
+  - `scripts/gto-pipeline/seed-batches.mjs`（+18/-5）— 產出 gametype-based seed
+  - `scripts/gto-pipeline/batch-worker.mjs`（+220/-114）— pathToRole 4 桶 → encodeAction + advancePot GTOW 編碼完整 path（X/B33/C/R75/F/RAI）；extractSpots 1 row/spot；uploadSpots upsert gto_solutions；CLI 新增 `--gametype-filter` / `--depth-filter`
+- **合併衝突解決**：task-board In Review section 兩邊都保留（T-096 + T-097 各自 details block）
+- ⚠ **T-097 F 驗證階段 BLOCKED**：migration 20260425 未部署（執行者紀律不自己貼 Dashboard）
+  - 大腦本次 commit 不 DROP 舊表（T-098 retrieval fallback 需要 2 週）
+  - 用戶貼 migration SQL 到測試 Supabase Dashboard 後才能解 block
+  - 驗證通過 → 執行者重 seed + 跑 1 個 HU 25bb SRP batch 驗端到端 → T-097 真正 Done
+- **EV 限制記錄**：TexasSolver v0.2.0 無 EV dump（CLI 無 set_dump_ev，JSON 無 ev/equity/value 欄位）→ `node_data.hands` items 只有 `[{action, freq}]`，`solver_config.ev_available: false` 顯式標示，schema jsonb 彈性保留未來 GTOW fill
+- bump v0.8.5-dev.37 → v0.8.5-dev.38
+
+## 2026-04-23 v0.8.5-dev.37 [dev] — T-096 Done + 產品願景 v2 draft + D4 門檻突破
+- **T-096 merge**：執行者士林 `wip/T096-extract-old-to-v2` @ `9192300`
+  - 新 scripts：`migrate-gto-postflop-to-v2.mjs` (+277) + `migrate-solver-postflop-to-v2.mjs` (+452)
+  - **實搬測試 Supabase 結果**：
+    - `gto_postflop` 594 rows → 6 spots (gametype=`hu_25bb`)
+    - `solver_postflop_6max` 325 trees → 3084 nodes (gametype=`cash_6max_100bb`)
+    - `solver_postflop_mtt` 1 tree → 12 nodes (gametype=`mtt_9max_40bb`)
+    - **合計 3102 rows 進 `gto_solutions`，count 驗證全對上**
+  - 🎯 **D4 門檻突破**：測試 Supabase `gto_solutions` 3102 rows > 2K 門檻（lossy 資料但 schema 已驗證可承載）
+  - Lossy 註記（資料層）：
+    - 舊 role 欄位 collapse 了 flop path → `flop_actions`/`turn_actions` 粗估，原 role 保留在 `node_data.source_role` 供 audit
+    - EV 全 null（舊 schema 沒抓；T-097 新 batch 也因 TexasSolver v0.2.0 無 EV dump 仍 null；未來 GTOW fill）
+  - 兩 scripts 支援 dry-run / --live 雙模式（安全）
+- **產品願景 v2 draft**：新 wiki `memory/wiki/product-vision-v2.md`
+  - 基於 2026-04-23 對話整理：pre-launch refactor / 選 A 聚焦改造
+  - 一句話願景：**針對特定對手的剝削助手**（不是 GTO 訓練器）
+  - 核心閉環：建檔 → 牌譜 → range refine → 剝削建議 → 實戰
+  - 砍/淡化/保留清單 + P0/P1/P2 功能 + 10 條非目標
+  - 狀態：draft，等用戶修訂
+- **下一步**：
+  - T-097 執行者（家裡 wip1）繼續做 pipeline 升級
+  - T-097 完成後派 T-098 retrieval 改造（D4 門檻已達，但 T-099 正式部署仍要等 T-098 smoke test 通過）
+  - 用戶看 product-vision-v2 後修訂 → 討論 P0 task 展開
+- bump v0.8.5-dev.36 → v0.8.5-dev.37
+
+## 2026-04-23 v0.8.5-dev.36 [dev] — T-095 Done（Schema v2 表建立測試 Supabase）+ 派 T-096/T-097
+- **T-095 Done**：用戶手動貼 `supabase/migrations/20260424-gto-solutions-v2.sql` 到測試 Supabase SQL Editor Run 成功；4 條驗證查詢全通過
+  - `gto_solutions` 表（9 欄 composite PK + node_data jsonb 含 EV + source metadata）建立
+  - CHECK constraint / RLS authenticated SELECT / 3 個 index（PK + by_scenario + by_source）全建立
+- **解鎖**：T-096（extract 舊資料搬新表）+ T-097（seed-batches + batch-worker + gto_batch_progress schema 升級 + claim_gto_batch RPC 升級，整組 pipeline 升級）可並行派工
+- **下一步**：執行者 session 接單（可多台機器並行 T-096 + T-097，不同 scope 不衝突）
+- 正式 Supabase 部署繼續等 T-099（D4 門檻：測試 2K+ rows + 用戶授權）
+- bump v0.8.5-dev.35 → v0.8.5-dev.36
+
+## 2026-04-23 v0.8.5-dev.35 [dev] — Pipeline 凍結 + T-095 schema v2 migration 產出
+- **用戶決策**：Pipeline 所有工作暫停（T-091 / T-094 / 9MAX-MTT 線 / 等），集中火力完成 Schema v2 重整再追加
+  - 理由：舊 schema 跑出的資料都要 migrate 搬新表，現在跑 T-091 marathon 等於白工
+  - 執行者 T-091 切 ON HOLD，回 detached HEAD 等 Schema v2 完成
+- **T-095 產出**：`supabase/migrations/20260424-gto-solutions-v2.sql`（108 行）
+  - `gto_solutions` 主表（9 欄 composite PK + node_data jsonb 含 EV + source metadata）
+  - CHECK constraint + 2 index + RLS（authenticated SELECT）
+  - 舊表 `gto_postflop` / `solver_postflop_6max` / `solver_postflop_mtt` 保留 2 週 fallback（D3）
+- **task-board**：
+  - 加 Pipeline 凍結公告
+  - T-091 狀態 → ⏸ ON HOLD
+  - T-095 狀態 → ⏳ IN PROGRESS（等用戶貼測試 Supabase Dashboard）
+  - T-097 scope 擴充（併入 seed-batches / gto_batch_progress schema 升級 / claim_gto_batch RPC 升級，整組 pipeline 一起改）
+- **下一步**：用戶貼 T-095 SQL 到測試 Supabase Dashboard → 驗證通過 → 派 T-096（extract 舊資料）+ T-097（pipeline 改造）可並行
+- bump v0.8.5-dev.34 → v0.8.5-dev.35
+
+## 2026-04-23 v0.8.5-dev.34 [dev] — T-045 pipeline 端到端通過 + dedup fix + 派 T-091
+- **T-045 merge**：執行者 `wip/T045-first-real-batch` @ `cf66d4b`
+  - `batch-worker.mjs` uploadRows 進 Supabase chunk loop 前加 Map dedup（first-write-wins on `role|handClass`）+ console log 印 dedup 前後 count
+  - 新 `verify-t045.mjs`（純讀驗證工具）
+  - 實跑：claim 25bb turn batch / solver 17.5s (iter 151, expl 0.34%) / 1878 rows → dedup 594 / upsert 成功 / `gto_batch_progress` status=done row_count=594
+  - 修 2026-04-21 前人發現的 Postgres 42601 `ON CONFLICT DO UPDATE affect row twice` blocker（根因：`pathToRole` 把 solver game tree 多節點 collapse 到同 role bucket → 單 batch `(role, hand_class)` 非 unique）
+- **T-092 長期 A 方案評估依據**：25bb 單 batch 1878→594 ≈ **3.2x dup ratio**，每個 (role, hand_class) 平均 3.2 個 solver tree 節點，dedup 丟 1284 rows flop path 語義資訊；T-091 phased 跑完後大腦評估 role 爆量對 retrieval query 效能再決定 T-092 啟動
+- **T-091 派工**：phased 執行 scope — seed --include-river 全量 + `--stack-filter 13bb` 驗 1 batch；13bb 1040 marathon 另開 T-094
+- **大腦 session 踩坑**：2026-04-23 派 T-045 時漏看 `b59ef4a` diagnose commit → 執行者接單才發現 dedup blocker；以後派 pipeline 類 task 要先 `git log --oneline --all | grep T-xxx` 看歷史 diagnose commits
+- 合併：GTO Wizard 定價 + 戰略評估 wiki（`gto-wizard-pricing-analysis.md`，尚未拍板 [待討論]）
+- bump v0.8.5-dev.33 → v0.8.5-dev.34
+
+## 2026-04-23 v0.8.5-dev.33 [dev] — task-board cleanup
+- **task-board In Review 區整理**：昨日 dev-log 已標 Done 但 task-board In Review 區未清 → 把 T-064 / T-082 / T-085 / T-087 / T-088 / T-089 六個已 merge task 從 In Review 區移到 Done 區，保留 T-046（真正還在 In Review 等決策）
+- **刪 remote 殘留 wip branch 10 個**：`T013-scraping-audit` / `T021-hu40bb-3bp` / `T030-exploit-coach-verify` / `T045-first-real-batch` / `T045b-real-batch` / `T070-villain-persist` / `T072-villain-hand-before-review` / `T073-villain-laozhang-standard` / `T074-mark-test-data` / `T080-quick-analysis-text`（dev-log 都標 Done，branch 是歷史殘留）
+- 純 flow 改動（memory/wiki/task-board.md + src/version.ts bump），無產品 code 變動
+- bump v0.8.5-dev.32 → v0.8.5-dev.33
+
+## 2026-04-22 v0.8.5-dev.32 [dev] — 收工
+- **ES256 JWT verify_jwt 坑（根因）**：用戶部署 T-082 exploit-coach-gtow + T-085 exploit-coach-villain-v2 兩個新 Edge Function 後撞「登入已過期」→ 大腦誤派 T-064 修 client side parent refresh hang → 沒解 → 查 wiki supabase-edge-function-gotchas 坑 1 發現根因是 ES256 verify_jwt 沒關
+- **修法**：Supabase Dashboard → Edge Functions → 該 function → Details/Settings → 關 Verify JWT switch（ES256 project 新 function 默認開著會擋 token）
+- **預防**：wiki supabase-edge-function-gotchas.md 首屏加「新 Edge Function 部署 SOP checklist」，下次部署 new function 前必讀
+- **整批 task 標 Done**（T-082 / T-086 / T-087 / T-088 / T-089 / T-090 / T-064）：
+  - T-082 GTO Wizard 內測上線（需 ECDSA signing + refresh flow 路線確定可行）
+  - T-086 GTOW signing 實作
+  - T-087 villain v2 新流程 production（B/C1/C2/C3/D 6 screens）
+  - T-088 5 issue polish + standalone auth
+  - T-089 standalone auth patch 抄到 gtow-test + villain-v2-test
+  - T-090 測試機主站 iframe 切換到 villain v2 新流程
+  - T-064 parent refresh hang defensive fix（非根因但有防禦價值）
+- **當前測試機主站狀態**：poker-goal-dev.vercel.app/ 進剝削教練 tab = villain v2 新流程（3 入口 B 選擇頁）；正式機未動
+- bump v0.8.5-dev.31 → v0.8.5-dev.32
+
+## 2026-04-22 v0.8.5-dev.31 [dev]
+- **T-064 merge**：執行者交付 `wip/T064-parent-refresh-hang` @ `be39e45`（家裡 wip1，1 檔 +29/-5）
+  - 修法 4 步：
+    1. 新 `timeoutAfter(ms)` helper
+    2. 先 `getSession()` 驗活性（LS 讀，不走網路）；remainingMs > 30_000 → 直接回現有 token 不 refresh
+    3. 過期/即將過期 → `Promise.race<string | null>([refreshSession(), timeoutAfter(2500)])`
+    4. Timeout → fallback 再 `getSession()`（SDK 可能同期已寫入 LS）；仍無 → null
+  - 新 console log：session alive / need refresh / refresh ok / refresh timed out, fallback to getSession
+  - tsc EXIT=0
+- **Fork 獨立 catch-net**：0 改 iframe HTML / Edge Function / supabase client 初始化
+- 解 T-090 ship 後玩家撞「登入已過期」阻擋
+- 整批 task 可結案（T-082/T-085/T-086/T-087/T-088/T-089/T-090 + T-064）
+- bump v0.8.5-dev.30 → v0.8.5-dev.31
+
+## 2026-04-22 v0.8.5-dev.30 [dev]
+- **T-064 派工升級**：T-090 ship 後用戶主站實測撞到 parent refresh hang（結構化 + narrative 快速分析兩邊都「⚠ 登入已過期」）→ 阻擋玩家使用
+- T-064 scope 本來就有（2026-04-21 T-030 衍生），現在加派工日期 + 實測觸發記錄 + 更精細的 scope（先 getSession 驗活性，只有真過期才 refreshSession + race timeout 2500ms）
+- 工時 1-2 hr（小 patch，scope 清楚）
+- 修完 T-082/T-085/T-086/T-087/T-088/T-089/T-090 全批 task 都可以真正驗完結案
+- bump v0.8.5-dev.29 → v0.8.5-dev.30
+
+## 2026-04-22 v0.8.5-dev.29 [dev]
+- **T-090 merge**：執行者交付 `wip/T090-exploit-coach-tab-iframe-switch` @ `3571830`（家裡 wip1，2 檔 +15/-1）
+  - `src/tabs/ExploitCoachTab.tsx:68` 改 iframe src：`/exploit-coach-mockup-v3.html` → `/exploit-coach-villain-v2-flow.html`
+  - 原 request-supabase-refresh postMessage listener 保留（villain-v2-flow IS_STANDALONE=false 走 askParentRefresh path，同 mockup-v3 機制）
+  - tsc EXIT=0
+- **測試機主站玩家進剝削教練 tab 直接看到新流程**（push dev 後 Vercel 自動部署）
+- mockup-v3.html 保留作 fallback / rollback 用
+- **正式機保持舊流程**（main branch 未 push，正式玩家不受影響）
+- 執行者備忘：T-086 test-gtow-flow.mjs preflop_actions 修正 stash 是 stale（大腦已 commit `e072c05`），不用 cherry-pick
+- bump v0.8.5-dev.28 → v0.8.5-dev.29
+
+## 2026-04-22 v0.8.5-dev.28 [dev]
+- **T-089 merge**：執行者交付 `wip/T089-standalone-auth-fix` @ `76ae9c6`（家裡 wip1，2 檔各 +22/-6 + task-board）
+  - 抄 T-088 三段 patch（IS_STANDALONE 旗標 + supabase client 條件式 persistSession/autoRefreshToken + getFreshAccessTokenStandalone）到：
+    - `public/exploit-coach-gtow-test.html` (T-082)
+    - `public/exploit-coach-villain-v2-test.html` (T-085)
+  - getFreshAccessToken 頂部分流，iframe 路徑原封不動
+  - tsc EXIT=0
+- **Fork 獨立 catch-net 通過**：0 改原版 / Edge Function / lib / React app
+- 解 T-082 + T-085 部署後驗證撞登入 bug
+- bump v0.8.5-dev.27 → v0.8.5-dev.28
+
+## 2026-04-22 v0.8.5-dev.27 [dev]
+- **派 T-090**：ExploitCoachTab iframe src 改載 villain-v2-flow.html，讓測試機主站玩家直接看到新流程
+- ⚠ **違反 fork 獨立原則明確授權**：用戶 2026-04-22 說「做 T-090 直接可以在測試機看到內容」 → production-level 取代決策
+- scope 極簡：改 src/tabs/ExploitCoachTab.tsx 1 行 iframe src（從 mockup-v3 → villain-v2-flow）
+- mockup-v3.html 保留作 fallback，不刪
+- **絕不 push main**（正式機玩家保持舊流程直到明確授權）
+- 工時 1-2 hr
+- bump v0.8.5-dev.26 → v0.8.5-dev.27
+
+## 2026-04-22 v0.8.5-dev.26 [dev]
+- T-082 + T-086 部署完成（用戶手動設 Supabase Secrets + 貼合併 Edge Function）
+- 但驗證撞到「需要先登入才能呼叫 AI 教練」 — 跟 T-088 修的 villain-v2-flow.html 同根因（standalone HTML auth code 假設 iframe + parent，window === window.parent → 永遠沒 token）
+- **派 T-089**：抄 T-088 的 IS_STANDALONE + getFreshAccessTokenStandalone patch 到 `exploit-coach-gtow-test.html` (T-082) + `exploit-coach-villain-v2-test.html` (T-085)
+- 工時 1-2 hr（純 copy-paste）
+- bump v0.8.5-dev.25 → v0.8.5-dev.26
+
+## 2026-04-22 v0.8.5-dev.25 [dev]
+- **T-088 merge**：執行者交付 `wip/T088-villain-v2-flow-polish-bugfix` @ `e573edf`（家裡 wip1，1 檔 +178/-34）
+  - **Issue 1 — C2 模板選中高亮**：`sfC2State.activeTemplate` 追蹤，`matchesTemplate()` 偵測 21 key 全吻合才算 active；手動改 % 即清掉；新 `renderTemplateToolbar` helper 共用高亮 UI（✓ + 綠底）
+  - **Issue 2 — C3 4 模板 + 改名**：「載入 baseline」→「載入指定範圍」prefix；GTO / LAG 鬆凶 / TAG 緊凶 / Nit 超緊；新 `sfC3LoadTemplate(name)` 該位置 6 動作一次全套
+  - **Issue 3 — C3 動作互斥**：新 `MUTEX_PAIRS`（CALL↔3BET / CALL_3BET↔4BET）+ `mutexSiblingKey()`；blocked grid 加 ✕ 角標 + tooltip；點灰格 = 從 sibling 移除 + 加 current（搶 hand）；RAISE / CALL_4BET 無 peer 不互斥；跨位置不互斥
+  - **Issue 4 — 命名頁顏色 bug**：`sfPickColor(c)` 切色前先讀 `input.value` 存回 `sfNamePending.name`，避免 renderNameScreen 用舊空值覆寫
+  - **Issue 5 — 登入 bug 核心根因**：flow 是 standalone HTML，但 auth code 假設 iframe + parent；`window === window.parent` → askParentRefresh 秒 resolve null → 永遠沒 token
+    - 修法：`IS_STANDALONE` 旗標；standalone 模式 supabase client 開 `persistSession: true` + `autoRefreshToken: true`；新 `getFreshAccessTokenStandalone()` 用 SDK `auth.getSession()` / `refreshSession()`；iframe 路徑原封不動
+    - 用戶流程：先在主站登入（同 domain）→ 開內測 URL → SDK 自動讀 LS token
+  - tsc EXIT=0
+- **Fork 獨立 catch-net**：純改 villain-v2-flow.html + task-board，0 改原版 / 0 改其他 fork / 0 改 lib
+- **已知限制**：
+  - matchesTemplate 用 === 嚴格比（任一 % 不同就不算 active）
+  - edit mode 後 activeTemplates = {} 按載入會重設整組（預期行為）
+  - villain-v2-test.html (T-085) 同樣 standalone auth bug 沒修，scope 不涵蓋 → 可另開 follow-up T-089 修
+- bump v0.8.5-dev.24 → v0.8.5-dev.25
+
+## 2026-04-22 v0.8.5-dev.24 [dev]
+- T-086 followup（士林本機 E2E 驗證發現的 2 件小事）：
+  - **修 test-gtow-flow.mjs preflop_actions bug**：原本空格分隔 `F F F R2.5 F C F` → GTOW 要 dash 分隔 `F-F-F-R2.5-F-C-F`（士林執行者本機改了讓 E2E 全綠但沒 commit，現大腦補進 origin）
+  - **補 .gitignore**：加 `scripts/dev-tools/.gtow-*.local.*` + `scripts/dev-tools/.merged-*.local.*` 通配，未來執行者放 keypair / merged Edge Function 的本機檔自動忽略
+- T-086 本機驗證 ✅：
+  - Step 1 ECDSA P-256 keypair 生成
+  - Step 2 google-anal-id header 簽名（5 parts, 571 chars）
+  - Step 3 POST `/v1/token/refresh/` HTTP 200 + access token (exp +897s)
+  - Step 4 GET `/v4/solutions/spot-solution/` HTTP 204（auth 通過，場景無解）
+- 待用戶手動 3 步部署（chrome MCP 擋 supabase.com）：
+  - Step A: 設 Supabase Secrets `GTOW_REFRESH_TOKEN` + `GTOW_KEYPAIR_JWK`（值在士林本機 `.local.` 檔）
+  - Step B: 貼合併版 Edge Function（士林本機 `.merged-edge-function.local.ts`，905 行）→ Deploy
+  - Step C: 驗 `https://poker-goal-dev.vercel.app/exploit-coach-gtow-test.html` + 看 logs
+- bump v0.8.5-dev.23 → v0.8.5-dev.24
+
+## 2026-04-22 v0.8.5-dev.23 [dev]
+- **派 T-088**：villain-v2-flow polish + 登入 bug 修（用戶 review T-087 ship 後找出 5 個 issue，全包一個 task）
+- 5 個 issue：
+  - C2 模板選中沒高亮（不知道用哪個）
+  - C3 模板只有 GTO 沒鬆/緊預設範圍 + 「載入 baseline」改名「載入指定範圍」
+  - C3 動作互斥沒擋（同位置 CALL ⊥ 3BET、CALL_3BET ⊥ 4BET）
+  - 命名頁選顏色清空暱稱
+  - 「請教練分析」出現「要前往登入」（debug + 修）
+- scope 嚴格：純改 villain-v2-flow.html，不動其他檔
+- 工時 4-8 hr（5 點看 debug 複雜度）
+- bump v0.8.5-dev.22 → v0.8.5-dev.23
+
+## 2026-04-22 v0.8.5-dev.22 [dev]
+- T-087 villain-v2-flow.html 加 desktop wrapper：max-width 420px + margin auto + 陰影 → 直接開 dev URL desktop 上看像一支 phone mockup 居中
+- 不影響 React app iframe 嵌入（iframe 本身已限寬）
+- 不影響手機（手機 < 420px）
+- 純 CSS 1 行改動
+- 其他內測 URL（villain-v2-test.html / gtow-test.html）未改，等用戶決定要不要也加
+- bump v0.8.5-dev.21 → v0.8.5-dev.22
+
+## 2026-04-22 v0.8.5-dev.21 [dev]
+- **T-087 merge**：執行者交付 `wip/T087-villain-v2-flow` @ `46d14b0`（家裡 wip1，1 新檔 3045 行）
+  - 新 `public/exploit-coach-villain-v2-flow.html`（2800 行 production flow，fork from villain-v2-test.html）
+  - 6 screens：B 選擇頁 / C1 快速問答 7 題 / C2 設定比例（4 頁 × dropdown + 4 模板 GTO/LAG/TAG/Nit）/ C3 詳細範圍（4 頁 × 6 動作 tab × 13×13 grid 0/1）/ 命名 / D 用戶檔案頁（風格摘要 + 21 range 4×6 表 + 動作 tab mini grid + AI 策略 + 編輯/開始分析）
+  - AI 升級按鈕：fetch `exploit-coach-villain-v2` Edge Function（「4 句摘要 + 5 條策略」prompt），用 **深度剝削策略** 標題 split 塞 aiSummary/aiStrategy 並持久化；MVP 免費
+  - 編輯流程：D 「編輯範圍」→ 塞 grids 進 sfC3State → C3 edit → 回 D（AI 結果清空強制重算）
+  - LS namespace 完全隔離：`exploit-coach-villain-v2-flow-villains` + `-conversations`
+  - **Fork 獨立原則 catch-net 通過**：原版 mockup-v3.html / villain-v2-test.html / 所有 Edge Functions / villain-lib.js / src/lib/villainProfile/ 全 0 改動
+  - tsc EXIT=0
+- 依賴：T-085 `exploit-coach-villain-v2` Edge Function 已部署（✅ 2026-04-22 用戶已部署）
+- 內測 URL：`https://poker-goal-dev.vercel.app/exploit-coach-villain-v2-flow.html`（Vercel dev 自動部署）
+- **已知限制**：C3 touch 只支援 tap 無 touchmove；LAG/TAG/Nit 模板用簡單偏移規則；AI 回覆 parser 依賴 **深度剝削策略** 標題 split；grid 變更會清空 AI 結果強制重算
+- bump v0.8.5-dev.20 → v0.8.5-dev.21
+
+## 2026-04-22 v0.8.5-dev.20 [dev]
+- **T-086 merge**：執行者交付 `wip/T086-gtow-signing-flow` @ `342e3d1`（士林電腦 wip1，6 檔 +598/-9）
+  - 新 `supabase/functions/exploit-coach-gtow/gto_signing.ts`（271 行 Deno Web Crypto；generateKeypair / signRefreshRequest / refreshAccessToken / ensureFreshAccessToken + module-scope cache + server time sync）
+  - 改 `supabase/functions/exploit-coach-gtow/index.ts`（+25 行 / -9 行）：移除 `GTO_WIZARD_TOKEN`，改用 `GTOW_REFRESH_TOKEN` + 可選 `GTOW_KEYPAIR_JWK`；retrieveSolverNode 前 `await ensureFreshAccessToken()`
+  - 新 `scripts/dev-tools/test-gtow-flow.mjs`（226 行 Node 18+ E2E 驗證）+ README + .gitignore 加 `.gtow-refresh.local.txt`
+  - **關鍵發現**：Web Crypto ECDSA P-256 sign 已輸出 raw r||s（IEEE P1363），跟 Python `_sign_raw_b64()` decode_dss_signature 後手動 concat 同格式 → **不需 DER 轉換**（task scope 列的 raw vs DER 風險解除）
+  - SPKI export / JWK 格式都對齊 Python 版（base64url no-padding）
+  - **Cache 策略**：scope 方案 B（Edge Function Secret + module-scope in-memory cache，沒做 gtow_tokens migration 表）— cold start 重 refresh 一次是 MVP 可接受代價
+  - **Risk**：USER_AGENT / BUILD_VERSION / APP_UID 鎖定 GTOW 2026-03-23 版本，GTOW 改架構就壞 → log 會噴 HTTP 400 / invalid signature
+- 待用戶：① 取 `localStorage.user_refresh` token；② 跑 `test-gtow-flow.mjs` E2E；③ 設 Supabase Secret `GTOW_REFRESH_TOKEN`（+ 可選 `GTOW_KEYPAIR_JWK`）；④ 手貼 Edge Function 重部署
+- T-082 阻擋解除（待 T-086 部署 → 內測驗證）
+- bump v0.8.5-dev.19 → v0.8.5-dev.20
+
+## 2026-04-22 v0.8.5-dev.19 [dev]
+- ✅ **T-085 真 Done**：用戶部署 `exploit-coach-villain-v2` Edge Function 到測試 Supabase + 驗 dev URL `exploit-coach-villain-v2-test.html` 通過；villain profile v2 21 range 內測上線
+- T-087 執行者開工依賴解除（T-085 Edge Function 已部署 → T-087 production 流程可接到 backend）
+- 純 flow 改動，不觸發測試機驗證
+- bump v0.8.5-dev.18 → v0.8.5-dev.19
+
+## 2026-04-22 v0.8.5-dev.18 [dev]
+- **T-087 scope 升級**：從「純 mockup wireframe」→「production 版接真 Edge Function + ship 測試機」
+  - 新檔 `public/exploit-coach-villain-v2-flow.html`（去 -mockup 後綴）
+  - 接既有 `exploit-coach-villain-v2` Edge Function（T-085 已寫，待用戶部署）
+  - D 頁「升級 AI 版」按鈕真的 fetch Edge Function（內測階段免費，未來改 5 點）
+  - 工時 6-10 hr → 12-18 hr（多了 Edge Function 整合 + AI 升級邏輯）
+  - 取消後續 T-088（不用再做 production 版，T-087 直接是 production）
+- bump v0.8.5-dev.17 → v0.8.5-dev.18
+
+## 2026-04-22 v0.8.5-dev.17 [dev]
+- **派 T-087**：villain v2 新流程 HTML mockup（用戶要重新設計 villain v2 建立流程，取代 T-085 的 21 題傻問）
+- 新流程：B 選擇頁（3 入口：快速問答 / 設定比例 / 詳細範圍）→ C1/C2/C3（每個對應一種輸入方式）→ D 用戶檔案頁（風格摘要 + 21 range 表 + 範圍縮圖 + 編輯）
+- 設計決策（2026-04-22 與用戶 align 完成）：
+  - C2：4 頁，一頁一位置 6 動作 dropdown table
+  - C3：4 頁，一頁一位置 13×13 grid 純 0/1，先載 baseline 模板再改
+  - D：動作 tab 切換顯示 4 位置 mini grid 縮圖
+  - 風格摘要生成（決策 C 折中）：創建時靜態規則生成，D 頁可升級 AI 版（5 點）
+- T-087 = 純前端 wireframe（不接 Edge Function、純 localStorage、共存於 villain-v2-test.html，不取代）
+- 完成後派 T-088 實作 production 版
+- 工時 6-10 hr
+- bump v0.8.5-dev.16 → v0.8.5-dev.17
+
+## 2026-04-22 v0.8.5-dev.16 [dev]
+- 改 CLAUDE.md「程式碼交付」段：大段 code（≥ 50 行 / Edge Function 整檔 / 大 migration）改用「檔案路徑模式」 — 大腦給絕對路徑，用戶自己開檔複製，不再對話貼整檔
+- 小段 (< 50 行) 維持直接貼對話
+- 用戶決議：T-082 + T-085 兩次貼 600+ 行整檔太慢，本地檔案複製比較快
+- bump v0.8.5-dev.15 → v0.8.5-dev.16
+
+## 2026-04-22 v0.8.5-dev.15 [dev]
+- **T-085 merge**：執行者交付 `wip/T085-villain-v2-fork` @ `ebbdc85` (2 新檔, +2,720 行 fork code)
+  - 新 `supabase/functions/exploit-coach-villain-v2/index.ts` (437 行) — fork from exploit-coach 加 villain_profile_summary + villain_name 處理
+  - 新 `public/exploit-coach-villain-v2-test.html` (2,283 行) — fork from mockup-v3 加 sv2-intro/sv2-q/sv2-name screens + 改 endpoint + LS namespace
+  - reuse `src/lib/villainProfile/` + `public/exploit-coach-villain-lib.js` (T-083 留下的)
+  - **Fork 獨立原則 catch-net 通過**：原版 `exploit-coach/index.ts` + `mockup-v3.html` + `exploit-coach-gtow/` 全 0 改動
+  - tsc EXIT=0
+- 待大腦：產 Edge Function 整檔貼碼指令給用戶部署 `exploit-coach-villain-v2` 到測試 Supabase
+- bump v0.8.5-dev.14 → v0.8.5-dev.15
+
+## 2026-04-22 v0.8.5-dev.14 [dev]
+- **救 T-082**：用戶質疑「別人能做為什麼我們不能」 → 大腦認真讀 ai-poker-wizard 完整 code（之前只讀 README + partial summary，沒看 chrome-extension/ + scripts/gto_signing.py + scripts/gto_token.py）→ 確認 server-side 整合**可行**：對方用「自生 ECDSA keypair → 註冊給 server」繞 non-extractable，只有 token refresh 要簽，spot-solution 用 Bearer + origin 即可
+- **執行者反爬分析有對有錯**：ECDSA 簽名是真的，但執行者結論「server-side 簽不了」錯 — 沒研究對方完整解法就斷言不行
+- **大腦失職記錄**：第一次看執行者結論直接接受，差點廢掉 T-082；用戶質疑後才回頭認真看對方 code
+- **派 T-086**：exploit-coach-gtow ECDSA P-256 signing + token refresh flow（Deno Web Crypto API + 對方 Python `gto_signing.py` 邏輯重寫），工時 12-22 hr
+- **改寫 wiki [[gtow-api-reverse-eng]]**：從「廢棄根因」改成「完整解法 + T-086 實作清單」+ 警告未來大腦先看對方解法再下結論
+- **task-board T-082 標記改**：從「Cancelled」→「Blocked 待 T-086」
+- **memory/index.md 更新** wiki 描述
+- 兩個 task 並行：T-085 villain v2 fork（已派 commit `80a13ce`）+ T-086（救 T-082）
+- bump v0.8.5-dev.13 → v0.8.5-dev.14
+
+## 2026-04-22 v0.8.5-dev.13 [dev]
+- **⚠ T-083 partial revert**：用戶指出 T-083 違反「fork 獨立」原則 — 改了原版正式入口檔（mockup-v3.html 刪老張+改建立新對手按鈕為 v2 流程；exploit-coach Edge Function 加 villain_profile_summary）。原版 = Vercel dev 自動部署 = 影響測試機玩家。
+- **Revert 範圍**：
+  - 還原 `public/exploit-coach-mockup-v3.html` 為 T-083 merge 前狀態（從 b11117f 撈）
+  - 還原 `supabase/functions/exploit-coach/index.ts` 為 T-083 merge 前狀態
+  - **保留** `src/lib/villainProfile/` 7 個 TS 檔 + `public/exploit-coach-villain-lib.js`（給 T-085 reuse）
+  - **保留** `memory/wiki/villain-profile-design.md` §11 v2 鎖定規格
+- **新規則進專案 CLAUDE.md**：「內測 / 實驗性改動：fork 獨立原則」(跨 session 硬規則) — 強制所有實驗性改動 fork 獨立 endpoint，原版不動 + 大腦 merge 前 catch-net + push dev 是大腦獨佔權限
+- **派工 T-085**：villain v2 fork 版（獨立 mockup `exploit-coach-villain-v2-test.html` + 獨立 Edge Function `exploit-coach-villain-v2`），lib reuse T-083 留下的，工時 6-10 hr
+- 教訓記錄：大腦寫 T-083 派工 scope 時用「取代現有」「整合到既有流程」字眼，沒套 T-082 已確立的 fork 模式 — 「換資料源」直覺套 fork，「升級功能」直覺當 production patch，下次大腦要把所有實驗性改動都當 fork
+- bump v0.8.5-dev.12 → v0.8.5-dev.13
+
+## 2026-04-22 v0.8.5-dev.12 [dev]
+- **T-084 merge**：執行者交付 `wip/T084-gtow-token-grabber` (3cbdfa6, 5 檔, +308 行)，士林電腦 worktree poker-mentor-wip1
+  - 新 `scripts/dev-tools/grab-gtow-token.mjs` — Playwright CDP 連 port 9222 監聽 api.gtowizard.com 抓 Bearer token，stdout only（--save flag opt-in 寫檔）
+  - 新 `scripts/dev-tools/package.json` — 獨立 playwright-core，**不污染 main deps**
+  - 新 `scripts/dev-tools/README.md` — Windows/Mac/Linux Chrome 啟動指令 + troubleshooting
+  - 改 `.gitignore` — 加 `.gtow-token.local.txt` + `scripts/dev-tools/node_modules/`
+  - 未動 src / supabase（純 dev tooling）
+- 待用戶實機驗 token grabber：`cd scripts/dev-tools && npm install` → 開 Chrome 帶 `--remote-debugging-port=9222` → 登 GTOW → `node grab-gtow-token.mjs`
+- 解開 T-084 部署阻擋後，T-082 Edge Function 可以正式驗證
+- bump v0.8.5-dev.11 → v0.8.5-dev.12
+
+## 2026-04-22 v0.8.5-dev.11 [dev]
+- **T-083 merge**：執行者交付 `wip/T083-villain-profile-v2-mvp` (5 commits, 12 files, +1561 行)
+  - design doc §11 v2 鎖定規格（補完 hand index、grid % 選項、baseline 套用、summarizer 規則）
+  - 新 `src/lib/villainProfile/` 7 個 TS 檔（types/ranges/storage/baseline/summarizer/builder/index）
+  - 新 `public/exploit-coach-villain-lib.js`（mockup 用 vanilla JS port，含 12 baseline ranges）
+  - 改 `public/exploit-coach-mockup-v3.html` — 加 sv2-intro / sv2-q（21 題動態渲染）/ sv2-name screens
+  - 改 `supabase/functions/exploit-coach/index.ts` (+18 行) — 加 `villain_profile_summary` + `villain_name`，buildSystemPrompt 優先用 v2 (backwards-compatible，舊 villain_type fallback 保留)
+  - tsc EXIT=0；preview 端到端驗證 pass：21 題 → save → v2 profile 持久化 → buildCoachContext 977 字 villain_profile_summary 含具體 GTO diff
+- **執行者誤刪 T-084 派工**：解 conflict 時恢復（執行者 wip 從 df0995c 切，沒帶 dcc5682 / b11117f 兩個後續 commit）
+- 待大腦：產 Edge Function 整檔貼碼指令給用戶部署到測試 Supabase
+- bump v0.8.5-dev.10 → v0.8.5-dev.11
+
+## 2026-04-22 v0.8.5-dev.10 [dev]
+- 修 `scripts/session-sync.sh` 兩個常見坑：
+  - **自動偵測子目錄**：cwd 非 git repo 時自動找 `poker-mentor` / `gto-poker-trainer*` 子目錄並 cd 進去（解士林電腦 cwd `POKERNEW` 上層問題）
+  - **wip branch 提示 dev 已更新**：當前在 `wip/*` branch 且 origin/dev 比 wip 新時，明確告知「task-board / dev-log 不是最新」+ 給切 dev / 開新 wip 指令
+- 用戶 CLAUDE.md（user-level，不在 repo）加：各機器 cwd 對照表 + 士林電腦執行者 cwd `C:\Users\User\POKERNEW\poker-mentor` 快捷
+- 根因記錄：2026-04-22 士林電腦執行者在 POKERNEW 上層開 Claude → SessionStart hook 跳過 sync → cd 進子目錄後看到 wip/T080 老 branch 的 dev-log，誤以為 dev 還停在 v0.8.4
+- 純 flow 改動，不觸發測試機驗證
+
+## 2026-04-22 v0.8.5-dev.9 [dev]
+- 派工 **T-084**：GTO Wizard Token Grabber Script（士林電腦執行者，優先序：先做 T-084 解 T-082 部署阻擋 → 再回 T-083）
+- 用 Playwright + Chrome remote debugging port 連已開的 Chrome → 抓 GTOW API 請求的 Authorization Bearer token → 印 console（用戶複製貼 Supabase Secret）
+- scope 嚴格：純 dev tooling、不污染 main package.json、不自動 set Supabase secret、不做 Chrome Extension（留 phase 2）、不批次撈 GTOW 資料（ToS）
+- 工時 4-8 hr
+- bump v0.8.5-dev.8 → v0.8.5-dev.9
+
+## 2026-04-22 v0.8.5-dev.8 [dev]
+- **T-082 merge**：執行者交付 `wip/T082-exploit-coach-gtow-test` @ `4aa445d`（2 新檔，0 改原檔）
+  - 新 `supabase/functions/exploit-coach-gtow/index.ts`（619 行 fork）— 只換 `retrieveSolverNode` 為 GTOW API call，prompt / TERMINOLOGY_RULES / Claude / auth / log 完整保留
+  - 新 `public/exploit-coach-gtow-test.html`（2047 行 fork）— 5 處 diff（title / 內測橫幅 / 2 LS namespace / fetch endpoint）
+  - GTOW 整合：Bearer token + origin header、204/403 graceful、raw response truncated 3000 chars
+  - tsc EXIT=0
+  - **待用戶**：設測試 Supabase Secret `GTO_WIZARD_TOKEN` + 貼 Edge Function 到 Dashboard + 驗 dev URL
+- T-083 scope 更新：design v2 補完併入執行者 scope（用戶決定不大腦自做），工時 26-32 hr → 30-38 hr
+- bump v0.8.5-dev.7 → v0.8.5-dev.8
+
+## 2026-04-22 v0.8.5-dev.7 [dev]
+- 新 wiki [[villain-profile-design]] — villain profile v2 系統設計（v1 草案）
+  - 4 位置 group（前/中/後/盲注）× 6 動作（RAISE/跟注/3BET/跟3BET/4BET/跟4BET），前位砍 3 個邏輯不存在的 = **21 grid**
+  - 三種輸入：問卷（升級版）/ 數字比例（21 grid 各一題選擇題）/ 13×13 grid 拉
+  - schema、baseline 套用、LLM summarizer 設計完成；完整題目+選項 v2 補完
+- 派工 **T-083**：villain profile v2 MVP（最小範圍跑通端到端）
+  - scope：21 grid schema + localStorage + **數字比例輸入** + baseline 套用（手寫 26 ranges）+ summarizer v1 + Edge Function 改造
+  - 不做：13×13 grid 拉 / 問卷升級 / pd 16k baseline / template 庫 / 雲端同步 / 編輯模式
+  - 工時 26-32 hr（3-4 工作天）
+- memory/index.md 加索引
+- 純 flow 改動，不觸發測試機驗證
+
+## 2026-04-22 v0.8.5-dev.6 [dev]
+- 新 wiki [[prompt-cache-strategy]] — exploit-coach 省 LLM 錢策略記錄（5min cache + keep-warm cron → ~100% hit，省 80% input 成本）
+- idea 階段未實裝，量達 1k+/月或升 Sonnet/Opus 時優先做；分 Task A（cache 化）+ Task B（keep-warm cron）兩步
+- memory/index.md 加索引
+- 純 flow 改動，不觸發測試機驗證
+
+## 2026-04-22 v0.8.5-dev.5 [dev]
+- 派工 **T-082**：exploit-coach 內測版（fork + retrieval 換 GTO Wizard API），驗證「資料源差別」對教練品質影響
+- A/B 對照玩法：A 邊 = 正式機原版（own retrieval），B 邊 = `poker-goal-dev` 獨立內測 URL（GTOW retrieval），**用戶手動兩邊各問同一問題 → 肉眼比答案差異**（不做同頁並排 UI，兩環境完全隔離）
+- scope 嚴格：fork 不改原版、不寫 DB / 不 cache GTOW、不上線、不做 ICM、團隊 token 不貼對話、不部署正式 Supabase
+- 參考：研究 ai-poker-wizard repo（`gto_api.py` GTOW API 模式）
+- 純 flow 改動（task-board + version.ts），不觸發測試機驗證
+
+## 2026-04-22 v0.8.5-dev.4 [dev]
+- T-071 task-board cleanup：In Review 區條目移除 + Queue placeholder 標 Done（code 早已 merge @ 937c07e + bump v0.8.3-dev.4 `d2b8c31`，隨 v0.8.4/v0.8.5 上線）
+- 刪 remote wip branch `wip/T071-chat-history-persist`
+- 純 flow 改動（memory/ + version.ts），不觸發測試機驗證
+
+## 2026-04-22 v0.8.5-dev.3 [dev]
+- ✅ **v0.8.5 正式機部署完成**：繞過 Vercel webhook silent drop，用 CLI prebuilt+tgz 推上 `dpl_2mrSemknaAJz3Y6iZPJQxiF6vcJc`
+- ✅ **T-080 真 Done**：正式 Supabase `qaiwsocjwkjrmyzawabt` Edge Function 已部署（用戶手貼 Dashboard）
+- Vercel webhook silent drop 根因未 100% 確認（Hobby plan 無 delivery log），繞過路徑 + Redeploy 行為糾正 + CLI 完整工作流寫入新 wiki [[vercel-deployment-troubleshooting]]
+- task-board T-080 尾巴清（從「待部署」→「真 Done 2026-04-22」）
+- memory/index.md 加新 wiki 索引
+- 純 flow 改動（memory/），不觸發測試機驗證
+
+## 2026-04-21 v0.8.5-dev.2 [dev]
+- `.gitignore` 加 `.vercel`（vercel link 自動產的 `.vercel/` 目錄不進 repo）
+- context：為了繞過 Vercel webhook 斷線，嘗試 `npx vercel --prod` CLI 推正式機
+- CLI 散裝 upload 命中 free tier 5000 req/24h 上限 → 失敗；需等 24h 或改走 Deploy Hook
+- Vercel CLI 已登入 + link 到 `alphaxe-3842s-projects/poker-goal`（link 產物已 ignore）
+
+## 2026-04-21 v0.8.5-dev.1 [dev]
+- merge wip/T075-mtt-preflop-from-pd @ 4d40f27：T-075 Phase 1（Course 205 tables → preflop range module）
+- 新檔 `scripts/gto-pipeline/mtt_9max_ranges.mjs`（40 KB，110 distinct entries）
+- 新檔 `scripts/gto-pipeline/build-mtt-ranges.mjs`（5 KB builder，可 node 重跑）
+- `scripts/gto-pipeline/scenarios.mjs` re-export COURSE_RANGES + COURSE_RANGES_META（含語義 caveat 註解，不自動生 scenarios）
+- 語義 caveat：parser `scenario` tag 是 token-based heuristic，與 pd 實際語義可能不一致；Phase 1 只暴露 raw ranges，不自動產 9-max MTT scenarios（避免語義錯誤傳 solver）
+- 開發流程類（scripts/gto-pipeline/），不影響 Vercel build，不需測試機 curl 驗證
+- T-076 未開工（依賴 T-075 Phase 1 的 ranges）
+
+## 2026-04-21 [收工狀態] 士林下班 — 換電腦接續
+**今日成果**：5 個版本 ship（v0.8.1 → v0.8.2 → v0.8.3 → v0.8.4 → v0.8.5）
+
+**Task 狀態**：
+- ✅ Done：T-013 / T-021 / T-030 / T-046 / T-062 / T-063 / T-064(defense)(原 T-030 follow-up)/ T-070 / T-071 / T-072 / T-073 / T-074 / T-075 Phase 0 / T-080
+- 🔨 派工中 Queue：T-075 Phase 1（只做 Course 205 tables）
+- 📥 Queue 未派：T-076（MTT postflop solver，依賴 T-075）
+
+**⚠ 未完成收尾事項**（回來續做）：
+
+1. **Vercel webhook 斷線** — 正式機 v0.8.5 卡在 v0.8.3
+   - Git remote main 已是 d022317 + empty commit 6891c6c
+   - Vercel 沒觸發 build，GitHub push 不 trigger webhook
+   - 臨時解法：去 Vercel dashboard `poker-goal` 最新 deployment 點 `...` → **Redeploy**
+   - 根因診斷：Vercel Usage / GitHub webhook status / Vercel Git integration 要查
+   - dev 也同樣狀況（但剛 empty commit 後有動了一次，可能間歇）
+
+2. **正式 Supabase Edge Function 未部署 v0.8.5**
+   - 正式 `qaiwsocjwkjrmyzawabt` 還是 v0.8.4 的 prompt
+   - 用戶要貼本地 `supabase/functions/exploit-coach/index.ts` 整檔到 Dashboard：
+     - https://supabase.com/dashboard/project/qaiwsocjwkjrmyzawabt/functions/exploit-coach/code
+   - 貼碼順序：Ctrl+A Delete → 從本地檔 Ctrl+C/V → Deploy
+   - Deploy 完打開 https://poker-goal.vercel.app/ 實機驗 T-080 快速分析 + 禁詞
+
+3. **T-075 Phase 1 派工中但還沒執行者接**
+   - scope：只處理 Course project 205 auto-parseable tables
+   - 開工指令已在對話中（「執行者接 T-075 Phase 1」那段）
+   - 回家後士林 wip1 或家裡執行者可接
+
+4. **dev 版本**：v0.8.5（已 ship）
+   - 下個開發循環應 bump 到 v0.8.5-dev.1 起算
+
 ## 2026-04-21 v0.8.5 [ship]
 - 🚀 v0.8.4 → v0.8.5 正式
 - 內容（CHANGELOG.md v0.8.5）：
