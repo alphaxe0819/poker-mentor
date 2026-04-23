@@ -5,6 +5,31 @@
 
 ---
 
+## 2026-04-23 v0.8.5-dev.37 [dev] — T-096 Done + 產品願景 v2 draft + D4 門檻突破
+- **T-096 merge**：執行者士林 `wip/T096-extract-old-to-v2` @ `9192300`
+  - 新 scripts：`migrate-gto-postflop-to-v2.mjs` (+277) + `migrate-solver-postflop-to-v2.mjs` (+452)
+  - **實搬測試 Supabase 結果**：
+    - `gto_postflop` 594 rows → 6 spots (gametype=`hu_25bb`)
+    - `solver_postflop_6max` 325 trees → 3084 nodes (gametype=`cash_6max_100bb`)
+    - `solver_postflop_mtt` 1 tree → 12 nodes (gametype=`mtt_9max_40bb`)
+    - **合計 3102 rows 進 `gto_solutions`，count 驗證全對上**
+  - 🎯 **D4 門檻突破**：測試 Supabase `gto_solutions` 3102 rows > 2K 門檻（lossy 資料但 schema 已驗證可承載）
+  - Lossy 註記（資料層）：
+    - 舊 role 欄位 collapse 了 flop path → `flop_actions`/`turn_actions` 粗估，原 role 保留在 `node_data.source_role` 供 audit
+    - EV 全 null（舊 schema 沒抓；T-097 新 batch 也因 TexasSolver v0.2.0 無 EV dump 仍 null；未來 GTOW fill）
+  - 兩 scripts 支援 dry-run / --live 雙模式（安全）
+- **產品願景 v2 draft**：新 wiki `memory/wiki/product-vision-v2.md`
+  - 基於 2026-04-23 對話整理：pre-launch refactor / 選 A 聚焦改造
+  - 一句話願景：**針對特定對手的剝削助手**（不是 GTO 訓練器）
+  - 核心閉環：建檔 → 牌譜 → range refine → 剝削建議 → 實戰
+  - 砍/淡化/保留清單 + P0/P1/P2 功能 + 10 條非目標
+  - 狀態：draft，等用戶修訂
+- **下一步**：
+  - T-097 執行者（家裡 wip1）繼續做 pipeline 升級
+  - T-097 完成後派 T-098 retrieval 改造（D4 門檻已達，但 T-099 正式部署仍要等 T-098 smoke test 通過）
+  - 用戶看 product-vision-v2 後修訂 → 討論 P0 task 展開
+- bump v0.8.5-dev.36 → v0.8.5-dev.37
+
 ## 2026-04-23 v0.8.5-dev.36 [dev] — T-095 Done（Schema v2 表建立測試 Supabase）+ 派 T-096/T-097
 - **T-095 Done**：用戶手動貼 `supabase/migrations/20260424-gto-solutions-v2.sql` 到測試 Supabase SQL Editor Run 成功；4 條驗證查詢全通過
   - `gto_solutions` 表（9 欄 composite PK + node_data jsonb 含 EV + source metadata）建立
