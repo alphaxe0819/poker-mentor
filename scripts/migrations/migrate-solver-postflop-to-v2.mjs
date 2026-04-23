@@ -21,6 +21,8 @@ import { createClient } from '@supabase/supabase-js'
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+// T-096b：改用共用 encoder lib（與 batch-worker.mjs 同一份）
+import { encodeAction as libEncodeAction, advancePot as libAdvancePot } from '../gto-pipeline/lib/action-encoder.mjs'
 
 // ── .env ──
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -111,7 +113,8 @@ function parseScenarioSlug(slug, matchup) {
     let preflop = 'R2.5-C'
     if (potType === '3bp') preflop = 'R2.5-R8-C'
     if (potType === '4bp') preflop = 'R2.5-R8-R22-C'
-    return { gametype: `hu_${depth}bb`, depth_bb: depth, preflop_actions: preflop }
+    // T-096b：加 pot_type 後綴對齊 T-097 gametype（hu_25bb_srp / hu_40bb_3bp 等）
+    return { gametype: `hu_${depth}bb_${potType}`, depth_bb: depth, preflop_actions: preflop }
   }
 
   // 6max SRP：6max_100bb_srp_{opener}_open_{caller}_call
@@ -119,7 +122,7 @@ function parseScenarioSlug(slug, matchup) {
   if (m) {
     const depth = parseInt(m[1], 10)
     const preflop = buildPreflopActions('6max', 'srp', m[2], m[3]) || 'R2.5-C'
-    return { gametype: `cash_6max_${depth}bb`, depth_bb: depth, preflop_actions: preflop }
+    return { gametype: `cash_6max_${depth}bb_srp`, depth_bb: depth, preflop_actions: preflop }
   }
 
   // 6max 3BP：6max_100bb_3bp_{opener}_open_{3better}_3b
@@ -127,7 +130,7 @@ function parseScenarioSlug(slug, matchup) {
   if (m) {
     const depth = parseInt(m[1], 10)
     const preflop = buildPreflopActions('6max', '3bp', m[2], m[3]) || 'R2.5-R8'
-    return { gametype: `cash_6max_${depth}bb`, depth_bb: depth, preflop_actions: preflop }
+    return { gametype: `cash_6max_${depth}bb_3bp`, depth_bb: depth, preflop_actions: preflop }
   }
 
   // 9max SRP：9max_{depth}bb_srp_{ip}_vs_bb
@@ -135,7 +138,7 @@ function parseScenarioSlug(slug, matchup) {
   if (m) {
     const depth = parseInt(m[1], 10)
     const preflop = buildPreflopActions('9max', 'srp', m[2], m[3]) || 'R2.2-C'
-    return { gametype: `mtt_9max_${depth}bb`, depth_bb: depth, preflop_actions: preflop }
+    return { gametype: `mtt_9max_${depth}bb_srp`, depth_bb: depth, preflop_actions: preflop }
   }
 
   // MTT：mtt_{depth}bb_srp_btn_open_bb_call 等
@@ -143,7 +146,7 @@ function parseScenarioSlug(slug, matchup) {
   if (m) {
     const depth = parseInt(m[1], 10)
     const preflop = buildPreflopActions('9max', 'srp', m[2], m[3]) || 'R2.2-C'
-    return { gametype: `mtt_9max_${depth}bb`, depth_bb: depth, preflop_actions: preflop }
+    return { gametype: `mtt_9max_${depth}bb_srp`, depth_bb: depth, preflop_actions: preflop }
   }
 
   // Fallback：無法 parse 的直接塞 raw slug 當 gametype（不丟資料）
@@ -155,28 +158,12 @@ function parseScenarioSlug(slug, matchup) {
   }
 }
 
-// ── Solver action 字串 → GTOW 編碼 ──
-// 'CHECK' → 'X', 'CALL' → 'C', 'FOLD' → 'F'
-// 'BET 1.5' → B{round(1.5/pot*100)}, 'RAISE 4.0' → R{round(4.0/pot*100)}
-// potBefore = 該動作發生前的 pot size (bb)
-function encodeAction(rawKey, potBefore) {
-  if (rawKey === 'CHECK') return 'X'
-  if (rawKey === 'CALL') return 'C'
-  if (rawKey === 'FOLD') return 'F'
-  const mBet = rawKey.match(/^BET\s+([\d.]+)$/)
-  if (mBet) {
-    const amt = parseFloat(mBet[1])
-    const pct = Math.round((amt / potBefore) * 100)
-    // allin 判定留給 caller（需 effective_stack）
-    return `B${pct}`
-  }
-  const mRaise = rawKey.match(/^RAISE\s+([\d.]+)$/)
-  if (mRaise) {
-    const amt = parseFloat(mRaise[1])
-    const pct = Math.round((amt / potBefore) * 100)
-    return `R${pct}`
-  }
-  return null   // 非 action key（可能是 deal_card）
+// T-096b：encode / advancePot 全用 lib/action-encoder.mjs（libEncodeAction / libAdvancePot）
+// 本檔保留 `isActionKey` wrapper 判斷「可編碼的 action key」與「card deal key」
+function isActionKey(key) {
+  if (typeof key !== 'string') return false
+  if (key === 'CHECK' || key === 'CALL' || key === 'FOLD') return true
+  return /^(BET|RAISE)\s+[\d.]+$/.test(key)
 }
 
 // 2-char card key 判定：'Kh' / '2c' / 'Tc' 等
@@ -201,7 +188,7 @@ function walkTree(node, state, effStack, ctx, emit) {
       for (let i = 0; i < actions.length; i++) {
         const f = Array.isArray(freqs) ? freqs[i] : null
         if (f == null || f < 0.01) continue   // 丟 <1% 噪音
-        const encoded = encodeActionForHand(actions[i], state.pot, effStack)
+        const encoded = libEncodeAction(actions[i], state.pot, effStack)
         entries.push({ action: encoded, freq: Math.round(f * 10000) / 10000, ev: null })
       }
       if (entries.length > 0) hands[hand] = entries
@@ -223,9 +210,9 @@ function walkTree(node, state, effStack, ctx, emit) {
   // 遞迴 children
   if (!node.children) return
   for (const [childKey, childNode] of Object.entries(node.children)) {
-    // Card deal（進下一街）
+    // Card deal（進下一街；新街 betFacing 重設為 0）
     if (isCardKey(childKey)) {
-      const newState = { ...state }
+      const newState = { ...state, betFacing: 0 }
       if (state.street === 'flop') {
         newState.turn_card = childKey
         newState.street = 'turn'
@@ -237,57 +224,31 @@ function walkTree(node, state, effStack, ctx, emit) {
       continue
     }
 
-    // Action（append 到當前街的 actions，更新 pot）
-    const encoded = encodeAction(childKey, state.pot)
-    if (encoded == null) {
-      // 未知 key → 略過（不動 state）
+    // Action（append 到當前街的 actions，更新 pot + betFacing via lib）
+    if (!isActionKey(childKey)) {
+      // 未知 key → 略過（不動 state），繼續 walk child
       walkTree(childNode, state, effStack, ctx, emit)
       continue
     }
+    const encoded = libEncodeAction(childKey, state.pot, effStack)
 
-    const newState = { ...state }
     const fieldMap = {
       flop: 'flop_actions',
       turn: 'turn_actions',
       river: 'river_actions',
     }
     const field = fieldMap[state.street]
+    const newState = { ...state }
     newState[field] = state[field] ? `${state[field]}-${encoded}` : encoded
 
-    // 更新 pot（BET X / RAISE X → 加上 X；CALL → 假設跟注到最後 bet；CHECK/FOLD → 不動）
-    const mBet = childKey.match(/^BET\s+([\d.]+)$/)
-    const mRaise = childKey.match(/^RAISE\s+([\d.]+)$/)
-    if (mBet) {
-      newState.pot = state.pot + parseFloat(mBet[1])
-    } else if (mRaise) {
-      newState.pot = state.pot + parseFloat(mRaise[1])
-    } else if (childKey === 'CALL') {
-      // 粗估：pot 再加一份最後 bet size（從父 node 推不到準確，簡化）
-      newState.pot = state.pot * 1.5
-    }
+    // 用 libAdvancePot（與 batch-worker extractSpots 同一份 pot 模型）
+    const { pot: newPot, betFacing: newBetFacing } =
+      libAdvancePot(state.pot, state.betFacing ?? 0, childKey)
+    newState.pot = newPot
+    newState.betFacing = newBetFacing
 
     walkTree(childNode, newState, effStack, ctx, emit)
   }
-}
-
-// 單 hand 的 action encoding（pot-relative，含 allin 檢測）
-function encodeActionForHand(rawAction, potBefore, effStack) {
-  if (rawAction === 'CHECK') return 'X'
-  if (rawAction === 'CALL') return 'C'
-  if (rawAction === 'FOLD') return 'F'
-  const mBet = rawAction.match(/^BET\s+([\d.]+)$/)
-  if (mBet) {
-    const amt = parseFloat(mBet[1])
-    if (effStack && amt >= effStack * 0.95) return 'RAI'
-    return `B${Math.round((amt / potBefore) * 100)}`
-  }
-  const mRaise = rawAction.match(/^RAISE\s+([\d.]+)$/)
-  if (mRaise) {
-    const amt = parseFloat(mRaise[1])
-    if (effStack && amt >= effStack * 0.95) return 'RAI'
-    return `R${Math.round((amt / potBefore) * 100)}`
-  }
-  return rawAction
 }
 
 // ── Main ──
@@ -316,6 +277,7 @@ async function migrateTable(tableName) {
       river_card: '',
       river_actions: '',
       pot: Number(row.pot_bb),
+      betFacing: 0,                // T-096b：libAdvancePot 需要此 state
       street: 'flop',
     }
     const ctx = {
@@ -430,8 +392,8 @@ async function main() {
     return
   }
 
-  // Count 驗證（分 gametype 對照 dry-run 統計）
-  for (const gt of ['cash_6max_100bb', 'mtt_9max_40bb']) {
+  // Count 驗證（分 gametype 對照 dry-run 統計；T-096b _srp/_3bp 後綴）
+  for (const gt of ['cash_6max_100bb_srp', 'cash_6max_100bb_3bp', 'mtt_9max_40bb_srp']) {
     const { count, error: cntErr } = await supabase
       .from('gto_solutions')
       .select('*', { count: 'exact', head: true })
