@@ -12,7 +12,8 @@
 
 - [[hu-simulator]] — HU 模擬器開發流程：smoke test、已知 bug、GTO 資料、V1/V2 架構
 - [[ui-v2-rules]] — V2 UI 設計規則：牌面樣式、版面結構、HU 換手 UX
-- [[deployment-state]] — Supabase Edge Functions / DB Tables / RPC / Vercel 基礎設施狀態
+- [[database-architecture]] — DB 架構總覽（table 設計意圖 / 兩套 postflop schema 混亂說明 / 資料流圖 / 7 大已知問題 / migration 索引）
+- [[deployment-state]] — Supabase Edge Functions / DB Tables / RPC / Vercel 基礎設施狀態（執行面部署清單，設計說明見 database-architecture）
 - [[supabase-edge-function-gotchas]] — Edge Function 部署坑：ES256 JWT 不被 runtime 支援、Secrets 跨 project 不自動帶、fetch 沒 response.ok check
 - [[vercel-deployment-troubleshooting]] — Vercel webhook silent drop 繞過路徑 + CLI prebuilt+tgz 工作流 + Redeploy 行為糾正（不抓 git HEAD）
 - [[poker-terminology-zh-tw]] — 繁中撲克術語對照表（台灣社群用法）：LLM 教練 system prompt 的術語 grounding，避免 `dominate`→「過度」類直翻
