@@ -897,15 +897,41 @@ updated: 2026-04-23
 <!-- T-043 → Done 2026-04-20 -->
 <!-- T-044 → Done 2026-04-20 -->
 
-- [ ] **T-045** | Pipeline | **真跑 1 個 batch（去掉 --dry-run，完整鏈路）** `(2026-04-23 大腦派工更新 → 家裡電腦執行者，需 TexasSolver binary)`
+- [ ] **T-045** | Pipeline | **真跑 1 個 batch（去掉 --dry-run，含 dedup fix）** `(2026-04-23 大腦派工更新 → 家裡電腦執行者，需 TexasSolver binary)`
   - 建議 branch：`wip/T045-first-real-batch`（從 `origin/dev@cca59f9` 切新，舊 remote branch 已清）
   - **派工背景（2026-04-23）**：用戶拍板 T-046 phased seed 策略（全量 seed river + 先跑 13bb slice 1040 row warm-up）；T-045 先驗 pipeline 端到端，過了大腦派 T-091 做 phased 執行
-  - **建議順序**：先跑 T-045（15-30min 驗 pipeline 通），過了再升級 T-091
-  - 範圍：從 T-043 已 seed 的 390 turn batches 挑 1 個 → TexasSolver 實解 → JSON parse → upload 到 `gto_postflop` → mark done
-  - 前置：TexasSolver 已解壓到 `scripts/gto-pipeline/TexasSolver-v0.2.0-Windows/`（batch-worker 會自動偵測 nested/flat 路徑）
-  - 預估：15-30 min（solver ~10-20 min + upload/verify）
-  - 完成條件：`gto_postflop` 表新增 N 筆 row（一個 turn 節點約 10 roles × 169 hand_class ≈ 1690 row），`gto_batch_progress` 該筆 status=done
-  - 用：`node batch-worker.mjs --machine <機器名> --max 1`（不加 --dry-run）
+  - ⚠️ **已知 BLOCKER（2026-04-21 前人 T-045 實跑發現，`b59ef4a` diagnose commit 完整記錄）**：
+    - 症狀：solver 7 秒跑完 OK / JSON parse 631 rows OK → uploadRows 撞 Postgres `42601: ON CONFLICT DO UPDATE command cannot affect row a second time`
+    - 根因：`pathToRole` 把 solver game tree 多節點 collapse 到同一個 role（btn_bet / bb_facing_bet_mid 等 4 桶）→ 631 rows 只 236 unique (role, hand_class) keys，每 key 2-4x dup → upsert 撞重
+    - 診斷工具：`scripts/gto-pipeline/diagnose-dup.mjs`（前人留下，純分析）
+    - 原 T-064 follow-up 要修這個但後被改派成 parent refresh hang，dedup blocker 孤立至今
+  - **2026-04-23 大腦拍板修法：方案 C first-write-wins**（短期 unblock，長期 T-092 做方案 A 正解）
+    - 在 `uploadRows()` 進 Supabase 前加 Map dedup：key = `${role}|${hand_class}`，first-write-wins（Set 標記已見過的 key，同 key 後續 row 丟棄）
+    - 加 `console.log` 印 dedup 前後 row count（debug 用）
+    - 不改 `pathToRole` / `extractTurnRiverNodes` / schema / downstream query
+  - 範圍：
+    1. **先改 batch-worker.mjs uploadRows 加 dedup**（純 code 改動，tsc check）
+    2. 跑 `node batch-worker.mjs --machine <機器名> --max 1`（不加 `--dry-run`）
+    3. 驗 upload 成功（無 42601）
+    4. 跑 `node diagnose-dup.mjs` 確認 dedup 生效（unique keys = deduped rows）
+    5. 驗 `gto_postflop` 表新增 ~236 row（dedup 後）+ `gto_batch_progress` status=done
+  - 前置：TexasSolver 已解壓到 `scripts/gto-pipeline/TexasSolver-v0.2.0-Windows/`
+  - 預估：20-40 min（dedup patch 5 min + solver 7-15 min + upload/verify）
+  - 執行者紀律：不動 `src/version.ts` / `memory/dev-log.md`
+
+- [ ] **T-092** | Pipeline | **role 分桶根因解（schema + convert-to-db + retrieval 連動改）** `(blocker，等 T-091 phased 跑完有真實 retrieval 資料後評估)`
+  - 建議 branch：`wip/T092-role-path-fidelity`
+  - **背景**：T-045 當前用 C first-write-wins dedup 短期 unblock，但丟了 solver game tree 裡不同語義節點的資訊（例：同 `bb_facing_bet_mid` 可能對應 flop-checked-turn 和 flop-raised-turn 兩條不同路徑）
+  - **修法（方案 A）**：role 納入 path 成分，例：`btn_facing_bet_mid_after_flop_check` / `btn_facing_bet_mid_after_flop_raise`
+  - **連動改**：
+    1. `pathToRole` 改成回傳完整 path + bucket 合成
+    2. `gto_postflop` schema `role` 欄位爆量（估 10x → 幾十種）
+    3. `convert-to-db.mjs` 產出對齊
+    4. client retrieval（`getGTOPostflopFromDB.ts`）要能從 heroHistory 推出正確 path
+    5. `huHeuristics.ts` PostflopRole enum 擴充
+  - **前置**：T-091 phased 執行完成（13bb / 25bb / 40bb 有真實資料），才能評估 role 爆量對 retrieval query 效能的影響
+  - 預估：3-5 hr（schema 改 + backfill 既有 batch + retrieval 對齊）
+  - 執行者紀律：大 scope，跨 pipeline + client，派工前大腦要 brainstorm 細 scope
 
 <!-- T-046 → Done 2026-04-21（code merge @ 9ee0222 estimate-river-seed.mjs dry-run；實測 Turn 390 / River 3120 / Grand 3510 rows < 10k 門檻 → seed 本身 OK；瓶頸在 solver 吞吐 878-1170hr 單機；剩「phased by stack_label 策略 + 真 seed」屬戰略決策，留給用戶後續拍板；remote wip branch 已清） -->
 
