@@ -2,7 +2,7 @@
 name: Task Board
 description: 中央大腦看板 — task 分派 / 執行中 / 審查中 / 已完成；支援 wip branch 雙角色模型
 type: project
-updated: 2026-04-20
+updated: 2026-04-23
 ---
 
 ## 使用規則
@@ -974,207 +974,6 @@ updated: 2026-04-20
 
 ## 👀 In Review（等大腦整合）
 
-- [?] **T-064** | Product | **exploit-coach parent refresh handshake hang 修**
-  - branch: `wip/T064-parent-refresh-hang`（from `origin/dev@a1ae853`）
-  - 機器：家裡 wip1 worktree
-  - 改動：單檔 `src/tabs/ExploitCoachTab.tsx`（+29/-5，handler 內部邏輯重寫）；其他檔 0 改動 ✓
-  - **修法**（對齊 scope 四步）：
-    1. 加 `timeoutAfter(ms)` helper（Promise<null> that resolves after ms）
-    2. 先 `supabase.auth.getSession()` 驗活性（SDK 內部讀 LS，不走網路）；若 `expires_at - now > 30_000` → 直接 postMessage 回現有 `access_token`，**不跑 refreshSession**
-    3. 過期或即將過期 → `Promise.race<string | null>([refreshSession().then(r => access_token), timeoutAfter(2500)])`，明確 `<string | null>` 型別讓 tsc 過
-    4. Race 拿到 token → 用；race timeout → fallback 再 `getSession()` 一次（SDK 可能同期 auto-refresh 完寫進 LS）；仍無 → null
-    5. 整段 try/catch 保留原 `refresh threw` 錯誤路徑
-  - **不改**：iframe 端 HTML（`villain-v2-flow.html` / `mockup-v3.html` 的 `askParentRefresh` 機制保留）；Edge Function；supabase client 初始化
-  - **console log 區別**（便於 Safari 遠端 Inspector debug）：
-    - 活：`[parent-refresh] session alive, return existing token { remainingMs }`
-    - 需 refresh：`[parent-refresh] need refresh { remainingMs }`
-    - 成功：`[parent-refresh] refresh ok`
-    - Timeout 觸發：`[parent-refresh] refresh timed out, fallback to getSession`
-  - **驗證**：`npx tsc -b --noEmit` EXIT=0 ✓ / `git status` 只顯示 `ExploitCoachTab.tsx` + `task-board.md` ✓
-  - **大腦接手待做**：
-    1. merge wip → dev → bump version + push → Vercel dev 自動部署（**產品改動**，需跑推送後驗證 curl HTTP 200 + Vite build hash）
-    2. 用戶驗收 3 條：
-       - 登入 → 剝削教練 tab → 結構化流程發問 → 拿到 AI 回覆（不「登入已過期」）
-       - narrative 快速分析發問 → 拿到 AI 回覆
-       - 掛 tab 40+ min（token 過期）→ 回來發問 → 自動 refresh + 拿到回覆，不用重新整理
-    3. console 不再有「parent refresh timeout」（除非真網路異常）
-  - **已知限制 / 追加考量**：
-    - 若 `getSession()` 本身 hang（理論不會，但 auth storage polyfill 異常場景）→ handler 仍可能卡；scope 未要求處理
-    - `refreshSession` 超時不代表失敗，只代表 2.5s 內沒回；SDK 可能稍晚才成功寫 LS → fallback getSession 撿到
-    - 30s buffer 用於避免 iframe 拿到 token 後延遲打 Edge Function 時剛好過期；可調
-
-- [?] **T-089** | Product 內測 / Bugfix | **villain-v2-test + gtow-test standalone auth patch（抄 T-088）**
-  - branch: `wip/T089-standalone-auth-fix`（from `origin/dev@187e381`）
-  - 機器：家裡 wip1 worktree
-  - 改動：2 檔（純 auth patch 照抄 T-088）
-    - `public/exploit-coach-gtow-test.html`
-    - `public/exploit-coach-villain-v2-test.html`
-  - **Patch 內容**（三段，對齊 T-088 在 villain-v2-flow.html 的實作）：
-    1. 新 `IS_STANDALONE = (window === window.parent)` 全域旗標
-    2. supabase client 初始化改 `persistSession: IS_STANDALONE, autoRefreshToken: IS_STANDALONE`（iframe 仍關掉避免跟 parent 搶 rotating refresh_token；standalone 開啟讓 SDK 自己管 session）
-    3. 新 `getFreshAccessTokenStandalone()`：用 `supabaseClient.auth.getSession()` 讀 LS session（過期 30s 門檻），過期則 `refreshSession()`
-    4. `getFreshAccessToken()` 頂部加 `if (IS_STANDALONE) return await getFreshAccessTokenStandalone();`，iframe 路徑原封不動
-  - **fork 獨立驗證**：原版 `mockup-v3.html` 未動 / `villain-v2-flow.html` 未動（T-088 已修） / 任何 Edge Function / `villain-lib.js` / React app 全 0 modification ✓
-  - **驗證**：
-    - `npx tsc -b --noEmit` EXIT=0 ✓
-    - `git status` 只顯示 2 個目標 HTML + task-board.md ✓
-  - **大腦接手待做**：
-    1. merge wip → dev → Vercel dev 自動部署
-    2. 用戶驗收：主站登入後開兩個內測 URL 問教練，應拿到 AI 回覆（不再「需要先登入」）
-       - `/exploit-coach-gtow-test.html` → T-082 內測通關
-       - `/exploit-coach-villain-v2-test.html` → T-085 補完
-    3. 不部署正式機
-  - **已知限制**：三份 HTML 各持一份 auth patch 副本（scope 禁抽 lib）；未來可合併 `exploit-coach-standalone-auth.js` 共用 lib
-
-- [?] **T-088** | Product 內測 / Polish + Bugfix | **villain-v2-flow polish + 登入 bug 修（5 issue 全包）**
-  - branch: `wip/T088-villain-v2-flow-polish-bugfix`（from `origin/dev@717c4c1`）
-  - 機器：家裡 wip1 worktree
-  - 改動：**單檔** `public/exploit-coach-villain-v2-flow.html`（+144 / -34）；其他檔 0 改動 ✓
-  - **5 個 issue 修法**：
-    1. **C2 模板高亮**（Issue 1）：
-       - `sfC2State` 加 `activeTemplate` 欄位；`loadTemplate(name)` 設 activeTemplate；`sfC2Pick` 手動改 % 後用 `matchesTemplate()` 檢查 — 不再對齊模板 → 清 activeTemplate
-       - 新 `renderTemplateToolbar(targetId, onclickBuilder, activeName)` 共用 helper：active 按鈕綠底白字 + ✓ 前綴
-       - C2 HTML 區塊的 hardcode toolbar 改為 `<div id="sf-c2-tmpl-bar">`，renderC2 每次重繪
-    2. **C3 模板擴充 + 改名**（Issue 2）：
-       - 原「載入 baseline」按鈕去除，新增 `<div id="sf-c3-tmpl-bar">` 渲染同一 `renderTemplateToolbar`
-       - toolbar prefix 文字：**「載入指定範圍：」**（含 GTO / LAG 鬆凶 / TAG 緊凶 / Nit 超緊 4 按鈕）
-       - 新 `sfC3LoadTemplate(name)`：該位置 6 動作 grid 全部用 `findBaselineRange(rk, TEMPLATES[name]()[rk])` 套上；設 `activeTemplates[pos]` 高亮
-       - reuse T-087 的 TEMPLATES 函式（villain-lib.js 沒有這 4 個，是 flow 頁自己的；scope 說「T-083 留下」應是口誤）
-    3. **C3 動作互斥**（Issue 3）：
-       - 新 `MUTEX_PAIRS` 常數：`CALL↔3BET` / `CALL_3BET↔4BET`（RAISE / CALL_4BET 無 peer）
-       - 新 `mutexSiblingKey(pos, act)`：查該位置是否有 peer grid，存在則回 sibling rangeKey
-       - `renderC3` 每格渲染時：若 sibling grid 該格=1 且 current grid 該格=0 → 加 `.blocked` class + `title` tooltip「已在 XX 選擇，點此切換到 YY」
-       - CSS `.hand-cell.blocked` 深灰 + `::after` 顯示 ✕ 角標（pair / suited / offsuit 變體各自對應）
-       - `sfC3Paint` 互斥切換邏輯：start/drag 遇到 sibling=1 且 curr=0 → 從 sibling 移除 + 加入 current；互斥切換後 `sfC3PaintVal=1`（避免拖拉把剛切過來的再抹掉）
-       - 跨位置不互斥（`mutexSiblingKey` 只查同 pos）
-    4. **命名頁顏色 bug**（Issue 4）：
-       - `sfPickColor(c)` 在切換色 + renderNameScreen 之前，先讀 input.value 捕捉進 `sfNamePending.name`，避免 re-render 時用舊空值覆寫 input
-    5. **登入 bug**（Issue 5，核心根因）：
-       - **根因**：flow 頁是 **standalone HTML**（直接開 dev URL，非 React app iframe），但既有 auth flow 只有 iframe 路徑：`readTokenFromStorage()` 要能讀到 parent 寫入的 LS token，`askParentRefresh()` 需要 `window.parent` 存在。standalone 時 `window === window.parent` → askParentRefresh 直接 resolve null → fetch 沒 token → UI 顯示「需要先登入」
-       - **修法**：
-         - 新 `IS_STANDALONE = (window === window.parent)` 全域旗標
-         - supabase client 初始化時 standalone 模式改開 `persistSession: true, autoRefreshToken: true`（iframe 仍關掉，避免跟 parent 搶 rotating refresh_token）
-         - 新 `getFreshAccessTokenStandalone()`：用 `supabase.auth.getSession()` 讀 session（SDK 自動 + 同 LS key 同 project，共享 parent 主站登入寫入的 token）；過期時 `supabase.auth.refreshSession()`
-         - `getFreshAccessToken()` 頂部加 `if (IS_STANDALONE) return await getFreshAccessTokenStandalone();`，iframe 路徑保持原樣
-       - **使用流程**：
-         1. 用戶先在主站 `poker-goal-dev.vercel.app/` 登入（寫入 `sb-<ref>-auth-token` 到 localStorage）
-         2. 開 `/exploit-coach-villain-v2-flow.html` 內測 URL（同 domain，LS 共享）
-         3. standalone supabase client `getSession()` 讀到 token → AI / chat 正常
-       - **對照 T-085 villain-v2-test.html**：同樣 bug（未改），但用戶實際多用 test 頁是從 React app iframe 進 → 沒暴露；flow 頁多半直接開 URL 才踩到
-  - **驗證**：
-    - `npx tsc -b --noEmit` EXIT=0 ✓
-    - `git status` 只顯示 `public/exploit-coach-villain-v2-flow.html` + `memory/wiki/task-board.md` ✓
-  - **Fork 獨立驗證**：原版 `mockup-v3.html` / `villain-v2-test.html` / 任何 Edge Function / `villain-lib.js` / React app 全 0 modification ✓
-  - **大腦接手待做**：
-    1. merge wip → dev → Vercel dev 自動部署
-    2. 用戶驗收 5 點：
-       - C2 切換 GTO/LAG/TAG/Nit 看到按鈕高亮 ✓
-       - C2 手動改 % 後高亮消失 ✓
-       - C3 同樣 4 個模板按鈕 + 「載入指定範圍」label
-       - C3 切 4BET，該位置 CALL_3BET 已選的 hand 變灰 + ✕ 角標；點灰格 → 從 CALL_3BET 移除、4BET 加
-       - 命名頁打字 → 選顏色 → 暱稱字串保留
-       - 登入後開內測 URL → 點「請教練分析」→ 拿到 AI 回覆，不再「需要先登入」
-    3. 若 villain-v2-test 也要同樣修登入 bug → 可另開 follow-up
-  - **已知限制**：
-    - matchesTemplate 用 `===` 嚴格比 21 key；若模板函式產出有浮點誤差會 false-negative（目前全 integer ok）
-    - standalone 模式 supabase SDK `persistSession: true` 會寫入 LS；若同一 browser 之前用 iframe 模式寫入，LS 值格式可能微有差異（modern v2 SDK 向下兼容，實測無 issue）
-    - mutex 遇到 `editProfileFromD` 後 `sfC3State.activeTemplates = {}` 所有位置都沒 active template → user 點載入會重設整個 6 動作 grid（含 user 編輯的 → 破壞），這是預期行為（用戶明確按「載入」才會發生）
-
-- [?] **T-087** | Product 內測 | **villain v2 新流程 production 版（B/C1/C2/C3/D fork 版）**
-  - branch: `wip/T087-villain-v2-flow`（from `origin/dev@f221115`）
-  - 機器：家裡 wip1 worktree
-  - 改動（**1 新檔，0 改原檔**，嚴格 fork 獨立）：
-    - 新 `public/exploit-coach-villain-v2-flow.html`（fork 自 `exploit-coach-villain-v2-test.html`）
-    - 單檔 ~2800 行，內含完整 B/C1/C2/C3/命名/D 六個 screen 的 HTML + JS flow
-  - **fork 獨立驗證**：`git status` 只顯示單一新檔；原版 `mockup-v3.html` / `villain-v2-test.html` / `exploit-coach*` Edge Functions / `exploit-coach-villain-lib.js` / `src/lib/villainProfile/` 全 0 modification
-  - **畫面/功能實作**：
-    - **B 選擇頁** `#sf-b`：3 個 flow-card（快速問答 / 設定比例 / 詳細範圍），icon + 說明 + 預估時間
-    - **C1 快速問答** `#sf-c1`：7 題 hardcode quiz（依 design doc §3.2 骨架：前位 open / 中位 open / 後位 open / SB open / 3-bet 頻率 / face 3-bet / face 4-bet），每題 3-4 個語義化選項；progress bar + 上一題/下一題；`sfC1Next()` 收斂成 21 個 percentChoices（snapToOption 對齊 PERCENT_OPTIONS），CALL 三 key 用 q3 後位 open 寬度 `deriveCallFromC1` 推導
-    - **C2 設定比例** `#sf-c2`：4 頁（EP 3 row / MP/LP/BL 6 row），每 row 顯示動作名 + GTO baseline + 偏離度 badge（標準/鬆/緊）+ 6 個 % chip 選項（PERCENT_OPTIONS）；頂部「載入模板」4 按鈕（GTO/LAG/TAG/Nit）
-    - **C3 詳細範圍** `#sf-c3`：4 頁 × 6 動作 tab × 13×13 hand grid；初始預填 baseline；點擊 toggle 0/1；按住拖拉批次（onmousedown + onmouseenter）；右上角即時顯示當前 % + 偏離度；「載入 baseline」/「清空」按鈕
-    - **命名 screen** `#sf-name`：名稱輸入 + 顏色選擇（8 色）+ summary 預覽（即時呼叫 `VP.summarizeVillainProfile`）
-    - **D 用戶檔案頁** `#sf-d`：header + 風格摘要（`computeStyleSummary` 靜態規則：LAG / Nit / TAG / 被動 / 標準）+ 21 range 4×6 table（鬆/緊著色）+ 動作 tab 切換 4 位置 mini grid + AI 剝削策略（`computeStaticStrategy` 靜態 5 條 or AI 覆蓋）+ 「升級 AI 版（免費）」/「編輯範圍」/「開始分析」按鈕
-  - **AI 升級按鈕**（task 核心要求）：`upgradeAIStrategy()` 呼叫 `exploit-coach-villain-v2` Edge Function，messages[0] 為「給 4 句風格摘要 + 5 條深度剝削策略」prompt，context 帶 `villain_profile_summary` + `villain_name` + `_t087_ai_upgrade: true` flag；回覆用 `**深度剝削策略**` 標題切兩段塞 aiSummary/aiStrategy；updateFlowVillain 覆蓋持久化
-  - **編輯流程**：D「編輯範圍」塞現 grids 進 sfC3State → 進 C3；`sfC3Next` wrap（sfEditMode flag），編輯完 Last Next 覆蓋 working profile + 回 D（aiSummary/aiStrategy 設 null 強制重新升級）
-  - **storage**：
-    - `LS_VILLAINS_KEY = 'exploit-coach-villain-v2-flow-villains'`（自前 `loadFlowVillains` / `saveFlowVillains` / `appendFlowVillain` / `updateFlowVillain`，不用 lib 的 `LS_KEY_V2`，與 T-085 LS 完全隔離）
-    - `LS_CONVO_KEY = 'exploit-coach-villain-v2-flow-conversations'`
-  - **共用 lib（不改）**：`VP.RANGE_KEYS` / `VP.PERCENT_OPTIONS` / `VP.POSITION_LABEL` / `VP.ACTION_LABEL` / `VP.findBaselineRange` / `VP.baselinePctFor` / `VP.buildVillainProfile` / `VP.summarizeVillainProfile` / `VP.clearLegacyV1`
-  - **chat flow**：D「開始分析」→ `enterChatFromD()` 設 `sv2CurrentProfile = working`（buildCoachContext 會送 `villain_profile_summary` + `villain_name` 給 Edge Function）→ go('s2')
-  - 驗證：`npx tsc -b --noEmit` EXIT=0 ✓
-  - **大腦接手待做**：
-    1. merge wip → dev → Vercel dev 自動部署 HTML
-    2. **依賴**：`exploit-coach-villain-v2` Edge Function（T-085）必須已部署到測試 Supabase（用戶應已貼完）— 若尚未貼，本頁所有 chat + AI 升級都會 401/404
-    3. 用戶內測 URL: `https://poker-goal-dev.vercel.app/exploit-coach-villain-v2-flow.html`
-    4. 驗收條件：B→C1/C2/C3 三路徑都跑通 / 4 模板按鈕 OK / 命名 save / D 風格摘要 + 4×6 表 + mini grid tab / AI 升級按鈕真 fetch / 編輯範圍 → 回 D 更新 / reload villain 還在 / 原版 mockup-v3.html / villain-v2-test.html 都沒變化
-    5. **不部署到正式 Supabase**
-  - **已知限制 / 設計決策**：
-    - C3 touch drag 只支援 tap（沒做 touchmove + elementFromPoint），桌面 mouse drag 完整支援
-    - LAG / TAG / Nit 模板用簡單偏移規則產生（非真實 villain 統計），dev 用 good-enough
-    - AI prompt 切 parser 用 `**深度剝削策略**` 標題；若 LLM 不照格式，會全塞 aiSummary、aiStrategy 空
-    - 編輯範圍後 aiSummary/aiStrategy 設 null 強制重新升級，避免 stale
-    - MVP 免費（代碼註解標 `TODO: production 上線時改 5 點，需 service role key 過 RLS spend_points`）
-
-- [?] **T-085** | Product 內測 | **villain profile v2 fork 版（獨立 mockup + Edge Function）**
-  - branch: `wip/T085-villain-v2-fork`（from `origin/dev@80a13ce`）
-  - 機器：家裡 wip1 worktree
-  - 改動（2 新檔，**0 改原檔**，嚴格遵守 fork 獨立原則）：
-    - 新 `supabase/functions/exploit-coach-villain-v2/index.ts`（fork 自 exploit-coach；18 行 T-083 diff 照抄：CoachContext 加 `villain_profile_summary` + `villain_name`，buildSystemPrompt 優先 v2 summary else fallback v1 `villain_type`，log context 加 `_backend: 'villain-v2'`）
-    - 新 `public/exploit-coach-villain-v2-test.html`（fork 自 mockup-v3；照抄 T-083 所有 UI diff + 內測橫幅 + namespace 改動）
-  - **Fork 獨立驗證**：`git status` 確認 `supabase/functions/exploit-coach/index.ts` + `public/exploit-coach-mockup-v3.html` 完全沒動（兩檔均非 modified）
-  - **HTML fork 細節**（13 diff 塊）：
-    - title：「剝削教練 v3 — Mockup」→「剝削教練 — villain v2 內測版」
-    - 引入 `<script src="./exploit-coach-villain-lib.js"></script>`
-    - `<body>` 後加紫色內測橫幅「⚠ 內測版（villain v2 21 range）」
-    - S1 老張 hardcoded card → 空 placeholder（`#opp-empty`）
-    - S1「+ 建立新對手」按鈕 `newOpp()` → `startV2Flow()`
-    - 插入 3 個 screen：`sv2-intro` / `sv2-q`（21 題進度）/ `sv2-name`（命名 + 顏色 + summary preview）
-    - `LS_VILLAINS_KEY` → `exploit-coach-villain-v2-villains`
-    - `LS_CONVO_KEY` → `exploit-coach-villain-v2-conversations`
-    - fetch endpoint `/exploit-coach` → `/exploit-coach-villain-v2`
-    - `buildCoachContext` 優先 `sv2CurrentProfile` 送 `villain_profile_summary` + `villain_name`，legacy v1 fallback 保留
-    - 加 `sv2*` 流程函式（state / begin / render / pick / back / next / name / color / save / select / renderV2Villains）
-    - init 區 `renderSavedVillains()` → `VP.clearLegacyV1()` + `renderV2Villains()`
-  - **共用 lib**：`src/lib/villainProfile/` + `public/exploit-coach-villain-lib.js` reuse，**lib code 完全不動**
-  - 驗證：`npx tsc -b --noEmit` EXIT=0 ✓
-  - **已知 LS 微妙點（記錄，非 bug）**：lib 內部 `LS_KEY_V2 = 'exploit-coach-villains-v2'` 沒改（scope 禁改 lib）。當前沒有其他頁使用 VP lib（T-083 revert 後原版不引入），fork 獨佔。未來若原版引入 VP lib，與 fork 會共用此 LS key — 屆時大腦決定策略。
-  - **大腦接手待做**：
-    1. 產 Edge Function 整檔貼碼指令 → 用戶手貼測試 Supabase Dashboard Create new `exploit-coach-villain-v2` → Deploy（Secrets 照抄 `ANTHROPIC_API_KEY`，無新增）
-    2. Vercel dev 自動部署 HTML → 內測 URL: `https://poker-goal-dev.vercel.app/exploit-coach-villain-v2-test.html`
-    3. 驗：走完 21 題 → save → chat 看到「後位 35% open（偏緊 -14%）」grounding
-    4. 回驗原版 `/exploit-coach-mockup-v3.html` 仍是老張 + 舊 quiz（T-083 partial revert 還原的狀態，fork 無污染）
-    5. **不部署到正式 Supabase**
-
-- [?] **T-082** | Product 內測 | **exploit-coach 內測版：retrieval 換 GTO Wizard API**
-  - branch: `wip/T082-exploit-coach-gtow-test`（from `origin/dev@f958aab`）
-  - 機器：家裡 wip1 worktree
-  - 改動（2 新檔，0 改原檔）：
-    - 新 `supabase/functions/exploit-coach-gtow/index.ts`（fork 自 exploit-coach；只換 `retrieveSolverNode` 為 GTOW API call；保留 prompt / TERMINOLOGY_RULES / Claude / auth / log 原封不動）
-    - 新 `public/exploit-coach-gtow-test.html`（fork 自 mockup-v3；5 處 diff：title、內測橫幅、LS_VILLAINS_KEY namespace、LS_CONVO_KEY namespace、fetch endpoint `/exploit-coach` → `/exploit-coach-gtow`）
-  - **GTOW 整合細節**（參考 ai-poker-wizard `scripts/gto_api.py`）：
-    - Endpoint: `GET https://api.gtowizard.com/v4/solutions/spot-solution/`
-    - Auth: `Authorization: Bearer <GTO_WIZARD_TOKEN>` + `origin: https://app.gtowizard.com`
-    - Params: `gametype` / `depth` / `stacks` / `preflop_actions` / `board` / `flop_actions`
-    - Slug → gametype: `6max_100bb_*` → `Cash6mGeneral_6mNL100R2`; `mtt_*` / `9max_*` / `hu_*` → `MTTGeneral`
-    - Depth: nearest from GTOW available list + `.125` (MTT) / `.0` (cash)
-    - Preflop 合成：依 scenario_slug 的 `<opener>_open_<caller>_call` 或 `<opener>_open_<3bettor>_3b` 展開 `F-F-F-F-R2.5-F-C` 序列
-    - Path → flop_actions: `CHECK`→`X` / `CALL`→`C` / `FOLD`→`F` / `BET_<n>`→`B<n>` / `ALLIN`→`RAI`
-    - 204/403 → 視為 miss → `nodeSummary=null` → Claude 自己答（不崩）
-    - console.log GTOW raw response (truncated 3000 chars) 供 debug
-  - **不寫 DB / 不 cache GTOW 回傳**（ToS 保護）；`coach_queries` log 保留，context 內加 `_backend: 'gtow'` 標記
-  - 驗證：`npx tsc -b --noEmit` EXIT=0 ✓
-  - **大腦接手待做**：
-    1. 設測試 Supabase Secret `GTO_WIZARD_TOKEN`（用戶操作，token 不貼對話）
-    2. 產 Edge Function 整檔貼碼指令 → 用戶手貼測試 Supabase Dashboard → Functions → `exploit-coach-gtow` (Create new) → Deploy
-    3. Vercel dev 會自動部署新 HTML（`public/` 靜態檔）→ 內測 URL: `https://poker-goal-dev.vercel.app/exploit-coach-gtow-test.html`
-    4. 驗：用戶問 5 題同 A/B，肉眼比回答差異
-    5. **不部署到正式 Supabase**
-  - **已知限制（v1 預期）**：
-    - Preflop raise size 用標準值（MTT R2.2 / Cash R2.5 / 3bet R6.5/R8.0）；若 GTOW 期待別的 size 可能 204 — v2 可加 `next_actions` probe 找最近 legal
-    - Postflop combo-level signature hands 沒做（1326-array index 較複雜；範圍平均頻率仍正確）
-    - Preflop 169-array hand order 用標準 pair-first → suited → offsuit（若 GTOW 用不同 order，key-hand 對應會錯，但 aggregate freq 不受影響）
-    - HU slug 用 9-max positions 近似；`hu_*_3bp/4bp` 先用保守預設 size
-
 <!-- T-013 / T-030 / T-021 / T-074 / T-073 / T-071 / T-072 / T-070 / T-075 Phase 0 / T-075 Phase 1 / T-080 已 merge 2026-04-21 -->
 <!-- T-080 真 Done 2026-04-22：正式 Supabase Edge Function 已部署 + v0.8.5 正式機已上（繞過 Vercel webhook silent drop，改用 CLI prebuilt+tgz；詳見 [[vercel-deployment-troubleshooting]]） -->
 <!-- T-075 Phase 1 merge @ 4d40f27 — Course 205 tables → mtt_9max_ranges.mjs (110 distinct entries)；scenarios.mjs re-export COURSE_RANGES + caveat 註解；等 T-076 消化 -->
@@ -1182,6 +981,9 @@ updated: 2026-04-20
 <!-- T-070 / T-021 / T-072 已 merge 2026-04-21 -->
 
 <!-- T-071 → Done 2026-04-22（task-board cleanup，code 早已 merge @ 937c07e + bump v0.8.3-dev.4 d2b8c31，已隨 v0.8.4/v0.8.5 上線；remote wip branch 已清） -->
+
+<!-- T-082 / T-085 / T-087 / T-088 / T-089 / T-064 已 merge 2026-04-22（dev.31/dev.32 批次結案，見 Done 區） -->
+<!-- 2026-04-23 task-board cleanup：In Review 區 6 個已 merge task 移到 Done + 刪 remote 殘留 wip branch 10 個（T013/T021/T030/T045/T045b/T070/T072/T073/T074/T080） -->
 
 - [?] **T-046** | Pipeline | **seed --include-river row 估算（dry-run 完成）**
   - branch: `wip/T046-seed-river-estimate`
@@ -1464,6 +1266,45 @@ updated: 2026-04-20
     - `scripts/gto-pipeline/scenarios.mjs`（+MTT_SCENARIOS 54 個 + `enumerateMTTFromPD` async scanner，mtt 進 ALL_FORMATS）
   - 驗證：57/57 tests pass，`npx tsc -b --noEmit` EXIT=0
   - 限制：pd hand map → TexasSolver range 字串轉換屬 T-011（C3）；真實 ~16k pd tables parsing rate 需跑 CLI 實測
+- [x] **T-064** | Product + 大腦 | **exploit-coach parent refresh handshake hang 修** | 2026-04-22 | merge `0e44944` + dev.31
+  - 執行者：家裡 wip1（`wip/T064-parent-refresh-hang` @ `be39e45`）
+  - 改動：單檔 `src/tabs/ExploitCoachTab.tsx`（+29/-5）
+  - 修法：timeoutAfter helper + 先 getSession 驗活性（remainingMs > 30s 直接回）+ `Promise.race([refreshSession, timeoutAfter(2500)])` + fallback getSession
+  - 追記：後續查 wiki `supabase-edge-function-gotchas` 坑 1 發現主站玩家實際「登入已過期」根因是 T-082 / T-085 新 Edge Function 的 **ES256 Verify JWT 沒關**，非 client side hang。T-064 仍作為 defensive fix 保留
+- [x] **T-082** | Product 內測 + 大腦 | **exploit-coach 內測版：retrieval 換 GTO Wizard API（fork 版）** | 2026-04-22 | dev.32 批次結案
+  - 執行者：家裡 wip1（`wip/T082-exploit-coach-gtow-test`）
+  - 產出（2 新檔，0 改原檔，嚴格 fork）：
+    - `supabase/functions/exploit-coach-gtow/index.ts`（fork 自 exploit-coach，只換 retrieveSolverNode → GTOW API）
+    - `public/exploit-coach-gtow-test.html`（fork mockup-v3；內測橫幅 + namespace 隔離 + fetch endpoint 切換）
+  - 部署：用戶手貼測試 Supabase `exploit-coach-gtow` + 設 `GTO_WIZARD_TOKEN` secret
+  - 驗收：內測 URL `https://poker-goal-dev.vercel.app/exploit-coach-gtow-test.html` 可問 → Claude 拿到 GTOW retrieval 回答
+- [x] **T-085** | Product 內測 + 大腦 | **villain profile v2 fork 版（獨立 mockup + Edge Function）** | 2026-04-22 | dev.32 批次結案
+  - 執行者：家裡 wip1（`wip/T085-villain-v2-fork`）
+  - 產出（2 新檔，0 改原檔）：
+    - `supabase/functions/exploit-coach-villain-v2/index.ts`（18 行 T-083 diff 照抄，CoachContext 加 villain_profile_summary/villain_name）
+    - `public/exploit-coach-villain-v2-test.html`（21 題新流程 + namespace 隔離）
+  - 部署：用戶手貼測試 Supabase `exploit-coach-villain-v2`
+  - 對應 T-083 revert 後的 fork 重派（替代「取代原版」違反 fork 原則的方案）
+- [x] **T-087** | Product 內測 + 大腦 | **villain v2 新流程 production 版（B/C1/C2/C3/D fork 版）** | 2026-04-22 | dev.32 批次結案
+  - 執行者：家裡 wip1（`wip/T087-villain-v2-flow`）
+  - 產出（1 新檔 ~2800 行，0 改原檔）：`public/exploit-coach-villain-v2-flow.html`（6 screens：B 選擇 / C1 快速問答 / C2 設定比例 / C3 詳細範圍 / 命名 / D 用戶檔案頁 + AI 升級按鈕）
+  - 依賴 T-085 Edge Function + `src/lib/villainProfile/` 共用 lib（lib 不動）
+- [x] **T-088** | Product 內測 + 大腦 | **villain-v2-flow 5 issue polish + standalone auth bugfix** | 2026-04-22 | dev.32 批次結案
+  - 執行者：家裡 wip1（`wip/T088-villain-v2-flow-polish-bugfix`）
+  - 單檔 `public/exploit-coach-villain-v2-flow.html`（+144/-34）
+  - 5 個 issue 修法：
+    1. C2 模板高亮（activeTemplate state + renderTemplateToolbar helper）
+    2. C3 模板擴充 + 改名「載入指定範圍」（原「載入 baseline」去除）
+    3. C3 動作互斥（MUTEX_PAIRS：CALL↔3BET / CALL_3BET↔4BET；blocked ✕ 角標 + 切換邏輯）
+    4. 命名頁顏色 bug（sfPickColor 先捕捉 input.value 進 sfNamePending.name）
+    5. 登入 bug（IS_STANDALONE 全域旗標 + supabase client persistSession/autoRefreshToken 分流 + getFreshAccessTokenStandalone 走 SDK getSession/refreshSession）
+- [x] **T-089** | Product 內測 + 大腦 | **villain-v2-test + gtow-test standalone auth patch（抄 T-088）** | 2026-04-22 | dev.32 批次結案
+  - 執行者：家裡 wip1（`wip/T089-standalone-auth-fix`）
+  - 改動 2 檔（純 auth patch 照抄 T-088 三段）：
+    - `public/exploit-coach-gtow-test.html`
+    - `public/exploit-coach-villain-v2-test.html`
+  - 0 改原版 / 0 改 lib / 0 改 Edge Function
+  - 已知限制：三份 HTML 各持一份 auth patch 副本（未來可合併共用 lib）
 
 ---
 

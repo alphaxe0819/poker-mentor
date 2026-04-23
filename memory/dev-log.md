@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-04-23 v0.8.5-dev.33 [dev] — task-board cleanup
+- **task-board In Review 區整理**：昨日 dev-log 已標 Done 但 task-board In Review 區未清 → 把 T-064 / T-082 / T-085 / T-087 / T-088 / T-089 六個已 merge task 從 In Review 區移到 Done 區，保留 T-046（真正還在 In Review 等決策）
+- **刪 remote 殘留 wip branch 10 個**：`T013-scraping-audit` / `T021-hu40bb-3bp` / `T030-exploit-coach-verify` / `T045-first-real-batch` / `T045b-real-batch` / `T070-villain-persist` / `T072-villain-hand-before-review` / `T073-villain-laozhang-standard` / `T074-mark-test-data` / `T080-quick-analysis-text`（dev-log 都標 Done，branch 是歷史殘留）
+- 純 flow 改動（memory/wiki/task-board.md + src/version.ts bump），無產品 code 變動
+- bump v0.8.5-dev.32 → v0.8.5-dev.33
+
 ## 2026-04-22 v0.8.5-dev.32 [dev] — 收工
 - **ES256 JWT verify_jwt 坑（根因）**：用戶部署 T-082 exploit-coach-gtow + T-085 exploit-coach-villain-v2 兩個新 Edge Function 後撞「登入已過期」→ 大腦誤派 T-064 修 client side parent refresh hang → 沒解 → 查 wiki supabase-edge-function-gotchas 坑 1 發現根因是 ES256 verify_jwt 沒關
 - **修法**：Supabase Dashboard → Edge Functions → 該 function → Details/Settings → 關 Verify JWT switch（ES256 project 新 function 默認開著會擋 token）
