@@ -5,6 +5,11 @@
 
 ---
 
+## 2026-04-26 [dev] — PD 抓爬交付文件整理（給新專案參考）[flow, no bump]
+- 新增 `memory/wiki/pd-scraping-handover.md` — 整合抓爬方案 / DOM 選擇器 / 顏色映射 / 資料格式 / 轉換 pipeline / Supabase 上傳的單頁 handover doc
+- 來源歸納：`scrape-pokerdinosaur.js` + `pd-to-range.mjs` + `parse-pd-table-name.mjs` + `build-mtt-ranges.mjs` + `upload-pd-data.js` + 既有 wiki（project_pokerdinosaur_scraping / scraping-audit / range-collection-roadmap）
+- index.md 加 Scraping 區一行索引
+
 ## 2026-04-23 **v1.0.0** [dev] — 🎯 專案 code 凍結 + T-096b 真 Done + 進入 ship sequence
 
 > **這是本專案 dev branch 的最終版本號。**

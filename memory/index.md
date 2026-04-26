@@ -44,3 +44,4 @@
 - [[range-collection-roadmap]] — 範圍收集總進度表：scraping / converter / solver 三線分批 + 跨機器協作指引
 - [[project_pokerdinosaur_scraping]] — pokerdinosaur.com 備份進度、正確技術方案、待爬 project 清單（未經允許不得更改方案）
 - [[scraping-audit-2026-04-21]] — T-013 scraping 現況盤點：10 個 JSON 全到位、S1 LiveMTT_Ben 已完成、S0 微小 diff
+- [[pd-scraping-handover]] — 🆕 **新專案交付文件**：抓爬邏輯 / DOM 選擇器 / 顏色映射 / 資料格式 / 轉換 pipeline / Supabase 上傳全套（給其他 Claude session 接手）
