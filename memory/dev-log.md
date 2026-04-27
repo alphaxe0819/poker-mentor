@@ -5,6 +5,22 @@
 
 ---
 
+## 2026-04-27 [dev] — Exploit Coach 全套搬遷文件（給新專案參考）[flow, no bump]
+- 新增 `memory/wiki/exploit-coach-handover.md` — 11 段完整 handover doc：
+  - §1 一句話定義 + 核心閉環
+  - §2 三個版本演進（v1 type / v2 21-range / GTOW fork）
+  - §3 三條 Edge Function fork 模式（exploit-coach / -gtow / -villain-v2）
+  - §4 iframe wrapper + parent ↔ iframe token refresh 協議（含 T-064 origin bug 教訓）
+  - §5 Villain Profile v2 lib 完整 API（7 檔 ~660 行）
+  - §6 Schema 設計（villain_profiles / villain_observations / Bayesian refine 偽碼，spec approved 未轉 migration）
+  - §7 GTOW 整合（self-gen keypair + ECDSA P-256 sign，3 個 secret）
+  - §8 部署 checklist（測試/正式分階段）
+  - §9 已知狀態 + 未完成項
+  - §10 完整檔案清單（4 Edge Function / 11 lib / 3 入口 / 6 mockup / 6 wiki）
+  - §11 新專案 Claude 搬遷 SOP + 驗收 checklist
+- index.md 加 Handover 區一行索引
+- 來源歸納：closed-loop-design / villain-profile-design / gtow-api-reverse-eng / supabase-edge-function-gotchas + 實際讀過 exploit-coach 相關所有檔案
+
 ## 2026-04-26 [dev] — PD 抓爬交付文件整理（給新專案參考）[flow, no bump]
 - 新增 `memory/wiki/pd-scraping-handover.md` — 整合抓爬方案 / DOM 選擇器 / 顏色映射 / 資料格式 / 轉換 pipeline / Supabase 上傳的單頁 handover doc
 - 來源歸納：`scrape-pokerdinosaur.js` + `pd-to-range.mjs` + `parse-pd-table-name.mjs` + `build-mtt-ranges.mjs` + `upload-pd-data.js` + 既有 wiki（project_pokerdinosaur_scraping / scraping-audit / range-collection-roadmap）

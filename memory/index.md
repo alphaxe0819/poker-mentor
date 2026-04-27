@@ -45,3 +45,7 @@
 - [[project_pokerdinosaur_scraping]] — pokerdinosaur.com 備份進度、正確技術方案、待爬 project 清單（未經允許不得更改方案）
 - [[scraping-audit-2026-04-21]] — T-013 scraping 現況盤點：10 個 JSON 全到位、S1 LiveMTT_Ben 已完成、S0 微小 diff
 - [[pd-scraping-handover]] — 🆕 **新專案交付文件**：抓爬邏輯 / DOM 選擇器 / 顏色映射 / 資料格式 / 轉換 pipeline / Supabase 上傳全套（給其他 Claude session 接手）
+
+## Handover
+
+- [[exploit-coach-handover]] — 🆕 **剝削教練全套搬遷文件**（2026-04-27）：三條 fork（v1 type / v2 21-range / GTOW）、iframe wrapper、villain profile lib、Schema 設計、部署 checklist、完整檔案清單
