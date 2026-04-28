@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-04-27 [dev] — Exploit Coach handover §10 路徑改家中電腦絕對路徑 [flow, no bump]
+- §10 全部改成 `C:\Users\User\POKERNEW\poker-mentor-brain\...` 絕對路徑（家中電腦 cwd）
+- 加 lib 依賴清單（getGTOAction / helpers / gtoData_cash_6max_100bb / explanations / supabase）— exploitEngine + baseline 連動的檔
+- 加 PowerShell 一鍵驗證 script（35 檔 Test-Path 全 OK）
+- 不是士林電腦路徑（士林為 `C:\Users\User\Desktop\gto-poker-trainer\`），新專案搬遷以家中為準
+
 ## 2026-04-27 [dev] — Exploit Coach 全套搬遷文件（給新專案參考）[flow, no bump]
 - 新增 `memory/wiki/exploit-coach-handover.md` — 11 段完整 handover doc：
   - §1 一句話定義 + 核心閉環
