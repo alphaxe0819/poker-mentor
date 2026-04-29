@@ -5,6 +5,31 @@
 
 ---
 
+## 2026-04-27 [dev] — Train Table V2 100% UI 複製 handover doc（Level A）[flow, no bump]
+- 新增 `memory/wiki/train-table-v2-handover.md`（~750 行 18 段）— 訓練模式 V2 牌桌 1:1 搬遷包
+- 涵蓋：
+  - §0 一句話 + UI v2 設計規則
+  - §1 技術棧鎖定（Tailwind 3.4 / React 19 / Vite 8 版本鎖）
+  - §2 設計系統（tailwind.config.js 全文 + CSS variable 對映）
+  - §3 全域樣式（index.css 全文：字型 import / :root variables / reset / iOS quirks / animations / utilities）
+  - §4 index.html 全文（含 viewport-fit=cover / theme-color / Google Fonts preconnect）
+  - §5 11 元件樹狀圖
+  - §6 ⭐ PokerFeltV2 數學常數（PILL_W=84, PILL_H=120）+ POSITION_MAP 權威表 + STATUS_STYLE + SUIT 配色 + z-index 層級
+  - §7 HoleCards / CommunityCards 卡片視覺規則（GTOW 風格 ♠灰♥紅♦藍♣綠）
+  - §8 BetSizingBarV2 規則（無自訂 slider，純按鈕，hardcoded RGB）
+  - §9 FeedbackSheetV2 4 chips 街別評分 + scoreByFreq 公式 + drag handle 行為
+  - §10 ActionHistoryBarTop 4 種 kind 顏色
+  - §11 TrainSetupScreen 三層選項
+  - §12 RoundResult + RangeGrid
+  - §13 完整檔案清單（19 檔家中絕對路徑 C:\Users\User\Desktop\gto-poker-trainer\...）
+  - §14 lib 依賴 mock 策略（saveAnswerRecord / gtoData no-op）
+  - §15 Mock props 範例（4 元件直接 render demo）
+  - §16 視覺驗收 18 項 checklist（4 viewport × 14 視覺項）
+  - §17 PowerShell 一鍵驗證 script
+  - §18 新專案 Claude 搬遷 SOP（7 步順序：設計系統 → type → 元件 → mock → demo → 驗收 → Level B）
+- 19/19 檔 PowerShell Test-Path 全 OK（士林機驗，家中同結構）
+- index.md Handover 區加索引
+
 ## 2026-04-27 [dev] — Exploit Coach handover §10 路徑改正：家中電腦絕對路徑 [flow, no bump]
 - §10 全部改成 `C:\Users\User\Desktop\gto-poker-trainer\...` 絕對路徑（家中電腦）
 - 上一個 commit 寫反方向（誤把士林 cwd `C:\Users\User\POKERNEW\poker-mentor-brain\` 當家中），用戶糾正後修正

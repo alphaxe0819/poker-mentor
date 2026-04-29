@@ -49,3 +49,4 @@
 ## Handover
 
 - [[exploit-coach-handover]] — 🆕 **剝削教練全套搬遷文件**（2026-04-27）：三條 fork（v1 type / v2 21-range / GTOW）、iframe wrapper、villain profile lib、Schema 設計、部署 checklist、完整檔案清單
+- [[train-table-v2-handover]] — 🆕 **訓練模式 V2 牌桌 100% UI 複製包**（2026-04-27 Level A）：CSS variables / Tailwind theme / capsule pillSeatSlots 數學 / SUIT_STYLES / 4 chips 街別評分 / mock props 範例 / 視覺驗收 18 項 / 11 元件 + 6 設計系統檔家中絕對路徑
