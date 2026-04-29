@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slotomania 成功學 — 為什麼一台老虎機能做到 80 億美元</title>
+<style>
+  :root {
+    --bg: #0a0e14;
+    --bg-2: #111821;
+    --bg-3: #1a232f;
+    --gold: #d4af37;
+    --gold-bright: #f4cf5a;
+    --red: #c5392c;
+    --green: #4a8b5f;
+    --text: #e8e6e1;
+    --text-dim: #8a8a8a;
+    --text-faint: #5a5a5a;
+    --border: #2a3441;
+    --accent: #d4af37;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Serif TC', 'Songti TC', 'PingFang TC', 'Hiragino Mincho ProN', serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+  }
+
+  .deck {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    padding: 4vh 6vw;
+    display: none;
+    flex-direction: column;
+    overflow-y: auto;
+    background:
+      radial-gradient(ellipse at top right, rgba(212, 175, 55, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom left, rgba(197, 57, 44, 0.03) 0%, transparent 50%),
+      var(--bg);
+  }
+
+  .slide.active {
+    display: flex;
+    animation: fadeIn 0.5s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Header */
+  .slide-num {
+    position: absolute;
+    top: 4vh;
+    left: 6vw;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 3rem;
+    font-weight: 300;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    opacity: 0.85;
+  }
+
+  .slide-tag {
+    position: absolute;
+    top: 5vh;
+    right: 6vw;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+
+  .slide h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2.8rem;
+    font-weight: 400;
+    margin-top: 8vh;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.02em;
+  }
+
+  .slide h1 .accent {
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 1rem;
+    margin-bottom: 3rem;
+    letter-spacing: 0.05em;
+  }
+
+  /* Cover Slide */
+  .cover {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background:
+      radial-gradient(ellipse at center, rgba(212, 175, 55, 0.08) 0%, transparent 60%),
+      var(--bg);
+  }
+
+  .cover-suits {
+    font-size: 1.5rem;
+    color: var(--gold);
+    letter-spacing: 1.5rem;
+    margin-bottom: 2rem;
+    opacity: 0.8;
+  }
+
+  .cover-brand {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 8rem;
+    font-weight: 700;
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold) 50%, #8a6f1f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 4px 30px rgba(212, 175, 55, 0.2);
+  }
+
+  .cover-tag {
+    font-size: 1.3rem;
+    color: var(--text);
+    margin-bottom: 1rem;
+    letter-spacing: 0.1em;
+  }
+
+  .cover-tag .red { color: var(--red); }
+
+  .cover-sub {
+    color: var(--text-dim);
+    font-size: 1rem;
+    max-width: 600px;
+    margin: 1rem auto 3rem;
+    line-height: 1.8;
+  }
+
+  .cover-meta {
+    display: flex;
+    gap: 4rem;
+    justify-content: center;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .meta-item {
+    text-align: center;
+  }
+
+  .meta-num {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2.5rem;
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  .meta-label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 0.3rem;
+  }
+
+  .cover-date {
+    position: absolute;
+    bottom: 4vh;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--text-faint);
+    font-size: 0.8rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+
+  /* Cards */
+  .grid {
+    display: grid;
+    gap: 1.5rem;
+  }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .card {
+    background: linear-gradient(135deg, var(--bg-2) 0%, var(--bg-3) 100%);
+    border: 1px solid var(--border);
+    padding: 1.8rem;
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.3s;
+  }
+
+  .card.gold-edge {
+    border-left: 3px solid var(--gold);
+  }
+
+  .card.red-edge {
+    border-left: 3px solid var(--red);
+  }
+
+  .card-icon {
+    font-size: 1.8rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .card-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.3rem;
+    color: var(--gold);
+    margin-bottom: 0.8rem;
+    letter-spacing: 0.02em;
+  }
+
+  .card-body {
+    color: var(--text);
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+
+  .card-body .highlight {
+    color: var(--gold-bright);
+    font-weight: 500;
+  }
+
+  /* Stat Cards */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  .stat {
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    text-align: center;
+    background: var(--bg-2);
+    border-radius: 4px;
+  }
+
+  .stat-num {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2.2rem;
+    color: var(--gold);
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  .stat-label {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+    letter-spacing: 0.1em;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+
+  th {
+    text-align: left;
+    padding: 0.8rem 1rem;
+    background: var(--bg-3);
+    color: var(--gold);
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 500;
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid var(--gold);
+  }
+
+  td {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  tr:hover td {
+    background: rgba(212, 175, 55, 0.04);
+  }
+
+  td.num {
+    color: var(--gold-bright);
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 500;
+  }
+
+  /* Timeline */
+  .timeline {
+    position: relative;
+    padding-left: 3rem;
+    margin: 2rem 0;
+  }
+
+  .timeline::before {
+    content: "";
+    position: absolute;
+    left: 1rem;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, var(--gold) 0%, var(--gold) 60%, transparent 100%);
+  }
+
+  .tl-item {
+    position: relative;
+    margin-bottom: 1.8rem;
+  }
+
+  .tl-item::before {
+    content: "";
+    position: absolute;
+    left: -2.4rem;
+    top: 0.4rem;
+    width: 12px;
+    height: 12px;
+    background: var(--gold);
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px var(--bg), 0 0 0 5px var(--gold);
+  }
+
+  .tl-year {
+    font-family: 'Playfair Display', Georgia, serif;
+    color: var(--gold);
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+  }
+
+  .tl-content {
+    color: var(--text);
+    margin-top: 0.3rem;
+    font-size: 0.95rem;
+  }
+
+  .tl-revenue {
+    color: var(--gold-bright);
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 500;
+  }
+
+  /* Quote / Pull */
+  .pull-quote {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.6rem;
+    font-style: italic;
+    color: var(--gold);
+    line-height: 1.5;
+    padding: 2rem 3rem;
+    border-left: 3px solid var(--gold);
+    margin: 2rem 0;
+    background: rgba(212, 175, 55, 0.04);
+  }
+
+  /* Bullet list refined */
+  .reasons {
+    list-style: none;
+  }
+
+  .reasons li {
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 0.8rem;
+    background: var(--bg-2);
+    border-left: 2px solid var(--border);
+    transition: border-color 0.3s;
+  }
+
+  .reasons li:hover {
+    border-left-color: var(--gold);
+  }
+
+  .reason-num {
+    color: var(--gold);
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-right: 1rem;
+    display: inline-block;
+    min-width: 2.5rem;
+  }
+
+  .reason-title {
+    color: var(--text);
+    font-size: 1.05rem;
+    font-weight: 500;
+  }
+
+  .reason-desc {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    margin-left: 3.5rem;
+    line-height: 1.7;
+  }
+
+  /* Comparison Table */
+  .vs-block {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 2rem;
+    margin: 2rem 0;
+    align-items: center;
+  }
+
+  .vs-side {
+    padding: 2rem;
+    border: 1px solid var(--border);
+    background: var(--bg-2);
+    border-radius: 4px;
+  }
+
+  .vs-side.winner {
+    border-color: var(--gold);
+    background: linear-gradient(135deg, var(--bg-2) 0%, rgba(212, 175, 55, 0.06) 100%);
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.08);
+  }
+
+  .vs-side.loser {
+    border-color: var(--red);
+    opacity: 0.85;
+  }
+
+  .vs-name {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.6rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .vs-name.gold { color: var(--gold); }
+  .vs-name.red { color: var(--red); }
+
+  .vs-tag {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    letter-spacing: 0.1em;
+  }
+
+  .vs-stats {
+    margin-top: 1rem;
+  }
+
+  .vs-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed var(--border);
+    font-size: 0.9rem;
+  }
+
+  .vs-stat:last-child { border: none; }
+
+  .vs-stat .k { color: var(--text-dim); }
+  .vs-stat .v { color: var(--text); font-family: 'Playfair Display', Georgia, serif; }
+  .vs-stat .v.up { color: var(--gold-bright); }
+  .vs-stat .v.down { color: var(--red); }
+
+  .vs-divider {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2rem;
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  /* Navigation */
+  .nav {
+    position: fixed;
+    bottom: 2vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background: rgba(10, 14, 20, 0.92);
+    backdrop-filter: blur(12px);
+    padding: 0.7rem 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    z-index: 100;
+  }
+
+  .nav button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.4rem 1rem;
+    border-radius: 50px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .nav button:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .nav button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .page-num {
+    color: var(--gold);
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+  }
+
+  /* Special: Bar Chart */
+  .bar-chart {
+    margin: 2rem 0;
+  }
+
+  .bar-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 100px;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem 0;
+  }
+
+  .bar-year {
+    color: var(--text-dim);
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 0.95rem;
+  }
+
+  .bar-track {
+    height: 28px;
+    background: var(--bg-2);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--gold-bright) 100%);
+    border-radius: 2px;
+    transition: width 1s ease;
+  }
+
+  .bar-fill.peak {
+    background: linear-gradient(90deg, var(--gold-bright) 0%, #fff5c4 100%);
+    box-shadow: 0 0 12px rgba(244, 207, 90, 0.4);
+  }
+
+  .bar-fill.decline {
+    background: linear-gradient(90deg, var(--red) 0%, #e85a4d 100%);
+    opacity: 0.8;
+  }
+
+  .bar-val {
+    color: var(--gold-bright);
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 0.95rem;
+    text-align: right;
+  }
+
+  /* Section Heading */
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin: 2rem 0 1.2rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-head h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.5rem;
+    color: var(--gold);
+    font-weight: 500;
+  }
+
+  .section-head .num {
+    color: var(--text-faint);
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+  }
+
+  /* Final slide */
+  .closing {
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .closing-quote {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2rem;
+    line-height: 1.6;
+    color: var(--text);
+    max-width: 900px;
+    margin: 0 auto 2rem;
+    font-style: italic;
+  }
+
+  .closing-quote .gold {
+    color: var(--gold);
+  }
+
+  .closing-source {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    letter-spacing: 0.2em;
+    margin-top: 3rem;
+    text-transform: uppercase;
+  }
+
+  /* Mobile basic */
+  @media (max-width: 900px) {
+    .slide { padding: 6vh 5vw; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+    .vs-block { grid-template-columns: 1fr; }
+    .cover-brand { font-size: 4rem; }
+    .slide h1 { font-size: 1.8rem; }
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Noto+Serif+TC:wght@300;400;500;600;700&display=swap');
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Noto+Serif+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="deck">
+
+  <!-- Slide 1: Cover -->
+  <div class="slide cover active">
+    <div class="cover-suits">♠ ♥ ♦ ♣</div>
+    <div class="cover-brand">SLOTOMANIA</div>
+    <div class="cover-tag">為什麼一台 <span class="red">虛擬老虎機</span> 能做到 <span style="color:var(--gold-bright)">80 億美元</span></div>
+    <div class="cover-sub">
+      從 2010 年 Facebook 上的一個 MVP，到累計營收 $7.5B 的 social casino 王者<br>
+      解構 Playtika 旗艦產品 15 年長青的六層成功密碼
+    </div>
+    <div class="cover-meta">
+      <div class="meta-item">
+        <div class="meta-num">15<span style="font-size:1.2rem">年</span></div>
+        <div class="meta-label">產品壽命</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-num">$7.5B+</div>
+        <div class="meta-label">累計營收</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-num">$731M</div>
+        <div class="meta-label">2020 年峰值</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-num">28%</div>
+        <div class="meta-label">品類市占</div>
+      </div>
+    </div>
+    <div class="cover-date">SUCCESS DECONSTRUCTED  ·  2026</div>
+  </div>
+
+  <!-- Slide 2: 起點 -->
+  <div class="slide">
+    <div class="slide-num">01</div>
+    <div class="slide-tag">THE ORIGIN</div>
+    <h1>2010 年的<span class="accent"> 起跑線</span></h1>
+    <div class="subtitle">Slotomania 不是市場最早的 social slot，但它跑得最遠</div>
+
+    <div class="grid grid-3" style="margin-top:1rem">
+      <div class="card">
+        <div class="card-icon" style="color:var(--red)">🥇</div>
+        <div class="card-title">DoubleDown Casino</div>
+        <div class="card-body">
+          2010 年 4 月在 Facebook 上線，<span class="highlight">早 Slotomania 8 個月</span>。Seattle 團隊起家，2011 年成 Facebook 第 4 大遊戲。
+        </div>
+      </div>
+      <div class="card gold-edge">
+        <div class="card-icon" style="color:var(--gold)">⭐</div>
+        <div class="card-title">Slotomania</div>
+        <div class="card-body">
+          <span class="highlight">2010 年 12 月</span>在 Facebook 上線。以色列 Playtika 第一款產品，靠 100 萬美元種子資金起家。
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="color:var(--text-dim)">👑</div>
+        <div class="card-title">Zynga 帝國</div>
+        <div class="card-body">
+          整個 Facebook 遊戲霸主，FarmVille 母公司。2007 年就有 Zynga Poker，但 <span class="highlight">2010 年還沒做純 slot</span>。
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <span class="num">FACT</span>
+      <h2>2010 年沒有真正的龍頭</h2>
+    </div>
+
+    <p style="color:var(--text); font-size:1rem; line-height:1.9; max-width:1000px">
+      2010 是 social slot 品類的「元年」——市場剛形成，幾家同時起跑搶地盤。傳統賭場業者（IGT、WMS、Caesars）看到這個新興市場，
+      <span style="color:var(--gold-bright)">但他們的選擇是收購而非自建</span>。這個產業的真正龍頭，要到 2014-2016 年才會浮現。
+    </p>
+
+    <div class="pull-quote" style="margin-top:2rem">
+      先發優勢只值 8 個月，執行力決定 15 年。
+    </div>
+  </div>
+
+  <!-- Slide 3: Facebook 浪頭 -->
+  <div class="slide">
+    <div class="slide-num">02</div>
+    <div class="slide-tag">THE FACEBOOK WAVE</div>
+    <h1>踩在<span class="accent"> 完美的浪頭上</span></h1>
+    <div class="subtitle">2010 年 12 月——Facebook 社交遊戲史上的黃金頂點</div>
+
+    <p style="color:var(--text); font-size:1rem; line-height:1.8; max-width:1100px; margin-bottom:1.5rem">
+      Slotomania 在 Facebook 上線的時間點，剛好是<span style="color:var(--gold-bright)">人類史上社交遊戲最瘋狂的瞬間</span>。
+      這個時間點的選擇，給了它三個其他時候無法獲得的關鍵紅利。
+    </p>
+
+    <div class="section-head">
+      <span class="num">CONTEXT</span>
+      <h2>2010 年 Facebook 遊戲的瘋狂程度</h2>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat">
+        <div class="stat-num">30%+</div>
+        <div class="stat-label">Facebook 總時間花在遊戲</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">83M</div>
+        <div class="stat-label">FarmVille 9 個月達 MAU</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">1億</div>
+        <div class="stat-label">CityVille 31 天 MAU</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">19%</div>
+        <div class="stat-label">Zynga 佔 Facebook 營收</div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <span class="num">3 BENEFITS</span>
+      <h2>浪頭帶來的三個紅利</h2>
+    </div>
+
+    <div class="grid grid-3">
+      <div class="card gold-edge">
+        <div class="card-icon">🦠</div>
+        <div class="card-title">免費病毒式傳播</div>
+        <div class="card-body">
+          當時 Facebook 還沒限制遊戲動態，玩家送禮、邀請、解鎖機制可以直接洗版。<span class="highlight">買量幾乎是免費的</span>。
+        </div>
+      </div>
+      <div class="card gold-edge">
+        <div class="card-icon">💳</div>
+        <div class="card-title">F2P + IAP 已被教育</div>
+        <div class="card-body">
+          Zynga 已經教會玩家「免費玩、花錢更爽」。<span class="highlight">Slotomania 不需要教育市場</span>，直接收割。
+        </div>
+      </div>
+      <div class="card gold-edge">
+        <div class="card-icon">💼</div>
+        <div class="card-title">Caesars 的關鍵收購</div>
+        <div class="card-body">
+          浪頭吸引傳統業者注目，2011 年 5 月 Caesars 以 $170M 收購。<span class="highlight">給資金、給品牌、卻不干預營運</span>。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 4: 跳離浪頭 -->
+  <div class="slide">
+    <div class="slide-num">03</div>
+    <div class="slide-tag">JUMPING OFF THE WAVE</div>
+    <h1>但運氣只是<span class="accent"> 入場券</span></h1>
+    <div class="subtitle">Zynga 同樣踩中浪頭，最後跌掉 90% 市值——Slotomania 的偉大在於「跳離浪頭」</div>
+
+    <div class="vs-block">
+      <div class="vs-side loser">
+        <div class="vs-name red">ZYNGA</div>
+        <div class="vs-tag">把 Facebook 當作主場</div>
+        <div class="vs-stats">
+          <div class="vs-stat"><span class="k">2011 年 IPO 估值</span><span class="v down">$70 億</span></div>
+          <div class="vs-stat"><span class="k">FB 政策變動後</span><span class="v down">市值 -90%</span></div>
+          <div class="vs-stat"><span class="k">行動端轉型</span><span class="v down">慢且痛苦</span></div>
+          <div class="vs-stat"><span class="k">代表作 FarmVille</span><span class="v down">已關服</span></div>
+        </div>
+      </div>
+
+      <div class="vs-divider">vs.</div>
+
+      <div class="vs-side winner">
+        <div class="vs-name gold">SLOTOMANIA</div>
+        <div class="vs-tag">把 Facebook 當作跳板</div>
+        <div class="vs-stats">
+          <div class="vs-stat"><span class="k">2011.11</span><span class="v up">iOS 版上線</span></div>
+          <div class="vs-stat"><span class="k">2012.02</span><span class="v up">Android 版上線</span></div>
+          <div class="vs-stat"><span class="k">2012.07</span><span class="v up">獨立 .com 推出</span></div>
+          <div class="vs-stat"><span class="k">2024 DTC 占比</span><span class="v up">27.5%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <span class="num">WHY SLOT WINS</span>
+      <h2>除了時機，還有一個運氣:選對品類</h2>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card red-edge">
+        <div class="card-title" style="color:var(--red)">FarmVille 模式的問題</div>
+        <div class="card-body">
+          內容容易看膩、玩家會「畢業」（蓋滿城市就無聊了）。<span class="highlight">90% 玩家在 6 個月內離開</span>。
+        </div>
+      </div>
+      <div class="card gold-edge">
+        <div class="card-title">Slot 模式的本質</div>
+        <div class="card-body">
+          永遠沒有「畢業」——只要還有金幣就能繼續轉。<span class="highlight">追逐 jackpot 是經過 100 年驗證的不會膩設計</span>。
+        </div>
+      </div>
+    </div>
+
+    <div class="pull-quote">
+      Zynga 做的是「社交層 + 容易膩的核心循環」，<br>
+      Slotomania 做的是「社交層 + 永遠不膩的核心循環」。
+    </div>
+  </div>
+
+  <!-- Slide 5: 營收軌跡 -->
+  <div class="slide">
+    <div class="slide-num">04</div>
+    <div class="slide-tag">REVENUE TRAJECTORY</div>
+    <h1>15 年的<span class="accent"> 營收曲線</span></h1>
+    <div class="subtitle">從 0 到 $731M 峰值，再到衰退期仍年產 $5 億</div>
+
+    <div class="bar-chart">
+      <div class="bar-row">
+        <div class="bar-year">2011</div>
+        <div class="bar-track"><div class="bar-fill" style="width:7%"></div></div>
+        <div class="bar-val">~$54M</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-year">2014</div>
+        <div class="bar-track"><div class="bar-fill" style="width:38%"></div></div>
+        <div class="bar-val">~$280M</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-year">2016</div>
+        <div class="bar-track"><div class="bar-fill" style="width:55%"></div></div>
+        <div class="bar-val">~$405M</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-year">2017</div>
+        <div class="bar-track"><div class="bar-fill" style="width:70%"></div></div>
+        <div class="bar-val">$514M</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-year">2020 ★</div>
+        <div class="bar-track"><div class="bar-fill peak" style="width:100%"></div></div>
+        <div class="bar-val">$731M</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-year">2022</div>
+        <div class="bar-track"><div class="bar-fill" style="width:89%"></div></div>
+        <div class="bar-val">~$651M</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-year">2023</div>
+        <div class="bar-track"><div class="bar-fill decline" style="width:78%"></div></div>
+        <div class="bar-val">~$570M</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-year">2024</div>
+        <div class="bar-track"><div class="bar-fill decline" style="width:70%"></div></div>
+        <div class="bar-val">~$510M</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-year">2025E</div>
+        <div class="bar-track"><div class="bar-fill decline" style="width:42%"></div></div>
+        <div class="bar-val">~$310M</div>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat">
+        <div class="stat-num">$7.5B+</div>
+        <div class="stat-label">累計營收（15 年）</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">$26.79</div>
+        <div class="stat-label">每次下載收入 RpD</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">73%</div>
+        <div class="stat-label">營收來自 3 年以上老用戶</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">3.6%</div>
+        <div class="stat-label">付費轉換率</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 6: 七層成功原因 -->
+  <div class="slide">
+    <div class="slide-num">05</div>
+    <div class="slide-tag">SUCCESS LAYERS</div>
+    <h1>七層<span class="accent"> 成功密碼</span></h1>
+    <div class="subtitle">不是單一原因，而是七層複合的時機、產品與系統</div>
+
+    <ul class="reasons" style="margin-top:1rem">
+      <li>
+        <span class="reason-num">I.</span>
+        <span class="reason-title">完美時機 — 踩中 Facebook 浪頭，又跳離浪頭</span>
+        <div class="reason-desc">2010 年 12 月上線，剛好是社交遊戲史上的黃金頂點。但更關鍵的是 2011-2012 年快速移到 iOS/Android，沒有像 Zynga 一樣死在平台政策變動。</div>
+      </li>
+      <li>
+        <span class="reason-num">II.</span>
+        <span class="reason-title">法律灰色地帶 — 避開賭博監管</span>
+        <div class="reason-desc">用虛擬幣下注，沒有真錢回報，全球 App Store 都能上架，讓潛在市場放大數十倍。傳統賭場業者只能在被允許的州做生意。</div>
+      </li>
+      <li>
+        <span class="reason-num">III.</span>
+        <span class="reason-title">心理機制設計 — Piggy Bank 與稟賦效應</span>
+        <div class="reason-desc">每次小豬撲滿促銷帶來 15-20% 營收增長。讓玩家覺得是「拿回自己努力得來的」，不是「購買」。</div>
+      </li>
+      <li>
+        <span class="reason-num">IV.</span>
+        <span class="reason-title">技術護城河 — Playtika Boost Platform</span>
+        <div class="reason-desc">即時用戶分群、A/B 測試、動態定價、LTV 模型、跨遊戲導流。每個玩家看到的價格、難度、獎勵都被個性化計算。</div>
+      </li>
+      <li>
+        <span class="reason-num">V.</span>
+        <span class="reason-title">數值調校的冷酷 — 蜜月期 vs 真實期</span>
+        <div class="reason-desc">前期高勝率建立成癮，過了 onboarding 後悄悄調回真實機台數學，玩家必須付費才能維持遊玩節奏。</div>
+      </li>
+      <li>
+        <span class="reason-num">VI.</span>
+        <span class="reason-title">老用戶的時間沉沒成本</span>
+        <div class="reason-desc">VIP 等級、SlotoCards 收集、SlotoClans 公會。退坑成本越來越高，2010-2013 加入的玩家在 2020 年仍貢獻 45% 營收。</div>
+      </li>
+      <li>
+        <span class="reason-num">VII.</span>
+        <span class="reason-title">產品策略聚焦 — 純 slot 極致化</span>
+        <div class="reason-desc">不做綜合賭場，只做 slot 但做到 200+ 種，加入劇情、收集、解謎元素。資源集中讓單一玩法做到對手無法追上的深度。</div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Slide 7: 用戶結構 -->
+  <div class="slide">
+    <div class="slide-num">06</div>
+    <div class="slide-tag">USER PROFILE</div>
+    <h1>誰在<span class="accent"> 玩 Slotomania</span></h1>
+    <div class="subtitle">和你以為的「賭客」完全不同的玩家畫像</div>
+
+    <div class="grid grid-2" style="margin-top:1rem">
+      <div class="card gold-edge">
+        <div class="card-title">人口結構（顛覆認知）</div>
+        <div class="card-body">
+          <div style="display:flex; justify-content:space-between; padding:0.6rem 0; border-bottom:1px dashed var(--border)">
+            <span style="color:var(--text-dim)">女性玩家比例</span>
+            <span class="highlight">65–75%</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:0.6rem 0; border-bottom:1px dashed var(--border)">
+            <span style="color:var(--text-dim)">主要年齡層</span>
+            <span class="highlight">25–54 歲</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:0.6rem 0; border-bottom:1px dashed var(--border)">
+            <span style="color:var(--text-dim)">核心年齡</span>
+            <span class="highlight">35–44 歲</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:0.6rem 0">
+            <span style="color:var(--text-dim)">美國用戶比例</span>
+            <span class="highlight">~50%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card red-edge">
+        <div class="card-title">三大典型玩家</div>
+        <div class="card-body">
+          <div style="margin-bottom:1rem">
+            <div style="color:var(--gold-bright); font-weight:500">退休族 / 半退休</div>
+            <div style="color:var(--text-dim); font-size:0.88rem; margin-top:0.2rem">把賭場當日常時間消耗，移到手機上更方便</div>
+          </div>
+          <div style="margin-bottom:1rem">
+            <div style="color:var(--gold-bright); font-weight:500">30+ 主婦</div>
+            <div style="color:var(--text-dim); font-size:0.88rem; margin-top:0.2rem">家務後玩牌打發時間，過去靠 kitty parties，現在指尖就能玩</div>
+          </div>
+          <div>
+            <div style="color:var(--gold-bright); font-weight:500">想練習轉戰真錢</div>
+            <div style="color:var(--text-dim); font-size:0.88rem; margin-top:0.2rem">免費練手感，未來進真錢線上撲克或實體賭場</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <span class="num">COHORT DATA</span>
+      <h2>2020 年營收的世代分布</h2>
+    </div>
+
+    <table>
+      <tr>
+        <th>加入年份</th>
+        <th>佔 2020 總營收</th>
+        <th>用戶年資</th>
+        <th>意義</th>
+      </tr>
+      <tr>
+        <td>2013 及更早</td>
+        <td class="num">45%</td>
+        <td>7-10 年</td>
+        <td>核心金庫</td>
+      </tr>
+      <tr>
+        <td>2014-2017</td>
+        <td class="num">29%</td>
+        <td>3-6 年</td>
+        <td>穩定貢獻</td>
+      </tr>
+      <tr>
+        <td>2018-2019</td>
+        <td class="num">18%</td>
+        <td>1-2 年</td>
+        <td>新進力量</td>
+      </tr>
+      <tr>
+        <td>2020 新加入</td>
+        <td class="num">9%</td>
+        <td>未滿 1 年</td>
+        <td>當年買量結果</td>
+      </tr>
+    </table>
+
+    <div class="pull-quote">
+      Social casino 的真正資產不是新用戶，是「老用戶不會死」。
+    </div>
+  </div>
+
+  <!-- Slide 8: 變現機制 -->
+  <div class="slide">
+    <div class="slide-num">07</div>
+    <div class="slide-tag">MONETIZATION</div>
+    <h1>Piggy Bank<span class="accent"> 心理操弄</span></h1>
+    <div class="subtitle">Slotomania 史上最成功的單一變現設計</div>
+
+    <div class="grid grid-2" style="margin-top:1rem">
+      <div class="card gold-edge">
+        <div class="card-icon" style="color:var(--gold)">🐷</div>
+        <div class="card-title">機制原理</div>
+        <div class="card-body">
+          <p style="margin-bottom:0.8rem">HUD 上有一個豬撲滿圖示。</p>
+          <p style="margin-bottom:0.8rem">玩家每次旋轉、每次遊玩時間，都會讓豬撲滿<span class="highlight">累積金幣</span>。</p>
+          <p>玩家可以付費「打破撲滿」，比一般 IAP 划算很多——但前提是先付錢。</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">🧠</div>
+        <div class="card-title">心理學基礎</div>
+        <div class="card-body">
+          <p style="margin-bottom:0.8rem"><span class="highlight">稟賦效應 (Endowment Effect)</span>：人類會高估自己擁有的東西。</p>
+          <p style="margin-bottom:0.8rem">玩家「看著」金幣慢慢累積 → 產生擁有感。</p>
+          <p>付費感覺像「拿回自己的東西」，不是「消費」——心理阻力極低。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-row" style="grid-template-columns: 1fr 1fr 1fr">
+      <div class="stat">
+        <div class="stat-num">15-20%</div>
+        <div class="stat-label">每次撲滿促銷的營收增幅</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">3+</div>
+        <div class="stat-label">每次開 App 看到的 IAP 優惠</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">3.6%</div>
+        <div class="stat-label">付費轉換率（業界頂級）</div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <span class="num">DUAL ROLE</span>
+      <h2>金幣的雙重角色</h2>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-title" style="color:var(--text)">金幣 = 貨幣</div>
+        <div class="card-body" style="color:var(--text-dim)">
+          下注、購買虛擬物品、解鎖新機台，是遊戲內唯一硬通貨。
+        </div>
+      </div>
+      <div class="card red-edge">
+        <div class="card-title" style="color:var(--red)">金幣 = 燃料</div>
+        <div class="card-body" style="color:var(--text-dim)">
+          金幣用完就無法繼續玩。製造雙重壓力：既想存錢買大獎，又必須花錢繼續玩。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 9: 技術護城河 -->
+  <div class="slide">
+    <div class="slide-num">08</div>
+    <div class="slide-tag">THE MOAT</div>
+    <h1>Boost Platform<span class="accent"> —— 真正的護城河</span></h1>
+    <div class="subtitle">外界看不到，卻是 Slotomania 撐 15 年的引擎</div>
+
+    <p style="color:var(--text); font-size:1rem; line-height:1.8; max-width:1000px; margin-bottom:2rem">
+      Playtika Boost Platform 是一個跨遊戲、跨用戶分群的 LiveOps 工業化引擎。它讓每個玩家看到的<span style="color:var(--gold-bright)">價格、難度、推送、優惠</span>都被即時計算。
+    </p>
+
+    <div class="grid grid-3">
+      <div class="card gold-edge">
+        <div class="card-icon">📊</div>
+        <div class="card-title">即時分群</div>
+        <div class="card-body">
+          系統判斷你是「鯨魚」、「海豚」還是「小魚」，動態調整你看到的內容
+        </div>
+      </div>
+      <div class="card gold-edge">
+        <div class="card-icon">🎯</div>
+        <div class="card-title">動態定價</div>
+        <div class="card-body">
+          Level 1 與 Level 30 的玩家，看到的 IAP 包價格與內容完全不同
+        </div>
+      </div>
+      <div class="card gold-edge">
+        <div class="card-icon">🧪</div>
+        <div class="card-title">A/B 測試框架</div>
+        <div class="card-body">
+          每個按鈕、每個促銷文案、每個獎勵設計都同時跑多個版本驗證
+        </div>
+      </div>
+      <div class="card gold-edge">
+        <div class="card-icon">📈</div>
+        <div class="card-title">LTV 預測</div>
+        <div class="card-body">
+          新用戶加入 24 小時內就能預估其終身價值，決定行銷投放與保留資源
+        </div>
+      </div>
+      <div class="card gold-edge">
+        <div class="card-icon">🤖</div>
+        <div class="card-title">Oatmeal AI</div>
+        <div class="card-body">
+          根據即時行為自動發送個性化遊戲內優惠和推送訊息
+        </div>
+      </div>
+      <div class="card gold-edge">
+        <div class="card-icon">🔄</div>
+        <div class="card-title">跨遊戲導流</div>
+        <div class="card-body">
+          Slotomania 流失的玩家會被導向 Bingo Blitz 或 Solitaire Grand Harvest
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <span class="num">SCALE</span>
+      <h2>規模驅動的數據優勢</h2>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat">
+        <div class="stat-num">34M+</div>
+        <div class="stat-label">月活躍用戶（全平台）</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">$0.85-0.95</div>
+        <div class="stat-label">ARPDAU（業界頂級）</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">$590M</div>
+        <div class="stat-label">2024 年行銷投入</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">23%</div>
+        <div class="stat-label">行銷費用率</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 10: 對標 DoubleDown -->
+  <div class="slide">
+    <div class="slide-num">09</div>
+    <div class="slide-tag">SLOTOMANIA vs DOUBLEDOWN</div>
+    <h1>為什麼<span class="accent"> 對手輸了</span></h1>
+    <div class="subtitle">DoubleDown 早 8 個月、被先收購、早期 DAU 更高，最後被反超一個量級</div>
+
+    <div class="vs-block">
+      <div class="vs-side winner">
+        <div class="vs-name gold">SLOTOMANIA</div>
+        <div class="vs-tag">2010 年 12 月上線 · 純 slot 極致化</div>
+        <div class="vs-stats">
+          <div class="vs-stat"><span class="k">2024 營收</span><span class="v up">~$510M</span></div>
+          <div class="vs-stat"><span class="k">累計營收</span><span class="v up">$7.5B+</span></div>
+          <div class="vs-stat"><span class="k">2016 賣價</span><span class="v up">$4.4B</span></div>
+          <div class="vs-stat"><span class="k">技術平台</span><span class="v up">Boost Platform</span></div>
+          <div class="vs-stat"><span class="k">產品策略</span><span class="v up">純 slot 200+ 機台</span></div>
+        </div>
+      </div>
+
+      <div class="vs-divider">vs.</div>
+
+      <div class="vs-side loser">
+        <div class="vs-name red">DoubleDown</div>
+        <div class="vs-tag">2010 年 4 月上線 · 綜合賭場路線</div>
+        <div class="vs-stats">
+          <div class="vs-stat"><span class="k">2024 營收</span><span class="v down">$341M（全公司）</span></div>
+          <div class="vs-stat"><span class="k">累計營收</span><span class="v down">不到 $4B</span></div>
+          <div class="vs-stat"><span class="k">2017 賣價</span><span class="v down">$825M</span></div>
+          <div class="vs-stat"><span class="k">技術平台</span><span class="v down">無等量級</span></div>
+          <div class="vs-stat"><span class="k">產品策略</span><span class="v down">slot+poker+blackjack</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <span class="num">FATAL FLAWS</span>
+      <h2>DoubleDown 的三大致命傷</h2>
+    </div>
+
+    <div class="grid grid-3">
+      <div class="card red-edge">
+        <div class="card-title" style="color:var(--red)">被賭場思維拖累</div>
+        <div class="card-body">
+          IGT 收購後，產品決策受賭場業務牽制。<span class="highlight">Caesars 卻讓 Playtika 完全獨立營運</span>。
+        </div>
+      </div>
+      <div class="card red-edge">
+        <div class="card-title" style="color:var(--red)">技術引擎缺席</div>
+        <div class="card-body">
+          沒有等量級的 LiveOps 平台。<span class="highlight">當買量成本上升時，無法精準變現</span>。
+        </div>
+      </div>
+      <div class="card red-edge">
+        <div class="card-title" style="color:var(--red)">產品策略攤薄</div>
+        <div class="card-body">
+          試圖複製真實賭場多樣性。<span class="highlight">玩家其實只想要 slot 越深越好</span>。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 11: 衰退 -->
+  <div class="slide">
+    <div class="slide-num">10</div>
+    <div class="slide-tag">THE DECLINE</div>
+    <h1>峰值之後的<span class="accent"> 緩慢衰退</span></h1>
+    <div class="subtitle">2020 年達到 $731M 之後，連續 5 年衰退，但仍年產數億美元</div>
+
+    <div class="grid grid-2" style="margin-top:1rem">
+      <div class="card">
+        <div class="card-title">外部因素</div>
+        <div class="card-body">
+          <ul style="list-style:none; padding:0">
+            <li style="padding:0.5rem 0; border-bottom:1px dashed var(--border)">
+              <span style="color:var(--gold)">▸</span> Apple IDFA 政策讓買量精準度下降
+            </li>
+            <li style="padding:0.5rem 0; border-bottom:1px dashed var(--border)">
+              <span style="color:var(--gold)">▸</span> 新世代不接受老虎機美學
+            </li>
+            <li style="padding:0.5rem 0; border-bottom:1px dashed var(--border)">
+              <span style="color:var(--gold)">▸</span> Sweepstakes casino（可兌現金）搶走鯨魚
+            </li>
+            <li style="padding:0.5rem 0">
+              <span style="color:var(--gold)">▸</span> 真錢線上博弈合法化分流
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">內部因素</div>
+        <div class="card-body">
+          <ul style="list-style:none; padding:0">
+            <li style="padding:0.5rem 0; border-bottom:1px dashed var(--border)">
+              <span style="color:var(--red)">▸</span> 2010-2013 的核心用戶開始自然退場
+            </li>
+            <li style="padding:0.5rem 0; border-bottom:1px dashed var(--border)">
+              <span style="color:var(--red)">▸</span> Playtika 把資源轉給 Bingo Blitz、Solitaire
+            </li>
+            <li style="padding:0.5rem 0; border-bottom:1px dashed var(--border)">
+              <span style="color:var(--red)">▸</span> 2025 主動「再平衡」經濟系統
+            </li>
+            <li style="padding:0.5rem 0">
+              <span style="color:var(--red)">▸</span> 連續多次裁員（2022 -15%、2024 -10%、2025 -20%）
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <span class="num">RESILIENCE</span>
+      <h2>衰退中的韌性</h2>
+    </div>
+
+    <p style="color:var(--text); font-size:1rem; line-height:1.9; max-width:1100px">
+      即使連續衰退 5 年，Slotomania <span style="color:var(--gold-bright)">2024 年仍然年產 $5.1 億美元</span>。
+      這就是 LiveOps 模式的本質——產品老了還能持續吐現金，靠的是<span style="color:var(--gold-bright)">老用戶的時間沉沒成本與付費習慣</span>，而非新用戶補充。
+    </p>
+
+    <div class="pull-quote">
+      Social casino 不會猝死，只會慢慢變小，但繼續吐現金。
+    </div>
+  </div>
+
+  <!-- Slide 12: 核心啟示 -->
+  <div class="slide">
+    <div class="slide-num">11</div>
+    <div class="slide-tag">KEY LESSONS</div>
+    <h1>給產品人的<span class="accent"> 六個啟示</span></h1>
+    <div class="subtitle">無論做的是不是 social casino，這些原則都成立</div>
+
+    <ul class="reasons" style="margin-top:1rem">
+      <li>
+        <span class="reason-num">①</span>
+        <span class="reason-title">時機是入場券，不是冠軍獎牌</span>
+        <div class="reason-desc">Slotomania、Zynga、DoubleDown 都踩中 Facebook 浪頭。最後 Zynga 跌掉 90%、DoubleDown 被反超，只有 Slotomania 笑到最後——時機只決定誰能上場，不決定誰會贏。</div>
+      </li>
+      <li>
+        <span class="reason-num">②</span>
+        <span class="reason-title">把平台當跳板，不是主場</span>
+        <div class="reason-desc">Slotomania 上線 11 個月內就推出 iOS，14 個月推出 Android。永遠假設「現在的紅利會結束」並提前佈署下一個通路，這是 Zynga 和 Slotomania 的根本差異。</div>
+      </li>
+      <li>
+        <span class="reason-num">③</span>
+        <span class="reason-title">產品系統 &gt; 產品本身</span>
+        <div class="reason-desc">DoubleDown 是好遊戲，Slotomania 是好產品系統。前者贏在玩法，後者贏在「能持續優化每個用戶的 LTV」的工業化能力。</div>
+      </li>
+      <li>
+        <span class="reason-num">④</span>
+        <span class="reason-title">老用戶才是真正的資產</span>
+        <div class="reason-desc">2020 年 73% 營收來自 3 年以上老用戶。所有變現、留存、社交設計，都應該為「讓今天加入的用戶 5 年後還在」服務，而非短期 ROAS。</div>
+      </li>
+      <li>
+        <span class="reason-num">⑤</span>
+        <span class="reason-title">心理機制 &gt; 功能堆疊</span>
+        <div class="reason-desc">Piggy Bank 一個機制帶來 15-20% 營收增長。比起多做 10 個功能，把人性裡的稟賦效應、損失厭惡、進度感做透徹，效果指數級放大。</div>
+      </li>
+      <li>
+        <span class="reason-num">⑥</span>
+        <span class="reason-title">選擇「不會膩」的核心循環</span>
+        <div class="reason-desc">Slot 的 jackpot 追逐機制是 100 年驗證的「永不畢業」設計。FarmVille 模式則是「蓋滿城市就無聊」。在做產品策略時，先問自己：這個核心循環會讓玩家畢業嗎？</div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Slide 11: 結尾 -->
+  <div class="slide closing">
+    <div class="cover-suits">♠ ♥ ♦ ♣</div>
+
+    <div class="closing-quote">
+      Slotomania 用 15 年證明：<br>
+      做出一個<span class="gold">會玩的人玩到不離不棄</span>的產品，<br>
+      比做一個<span class="gold">所有人都覺得有趣</span>的產品<br>
+      值錢得多。
+    </div>
+
+    <div style="display:flex; gap:3rem; justify-content:center; margin-top:3rem; padding-top:3rem; border-top:1px solid var(--border)">
+      <div class="meta-item">
+        <div class="meta-num">$7.5B</div>
+        <div class="meta-label">15 年累計營收</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-num">73%</div>
+        <div class="meta-label">老用戶營收佔比</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-num">3.6%</div>
+        <div class="meta-label">付費轉換率</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-num">15</div>
+        <div class="meta-label">產品年齡</div>
+      </div>
+    </div>
+
+    <div class="closing-source">
+      Sources: Playtika 10-K · IPO Prospectus · SEC Filings · Industry Research
+    </div>
+  </div>
+
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button id="prev">← 上一頁</button>
+  <span class="page-num"><span id="curr">1</span> / <span id="total">11</span></span>
+  <button id="next">下一頁 →</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let curr = 0;
+
+  document.getElementById('total').textContent = total;
+
+  function show(idx) {
+    slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+    document.getElementById('curr').textContent = idx + 1;
+    document.getElementById('prev').disabled = idx === 0;
+    document.getElementById('next').disabled = idx === total - 1;
+  }
+
+  document.getElementById('prev').addEventListener('click', () => {
+    if (curr > 0) { curr--; show(curr); }
+  });
+
+  document.getElementById('next').addEventListener('click', () => {
+    if (curr < total - 1) { curr++; show(curr); }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft' && curr > 0) { curr--; show(curr); }
+    if (e.key === 'ArrowRight' && curr < total - 1) { curr++; show(curr); }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

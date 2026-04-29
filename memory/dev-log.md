@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-04-29 [main] — 加入 Slotomania case study deck（用戶授權 push main）[flow, no bump]
+- 新增 `public/slotomania.html`（1460 行，獨立簡報，Vite serve 在 root URL）
+- 路徑：`https://poker-goal.vercel.app/slotomania.html`
+- 凍結後例外：用戶明確授權 push main（C.可以PUSH）
+- 內容：Playtika Slotomania 15 年成功案例研究（11 slides，金幣/紅/黑配色，Playfair Display + Noto Serif TC 字型）
+- 不影響既有功能：純獨立靜態頁，不 import 任何 src/ 內容
+
 ## 2026-04-27 [dev] — Train Table V2 100% UI 複製 handover doc（Level A）[flow, no bump]
 - 新增 `memory/wiki/train-table-v2-handover.md`（~750 行 18 段）— 訓練模式 V2 牌桌 1:1 搬遷包
 - 涵蓋：
