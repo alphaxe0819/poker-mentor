@@ -5,6 +5,66 @@
 
 ---
 
+## 2026-04-29 [main] — 加入 Slotomania case study deck（用戶授權 push main）[flow, no bump]
+- 新增 `public/slotomania.html`（1460 行，獨立簡報，Vite serve 在 root URL）
+- 路徑：`https://poker-goal.vercel.app/slotomania.html`
+- 凍結後例外：用戶明確授權 push main（C.可以PUSH）
+- 內容：Playtika Slotomania 15 年成功案例研究（11 slides，金幣/紅/黑配色，Playfair Display + Noto Serif TC 字型）
+- 不影響既有功能：純獨立靜態頁，不 import 任何 src/ 內容
+
+## 2026-04-27 [dev] — Train Table V2 100% UI 複製 handover doc（Level A）[flow, no bump]
+- 新增 `memory/wiki/train-table-v2-handover.md`（~750 行 18 段）— 訓練模式 V2 牌桌 1:1 搬遷包
+- 涵蓋：
+  - §0 一句話 + UI v2 設計規則
+  - §1 技術棧鎖定（Tailwind 3.4 / React 19 / Vite 8 版本鎖）
+  - §2 設計系統（tailwind.config.js 全文 + CSS variable 對映）
+  - §3 全域樣式（index.css 全文：字型 import / :root variables / reset / iOS quirks / animations / utilities）
+  - §4 index.html 全文（含 viewport-fit=cover / theme-color / Google Fonts preconnect）
+  - §5 11 元件樹狀圖
+  - §6 ⭐ PokerFeltV2 數學常數（PILL_W=84, PILL_H=120）+ POSITION_MAP 權威表 + STATUS_STYLE + SUIT 配色 + z-index 層級
+  - §7 HoleCards / CommunityCards 卡片視覺規則（GTOW 風格 ♠灰♥紅♦藍♣綠）
+  - §8 BetSizingBarV2 規則（無自訂 slider，純按鈕，hardcoded RGB）
+  - §9 FeedbackSheetV2 4 chips 街別評分 + scoreByFreq 公式 + drag handle 行為
+  - §10 ActionHistoryBarTop 4 種 kind 顏色
+  - §11 TrainSetupScreen 三層選項
+  - §12 RoundResult + RangeGrid
+  - §13 完整檔案清單（19 檔家中絕對路徑 C:\Users\User\Desktop\gto-poker-trainer\...）
+  - §14 lib 依賴 mock 策略（saveAnswerRecord / gtoData no-op）
+  - §15 Mock props 範例（4 元件直接 render demo）
+  - §16 視覺驗收 18 項 checklist（4 viewport × 14 視覺項）
+  - §17 PowerShell 一鍵驗證 script
+  - §18 新專案 Claude 搬遷 SOP（7 步順序：設計系統 → type → 元件 → mock → demo → 驗收 → Level B）
+- 19/19 檔 PowerShell Test-Path 全 OK（士林機驗，家中同結構）
+- index.md Handover 區加索引
+
+## 2026-04-27 [dev] — Exploit Coach handover §10 路徑改正：家中電腦絕對路徑 [flow, no bump]
+- §10 全部改成 `C:\Users\User\Desktop\gto-poker-trainer\...` 絕對路徑（家中電腦）
+- 上一個 commit 寫反方向（誤把士林 cwd `C:\Users\User\POKERNEW\poker-mentor-brain\` 當家中），用戶糾正後修正
+- 釐清：士林 = `C:\Users\User\POKERNEW\poker-mentor-brain\`，家中 = `C:\Users\User\Desktop\gto-poker-trainer\`
+- 加 lib 依賴清單（getGTOAction / helpers / gtoData_cash_6max_100bb / explanations / supabase）— exploitEngine + baseline 連動的檔
+- 加 PowerShell 一鍵驗證 script（家中電腦上跑可驗 35 檔在不在）
+
+## 2026-04-27 [dev] — Exploit Coach 全套搬遷文件（給新專案參考）[flow, no bump]
+- 新增 `memory/wiki/exploit-coach-handover.md` — 11 段完整 handover doc：
+  - §1 一句話定義 + 核心閉環
+  - §2 三個版本演進（v1 type / v2 21-range / GTOW fork）
+  - §3 三條 Edge Function fork 模式（exploit-coach / -gtow / -villain-v2）
+  - §4 iframe wrapper + parent ↔ iframe token refresh 協議（含 T-064 origin bug 教訓）
+  - §5 Villain Profile v2 lib 完整 API（7 檔 ~660 行）
+  - §6 Schema 設計（villain_profiles / villain_observations / Bayesian refine 偽碼，spec approved 未轉 migration）
+  - §7 GTOW 整合（self-gen keypair + ECDSA P-256 sign，3 個 secret）
+  - §8 部署 checklist（測試/正式分階段）
+  - §9 已知狀態 + 未完成項
+  - §10 完整檔案清單（4 Edge Function / 11 lib / 3 入口 / 6 mockup / 6 wiki）
+  - §11 新專案 Claude 搬遷 SOP + 驗收 checklist
+- index.md 加 Handover 區一行索引
+- 來源歸納：closed-loop-design / villain-profile-design / gtow-api-reverse-eng / supabase-edge-function-gotchas + 實際讀過 exploit-coach 相關所有檔案
+
+## 2026-04-26 [dev] — PD 抓爬交付文件整理（給新專案參考）[flow, no bump]
+- 新增 `memory/wiki/pd-scraping-handover.md` — 整合抓爬方案 / DOM 選擇器 / 顏色映射 / 資料格式 / 轉換 pipeline / Supabase 上傳的單頁 handover doc
+- 來源歸納：`scrape-pokerdinosaur.js` + `pd-to-range.mjs` + `parse-pd-table-name.mjs` + `build-mtt-ranges.mjs` + `upload-pd-data.js` + 既有 wiki（project_pokerdinosaur_scraping / scraping-audit / range-collection-roadmap）
+- index.md 加 Scraping 區一行索引
+
 ## 2026-04-23 **v1.0.0** [dev] — 🎯 專案 code 凍結 + T-096b 真 Done + 進入 ship sequence
 
 > **這是本專案 dev branch 的最終版本號。**

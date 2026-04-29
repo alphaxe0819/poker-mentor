@@ -44,3 +44,9 @@
 - [[range-collection-roadmap]] — 範圍收集總進度表：scraping / converter / solver 三線分批 + 跨機器協作指引
 - [[project_pokerdinosaur_scraping]] — pokerdinosaur.com 備份進度、正確技術方案、待爬 project 清單（未經允許不得更改方案）
 - [[scraping-audit-2026-04-21]] — T-013 scraping 現況盤點：10 個 JSON 全到位、S1 LiveMTT_Ben 已完成、S0 微小 diff
+- [[pd-scraping-handover]] — 🆕 **新專案交付文件**：抓爬邏輯 / DOM 選擇器 / 顏色映射 / 資料格式 / 轉換 pipeline / Supabase 上傳全套（給其他 Claude session 接手）
+
+## Handover
+
+- [[exploit-coach-handover]] — 🆕 **剝削教練全套搬遷文件**（2026-04-27）：三條 fork（v1 type / v2 21-range / GTOW）、iframe wrapper、villain profile lib、Schema 設計、部署 checklist、完整檔案清單
+- [[train-table-v2-handover]] — 🆕 **訓練模式 V2 牌桌 100% UI 複製包**（2026-04-27 Level A）：CSS variables / Tailwind theme / capsule pillSeatSlots 數學 / SUIT_STYLES / 4 chips 街別評分 / mock props 範例 / 視覺驗收 18 項 / 11 元件 + 6 設計系統檔家中絕對路徑
