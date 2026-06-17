@@ -342,7 +342,10 @@ export default function AdminDashboard() {
       )
     } catch (e: unknown) {
       console.error('Admin fetch error:', e)
-      setError(e instanceof Error ? e.message : String(e))
+      const msg = e instanceof Error
+        ? e.message
+        : (e as { message?: string })?.message ?? JSON.stringify(e)
+      setError(msg)
     } finally {
       setLoading(false)
     }
