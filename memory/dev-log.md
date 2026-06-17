@@ -5,9 +5,11 @@
 
 ---
 
-## 2026-06-17 [dev] — 修 AdminDashboard React error #310（hooks 順序違規）v1.0.0-dev.1
-- 將所有 useState/useEffect/useMemo 移到 component 最上方，early return 移到 hooks 之後
+## 2026-06-17 [dev] — 修 AdminDashboard React error #310（完整修復）v1.0.0-dev.2
+- 將所有 useState/useEffect/useMemo 移到 component 最上方，early return 移到所有 hooks 之後
+- dev.1 漏移 useMemo（answerMap + filteredProfiles），dev.2 補齊
 - fetchAll() 加 `if (!sb) return` guard 解決 TS18047
+- Vercel poker-goal-dev 補設 VITE_ADMIN_USER / VITE_ADMIN_PASS / VITE_SUPABASE_SERVICE_KEY
 
 ---
 

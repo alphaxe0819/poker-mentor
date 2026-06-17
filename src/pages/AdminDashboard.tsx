@@ -149,6 +149,46 @@ export default function AdminDashboard() {
     fetchAll()
   }, [authed])
 
+  // ── Derived (useMemo 也必須在 early return 之前) ──
+  const answerMap = useMemo(() => {
+    const m: Record<string, AnswerAgg> = {}
+    for (const a of answerAggs) m[a.user_id] = a
+    return m
+  }, [answerAggs])
+
+  const filteredProfiles = useMemo(() => {
+    let list = profiles
+    if (search.trim()) {
+      const q = search.trim().toLowerCase()
+      list = list.filter(p => p.email?.toLowerCase().includes(q) || p.name?.toLowerCase().includes(q))
+    }
+    list = [...list].sort((a, b) => {
+      let va: string | number = ''
+      let vb: string | number = ''
+      const aa = answerMap[a.id]
+      const ab = answerMap[b.id]
+      switch (sortKey) {
+        case 'email': va = a.email ?? ''; vb = b.email ?? ''; break
+        case 'name': va = a.name ?? ''; vb = b.name ?? ''; break
+        case 'points': va = a.points ?? 0; vb = b.points ?? 0; break
+        case 'total': va = aa?.total ?? 0; vb = ab?.total ?? 0; break
+        case 'rate':
+          va = aa?.total ? aa.correct / aa.total : 0
+          vb = ab?.total ? ab.correct / ab.total : 0
+          break
+        case 'lastActive':
+          va = lastActiveMap[a.id] ?? ''
+          vb = lastActiveMap[b.id] ?? ''
+          break
+        case 'created': va = a.created_at ?? ''; vb = b.created_at ?? ''; break
+      }
+      if (va < vb) return sortDir === 'asc' ? -1 : 1
+      if (va > vb) return sortDir === 'asc' ? 1 : -1
+      return 0
+    })
+    return list
+  }, [profiles, search, sortKey, sortDir, answerMap, lastActiveMap])
+
   // ── Early returns (after all hooks) ──────────
   if (!adminSupabase || !ADMIN_PASS) {
     return (
@@ -307,46 +347,6 @@ export default function AdminDashboard() {
       setLoading(false)
     }
   }
-
-  // ── Derived: user table ──────────
-  const answerMap = useMemo(() => {
-    const m: Record<string, AnswerAgg> = {}
-    for (const a of answerAggs) m[a.user_id] = a
-    return m
-  }, [answerAggs])
-
-  const filteredProfiles = useMemo(() => {
-    let list = profiles
-    if (search.trim()) {
-      const q = search.trim().toLowerCase()
-      list = list.filter(p => p.email?.toLowerCase().includes(q) || p.name?.toLowerCase().includes(q))
-    }
-    list = [...list].sort((a, b) => {
-      let va: string | number = ''
-      let vb: string | number = ''
-      const aa = answerMap[a.id]
-      const ab = answerMap[b.id]
-      switch (sortKey) {
-        case 'email': va = a.email ?? ''; vb = b.email ?? ''; break
-        case 'name': va = a.name ?? ''; vb = b.name ?? ''; break
-        case 'points': va = a.points ?? 0; vb = b.points ?? 0; break
-        case 'total': va = aa?.total ?? 0; vb = ab?.total ?? 0; break
-        case 'rate':
-          va = aa?.total ? aa.correct / aa.total : 0
-          vb = ab?.total ? ab.correct / ab.total : 0
-          break
-        case 'lastActive':
-          va = lastActiveMap[a.id] ?? ''
-          vb = lastActiveMap[b.id] ?? ''
-          break
-        case 'created': va = a.created_at ?? ''; vb = b.created_at ?? ''; break
-      }
-      if (va < vb) return sortDir === 'asc' ? -1 : 1
-      if (va > vb) return sortDir === 'asc' ? 1 : -1
-      return 0
-    })
-    return list
-  }, [profiles, search, sortKey, sortDir, answerMap, lastActiveMap])
 
   function toggleSort(key: typeof sortKey) {
     if (sortKey === key) {
