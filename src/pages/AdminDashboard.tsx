@@ -119,28 +119,7 @@ function AdminLogin({ onLogin }: { onLogin: () => void }) {
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState(() => sessionStorage.getItem('admin_auth') === '1')
 
-  if (!adminSupabase || !ADMIN_PASS) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a0a', color: '#fff' }}>
-        <div style={{ background: '#111', border: '1px solid #222', borderRadius: 16, padding: 32, maxWidth: 480, textAlign: 'center' }}>
-          <h1 style={{ fontSize: 24, marginBottom: 12 }}>🔒 後台未設定</h1>
-          <p style={{ color: '#888', fontSize: 14, lineHeight: 1.6 }}>
-            請在 <code style={{ background: '#222', padding: '2px 6px', borderRadius: 4 }}>.env</code> 中設定{' '}
-            <code style={{ background: '#222', padding: '2px 6px', borderRadius: 4 }}>VITE_SUPABASE_SERVICE_KEY</code> 和{' '}
-            <code style={{ background: '#222', padding: '2px 6px', borderRadius: 4 }}>VITE_ADMIN_PASS</code>
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!authed) {
-    return <AdminLogin onLogin={() => setAuthed(true)} />
-  }
-
-  const sb = adminSupabase
-
-  // ── State ────────────────────────
+  // ── State (全部 hooks 必須在任何 early return 之前) ──
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -162,12 +141,36 @@ export default function AdminDashboard() {
   const [sortKey, setSortKey] = useState<'email' | 'name' | 'points' | 'total' | 'rate' | 'lastActive' | 'created'>('created')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
+  const sb = adminSupabase
+
   // ── Data fetching ────────────────
   useEffect(() => {
+    if (!sb || !ADMIN_PASS || !authed) return
     fetchAll()
-  }, [])
+  }, [authed])
+
+  // ── Early returns (after all hooks) ──────────
+  if (!adminSupabase || !ADMIN_PASS) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a0a', color: '#fff' }}>
+        <div style={{ background: '#111', border: '1px solid #222', borderRadius: 16, padding: 32, maxWidth: 480, textAlign: 'center' }}>
+          <h1 style={{ fontSize: 24, marginBottom: 12 }}>🔒 後台未設定</h1>
+          <p style={{ color: '#888', fontSize: 14, lineHeight: 1.6 }}>
+            請在 <code style={{ background: '#222', padding: '2px 6px', borderRadius: 4 }}>.env</code> 中設定{' '}
+            <code style={{ background: '#222', padding: '2px 6px', borderRadius: 4 }}>VITE_SUPABASE_SERVICE_KEY</code> 和{' '}
+            <code style={{ background: '#222', padding: '2px 6px', borderRadius: 4 }}>VITE_ADMIN_PASS</code>
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!authed) {
+    return <AdminLogin onLogin={() => setAuthed(true)} />
+  }
 
   async function fetchAll() {
+    if (!sb) return
     setLoading(true)
     setError(null)
     try {

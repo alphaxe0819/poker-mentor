@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-06-17 [dev] — 修 AdminDashboard React error #310（hooks 順序違規）v1.0.0-dev.1
+- 將所有 useState/useEffect/useMemo 移到 component 最上方，early return 移到 hooks 之後
+- fetchAll() 加 `if (!sb) return` guard 解決 TS18047
+
+---
+
 ## 2026-04-29 [main] — 加入 Slotomania case study deck（用戶授權 push main）[flow, no bump]
 - 新增 `public/slotomania.html`（1460 行，獨立簡報，Vite serve 在 root URL）
 - 路徑：`https://poker-goal.vercel.app/slotomania.html`
